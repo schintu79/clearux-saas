@@ -4,7 +4,7 @@ import Navbar from '@/components/layout/Navbar'
 import Footer from '@/components/layout/Footer'
 import { Sparkles, ArrowRight, CheckCircle } from 'lucide-react'
 
-const BASE_URL = 'https://clearux.ai'
+const BASE_URL = 'https://fixpath.ai'
 
 export const metadata: Metadata = {
   title: 'UX Audit Checklist: 16 Categories Across 4 Pillars | Fixpath',

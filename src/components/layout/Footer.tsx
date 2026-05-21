@@ -53,7 +53,7 @@ const Footer: React.FC = () => {
               <h4 className="font-body font-medium text-xs uppercase tracking-wider text-white/70 mb-4">Product</h4>
               <ul className="space-y-2.5">
                 {[
-                  { label: 'How it works', href: '/how-it-works' },
+                  { label: 'Product', href: '/product' },
                   { label: 'Pricing', href: '/pricing' },
                   { label: 'FAQ', href: '/faq' },
                 ].map((link) => (

@@ -4,7 +4,7 @@ import { useRef } from 'react'
 import { SectionMarker } from '@/components/marketing/SectionMarker'
 import { Button } from '@/components/marketing/Button'
 import { ArrowRightIcon } from '@/components/marketing/icons'
-import { Coda } from '@/components/marketing/Coda'
+import { HomeCta } from '@/components/marketing/HomeCta'
 import { FaqPreview } from '@/components/marketing/FaqPreview'
 import { useTheme } from '@/context/ThemeContext'
 
@@ -1187,7 +1187,7 @@ export default function HowItWorksContent() {
       />
 
       {/* CTA */}
-      <Coda />
+      <HomeCta />
     </main>
   )
 }

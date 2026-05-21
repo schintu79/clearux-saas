@@ -67,7 +67,7 @@ export default function TermsPage() {
 
             <div>
               <h2 className="font-sans font-medium text-[17px] text-ink mb-2">9. Contact</h2>
-              <p>Questions about these terms? Contact us at <a href="mailto:support@clearux.ai" className="text-ink font-medium underline decoration-signal decoration-2 underline-offset-2 hover:text-signal transition-colors">support@clearux.ai</a>.</p>
+              <p>Questions about these terms? Contact us at <a href="mailto:support@fixpath.ai" className="text-ink font-medium underline decoration-signal decoration-2 underline-offset-2 hover:text-signal transition-colors">support@fixpath.ai</a>.</p>
             </div>
           </div>
         </section>

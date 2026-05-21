@@ -43,10 +43,10 @@ const Navbar: React.FC = () => {
   };
 
   const navLinks = [
-    { label: 'How it works', href: '/how-it-works' },
+    { label: 'Product', href: '/product' },
     { label: 'Pricing', href: '/pricing' },
+    { label: 'Resources', href: '/resources' },
     { label: 'About', href: '/about' },
-    { label: 'FAQ', href: '/faq' },
     { label: 'Contact', href: '/contact' },
   ];
 

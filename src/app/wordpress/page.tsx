@@ -2,18 +2,19 @@ import type { Metadata } from 'next'
 import { MarketingBody } from '@/components/marketing/MarketingBody'
 import { Nav } from '@/components/marketing/Nav'
 import { Footer } from '@/components/marketing/Footer'
-import AboutContent from './AboutContent'
+import { WordPressContent } from './WordPressContent'
 
 export const metadata: Metadata = {
-  title: 'About — Fixpath',
-  description: 'Fixpath helps teams find what is hurting their website, fix it directly, and track improvement over time. Learn why we built it.',
+  title: 'WordPress plugin — Fixpath',
+  description:
+    'The Fixpath WordPress plugin brings audit findings directly into your admin panel. See issues, apply fixes, and re-audit without leaving WordPress.',
 }
 
-export default function AboutPage() {
+export default function WordPressPage() {
   return (
     <MarketingBody>
       <Nav />
-      <AboutContent />
+      <WordPressContent />
       <Footer />
     </MarketingBody>
   )

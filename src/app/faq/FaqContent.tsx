@@ -3,7 +3,7 @@
 import { useState, useMemo } from 'react'
 import { SectionMarker } from '@/components/marketing/SectionMarker'
 import { ArrowRightIcon } from '@/components/marketing/icons'
-import { Coda } from '@/components/marketing/Coda'
+import { HomeCta } from '@/components/marketing/HomeCta'
 
 /* ── FAQ Data ───────────────────────────────────────────────── */
 
@@ -46,7 +46,7 @@ const FAQ_SECTIONS = [
     items: [
       { q: 'How do credits work?', a: 'One credit = one full audit. Credits never expire. Every audit includes all six modules, 96 checkpoints, PDF & Word reports, finding status tracking, shareable team links, and prioritised recommendations. Buy in packs to lower the per-audit cost.' },
       { q: 'Is my data secure?', a: 'We only analyse publicly visible content. Your website data is never stored or shared — only your report. Payments are processed securely via Stripe. We\'re GDPR compliant and use SSL encryption throughout.' },
-      { q: 'Can I get a refund?', a: 'If you\'re unsatisfied with an audit, reach out via our contact form or email support@clearux.ai and we\'ll resolve it or provide a credit for a new audit. We stand behind the quality of our reports.' },
+      { q: 'Can I get a refund?', a: 'If you\'re unsatisfied with an audit, reach out via our contact form or email support@fixpath.ai and we\'ll resolve it or provide a credit for a new audit. We stand behind the quality of our reports.' },
       { q: 'Can I buy more credits later?', a: 'Yes. You can purchase additional credit packs at any time. Credits from different purchases stack together and never expire.' },
       { q: 'What payment methods are accepted?', a: 'We accept Visa, Mastercard, American Express, Apple Pay, and Google Pay. All payments are processed securely via Stripe.' },
     ],
@@ -249,7 +249,7 @@ export default function FaqContent() {
       </section>
 
       {/* CTA */}
-      <Coda />
+      <HomeCta />
     </main>
   )
 }

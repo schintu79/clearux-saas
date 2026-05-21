@@ -2,15 +2,17 @@ import { Logo } from './Logo'
 import Link from 'next/link'
 
 const productLinks = [
-  { label: 'How it works', href: '/how-it-works' },
+  { label: 'Product', href: '/product' },
+  { label: 'WordPress plugin', href: '/wordpress' },
   { label: 'Pricing', href: '/pricing' },
-  { label: 'FAQ', href: '/faq' },
+  { label: 'Changelog', href: '/changelog' },
 ]
 
 const companyLinks = [
   { label: 'About', href: '/about' },
+  { label: 'Resources', href: '/resources' },
   { label: 'Contact', href: '/contact' },
-  { label: 'Login', href: '/login' },
+  { label: 'FAQ', href: '/faq' },
 ]
 
 const legalLinks = [
@@ -27,7 +29,7 @@ export function Footer() {
           <div>
             <Logo height={72} className="mb-[18px]" />
             <p className="text-[14px] text-m-muted max-w-[320px] leading-[1.6] font-sans">
-              Full clarity, at your fingertips. 360 UX audits across 6 modules, 96 checkpoints. Senior rigor, in minutes.
+              Find what's hurting your website. Fix it directly or send clear recommendations to your team. Track improvement over time.
             </p>
           </div>
 

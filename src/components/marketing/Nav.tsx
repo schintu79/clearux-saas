@@ -8,11 +8,11 @@ import { useTheme } from '@/context/ThemeContext'
 import { useAuth } from '@/context/AuthContext'
 
 const NAV_LINKS = [
-  { label: 'Product', href: '/how-it-works' },
+  { label: 'Product', href: '/product' },
+  { label: 'WordPress', href: '/wordpress' },
   { label: 'Pricing', href: '/pricing' },
-  { label: 'About', href: '/about' },
-  { label: 'FAQ', href: '/faq' },
-  { label: 'Contact', href: '/contact' },
+  { label: 'Resources', href: '/resources' },
+  { label: 'Changelog', href: '/changelog' },
 ]
 
 function getInitials(name: string): string {

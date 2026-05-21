@@ -4,7 +4,7 @@ import { useState } from 'react'
 import type { FormEvent } from 'react'
 import { SectionMarker } from '@/components/marketing/SectionMarker'
 import { ArrowRightIcon } from '@/components/marketing/icons'
-import { Coda } from '@/components/marketing/Coda'
+import { HomeCta } from '@/components/marketing/HomeCta'
 
 export default function ContactContent() {
   const [submitted, setSubmitted] = useState(false)
@@ -168,10 +168,10 @@ export default function ContactContent() {
               <div className="p-7 border-b border-ink">
                 <span className="font-mono text-[11px] tracking-[0.1em] uppercase text-signal mb-3 block">Email</span>
                 <a
-                  href="mailto:support@clearux.ai"
+                  href="mailto:support@fixpath.ai"
                   className="font-sans text-[15px] text-ink hover:text-signal transition-colors"
                 >
-                  support@clearux.ai
+                  support@fixpath.ai
                 </a>
               </div>
               <div className="p-7">
@@ -184,7 +184,7 @@ export default function ContactContent() {
       </section>
 
       {/* CTA */}
-      <Coda />
+      <HomeCta />
     </main>
   )
 }

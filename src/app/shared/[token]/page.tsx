@@ -288,7 +288,7 @@ export default function SharedAuditPage({ params }: { params: Promise<{ token: s
             <Lock size={32} className="mx-auto mb-3" style={{ color: 'var(--m-muted)' }} />
             <h2 className="font-sans font-medium text-lg mb-2" style={{ color: 'var(--ink)' }}>Audit didn&apos;t complete</h2>
             <p className="text-sm" style={{ color: 'var(--m-muted)' }}>
-              This audit was unable to finish. The owner can re-run it from their ClearUX dashboard.
+              This audit was unable to finish. The owner can re-run it from their Fixpath dashboard.
             </p>
           </div>
         </main>
@@ -305,7 +305,7 @@ export default function SharedAuditPage({ params }: { params: Promise<{ token: s
           <div className="text-center py-16">
             <div className="w-8 h-8 border-2 border-t-transparent rounded-full animate-spin mx-auto mb-4" style={{ borderColor: 'var(--signal)', borderTopColor: 'transparent' }} />
             <p className="text-sm" style={{ color: 'var(--m-muted)' }}>This audit is still being analysed.</p>
-            <p className="text-xs mt-1" style={{ color: 'var(--m-muted)' }}>ClearUX runs 96 checkpoints across 6 pillars - most audits finish in a few minutes.</p>
+            <p className="text-xs mt-1" style={{ color: 'var(--m-muted)' }}>Fixpath runs 96 checkpoints across 6 pillars - most audits finish in a few minutes.</p>
           </div>
         </main>
         <Footer />

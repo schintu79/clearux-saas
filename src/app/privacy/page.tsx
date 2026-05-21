@@ -80,7 +80,7 @@ export default function PrivacyPage() {
               <div className="space-y-2 ml-1">
                 <p><span className="font-medium text-ink">Access and update</span> your data anytime from your dashboard settings.</p>
                 <p><span className="font-medium text-ink">Export</span> your audit reports as PDF or Word documents.</p>
-                <p><span className="font-medium text-ink">Delete your account</span> and all associated data via our <a href="/contact" className="text-ink font-medium underline decoration-signal decoration-2 underline-offset-2 hover:text-signal transition-colors">contact form</a> or by emailing <a href="mailto:support@clearux.ai" className="text-ink font-medium underline decoration-signal decoration-2 underline-offset-2 hover:text-signal transition-colors">support@clearux.ai</a>. We process deletion requests within 30 days.</p>
+                <p><span className="font-medium text-ink">Delete your account</span> and all associated data via our <a href="/contact" className="text-ink font-medium underline decoration-signal decoration-2 underline-offset-2 hover:text-signal transition-colors">contact form</a> or by emailing <a href="mailto:support@fixpath.ai" className="text-ink font-medium underline decoration-signal decoration-2 underline-offset-2 hover:text-signal transition-colors">support@fixpath.ai</a>. We process deletion requests within 30 days.</p>
               </div>
             </div>
 
@@ -96,7 +96,7 @@ export default function PrivacyPage() {
 
             <div>
               <h2 className="font-sans font-medium text-[17px] text-ink mb-3">Questions?</h2>
-              <p>Use our <a href="/contact" className="text-ink font-medium underline decoration-signal decoration-2 underline-offset-2 hover:text-signal transition-colors">contact form</a> or email us at <a href="mailto:support@clearux.ai" className="text-ink font-medium underline decoration-signal decoration-2 underline-offset-2 hover:text-signal transition-colors">support@clearux.ai</a>. We reply to every message.</p>
+              <p>Use our <a href="/contact" className="text-ink font-medium underline decoration-signal decoration-2 underline-offset-2 hover:text-signal transition-colors">contact form</a> or email us at <a href="mailto:support@fixpath.ai" className="text-ink font-medium underline decoration-signal decoration-2 underline-offset-2 hover:text-signal transition-colors">support@fixpath.ai</a>. We reply to every message.</p>
             </div>
           </div>
         </section>

@@ -4,7 +4,7 @@ import Navbar from '@/components/layout/Navbar'
 import Footer from '@/components/layout/Footer'
 import { Sparkles, ArrowRight, Clock, DollarSign, Layers, Target } from 'lucide-react'
 
-const BASE_URL = 'https://clearux.ai'
+const BASE_URL = 'https://fixpath.ai'
 
 export const metadata: Metadata = {
   title: 'Best UX Audit Tools in 2026: Compare Software & Approaches | Fixpath',

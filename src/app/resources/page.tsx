@@ -2,18 +2,18 @@ import type { Metadata } from 'next'
 import { MarketingBody } from '@/components/marketing/MarketingBody'
 import { Nav } from '@/components/marketing/Nav'
 import { Footer } from '@/components/marketing/Footer'
-import AboutContent from './AboutContent'
+import { ResourcesContent } from './ResourcesContent'
 
 export const metadata: Metadata = {
-  title: 'About — Fixpath',
-  description: 'Fixpath helps teams find what is hurting their website, fix it directly, and track improvement over time. Learn why we built it.',
+  title: 'Resources — Fixpath',
+  description: 'Guides, tutorials, and best practices for improving your website health, accessibility, and AI visibility.',
 }
 
-export default function AboutPage() {
+export default function ResourcesPage() {
   return (
     <MarketingBody>
       <Nav />
-      <AboutContent />
+      <ResourcesContent />
       <Footer />
     </MarketingBody>
   )

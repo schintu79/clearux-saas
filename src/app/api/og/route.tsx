@@ -1,5 +1,5 @@
 // ============================================================
-// ClearUX — Dynamic OG Image Generation
+// Fixpath — Dynamic OG Image Generation
 // GET /api/og — returns a 1200x630 PNG for social sharing
 // ============================================================
 
@@ -58,24 +58,8 @@ export async function GET() {
             marginBottom: '32px',
           }}
         >
-          <div
-            style={{
-              width: '48px',
-              height: '48px',
-              borderRadius: '12px',
-              background: 'linear-gradient(135deg, #8B5CF6, #EC4899)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              color: 'white',
-              fontSize: '24px',
-              fontWeight: 500,
-            }}
-          >
-            C
-          </div>
-          <span style={{ fontSize: '36px', fontWeight: 500, color: 'white' }}>
-            Clear<span style={{ color: '#8B5CF6' }}>UX</span>
+          <span style={{ fontSize: '36px', fontWeight: 500, color: 'white', letterSpacing: '-0.02em' }}>
+            Fixpath
           </span>
         </div>
 
@@ -91,9 +75,9 @@ export async function GET() {
             marginBottom: '20px',
           }}
         >
-          AI-Powered UX Audits
+          Find the issues. Fix them directly.
           <br />
-          <span style={{ color: '#a78bfa' }}>That Go Beyond the Checklist</span>
+          <span style={{ color: '#a78bfa' }}>Track improvement over time.</span>
         </div>
 
         {/* Subtitle */}
@@ -106,7 +90,7 @@ export async function GET() {
             marginBottom: '40px',
           }}
         >
-          96 checkpoints across accessibility, ethics, AI readiness, and conversion — prioritised by business impact.
+          96 checkpoints across six modules. Every issue becomes a clear fix path.
         </div>
 
         {/* Stats row */}
@@ -117,9 +101,9 @@ export async function GET() {
           }}
         >
           {[
-            { num: '64', label: 'Checkpoints' },
-            { num: '16', label: 'Categories' },
-            { num: '4', label: 'Pillars' },
+            { num: '96', label: 'Checkpoints' },
+            { num: '24', label: 'Categories' },
+            { num: '6', label: 'Modules' },
           ].map((stat) => (
             <div
               key={stat.label}

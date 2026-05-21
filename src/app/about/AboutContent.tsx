@@ -4,7 +4,7 @@ import Image from 'next/image'
 import { SectionMarker } from '@/components/marketing/SectionMarker'
 import { Button } from '@/components/marketing/Button'
 import { ArrowRightIcon } from '@/components/marketing/icons'
-import { Coda } from '@/components/marketing/Coda'
+import { HomeCta } from '@/components/marketing/HomeCta'
 
 export default function AboutContent() {
   return (
@@ -150,7 +150,7 @@ export default function AboutContent() {
       </section>
 
       {/* CTA */}
-      <Coda />
+      <HomeCta />
     </main>
   )
 }

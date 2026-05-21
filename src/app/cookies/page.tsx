@@ -92,7 +92,7 @@ export default function CookiesPage() {
 
             <div>
               <h2 className="font-sans font-medium text-[17px] text-ink mb-3">Questions?</h2>
-              <p>Use our <a href="/contact" className="text-ink font-medium underline decoration-signal decoration-2 underline-offset-2 hover:text-signal transition-colors">contact form</a> or email us at <a href="mailto:support@clearux.ai" className="text-ink font-medium underline decoration-signal decoration-2 underline-offset-2 hover:text-signal transition-colors">support@clearux.ai</a>.</p>
+              <p>Use our <a href="/contact" className="text-ink font-medium underline decoration-signal decoration-2 underline-offset-2 hover:text-signal transition-colors">contact form</a> or email us at <a href="mailto:support@fixpath.ai" className="text-ink font-medium underline decoration-signal decoration-2 underline-offset-2 hover:text-signal transition-colors">support@fixpath.ai</a>.</p>
             </div>
           </div>
         </section>

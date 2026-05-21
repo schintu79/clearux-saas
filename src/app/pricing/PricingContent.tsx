@@ -5,7 +5,7 @@ import Link from 'next/link'
 import { SectionMarker } from '@/components/marketing/SectionMarker'
 import { Button } from '@/components/marketing/Button'
 import { ArrowRightIcon } from '@/components/marketing/icons'
-import { Coda } from '@/components/marketing/Coda'
+import { HomeCta } from '@/components/marketing/HomeCta'
 import { FaqPreview } from '@/components/marketing/FaqPreview'
 import { SUBSCRIPTION_PLANS, CREDIT_PACKS, formatPrice } from '@/lib/pricing'
 import type { BillingInterval } from '@/lib/pricing'
@@ -295,7 +295,7 @@ export default function PricingContent() {
         sectionNumber="05"
         items={[
           { q: 'How do credits work?', a: 'One credit = one full audit. Credits never expire. Every audit includes all six modules, 96 checkpoints, PDF & Word reports, finding status tracking, shareable team links, and prioritised recommendations. Buy in packs to lower the per-audit cost.' },
-          { q: 'Can I get a refund?', a: "If you’re unsatisfied with an audit, reach out via our contact form or email support@clearux.ai and we’ll resolve it or provide a credit for a new audit. We stand behind the quality of our reports." },
+          { q: 'Can I get a refund?', a: "If you're unsatisfied with an audit, reach out via our contact form or email support@fixpath.ai and we'll resolve it or provide a credit for a new audit. We stand behind the quality of our reports." },
           { q: 'What is the free preview audit?', a: 'Anyone can run a free preview audit from the homepage without signing up. The preview shows your overall score, module scores, and severity breakdown. Individual findings, recommendations, and downloadable reports are available when you unlock the full audit.' },
           { q: 'What payment methods are accepted?', a: 'We accept Visa, Mastercard, American Express, Apple Pay, and Google Pay. All payments are processed securely via Stripe.' },
           { q: 'Can I buy more credits later?', a: 'Yes. You can purchase additional credit packs at any time. Credits from different purchases stack together and never expire.' },
@@ -307,9 +307,7 @@ export default function PricingContent() {
         <div className="max-w-mkt mx-auto px-8 max-sm:px-5">
           <div className="flex flex-wrap items-center justify-center gap-4 text-[13px] font-sans text-m-muted">
             <span>Learn more:</span>
-            <Link href="/how-it-works" className="underline hover:text-signal transition-colors">How it works</Link>
-            <span className="opacity-30">|</span>
-            <Link href="/how-it-works" className="underline hover:text-signal transition-colors">How it works</Link>
+            <Link href="/product" className="underline hover:text-signal transition-colors">Product</Link>
             <span className="opacity-30">|</span>
             <Link href="/faq" className="underline hover:text-signal transition-colors">FAQ</Link>
           </div>
@@ -317,7 +315,7 @@ export default function PricingContent() {
       </section>
 
       {/* CTA */}
-      <Coda />
+      <HomeCta />
     </main>
   )
 }

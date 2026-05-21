@@ -1,25 +1,21 @@
 import type { Metadata } from 'next'
 import { MarketingBody } from '@/components/marketing/MarketingBody'
 import { Nav } from '@/components/marketing/Nav'
-import { Hero } from '@/components/marketing/Hero'
-import { DualPerspective } from '@/components/marketing/DualPerspective'
-import { Problem } from '@/components/marketing/Problem'
-import { Comparison } from '@/components/marketing/Comparison'
-import { HumanExperience } from '@/components/marketing/HumanExperience'
-import { InstrumentGrid } from '@/components/marketing/InstrumentGrid'
-import { CheckpointTicker } from '@/components/marketing/CheckpointTicker'
-import { BenchmarkTable } from '@/components/marketing/BenchmarkTable'
-import { FindingAnatomy } from '@/components/marketing/FindingAnatomy'
+import { HomeHero } from '@/components/marketing/HomeHero'
+import { HomeWorkflow } from '@/components/marketing/HomeWorkflow'
+import { HomeModules } from '@/components/marketing/HomeModules'
+import { HomeAdvantage } from '@/components/marketing/HomeAdvantage'
+import { HomeWordPress } from '@/components/marketing/HomeWordPress'
 import { Pricing } from '@/components/marketing/Pricing'
 import { HomeFaq } from '@/components/marketing/HomeFaq'
-import { Coda } from '@/components/marketing/Coda'
+import { HomeCta } from '@/components/marketing/HomeCta'
 import { Footer } from '@/components/marketing/Footer'
 import { HomeJsonLd } from '@/components/seo/JsonLd'
 
 export const metadata: Metadata = {
-  title: 'Fixpath — Find what is hurting your site. Follow the path to fix it.',
+  title: 'Fixpath — Find the issues hurting your site. Follow the path to fix them.',
   description:
-    'Audit your website UX, brand identity, and AI visibility in one place. 96 checkpoints, 6 modules. Severity-ranked findings with evidence and fixes. First audit free.',
+    'Fixpath.ai audits your website across 96 checkpoints, turns every issue into a clear fix path, and tracks improvement over time. First audit free.',
 }
 
 export default function HomePage() {
@@ -28,18 +24,14 @@ export default function HomePage() {
       <HomeJsonLd />
       <Nav />
       <main>
-        <Hero />
-        <DualPerspective />
-        <Problem />
-        <Comparison />
-        <HumanExperience />
-        <InstrumentGrid />
-        <CheckpointTicker />
-        <BenchmarkTable />
-        <FindingAnatomy />
+        <HomeHero />
+        <HomeWorkflow />
+        <HomeModules />
+        <HomeAdvantage />
+        <HomeWordPress />
         <Pricing />
         <HomeFaq />
-        <Coda />
+        <HomeCta />
       </main>
       <Footer />
     </MarketingBody>

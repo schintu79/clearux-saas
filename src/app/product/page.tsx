@@ -2,18 +2,19 @@ import type { Metadata } from 'next'
 import { MarketingBody } from '@/components/marketing/MarketingBody'
 import { Nav } from '@/components/marketing/Nav'
 import { Footer } from '@/components/marketing/Footer'
-import AboutContent from './AboutContent'
+import { ProductContent } from './ProductContent'
 
 export const metadata: Metadata = {
-  title: 'About — Fixpath',
-  description: 'Fixpath helps teams find what is hurting their website, fix it directly, and track improvement over time. Learn why we built it.',
+  title: 'Product — Fixpath',
+  description:
+    'See how Fixpath audits your website across 96 checkpoints, helps you fix issues directly, and tracks improvement over time.',
 }
 
-export default function AboutPage() {
+export default function ProductPage() {
   return (
     <MarketingBody>
       <Nav />
-      <AboutContent />
+      <ProductContent />
       <Footer />
     </MarketingBody>
   )
