@@ -129,6 +129,13 @@ export const UNVERIFIABLE_TOPICS: RegExp[] = [
   // Auth-gated page false positives — login page misinterpreted as site content
   /(?:dashboard|admin|account|settings)\s+(?:page\s+)?(?:shows?|displays?|contains?)\s+(?:only\s+)?(?:a\s+)?(?:login|sign[\s-]?in)/i,
   /login\s+(?:page|form|screen)\s+(?:instead\s+of|rather\s+than|not)\s+(?:expected|actual)/i,
+
+  // Extensionless URL 404 false positives — /path returns 404 but /path.html exists
+  // This is normal static hosting behavior, not a real issue
+  /(?:without|missing|no)\s+(?:\.html?\s+)?extension\s+(?:returns?|results?\s+in|gives?)\s+(?:a\s+)?404/i,
+  /extensionless\s+(?:url|path|version)\s+(?:returns?|results?\s+in|gives?|is)\s+(?:a\s+)?(?:404|not\s+found)/i,
+  /(?:url|path)\s+(?:without\s+)?(?:\.html?\s+)?(?:extension\s+)?(?:returns?|gives?)\s+(?:a\s+)?404.*(?:\.html?\s+(?:version|variant|page)\s+(?:exists?|works?|loads?))/i,
+  /404\s+(?:error|not\s+found).*(?:while|but|whereas)\s+(?:the\s+)?(?:\.html?\s+)?(?:version|variant|page)\s+(?:exists?|works?|is\s+accessible)/i,
 ]
 
 // ── Public API ───────────────────────────────────────────────

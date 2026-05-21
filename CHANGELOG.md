@@ -6,6 +6,24 @@ Last updated: 2026-05-21
 
 ---
 
+## Fix Console — Path Suggestion
+
+### Extensionless URLs mapped to wrong remote path
+- **Bug**: `suggestRemotePath()` mapped extensionless URLs like `/privacy` to `/privacy/index.html`, which doesn't exist on most static hosting setups. The actual file is `/privacy.html`.
+- **Fix**: Changed the fallback for extensionless paths from `${clean}/index.html` to `${clean}.html`. Root paths (`/`) still correctly resolve to `/index.html`.
+- **Files**: `src/components/dashboard/v2/FixConsole.tsx`
+
+---
+
+## Speculative Filter
+
+### Extensionless URL 404 false positive
+- **Bug**: The analyzer would flag findings like "/privacy returns 404 while /privacy.html exists" as a crawl inefficiency issue. This is normal static hosting behavior (the .html extension is required), not a real site problem.
+- **Fix**: Added 4 regex patterns to `UNVERIFIABLE_TOPICS` in the speculative filter to catch title variations of "extensionless URL returns 404 but .html variant exists."
+- **Files**: `src/lib/audit-engine/pipeline/speculative-filter.ts`
+
+---
+
 ## Surgical Fix Engine
 
 ### Multilingual lang attribute fix broken on batch deploy

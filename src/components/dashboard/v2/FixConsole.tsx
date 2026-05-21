@@ -351,7 +351,8 @@ function suggestRemotePath(pageUrl: string | null | undefined, remoteRoot: strin
   if (/\.\w{2,5}$/.test(pathname)) return `${root}${pathname}`;
   const clean = pathname.replace(/\/+$/, '') || '';
   if (!clean || clean === '/') return `${root}/index.html`;
-  return `${root}${clean}/index.html`;
+  // Extensionless paths like /privacy → /privacy.html (not /privacy/index.html)
+  return `${root}${clean}.html`;
 }
 
 function downloadFile(filename: string, content: string, mime: string) {
