@@ -6,6 +6,25 @@ Last updated: 2026-05-21
 
 ---
 
+## State Synchronization (AuditBundleContext)
+
+### Cross-page stale data after mutations
+- **Bug**: Every dashboard page (Overview, Find, Fix, Track, AI Readability, Intelligence) independently called `loadLatestAuditBundle()` and held its own `useState` copy. A status change on Fix wouldn't appear on Find or Track until the user navigated away and back.
+- **Fix**: Created `AuditBundleContext` — a shared React context that loads the bundle once and exposes `updateFindingLocally()` for optimistic updates, `updateReportScore()` for score changes, and `invalidate()` for server reconciliation. Wrapped in `DashboardShell` so all dashboard pages share one source of truth. Migrated all 6 consumer pages to use `useAuditBundle()` instead of local state.
+- **Files**: `src/context/AuditBundleContext.tsx` (new), `src/components/layout/DashboardShell.tsx`, `src/app/dashboard/fix/page.tsx`, `src/app/dashboard/find/page.tsx`, `src/app/dashboard/track/page.tsx`, `src/app/dashboard/overview/page.tsx`, `src/app/dashboard/ai-readability/page.tsx`, `src/app/dashboard/intelligence/page.tsx`
+
+### Score not updated after status change
+- **Bug**: The Fix page's `handleStatus()` and `handleDismiss()` ignored the `scoreUpdate` returned by `PATCH /api/findings/:id`, so the overview score stayed stale until full page reload.
+- **Fix**: Both handlers now read `scoreUpdate.newScore` from the API response and call `updateReportScore()` on the shared context, then `invalidate()` after 500ms to reconcile with the server.
+- **Files**: `src/app/dashboard/fix/page.tsx`
+
+### Rollback doesn't revert finding status
+- **Bug**: `handleRollback()` in FixConsole restored the original file via FTP but left the finding status as `'fixed'`, creating a mismatch between the deployed state and the finding status.
+- **Fix**: Added `onStatusChange?.('in_progress')` after successful rollback so the finding reverts to in-progress state.
+- **Files**: `src/components/dashboard/v2/FixConsole.tsx`
+
+---
+
 ## FixConsole
 
 ### Fixed findings still showing fix action buttons

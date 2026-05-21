@@ -31,10 +31,7 @@ import {
   Minus,
 } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
-import {
-  loadLatestAuditBundle,
-  type LatestAuditBundle,
-} from '@/lib/dashboard/latest-audit';
+import { useAuditBundle } from '@/context/AuditBundleContext';
 import { useBrandSelection } from '@/lib/dashboard/useBrandSelection';
 import EmptyAudit from '@/components/dashboard/v2/EmptyAudit';
 import PageHeader from '@/components/dashboard/v2/PageHeader';
@@ -106,28 +103,16 @@ function normalizeDomainInput(raw: string): string {
 export default function IntelligencePage() {
   const { user, loading: authLoading } = useAuth();
   const { selection, ready } = useBrandSelection();
-  const [bundle, setBundle] = useState<LatestAuditBundle | null>(null);
+  const { bundle, loading: bundleLoading } = useAuditBundle();
   const [drafts, setDrafts] = useState<DraftCompetitor[]>([]);
   const [serverSnapshot, setServerSnapshot] = useState<DraftCompetitor[]>([]);
   const [benchmarkPosition, setBenchmarkPosition] = useState<BenchmarkPosition | null>(null);
   const [industry, setIndustry] = useState<string | null>(null);
-  const [loading, setLoading] = useState(true);
+  const loading = authLoading || bundleLoading || !ready;
   const [detecting, setDetecting] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [info, setInfo] = useState<string | null>(null);
-
-  useEffect(() => {
-    if (authLoading || !user || !ready) {
-      if (!authLoading) setLoading(false);
-      return;
-    }
-    setLoading(true);
-    loadLatestAuditBundle(user.id, selection)
-      .then(setBundle)
-      .catch(() => {})
-      .finally(() => setLoading(false));
-  }, [authLoading, user, ready, selection]);
 
   useEffect(() => {
     const audit = bundle?.audit;
@@ -327,7 +312,7 @@ export default function IntelligencePage() {
     }
   };
 
-  if (authLoading || loading || !ready) {
+  if (loading) {
     return (
       <div>
         <div className="h-8 w-48 rounded-lg animate-pulse mb-2" style={{ background: 'var(--paper-2)' }} />

@@ -28,6 +28,7 @@ import {
   Server,
 } from 'lucide-react';
 import clsx from 'clsx';
+import { AuditBundleProvider } from '@/context/AuditBundleContext';
 import { useAuth } from '@/context/AuthContext';
 import { createBrowserSupabase } from '@/lib/supabase-ssr';
 import ThemeToggle from '@/components/ui/ThemeToggle';
@@ -781,7 +782,9 @@ const DashboardShell: React.FC<DashboardShellProps> = ({ children }) => {
 
         {/* Content area */}
         <main id="main-content" className="flex-1 overflow-auto">
-          <div className="p-5 sm:p-6 lg:p-8">{children}</div>
+          <AuditBundleProvider>
+            <div className="p-5 sm:p-6 lg:p-8">{children}</div>
+          </AuditBundleProvider>
         </main>
       </div>
     </div>

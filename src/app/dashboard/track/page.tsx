@@ -8,6 +8,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { useAuth } from '@/context/AuthContext';
+import { useAuditBundle } from '@/context/AuditBundleContext';
 import {
   ArrowRight,
   RefreshCw,
@@ -19,10 +20,6 @@ import {
   AlertTriangle,
   ExternalLink,
 } from 'lucide-react';
-import {
-  loadLatestAuditBundle,
-  type LatestAuditBundle,
-} from '@/lib/dashboard/latest-audit';
 import { useBrandSelection } from '@/lib/dashboard/useBrandSelection';
 import { computeAuditDiff } from '@/lib/audit-engine/audit-diff';
 import { createBrowserSupabase } from '@/lib/supabase-ssr';
@@ -66,21 +63,9 @@ function ScoreLine({ points }: { points: Array<{ score: number; date: string }> 
 export default function TrackPage() {
   const { user, loading: authLoading } = useAuth();
   const { selection, ready } = useBrandSelection();
-  const [bundle, setBundle] = useState<LatestAuditBundle | null>(null);
-  const [loading, setLoading] = useState(true);
+  const { bundle, loading: bundleLoading } = useAuditBundle();
+  const loading = authLoading || bundleLoading || !ready;
   const [priorFindings, setPriorFindings] = useState<import('@/types/database').AuditFinding[]>([]);
-
-  useEffect(() => {
-    if (authLoading || !user || !ready) {
-      if (!authLoading) setLoading(false);
-      return;
-    }
-    setLoading(true);
-    loadLatestAuditBundle(user.id, selection)
-      .then(setBundle)
-      .catch(() => {})
-      .finally(() => setLoading(false));
-  }, [authLoading, user, ready, selection]);
 
   // Fetch prior audit findings for diff validation
   useEffect(() => {
@@ -130,7 +115,7 @@ export default function TrackPage() {
     [diff],
   );
 
-  if (authLoading || loading || !ready) {
+  if (loading) {
     return (
       <div>
         <div className="h-8 w-32 rounded-lg animate-pulse mb-2" style={{ background: 'var(--paper-2)' }} />

@@ -29,12 +29,10 @@ import {
   Info,
 } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
+import { useAuditBundle } from '@/context/AuditBundleContext';
 import { createBrowserSupabase } from '@/lib/supabase-ssr';
 import { AIProviderIcon, providerKeyToIcon } from '@/components/ui/AIProviderIcon';
-import {
-  loadLatestAuditBundle,
-  type LatestAuditBundle,
-} from '@/lib/dashboard/latest-audit';
+import type { LatestAuditBundle } from '@/lib/dashboard/latest-audit';
 import { useBrandSelection } from '@/lib/dashboard/useBrandSelection';
 import EmptyAudit from '@/components/dashboard/v2/EmptyAudit';
 import PageHeader from '@/components/dashboard/v2/PageHeader';
@@ -88,22 +86,10 @@ function scoreColor(s: number | null): string {
 export default function AIReadabilityPage() {
   const { user, loading: authLoading } = useAuth();
   const { selection, ready } = useBrandSelection();
-  const [bundle, setBundle] = useState<LatestAuditBundle | null>(null);
+  const { bundle, loading: bundleLoading } = useAuditBundle();
   const [pages, setPages] = useState<AuditPageRow[]>([]);
   const [probes, setProbes] = useState<ModelProbe[]>([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    if (authLoading || !user || !ready) {
-      if (!authLoading) setLoading(false);
-      return;
-    }
-    setLoading(true);
-    loadLatestAuditBundle(user.id, selection)
-      .then(setBundle)
-      .catch(() => {})
-      .finally(() => setLoading(false));
-  }, [authLoading, user, ready, selection]);
+  const loading = authLoading || bundleLoading || !ready;
 
   const refreshProbes = React.useCallback(async (auditId: string) => {
     try {
@@ -131,7 +117,7 @@ export default function AIReadabilityPage() {
     void refreshProbes(auditId);
   }, [bundle, refreshProbes]);
 
-  if (authLoading || loading || !ready) {
+  if (loading) {
     return (
       <div>
         <div className="h-8 w-48 rounded-lg animate-pulse mb-2" style={{ background: 'var(--paper-2)' }} />

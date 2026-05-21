@@ -15,6 +15,7 @@ import React, { Suspense, useEffect, useMemo, useState, useRef, useCallback } fr
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
+import { useAuditBundle } from '@/context/AuditBundleContext';
 import {
   ArrowRight,
   Search,
@@ -27,13 +28,11 @@ import {
   Info,
 } from 'lucide-react';
 import {
-  loadLatestAuditBundle,
   severityColor,
   severityLabel,
   moduleIndexForFinding,
   MODULE_TINTS,
   PHASE1_MODULES,
-  type LatestAuditBundle,
 } from '@/lib/dashboard/latest-audit';
 import { useBrandSelection } from '@/lib/dashboard/useBrandSelection';
 import EmptyAudit from '@/components/dashboard/v2/EmptyAudit';
@@ -480,9 +479,9 @@ function ActiveFindingDetail({
 function FixPageInner() {
   const { user, loading: authLoading } = useAuth();
   const { selection, ready } = useBrandSelection();
+  const { bundle, loading: bundleLoading, updateFindingLocally, updateReportScore, invalidate } = useAuditBundle();
   const searchParams = useSearchParams();
-  const [bundle, setBundle] = useState<LatestAuditBundle | null>(null);
-  const [loading, setLoading] = useState(true);
+  const loading = authLoading || bundleLoading || !ready;
   const [pending, setPending] = useState<Record<string, boolean>>({});
   const [activeFindingId, setActiveFindingId] = useState<string | null>(null);
 
@@ -510,18 +509,6 @@ function FixPageInner() {
       setStatusFilter(status as FindingStatus);
     }
   }, [searchParams]);
-
-  useEffect(() => {
-    if (authLoading || !user || !ready) {
-      if (!authLoading) setLoading(false);
-      return;
-    }
-    setLoading(true);
-    loadLatestAuditBundle(user.id, selection)
-      .then(setBundle)
-      .catch(() => {})
-      .finally(() => setLoading(false));
-  }, [authLoading, user, ready, selection]);
 
   // Load FTP connections
   useEffect(() => {
@@ -636,23 +623,31 @@ function FixPageInner() {
     }
   }, [activeFindingId]);
 
-  const updateLocal = (id: string, patch: Partial<AuditFinding>) => {
-    setBundle((b) => b ? { ...b, findings: b.findings.map((f) => f.id === id ? { ...f, ...patch } : f) } : b);
-  };
-
   const handleStatus = async (id: string, status: FindingStatus) => {
     const prev = bundle?.findings.find((f) => f.id === id)?.status;
     setPending((p) => ({ ...p, [id]: true }));
-    updateLocal(id, { status });
+    // Optimistic update via shared context — all consumers see it instantly
+    updateFindingLocally(id, { status });
     try {
       const res = await fetch(`/api/findings/${id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ status }),
       });
-      if (!res.ok && prev) updateLocal(id, { status: prev });
+      if (!res.ok) {
+        if (prev) updateFindingLocally(id, { status: prev });
+      } else {
+        // Consume scoreUpdate from the API response (BUG 2 fix)
+        const data = await res.json().catch(() => ({} as Record<string, unknown>));
+        if (data?.scoreUpdate?.newScore != null) {
+          updateReportScore(data.scoreUpdate.newScore);
+        }
+        // Reconcile with server truth after a short delay
+        // (gives DB triggers time to settle)
+        setTimeout(invalidate, 500);
+      }
     } catch {
-      if (prev) updateLocal(id, { status: prev });
+      if (prev) updateFindingLocally(id, { status: prev });
     } finally {
       setPending((p) => ({ ...p, [id]: false }));
     }
@@ -668,14 +663,21 @@ function FixPageInner() {
         body: JSON.stringify({ dismiss: true, dismissal_reason: trimmed }),
       });
       if (res.ok) {
-        updateLocal(id, { dismissed: true, dismissal_reason: trimmed, dismissed_at: new Date().toISOString() });
+        // Optimistic update via shared context
+        updateFindingLocally(id, { dismissed: true, dismissal_reason: trimmed, dismissed_at: new Date().toISOString() });
+        // Consume scoreUpdate (BUG 6 fix)
+        const data = await res.json().catch(() => ({} as Record<string, unknown>));
+        if (data?.scoreUpdate?.newScore != null) {
+          updateReportScore(data.scoreUpdate.newScore);
+        }
+        setTimeout(invalidate, 500);
       }
     } catch {} finally {
       setPending((p) => ({ ...p, [id]: false }));
     }
   };
 
-  if (authLoading || loading || !ready) {
+  if (loading) {
     return (
       <div>
         <div className="h-8 w-32 rounded-lg animate-pulse mb-2" style={{ background: 'var(--paper-2)' }} />

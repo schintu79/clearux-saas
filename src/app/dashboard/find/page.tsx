@@ -34,14 +34,13 @@ import {
   X,
 } from 'lucide-react';
 import {
-  loadLatestAuditBundle,
   severityColor,
   severityLabel,
   moduleIndexForFinding,
   MODULE_TINTS,
   PHASE1_MODULES,
-  type LatestAuditBundle,
 } from '@/lib/dashboard/latest-audit';
+import { useAuditBundle } from '@/context/AuditBundleContext';
 import { useBrandSelection } from '@/lib/dashboard/useBrandSelection';
 import EmptyAudit from '@/components/dashboard/v2/EmptyAudit';
 import PriorityRecommendations, { derivePriorityRecs } from '@/components/dashboard/v2/PriorityRecommendations';
@@ -92,11 +91,11 @@ function FilterDropdown({
 }
 
 function FindPageInner() {
-  const { user, loading: authLoading } = useAuth();
+  const { loading: authLoading } = useAuth();
   const { selection, ready } = useBrandSelection();
+  const { bundle, loading: bundleLoading } = useAuditBundle();
   const searchParams = useSearchParams();
-  const [bundle, setBundle] = useState<LatestAuditBundle | null>(null);
-  const [loading, setLoading] = useState(true);
+  const loading = authLoading || bundleLoading || !ready;
   const [collapsed, setCollapsed] = useState<Record<number, boolean>>({});
   const [expanded, setExpanded] = useState<Record<string, boolean>>({});
 
@@ -115,18 +114,6 @@ function FindPageInner() {
       setSevFilter(sev as typeof SEVERITIES[number]);
     }
   }, [searchParams]);
-
-  useEffect(() => {
-    if (authLoading || !user || !ready) {
-      if (!authLoading) setLoading(false);
-      return;
-    }
-    setLoading(true);
-    loadLatestAuditBundle(user.id, selection)
-      .then(setBundle)
-      .catch(() => {})
-      .finally(() => setLoading(false));
-  }, [authLoading, user, ready, selection]);
 
   // Strategic observations — shown in a separate section below fixable findings
   const strategicFindings = useMemo(() => {
@@ -241,7 +228,7 @@ function FindPageInner() {
     setExpanded((prev) => ({ ...prev, [id]: !prev[id] }));
   };
 
-  if (authLoading || loading || !ready) {
+  if (loading) {
     return (
       <div>
         <div className="h-8 w-32 rounded-lg animate-pulse mb-2" style={{ background: 'var(--paper-2)' }} />

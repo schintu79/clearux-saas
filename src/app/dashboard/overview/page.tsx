@@ -53,6 +53,7 @@ import {
   BarChart3,
 } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
+import { useAuditBundle } from '@/context/AuditBundleContext';
 import { createBrowserSupabase } from '@/lib/supabase-ssr';
 import { AIProviderIcon, providerKeyToIcon } from '@/components/ui/AIProviderIcon';
 import {
@@ -67,7 +68,6 @@ import {
 import ScoreRing from '@/components/ui/ScoreRing';
 import { CHECKPOINT_LABELS } from '@/lib/audit-checkpoints';
 import {
-  loadLatestAuditBundle,
   moduleScoresFromReport,
   isInProgressAuditStatus,
   type LatestAuditBundle,
@@ -148,8 +148,7 @@ function OverviewInner() {
   const searchParams = useSearchParams();
   const router = useRouter();
 
-  const [bundle, setBundle] = useState<LatestAuditBundle | null>(null);
-  const [loading, setLoading] = useState(true);
+  const { bundle, loading: bundleLoading, invalidate } = useAuditBundle();
   const [creditsBanner, setCreditsBanner] = useState(false);
 
   const [scoreTrend, setScoreTrend] = useState<Array<{ auditId: string; date: string; overallScore: number }>>([]);
@@ -201,22 +200,14 @@ function OverviewInner() {
     window.history.replaceState({}, '', '/dashboard/overview');
   }, [searchParams]);
 
+  // Reset derived data when selection changes (bundle itself is managed by context).
   useEffect(() => {
-    if (authLoading || !user || !ready) {
-      if (!authLoading) setLoading(false);
-      return;
-    }
-    setLoading(true);
     setScoreTrend([]);
     setCompetitors([]);
     setCategoryScores([]);
     setFindings([]);
     setAuditPages([]);
-    loadLatestAuditBundle(user.id, selection)
-      .then(setBundle)
-      .catch(() => {})
-      .finally(() => setLoading(false));
-  }, [authLoading, user, ready, selection]);
+  }, [selection]);
 
   /* ── Poll in-progress audit until it reaches a terminal state ──
    *
@@ -245,10 +236,9 @@ function OverviewInner() {
         const status = (data as any)?.status as string | undefined;
         if (cancelled) return;
         if (status && !isInProgressAuditStatus(status)) {
-          // Terminal — refetch the whole bundle so the populated
-          // dashboard or the failed-state UI takes over.
-          const next = await loadLatestAuditBundle(user.id, selection);
-          if (!cancelled) setBundle(next);
+          // Terminal — refetch the whole bundle via context so the
+          // populated dashboard or the failed-state UI takes over.
+          invalidate();
         }
       } catch {
         /* swallow — next tick will retry */
@@ -260,7 +250,7 @@ function OverviewInner() {
       cancelled = true;
       clearInterval(interval);
     };
-  }, [user, inProgressAuditId, selection]);
+  }, [user, inProgressAuditId, invalidate]);
 
   useEffect(() => {
     if (!user || selection?.kind !== 'brand') {
@@ -439,10 +429,9 @@ function OverviewInner() {
   // audit was the one currently displayed at the top of Overview, the card
   // itself routes us away — otherwise we just refetch so the row vanishes.
   const handleAuditDeleted = useCallback((deletedAuditId: string) => {
-    if (!user) return;
     if (bundle?.audit?.id === deletedAuditId) return;
-    loadLatestAuditBundle(user.id, selection).then(setBundle).catch(() => {});
-  }, [user, selection, bundle?.audit?.id]);
+    invalidate();
+  }, [invalidate, bundle?.audit?.id]);
 
   // Quick action "Delete this audit" — the destructive option in the
   // header dropdown. Surfaced via a small inline confirmation modal so the
@@ -470,7 +459,7 @@ function OverviewInner() {
   }, [latestCompleted, router]);
 
   /* ── Loading skeleton ─────────────────────────────────── */
-  if (authLoading || loading || !ready) {
+  if (authLoading || bundleLoading || !ready) {
     return (
       <div className="w-full">
         <div className="h-8 w-64 rounded-lg animate-pulse mb-2" style={{ background: 'var(--paper-2)' }} />

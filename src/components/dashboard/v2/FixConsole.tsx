@@ -1255,6 +1255,8 @@ function SelfServeConsole({
       } else {
         setDeployResult({ ok: true, msg: 'Original file restored.' });
         setLastDeployId(null);
+        // Revert finding status after successful rollback
+        onStatusChange?.('in_progress');
       }
     } catch (err: any) {
       setDeployResult({ ok: false, msg: err?.message || 'Network error during rollback.' });
