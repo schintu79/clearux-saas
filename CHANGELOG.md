@@ -6,6 +6,33 @@ Last updated: 2026-05-21
 
 ---
 
+## Surgical Fix — Content-Based Language Detection
+
+### Lang attribute fix blindly trusted AI recommendation
+- **Bug**: The deterministic `html-lang-attribute` pattern determined the target language entirely from the AI recommendation text, never checking actual page content. If the AI said "change to Italian", it blindly did that — even for English pages. On re-audits, this caused flip-flopping: one audit says "change to en-US", the next says "change back to it".
+- **Fix**: Rewrote the lang fix to use content-first detection. A new `detectContentLanguage()` function strips HTML tags and counts stop-word frequencies across 6 languages (Italian, English, German, French, Spanish, Portuguese). The page content is the ground truth. URL patterns (e.g. `-eng` suffix) are a secondary signal. The AI recommendation is only a last resort fallback. Requires minimum 3 stop-word hits and 1.5x lead over the second language to avoid false matches.
+- **Files**: `src/lib/surgical-fix.ts`
+
+---
+
+## Dedup Engine — Language Finding Deduplication
+
+### Three findings generated for the same lang attribute issue
+- **Bug**: "Language Tagging Inconsistency", "Language Attribute Mismatch", and "Meta Description Mismatch Between Italian/English" all survived deduplication despite being about the same underlying language issue. Root causes: (1) `language` was in the same synonym group as `copy`/`text`/`content`, diluting similarity scores; (2) no topic fingerprint existed for language/i18n findings.
+- **Fix**: Moved `language` to its own synonym group (`language`, `lang`, `locale`, `localization`, `i18n`, `multilingual`, `hreflang`). Added two topic fingerprints: `lang_i18n` and `meta_description_i18n` to boost similarity for language-related findings.
+- **Files**: `src/lib/audit-engine/pipeline/dedup.ts`
+
+---
+
+## Fix Console — Page Tab Deduplication
+
+### Duplicate and ghost pages in deploy tabs
+- **Bug**: The page tabs in FixConsole showed `/privacy` and `/privacy.html` as separate pages, and `/` appeared twice. These came from `allCrawledPages` which collected every unique `page_url` from findings without normalizing URL variants.
+- **Fix**: Added URL normalization when building `allCrawledPages`: strips trailing slashes, strips `.html` extension to create canonical keys, then prefers the `.html` variant when duplicates exist. This collapses `/privacy` + `/privacy.html` into just `/privacy.html`, and deduplicates repeated `/` entries.
+- **Files**: `src/app/dashboard/fix/page.tsx`
+
+---
+
 ## Fix Console — Path Suggestion
 
 ### Extensionless URLs mapped to wrong remote path

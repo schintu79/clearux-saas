@@ -547,14 +547,35 @@ function FixPageInner() {
   }, [bundle]);
 
   // All unique crawled pages across the entire audit — used for batch fixes
-  // that target every page (e.g. lang attribute, viewport meta)
+  // that target every page (e.g. lang attribute, viewport meta).
+  // Deduplicates extensionless URL variants: /privacy and /privacy.html → keep /privacy.html
+  // Deduplicates trailing slash variants: / appearing twice → keep one
   const allCrawledPages = useMemo(() => {
     if (!bundle) return [];
     const urls = new Set<string>();
     for (const f of bundle.findings) {
       if (f.page_url) urls.add(f.page_url);
     }
-    return Array.from(urls);
+    // Normalize: prefer .html variant over extensionless
+    const normalized = new Map<string, string>();
+    for (const url of urls) {
+      let pathname: string;
+      try { pathname = new URL(url).pathname; } catch { pathname = url; }
+      // Create a canonical key: strip trailing slash, strip .html extension
+      const key = pathname.replace(/\/+$/, '').replace(/\.html?$/i, '') || '/';
+      const existing = normalized.get(key);
+      if (!existing) {
+        normalized.set(key, url);
+      } else {
+        // Prefer the one with .html extension (it's the real file)
+        const existingHasExt = /\.\w{2,5}$/.test(existing);
+        const currentHasExt = /\.\w{2,5}$/.test(url);
+        if (currentHasExt && !existingHasExt) {
+          normalized.set(key, url);
+        }
+      }
+    }
+    return Array.from(normalized.values());
   }, [bundle]);
 
   const stats = useMemo(() => {

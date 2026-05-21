@@ -102,6 +102,65 @@ export interface DeterministicFix {
   scope: 'single-page' | 'all-pages'
 }
 
+// ── Content-based language detection ────────────────────────
+// Uses stop-word frequency to determine the dominant language of
+// the page. This is the ground truth — we NEVER trust the AI
+// recommendation over what the page content actually says.
+
+const STOP_WORDS: Record<string, string[]> = {
+  it: ['della', 'delle', 'degli', 'dello', 'nella', 'nelle', 'sono', 'come', 'anche', 'questo', 'questa', 'perché', 'essere', 'tutti', 'tutto', 'dopo', 'ancora', 'quando', 'dove', 'molto', 'prima', 'fatto', 'altro', 'stata', 'stato', 'ogni', 'fare', 'abbiamo', 'nostro', 'nostra', 'nostri', 'nostre', 'scopri', 'vantaggi', 'servizi', 'ospitalità', 'informazioni', 'contatti', 'pagina'],
+  en: ['the', 'and', 'for', 'are', 'but', 'not', 'you', 'all', 'can', 'her', 'was', 'one', 'our', 'out', 'with', 'they', 'been', 'have', 'many', 'some', 'them', 'than', 'other', 'about', 'which', 'their', 'there', 'would', 'could', 'should', 'these', 'those', 'discover', 'services', 'contact', 'information', 'welcome', 'privacy', 'policy'],
+  de: ['und', 'der', 'die', 'das', 'ist', 'ein', 'eine', 'nicht', 'sich', 'mit', 'auf', 'für', 'dass', 'auch', 'noch', 'nach', 'wird', 'bei', 'einer', 'einem', 'haben', 'werden', 'diese', 'dieser', 'dieses', 'kann', 'sind', 'über', 'alle', 'wenn', 'oder', 'aber'],
+  fr: ['les', 'des', 'une', 'est', 'dans', 'pour', 'que', 'pas', 'sur', 'sont', 'avec', 'nous', 'vous', 'tout', 'cette', 'mais', 'être', 'aussi', 'plus', 'elle', 'entre', 'comme', 'après', 'leurs', 'notre', 'votre', 'tous', 'faire'],
+  es: ['los', 'las', 'una', 'del', 'para', 'por', 'con', 'son', 'como', 'está', 'pero', 'más', 'todo', 'esta', 'también', 'entre', 'cuando', 'sobre', 'desde', 'puede', 'todos', 'hacer', 'tiene', 'nuestro', 'nuestra'],
+  pt: ['dos', 'das', 'uma', 'para', 'com', 'por', 'são', 'como', 'está', 'mais', 'todo', 'esta', 'também', 'entre', 'quando', 'sobre', 'pode', 'todos', 'fazer', 'tem', 'nosso', 'nossa'],
+}
+
+const LANG_CODES: Record<string, string> = {
+  it: 'it', en: 'en-US', de: 'de', fr: 'fr', es: 'es', pt: 'pt',
+}
+
+/**
+ * Analyze the actual text content of an HTML file to determine the dominant language.
+ * Strips HTML tags and counts stop-word frequencies per language.
+ * Returns a lang code like 'it' or 'en-US', or null if inconclusive.
+ */
+function detectContentLanguage(htmlContent: string): string | null {
+  // Strip HTML tags and get visible text
+  const text = htmlContent
+    .replace(/<script[\s\S]*?<\/script>/gi, '')
+    .replace(/<style[\s\S]*?<\/style>/gi, '')
+    .replace(/<[^>]+>/g, ' ')
+    .replace(/&[a-z]+;/gi, ' ')
+    .replace(/&#x?[0-9a-f]+;/gi, ' ')
+    .toLowerCase()
+
+  // Tokenize into words (3+ chars)
+  const words = text.match(/[a-zàáâãäåæçèéêëìíîïðñòóôõöùúûüýþÿ]{3,}/g)
+  if (!words || words.length < 20) return null // Not enough text to detect
+
+  const wordSet = new Set(words)
+
+  // Count stop-word hits per language
+  const scores: Record<string, number> = {}
+  for (const [lang, stops] of Object.entries(STOP_WORDS)) {
+    scores[lang] = stops.filter(w => wordSet.has(w)).length
+  }
+
+  // Find highest-scoring language
+  const sorted = Object.entries(scores).sort((a, b) => b[1] - a[1])
+  if (sorted.length === 0) return null
+
+  const [bestLang, bestScore] = sorted[0]
+  const secondScore = sorted[1]?.[1] || 0
+
+  // Require minimum 3 stop-word hits AND at least 2x lead over second place
+  if (bestScore < 3) return null
+  if (bestScore < secondScore * 1.5) return null // Too close to call
+
+  return LANG_CODES[bestLang] || bestLang
+}
+
 /**
  * Registry of deterministic fix patterns.
  * Order matters — first match wins.
@@ -118,81 +177,40 @@ export const DETERMINISTIC_PATTERNS: DeterministicFix[] = [
         && (t.includes('html') || t.includes('page'))
     },
     apply: (content, { title, description, recommendation }, pageUrl) => {
-      const allText = `${title} ${description} ${recommendation}`
-
       // Extract the current lang from the file
       const currentLangMatch = content.match(/<html[^>]*\slang=["']([^"']+)["']/i)
       if (!currentLangMatch) return null // No lang attribute found
 
       const currentLang = currentLangMatch[1]
 
-      // ── Multilingual-aware: use the page URL to determine the correct lang ──
-      // The recommendation may mention multiple languages (e.g. Italian pages
-      // need lang='it', English pages need lang='en-US'). We parse ALL
-      // language→page mappings from the recommendation and match the current
-      // pageUrl to find the correct target lang for THIS specific page.
+      // ── CONTENT-FIRST language detection ──────────────────────
+      // We do NOT blindly trust the AI recommendation. Instead we analyze
+      // the actual page content to determine the dominant language using
+      // stop-word frequency. The recommendation is only a fallback hint.
       let targetLang: string | null = null
 
-      if (pageUrl) {
-        // Extract page-to-language mappings from the recommendation.
-        // Pattern: "pages (/path, /path2) must have lang='xx'"
-        // or "Italian pages (/path, /path2) must have lang='it'"
-        const pageLangMappings = recommendation.matchAll(
-          /(?:pages?\s*\(([^)]+)\).*?lang=["']([a-z]{2}(?:-[A-Z]{2})?)["'])|(?:lang=["']([a-z]{2}(?:-[A-Z]{2})?)["'].*?pages?\s*\(([^)]+)\))/gi
-        )
+      // Step 1: Detect language from ACTUAL page content
+      targetLang = detectContentLanguage(content)
 
+      // Step 2: If content detection is inconclusive, use URL patterns
+      if (!targetLang && pageUrl) {
         let pageUrlPath: string
         try { pageUrlPath = new URL(pageUrl).pathname } catch { pageUrlPath = pageUrl }
-
-        for (const m of pageLangMappings) {
-          const paths = (m[1] || m[4] || '').split(',').map((p: string) => p.trim())
-          const lang = m[2] || m[3]
-          if (lang && paths.some((p: string) => {
-            // Match by path: "/about-page.html" matches "/about-page.html"
-            // Also match "/" for homepage
-            return p === pageUrlPath || pageUrlPath.endsWith(p) || p.endsWith(pageUrlPath)
-          })) {
-            targetLang = lang
-            break
-          }
-        }
-
-        // Fallback: infer from URL patterns (e.g. "-eng" suffix → English)
-        if (!targetLang) {
-          const pathLower = pageUrlPath.toLowerCase()
-          if (pathLower.includes('-eng') || pathLower.includes('/en/') || pathLower.includes('/en-')) {
-            // Try to find the English lang from the recommendation
-            const enMatch = recommendation.match(/(?:english|en-us|en-gb).*?lang=["']([a-z]{2}(?:-[A-Z]{2})?)["']/i)
-              || recommendation.match(/lang=["']([a-z]{2}-[A-Z]{2})["']/i) // e.g. en-US
-            targetLang = enMatch?.[1] || 'en-US'
-          }
+        const pathLower = pageUrlPath.toLowerCase()
+        if (pathLower.includes('-eng') || pathLower.includes('/en/') || pathLower.includes('/en-') || pathLower.includes('index-eng')) {
+          targetLang = 'en-US'
         }
       }
 
-      // If page-aware matching didn't resolve, fall back to single-language extraction
+      // Step 3: Only as last resort, use the recommendation text
       if (!targetLang) {
+        const allText = `${title} ${description} ${recommendation}`
         const targetLangMatch = allText.match(/lang=["']([a-z]{2}(?:-[A-Z]{2})?)["']/i)
-          || allText.match(/correct.*?to\s+["']?([a-z]{2}(?:-[A-Z]{2})?)["']?/i)
           || allText.match(/should\s+be\s+["']?([a-z]{2}(?:-[A-Z]{2})?)["']?/i)
         targetLang = targetLangMatch?.[1] || null
       }
 
-      // If we still can't determine target, infer from language names in text
-      if (!targetLang) {
-        const descLower = `${title} ${description}`.toLowerCase()
-        if (descLower.includes('italian')) targetLang = 'it'
-        else if (descLower.includes('german')) targetLang = 'de'
-        else if (descLower.includes('french')) targetLang = 'fr'
-        else if (descLower.includes('spanish')) targetLang = 'es'
-        else if (descLower.includes('portuguese')) targetLang = 'pt'
-        else if (descLower.includes('dutch')) targetLang = 'nl'
-        else if (descLower.includes('japanese')) targetLang = 'ja'
-        else if (descLower.includes('chinese')) targetLang = 'zh'
-        else if (descLower.includes('korean')) targetLang = 'ko'
-        else if (descLower.includes('russian')) targetLang = 'ru'
-        else if (descLower.includes('arabic')) targetLang = 'ar'
-        else return null // Can't determine target language
-      }
+      if (!targetLang) return null // Can't determine target language
 
       // Already correct?
       if (currentLang.toLowerCase() === targetLang.toLowerCase()) return null
@@ -205,7 +223,7 @@ export const DETERMINISTIC_PATTERNS: DeterministicFix[] = [
       return {
         find: fullMatch,
         replace: fixed,
-        explanation: `Change lang="${currentLang}" to lang="${targetLang}" on the <html> tag`,
+        explanation: `Change lang="${currentLang}" to lang="${targetLang}" on the <html> tag (detected from page content)`,
       }
     },
     scope: 'all-pages',

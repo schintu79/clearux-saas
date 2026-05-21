@@ -61,7 +61,8 @@ export const SYNONYM_GROUPS: string[][] = [
   ['feedback', 'response', 'indication', 'notification', 'confirmation', 'success'],
   ['contrast', 'readability', 'legibility', 'readable'],
   ['value', 'proposition', 'benefit', 'offering'],
-  ['content', 'copy', 'text', 'messaging', 'message', 'wording', 'language'],
+  ['content', 'copy', 'text', 'messaging', 'message', 'wording'],
+  ['language', 'lang', 'locale', 'localization', 'i18n', 'multilingual', 'hreflang'],
   ['error', 'failure', 'issue', 'problem'],
   ['button', 'action', 'control', 'element'],
   ['headline', 'heading', 'title', 'hero', 'h1'],
@@ -103,6 +104,8 @@ export const TOPIC_PATTERNS: { topic: string; keywords: string[] }[] = [
   { topic: 'dark_patterns', keywords: ['dark', 'pattern', 'manipul', 'confirmshaming', 'deceptive', 'urgency'] },
   { topic: 'cta_clarity', keywords: ['cta', 'call', 'action', 'button', 'conversion', 'click'] },
   { topic: 'mobile_responsive', keywords: ['mobile', 'responsive', 'touch', 'viewport', 'breakpoint', 'adaptive'] },
+  { topic: 'lang_i18n', keywords: ['lang', 'language', 'attribute', 'locali', 'internation', 'italian', 'english', 'mismatch', 'tagging', 'hreflang', 'multilingual'] },
+  { topic: 'meta_description_i18n', keywords: ['meta', 'description', 'language', 'mismatch', 'italian', 'english', 'locali', 'translat'] },
 ]
 
 // ── Similarity thresholds ────────────────────────────────────
