@@ -6,6 +6,17 @@ Last updated: 2026-05-21
 
 ---
 
+## Code Quality UI
+
+### Code Quality section on Technical Health tab
+- **Feature**: Added a Code Quality section to the Technical Health tab on the audit detail page. Surfaces per-page HTML and CSS syntax issues detected by the code quality checker engine.
+- **Summary stats**: Added "Code errors" stat card to the summary grid (expanded from 4 to 5 columns).
+- **Per-page rows**: Expandable `<details>` rows per page showing rating (Good / Needs work / Poor), error/warning counts broken down by HTML vs CSS, and individual issue details with severity badges (ERR/WARN) and category tags (HTML/CSS).
+- **Issue display**: Each issue shows type badge, category badge, message text, and line number. Capped at 15 visible issues per page with overflow count.
+- **Files**: `src/app/dashboard/audits/[id]/page.tsx`
+
+---
+
 ## Code Quality Checker
 
 ### HTML & CSS syntax validation engine

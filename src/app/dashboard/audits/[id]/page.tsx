@@ -49,6 +49,8 @@ import {
   Activity,
   Image as ImageIcon,
   Heading1,
+  FileCode,
+  ChevronRight,
 } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { createBrowserSupabase } from '@/lib/supabase-ssr';
@@ -3258,6 +3260,7 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
             const totalA11yIssues = pagesWithTechnical.reduce((sum: number, p: any) => sum + (p.technical_audit?.accessibility?.issues?.length || 0), 0);
             const totalLinks = pagesWithTechnical.reduce((sum: number, p: any) => sum + (p.technical_audit?.links?.total || 0), 0);
             const totalNonDescriptive = pagesWithTechnical.reduce((sum: number, p: any) => sum + (p.technical_audit?.links?.nonDescriptive || 0), 0);
+            const totalCodeErrors = auditPages.reduce((sum: number, p: any) => sum + (p.code_quality?.html?.errors || 0) + (p.code_quality?.css?.errors || 0), 0);
 
             const ratingClass = (rating: string) =>
               rating === 'good' ? 'text-ok' : rating === 'needs_improvement' ? 'text-warn' : rating === 'slow' ? 'text-err' : 'text-m-muted';
@@ -3277,7 +3280,7 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
                       </p>
                     </div>
                   </div>
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mt-4">
+                  <div className="grid grid-cols-2 md:grid-cols-5 gap-3 mt-4">
                     <div className="p-3 rounded-lg border border-rule/60 bg-paper">
                       <p className="text-[10px] font-semibold tracking-[0.04em] uppercase text-m-muted">Avg load time</p>
                       <p className="text-[18px] font-bold text-ink mt-1">{avgLoad != null ? `${avgLoad}ms` : '—'}</p>
@@ -3293,6 +3296,10 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
                     <div className="p-3 rounded-lg border border-rule/60 bg-paper">
                       <p className="text-[10px] font-semibold tracking-[0.04em] uppercase text-m-muted">A11y issues</p>
                       <p className={`text-[18px] font-bold mt-1 ${totalA11yIssues > 0 ? 'text-warn' : 'text-ink'}`}>{totalA11yIssues}</p>
+                    </div>
+                    <div className="p-3 rounded-lg border border-rule/60 bg-paper">
+                      <p className="text-[10px] font-semibold tracking-[0.04em] uppercase text-m-muted">Code errors</p>
+                      <p className={`text-[18px] font-bold mt-1 ${totalCodeErrors > 0 ? 'text-err' : 'text-ok'}`}>{totalCodeErrors}</p>
                     </div>
                   </div>
                 </div>
@@ -3450,6 +3457,99 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
                     })}
                   </div>
                 </div>
+
+                {/* Code Quality section */}
+                {(() => {
+                  const pagesWithCodeQuality = auditPages.filter((p: any) => p.code_quality);
+                  if (pagesWithCodeQuality.length === 0) return null;
+
+                  const totalHtmlErrors = pagesWithCodeQuality.reduce((sum: number, p: any) => sum + (p.code_quality?.html?.errors || 0), 0);
+                  const totalHtmlWarnings = pagesWithCodeQuality.reduce((sum: number, p: any) => sum + (p.code_quality?.html?.warnings || 0), 0);
+                  const totalCssErrors = pagesWithCodeQuality.reduce((sum: number, p: any) => sum + (p.code_quality?.css?.errors || 0), 0);
+                  const totalCssWarnings = pagesWithCodeQuality.reduce((sum: number, p: any) => sum + (p.code_quality?.css?.warnings || 0), 0);
+                  const pagesWithErrors = pagesWithCodeQuality.filter((p: any) => (p.code_quality?.html?.errors || 0) + (p.code_quality?.css?.errors || 0) > 0).length;
+
+                  const cqRatingClass = (rating: string) =>
+                    rating === 'good' ? 'text-ok' : rating === 'needs_improvement' ? 'text-warn' : rating === 'poor' ? 'text-err' : 'text-m-muted';
+                  const cqRatingLabel = (rating: string) =>
+                    rating === 'good' ? 'Good' : rating === 'needs_improvement' ? 'Needs work' : rating === 'poor' ? 'Poor' : 'Unknown';
+
+                  return (
+                    <div className="rounded-xl border border-rule bg-card overflow-hidden">
+                      <div className="px-5 py-3.5 border-b border-rule/40 flex items-center gap-2">
+                        <FileCode size={15} className="text-m-muted" />
+                        <h3 className="text-[13px] font-semibold text-ink">Code Quality</h3>
+                        <span className="ml-auto text-[11px] text-m-muted font-medium">
+                          {totalHtmlErrors + totalCssErrors} error{totalHtmlErrors + totalCssErrors !== 1 ? 's' : ''} · {totalHtmlWarnings + totalCssWarnings} warning{totalHtmlWarnings + totalCssWarnings !== 1 ? 's' : ''} · {pagesWithErrors}/{pagesWithCodeQuality.length} pages with issues
+                        </span>
+                      </div>
+                      <div className="divide-y divide-rule/30">
+                        {pagesWithCodeQuality.map((page: any, i: number) => {
+                          const cq = page.code_quality;
+                          const htmlErrs = cq?.html?.errors || 0;
+                          const htmlWarns = cq?.html?.warnings || 0;
+                          const cssErrs = cq?.css?.errors || 0;
+                          const cssWarns = cq?.css?.warnings || 0;
+                          const rating = cq?.rating || 'good';
+                          const allIssues = [...(cq?.html?.issues || []), ...(cq?.css?.issues || [])];
+                          const hasIssues = allIssues.length > 0;
+
+                          return (
+                            <details key={i} className="group">
+                              <summary className="px-5 py-3 flex items-center gap-3 cursor-pointer hover:bg-off/40 transition-colors list-none [&::-webkit-details-marker]:hidden">
+                                {hasIssues && (
+                                  <ChevronRight size={12} className="text-m-muted flex-shrink-0 transition-transform group-open:rotate-90" />
+                                )}
+                                {!hasIssues && <span className="w-3" />}
+                                <span className="text-[12px] text-ink flex-1 truncate">{page.url}</span>
+                                <span className="text-[11px] text-m-muted whitespace-nowrap">
+                                  {htmlErrs > 0 && <span className="text-err">{htmlErrs} HTML err{htmlErrs !== 1 ? 's' : ''}</span>}
+                                  {htmlErrs > 0 && (htmlWarns > 0 || cssErrs > 0 || cssWarns > 0) && <span> · </span>}
+                                  {cssErrs > 0 && <span className="text-err">{cssErrs} CSS err{cssErrs !== 1 ? 's' : ''}</span>}
+                                  {cssErrs > 0 && (htmlWarns > 0 || cssWarns > 0) && <span> · </span>}
+                                  {(htmlWarns + cssWarns) > 0 && <span>{htmlWarns + cssWarns} warning{(htmlWarns + cssWarns) !== 1 ? 's' : ''}</span>}
+                                  {htmlErrs === 0 && cssErrs === 0 && htmlWarns === 0 && cssWarns === 0 && <span className="text-ok">Clean</span>}
+                                </span>
+                                <span className={`text-[11px] font-semibold min-w-[80px] text-right ${cqRatingClass(rating)}`}>
+                                  {cqRatingLabel(rating)}
+                                </span>
+                              </summary>
+                              {hasIssues && (
+                                <div className="px-5 pb-3 pt-0">
+                                  <div className="ml-6 space-y-1.5">
+                                    {allIssues.slice(0, 15).map((issue: any, j: number) => (
+                                      <div key={j} className="flex items-start gap-2 text-[11px]">
+                                        <span className={`flex-shrink-0 font-semibold uppercase text-[9px] tracking-wide px-1.5 py-0.5 rounded mt-px ${
+                                          issue.type === 'error'
+                                            ? 'text-err bg-err/10'
+                                            : 'text-warn bg-warn/10'
+                                        }`}>
+                                          {issue.type === 'error' ? 'ERR' : 'WARN'}
+                                        </span>
+                                        <span className={`flex-shrink-0 font-medium uppercase text-[9px] tracking-wide px-1.5 py-0.5 rounded mt-px ${
+                                          issue.category === 'html' ? 'text-blue-400 bg-blue-400/10' : 'text-purple-400 bg-purple-400/10'
+                                        }`}>
+                                          {issue.category.toUpperCase()}
+                                        </span>
+                                        <span className="text-m-muted flex-1 leading-relaxed">
+                                          {issue.message}
+                                          {issue.line && <span className="text-m-muted/60 ml-1">line {issue.line}</span>}
+                                        </span>
+                                      </div>
+                                    ))}
+                                    {allIssues.length > 15 && (
+                                      <p className="text-[10px] text-m-muted mt-1">+ {allIssues.length - 15} more issue{allIssues.length - 15 !== 1 ? 's' : ''}</p>
+                                    )}
+                                  </div>
+                                </div>
+                              )}
+                            </details>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  );
+                })()}
               </div>
             );
           })()}
