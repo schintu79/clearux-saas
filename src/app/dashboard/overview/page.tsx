@@ -526,13 +526,13 @@ function OverviewInner() {
           </h1>
           <p className="text-[13px] mt-1" style={{ color: 'var(--m-muted)' }}>
             {selection
-              ? 'No audit for this brand yet. Run one to see your Brand Health Score and what to fix next.'
-              : 'Pick a brand or run your first audit to see your Brand Health Score.'}
+              ? 'No audit for this brand yet. Run one to see your Website Health Score and what to fix next.'
+              : 'Pick a brand or run your first audit to see your Website Health Score.'}
           </p>
         </div>
         <EmptyAudit
           title={selection ? 'No audit for this brand yet' : 'Run your first audit'}
-          body="Enter a website URL and we will show you your Brand Health Score, the top issues hurting it, and a clear next action."
+          body="Enter a website URL and we will show you your Website Health Score, the top issues hurting it, and a clear next action."
         />
       </div>
     );
@@ -603,7 +603,7 @@ function OverviewInner() {
     }
   }
 
-  const hideBenchmarks = (audit as any).audit_type === 'brand_identity' || selection?.kind === 'brand';
+  const hideBenchmarks = (audit as any).audit_type === 'brand_identity';
 
   const execSummary = (report.executive_summary || '').trim();
 
@@ -765,9 +765,9 @@ function OverviewInner() {
 
       {/* ── Row 1: 3 equal summary cards ─────────────────────────────── */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-4 auto-rows-fr">
-        {/* 1) Brand Health Score + module dots */}
+        {/* 1) Website Health Score + module dots */}
         <DashboardCard
-          title="Brand Health Score"
+          title="Website Health Score"
           subtitle="Latest audit"
           rightLabel={audit.completed_at ? formatDate(audit.completed_at) : null}
           icon={Heart}
@@ -2095,7 +2095,7 @@ function AlertOrSummary({
             {critical} critical issue{critical === 1 ? '' : 's'} need attention
           </p>
           <p className="text-[11px] mt-1" style={{ color: 'var(--m-muted)' }}>
-            These have the biggest negative impact on your Brand Health Score. Triage them first.
+            These have the biggest negative impact on your Website Health Score. Triage them first.
           </p>
         </div>
         <Link
@@ -2136,7 +2136,7 @@ function AlertOrSummary({
       <Info size={14} style={{ color: 'var(--m-muted)' }} className="flex-shrink-0" />
       <p className="text-[12px]" style={{ color: 'var(--m-muted)' }}>
         Latest audit completed {formatDate(completedAt)} ·{' '}
-        <span className="font-semibold" style={{ color: 'var(--ink)' }}>{overallScore}/100</span> Brand Health Score
+        <span className="font-semibold" style={{ color: 'var(--ink)' }}>{overallScore}/100</span> Website Health Score
       </p>
     </div>
   );
@@ -2267,7 +2267,7 @@ function InProgressOverview({
 
       {/* Skeleton row 1 — mirrors Brand Health, Score Over Time, Heuristic Breakdown */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-4 auto-rows-fr">
-        <SkeletonCard title="Brand Health Score" subtitle="Calculating…" icon={Heart} />
+        <SkeletonCard title="Website Health Score" subtitle="Calculating…" icon={Heart} />
         <SkeletonCard title="Score Over Time" subtitle="Trend will appear after this audit" icon={TrendingUp} />
         <SkeletonCard title="Heuristic Breakdown" subtitle="Radar populates when the audit completes" icon={Target} />
       </div>

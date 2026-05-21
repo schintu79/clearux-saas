@@ -17,8 +17,8 @@ export const LEGACY_PRODUCT_NAME_LONG = 'ClearUX.ai' as const
  * Customer-facing score label. Use this in all dashboards, reports, shared
  * pages, and marketing surfaces instead of "ClearUX Score" or "Fixpath Score".
  */
-export const SCORE_LABEL = 'Brand Health Score' as const
-export const SCORE_LABEL_SHORT = 'Brand Health' as const
+export const SCORE_LABEL = 'Website Health Score' as const
+export const SCORE_LABEL_SHORT = 'Website Health' as const
 
 export const TAGLINE = 'Find the issue. Follow the fix path. Track improvement.' as const
 export const HERO_HEADLINE = 'Find the issues hurting your site. Follow the path to fix them.' as const

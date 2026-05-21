@@ -333,13 +333,13 @@ export default function IntelligencePage() {
         />
         <EmptyAudit
           title="No benchmarks yet"
-          body="Run a Fixpath audit to compare your Brand Health Score against detected competitors and your industry."
+          body="Run a Fixpath audit to compare your Website Health Score against detected competitors and your industry."
         />
       </div>
     );
   }
 
-  const isBrandAudit = (bundle.audit as any).audit_type === 'brand_identity' || selection?.kind === 'brand';
+  const isBrandAudit = (bundle.audit as any).audit_type === 'brand_identity';
   const overallScore = bundle.report.overall_score ?? 0;
   const scoredDrafts = drafts.filter(d => typeof d.score === 'number' && d.score > 0);
   const avgCompetitor = scoredDrafts.length > 0

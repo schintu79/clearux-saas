@@ -163,7 +163,7 @@ export default function TrackPage() {
   return (
     <div>
       <OverviewBreadcrumb current="Track" />
-      <PageHeader icon={<TrendingUp size={18} strokeWidth={1.75} style={{ color: 'var(--ink)' }} />} title="Track" subtitle="Brand Health Score and issue trend for this brand. Re-audit to confirm fixes landed." />
+      <PageHeader icon={<TrendingUp size={18} strokeWidth={1.75} style={{ color: 'var(--ink)' }} />} title="Track" subtitle="Website Health Score and issue trend for this brand. Re-audit to confirm fixes landed." />
 
       <div className="grid grid-cols-1 lg:grid-cols-[2fr_1fr] gap-4 mb-6">
         <DashCard padding="lg">

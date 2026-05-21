@@ -695,7 +695,7 @@ function OverviewPage({ brand }: { brand: typeof MOCK_BRANDS[number] }) {
           <ScoreRing score={brand.score} />
           <div className="min-w-0">
             <p className="text-[11px] font-medium tracking-[0.03em] uppercase" style={{ color: '#8A857A' }}>
-              Brand Health Score
+              Website Health Score
             </p>
             <p className="text-[12px] font-medium mt-1.5 inline-flex items-center gap-1" style={{ color: deltaTone(delta) }}>
               {delta > 0 ? <TrendingUp size={11} /> : delta < 0 ? <TrendingDown size={11} /> : <Minus size={11} />}

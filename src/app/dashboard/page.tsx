@@ -213,7 +213,7 @@ function DashboardInner() {
             No audits yet
           </h2>
           <p className="text-[13px] mb-5" style={{ color: 'var(--m-muted)' }}>
-            Run your first audit to see your Brand Health Score and a roadmap of fixes.
+            Run your first audit to see your Website Health Score and a roadmap of fixes.
           </p>
           <ActionLink href="/dashboard/new-audit" icon={PlusCircle}>New audit</ActionLink>
         </DashCard>
@@ -251,7 +251,7 @@ function DashboardInner() {
           label="Portfolio avg"
           value={portfolioAvgScore != null ? `${portfolioAvgScore}` : '—'}
           tone={portfolioAvgScore == null ? 'muted' : portfolioAvgScore >= 70 ? 'ok' : portfolioAvgScore >= 40 ? 'warn' : 'severe'}
-          hint="Brand Health Score"
+          hint="Website Health Score"
         />
         <StatCard
           icon={AlertTriangle}
