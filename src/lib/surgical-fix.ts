@@ -336,6 +336,30 @@ export function checkAlreadyFixed(
   finding: { title: string; description: string; recommendation: string },
   pageUrl?: string,
 ): string | null {
+  // ── JSON-LD duplicate check ──────────────────────────────
+  // If the recommendation contains a JSON-LD snippet, check if
+  // the file already has that @type. This prevents re-applying
+  // the same structured data fix on re-audit.
+  if (finding.recommendation.includes('application/ld+json')) {
+    const recTypeMatch = finding.recommendation.match(/"@type"\s*:\s*"([^"]+)"/)
+    if (recTypeMatch) {
+      const recType = recTypeMatch[1].toLowerCase()
+      const existingTypes = content.match(/"@type"\s*:\s*"([^"]+)"/g) || []
+      const existingTypeValues = existingTypes.map(t => {
+        const m = t.match(/"@type"\s*:\s*"([^"]+)"/)
+        return m ? m[1].toLowerCase() : ''
+      })
+      const equivalentTypes: Record<string, string[]> = {
+        organization: ['organization', 'localbusiness'],
+        localbusiness: ['localbusiness', 'organization'],
+      }
+      const typesToCheck = equivalentTypes[recType] || [recType]
+      if (existingTypeValues.some(t => typesToCheck.includes(t))) {
+        return `This page already has a JSON-LD block with @type "${recTypeMatch[1]}". No change needed.`
+      }
+    }
+  }
+
   for (const pattern of DETERMINISTIC_PATTERNS) {
     if (!pattern.detect(finding)) continue
     const result = pattern.apply(content, finding, pageUrl)
@@ -507,6 +531,7 @@ CRITICAL RULES:
 - "find" must be an EXACT substring from the file (copy-paste, preserve whitespace)
 - Keep "find" as SHORT as possible — 1-3 lines max. Use just enough to be unique in the file
 - For JSON-LD / <script type="application/ld+json"> blocks: use "find" to match just the opening tag (e.g. '<script type="application/ld+json">') and replace the ENTIRE block including closing </script>
+- DUPLICATE CHECK: Before inserting any JSON-LD block, check if a <script type="application/ld+json"> with the same "@type" (or equivalent like Organization/LocalBusiness) already exists in the file. If it does, return action "failed" with explanation "A JSON-LD block with this @type already exists."
 - "content" is the replacement (for replace) or new code to insert (for insert)${isNonDefault ? `\n- ALL user-visible text in "content" MUST be in ${language} — never English` : ''}
 - If you cannot locate the fix point, return: {"action":"failed","find":"","content":"","explanation":"reason"}`
 }
@@ -611,6 +636,37 @@ export function applyPatch(
 
   if (!find) {
     return { patchedContent: originalContent, applied: false, warning: 'Empty find string.' }
+  }
+
+  // ── JSON-LD duplicate prevention ──────────────────────────
+  // If we're about to INSERT a JSON-LD block, check if the same @type
+  // already exists in the file. This prevents the #1 cause of embarrassing
+  // duplicate structured data — our own fix engine adding it twice.
+  if ((action === 'insert_before' || action === 'insert_after') &&
+      content.includes('application/ld+json')) {
+    const newTypeMatch = content.match(/"@type"\s*:\s*"([^"]+)"/)
+    if (newTypeMatch) {
+      const newType = newTypeMatch[1].toLowerCase()
+      // Check all existing JSON-LD blocks in the file for the same @type
+      const existingTypes = originalContent.match(/"@type"\s*:\s*"([^"]+)"/g) || []
+      const existingTypeValues = existingTypes.map(t => {
+        const m = t.match(/"@type"\s*:\s*"([^"]+)"/)
+        return m ? m[1].toLowerCase() : ''
+      })
+      // Also treat Organization and LocalBusiness as equivalent
+      const equivalentTypes: Record<string, string[]> = {
+        organization: ['organization', 'localbusiness'],
+        localbusiness: ['localbusiness', 'organization'],
+      }
+      const typesToCheck = equivalentTypes[newType] || [newType]
+      if (existingTypeValues.some(t => typesToCheck.includes(t))) {
+        return {
+          patchedContent: originalContent,
+          applied: false,
+          warning: `A JSON-LD block with @type "${newTypeMatch[1]}" (or equivalent) already exists in this file. Skipping to prevent duplicate structured data.`,
+        }
+      }
+    }
   }
 
   // No-op detection: if find and content are identical, the file is already correct
