@@ -229,8 +229,9 @@ export function generateStaticParams() {
   return ALL_SLUGS.map((slug) => ({ slug }))
 }
 
-export function generateMetadata({ params }: { params: { slug: string } }) {
-  const article = ARTICLES[params.slug]
+export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }) {
+  const { slug } = await params
+  const article = ARTICLES[slug]
   if (!article) return { title: 'Not found' }
   return {
     title: `${article.title} — Fixpath Resources`,
@@ -238,11 +239,12 @@ export function generateMetadata({ params }: { params: { slug: string } }) {
   }
 }
 
-export default function ResourceArticlePage({ params }: { params: { slug: string } }) {
-  const article = ARTICLES[params.slug]
+export default async function ResourceArticlePage({ params }: { params: Promise<{ slug: string }> }) {
+  const { slug } = await params
+  const article = ARTICLES[slug]
   if (!article) notFound()
 
-  const related = getRelatedArticles(params.slug)
+  const related = getRelatedArticles(slug)
 
   return (
     <main>
