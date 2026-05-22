@@ -5,6 +5,26 @@ import { Button } from '@/components/marketing/Button'
 import { ArrowRightIcon } from '@/components/marketing/icons'
 import { HomeCta } from '@/components/marketing/HomeCta'
 import { FaqPreview } from '@/components/marketing/FaqPreview'
+import { Scale, Heart, Accessibility, Brain, FileSearch, Eye, Bot, Database, FileCode, Quote, type LucideIcon } from 'lucide-react'
+
+/* Dashboard-matching MODULE_TINTS */
+const MODULE_TINTS: Record<string, string> = {
+  'Foundation': '#3B82F6',
+  'Human experience': '#EC4899',
+  'Inclusive design': '#8B5CF6',
+  'Future readiness': '#F59E0B',
+  'Brand consistency': '#06B6D4',
+  'SEO structure': '#10B981',
+}
+
+const AUDIT_MODULES: { name: string; Icon: LucideIcon; checks: string[] }[] = [
+  { name: 'Foundation', Icon: Scale, checks: ['Site structure and navigation', 'Mobile responsiveness', 'Performance and load times'] },
+  { name: 'Human experience', Icon: Heart, checks: ['Usability and dark patterns', 'Cognitive accessibility', 'Conversion friction'] },
+  { name: 'Inclusive design', Icon: Accessibility, checks: ['WCAG 2.1 AA accessibility', 'Heading hierarchy', 'Colour contrast'] },
+  { name: 'Future readiness', Icon: Brain, checks: ['AI discoverability and readiness', 'Structured data validation', 'LLM probe accuracy'] },
+  { name: 'Brand consistency', Icon: Eye, checks: ['Brand and messaging consistency', 'Cross-page coherence', 'Tone of voice'] },
+  { name: 'SEO structure', Icon: FileSearch, checks: ['SEO structure and metadata', 'Canonical URLs', 'Internal linking'] },
+]
 
 /* ── FAQ data ── */
 const PRODUCT_FAQS = [
@@ -228,30 +248,35 @@ export function ProductContent() {
                 finding shows affected pages, what went wrong, and a concrete recommendation. Most
                 audits complete in under ten minutes.
               </p>
-              <h3 className="font-sans text-[16px] font-semibold text-ink mb-4">What the audit covers</h3>
-              <div className="grid sm:grid-cols-2 gap-x-8 gap-y-3 mb-8">
-                {[
-                  'Site structure and navigation',
-                  'Usability and dark patterns',
-                  'WCAG 2.1 AA accessibility',
-                  'AI discoverability and readiness',
-                  'Brand and messaging consistency',
-                  'SEO structure and metadata',
-                  'Mobile responsiveness',
-                  'Performance and load times',
-                  'Cognitive accessibility',
-                  'Structured data validation',
-                  'Heading hierarchy',
-                  'Cross-page coherence',
-                ].map((item) => (
-                  <div key={item} className="flex items-center gap-2.5">
-                    <span className="w-1 h-1 rounded-full bg-signal shrink-0" />
-                    <span className="font-sans text-[14px] text-ink-2">{item}</span>
-                  </div>
-                ))}
+              <h3 className="font-sans text-[16px] font-semibold text-ink mb-5">What the audit covers</h3>
+              <div className="grid sm:grid-cols-2 gap-3 mb-8">
+                {AUDIT_MODULES.map((mod) => {
+                  const tint = MODULE_TINTS[mod.name] || 'var(--signal)'
+                  return (
+                    <div key={mod.name} className="rounded-[4px] border border-rule p-4" style={{ background: 'var(--paper-2)' }}>
+                      <div className="flex items-center gap-2.5 mb-2.5">
+                        <span
+                          className="w-7 h-7 rounded-[5px] flex items-center justify-center shrink-0"
+                          style={{ background: `color-mix(in srgb, ${tint} 12%, transparent)`, color: tint }}
+                        >
+                          <mod.Icon size={15} strokeWidth={1.5} />
+                        </span>
+                        <span className="font-sans text-[13px] font-semibold text-ink">{mod.name}</span>
+                      </div>
+                      <div className="flex flex-col gap-1">
+                        {mod.checks.map((check) => (
+                          <div key={check} className="flex items-center gap-2">
+                            <span className="w-1 h-1 rounded-full shrink-0" style={{ background: tint }} />
+                            <span className="font-sans text-[12px] text-ink-2">{check}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )
+                })}
               </div>
               <p className="font-sans text-[14px] text-m-muted">
-                Every finding includes the affected pages, evidence from your actual site content, and a
+                96 checkpoints across six modules. Every finding includes affected pages, evidence, and a
                 concrete recommendation.
               </p>
             </div>
@@ -360,14 +385,20 @@ export function ProductContent() {
             AI agents are already reading your site for their users. Fixpath checks whether they
             get it right, connects findings to structured fixes, and tracks improvement over time — all inside one workflow.
           </p>
-          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-px" style={{ background: 'var(--rule)' }}>
+          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
             {[
-              { title: 'LLM probe testing', desc: 'We ask multiple AI models about your business and compare their answers to ground truth.' },
-              { title: 'Structured data audit', desc: 'Validates JSON-LD, Open Graph, and schema markup that AI agents rely on to understand your pages.' },
-              { title: 'AI discovery files', desc: 'Checks for llms.txt, robots.txt AI directives, and other files that guide AI crawlers.' },
-              { title: 'Citation monitoring', desc: 'Tracks when and how AI models cite your content, and whether the citations are accurate.' },
+              { title: 'LLM probe testing', desc: 'We ask multiple AI models about your business and compare their answers to ground truth.', Icon: Bot, color: '#F59E0B' },
+              { title: 'Structured data audit', desc: 'Validates JSON-LD, Open Graph, and schema markup that AI agents rely on to understand your pages.', Icon: Database, color: '#8B5CF6' },
+              { title: 'AI discovery files', desc: 'Checks for llms.txt, robots.txt AI directives, and other files that guide AI crawlers.', Icon: FileCode, color: '#3B82F6' },
+              { title: 'Citation monitoring', desc: 'Tracks when and how AI models cite your content, and whether the citations are accurate.', Icon: Quote, color: '#10B981' },
             ].map((item) => (
-              <div key={item.title} className="p-6" style={{ background: 'var(--paper)' }}>
+              <div key={item.title} className="rounded-[4px] border border-rule p-6" style={{ background: 'var(--paper-2)' }}>
+                <span
+                  className="w-9 h-9 rounded-[6px] flex items-center justify-center mb-4"
+                  style={{ background: `color-mix(in srgb, ${item.color} 12%, transparent)`, color: item.color }}
+                >
+                  <item.Icon size={18} strokeWidth={1.5} />
+                </span>
                 <h3 className="font-sans text-[16px] font-semibold text-ink mb-2">{item.title}</h3>
                 <p className="font-sans text-[13px] text-ink-2 leading-relaxed">{item.desc}</p>
               </div>
@@ -389,13 +420,19 @@ export function ProductContent() {
             clients or stakeholders. Every format includes the same severity-ranked findings,
             evidence, and recommendations.
           </p>
-          <div className="grid sm:grid-cols-3 gap-8">
+          <div className="grid sm:grid-cols-3 gap-4">
             {[
-              { format: 'PDF report', desc: 'Print-ready A4 document with cover page, executive summary, and detailed findings by module.' },
-              { format: 'Word document', desc: 'Editable .docx format. Add your own notes, customise recommendations, and share with your team.' },
-              { format: 'Shareable link', desc: 'A live web page anyone can view. No login required. Includes score, findings, and module breakdown.' },
+              { format: 'PDF report', desc: 'Print-ready A4 document with cover page, executive summary, and detailed findings by module.', Icon: FileSearch, color: '#EC4899' },
+              { format: 'Word document', desc: 'Editable .docx format. Add your own notes, customise recommendations, and share with your team.', Icon: FileCode, color: '#3B82F6' },
+              { format: 'Shareable link', desc: 'A live web page anyone can view. No login required. Includes score, findings, and module breakdown.', Icon: Eye, color: '#10B981' },
             ].map((item) => (
-              <div key={item.format} className="p-6 rounded-[4px] border border-rule" style={{ background: 'var(--paper)' }}>
+              <div key={item.format} className="p-6 rounded-[4px] border border-rule" style={{ background: 'var(--paper-2)' }}>
+                <span
+                  className="w-9 h-9 rounded-[6px] flex items-center justify-center mb-4"
+                  style={{ background: `color-mix(in srgb, ${item.color} 12%, transparent)`, color: item.color }}
+                >
+                  <item.Icon size={18} strokeWidth={1.5} />
+                </span>
                 <h3 className="font-sans text-[16px] font-semibold text-ink mb-2">{item.format}</h3>
                 <p className="font-sans text-[13px] text-ink-2 leading-relaxed">{item.desc}</p>
               </div>
