@@ -15,44 +15,38 @@ const MODULES = [
   {
     name: 'Foundation',
     count: 16,
-    desc: 'Site structure, navigation, page speed, mobile responsiveness, and technical baseline.',
-    checks: ['Page load speed', 'Mobile layout', 'Navigation depth', 'Link integrity'],
     Icon: Scale,
+    categories: ['Visual design and first impression', 'Value proposition and messaging', 'Navigation and information architecture', 'Content quality and readability'],
   },
   {
     name: 'Human experience',
     count: 16,
-    desc: 'Usability patterns, dark patterns, cognitive load, emotional design, and conversion friction.',
-    checks: ['Dark pattern detection', 'Cognitive load', 'Form usability', 'Trust signals'],
     Icon: Heart,
+    categories: ['Conversion paths and CTAs', 'Trust and credibility signals', 'Ethical design and dark patterns', 'Emotional design and engagement'],
   },
   {
     name: 'Inclusive design',
     count: 16,
-    desc: 'WCAG 2.1 AA compliance, keyboard navigation, screen reader compatibility, and colour contrast.',
-    checks: ['Colour contrast', 'Keyboard navigation', 'Screen readers', 'Touch targets'],
     Icon: Accessibility,
+    categories: ['WCAG 2.1 AA accessibility', 'Cognitive accessibility', 'Digital wellbeing and responsibility', 'Responsive and device support'],
   },
   {
     name: 'Future readiness',
     count: 16,
-    desc: 'AI discoverability, structured data, llms.txt, LLM probe accuracy, and citation quality.',
-    checks: ['LLM probe testing', 'Structured data', 'AI discovery files', 'Citation accuracy'],
     Icon: Brain,
+    categories: ['Performance and core web vitals', 'AI discoverability and structured data', 'AI agent readiness', 'Cultural and global readiness'],
   },
   {
     name: 'Brand consistency',
     count: 16,
-    desc: 'Visual identity alignment, tone of voice, messaging clarity, and cross-page coherence.',
-    checks: ['Visual identity', 'Tone of voice', 'Messaging clarity', 'Cross-page coherence'],
     Icon: Eye,
+    categories: ['Brand identity and guidelines', 'Brand experience and story', 'Visual asset consistency', 'Brand communication and tone'],
   },
   {
     name: 'SEO structure',
     count: 16,
-    desc: 'Meta tags, heading hierarchy, canonical URLs, internal linking, and indexability.',
-    checks: ['Meta tags', 'Heading hierarchy', 'Canonical URLs', 'Internal linking'],
     Icon: FileSearch,
+    categories: ['On-page SEO and metadata', 'Technical SEO and crawlability', 'Rich snippets and social markup', 'Content strategy and link structure'],
   },
 ]
 
@@ -65,21 +59,21 @@ export function HomeModules() {
           className="font-serif font-normal text-ink leading-[0.94] tracking-[-0.025em] mb-5"
           style={{ fontSize: 'clamp(36px, 5vw, 64px)' }}
         >
-          96 checkpoints.{' '}
+          24 categories.{' '}
           <em className="italic text-signal">Six modules.</em>
         </h2>
         <p className="text-[18px] leading-[1.6] text-ink-2 max-w-[560px] mb-14 font-sans">
-          Every audit covers six modules, each with 16 checkpoints. Findings are severity-ranked
-          with evidence, affected pages, and a concrete fix path.
+          Every audit covers six modules with four categories each — 96 checkpoints total.
+          Findings are severity-ranked with evidence, affected pages, and a concrete fix path.
         </p>
 
-        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-px" style={{ background: 'var(--rule)' }}>
+        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {MODULES.map((mod) => {
             const tint = MODULE_TINTS[mod.name] || 'var(--signal)'
             const IconComp = mod.Icon
             return (
-            <div key={mod.name} className="p-7" style={{ background: 'var(--paper)' }}>
-              <div className="flex items-center gap-3 mb-3">
+            <div key={mod.name} className="rounded-[4px] border border-rule p-6" style={{ background: 'var(--paper)' }}>
+              <div className="flex items-center gap-3 mb-4">
                 <span
                   className="w-9 h-9 rounded-[6px] flex items-center justify-center shrink-0"
                   style={{ background: `color-mix(in srgb, ${tint} 12%, transparent)`, color: tint }}
@@ -88,19 +82,15 @@ export function HomeModules() {
                 </span>
                 <div className="flex items-center justify-between flex-1 min-w-0">
                   <h3 className="font-sans text-[16px] font-semibold text-ink">{mod.name}</h3>
-                  <span className="font-mono text-[10px] tracking-[0.08em] uppercase text-m-muted shrink-0 ml-2">{mod.count}</span>
+                  <span className="font-mono text-[10px] tracking-[0.08em] uppercase text-m-muted shrink-0 ml-2">{mod.count} checks</span>
                 </div>
               </div>
-              <p className="font-sans text-[14px] text-ink-2 leading-[1.65] mb-4">{mod.desc}</p>
-              <div className="flex flex-wrap gap-1.5">
-                {mod.checks.map((check) => (
-                  <span
-                    key={check}
-                    className="font-mono text-[9px] tracking-[0.04em] px-2 py-1 rounded-[3px]"
-                    style={{ background: 'var(--paper-2)', color: 'var(--ink-2)' }}
-                  >
-                    {check}
-                  </span>
+              <div className="flex flex-col gap-2">
+                {mod.categories.map((cat) => (
+                  <div key={cat} className="flex items-start gap-2.5">
+                    <span className="w-1.5 h-1.5 rounded-full shrink-0 mt-[5px]" style={{ background: tint }} />
+                    <span className="font-sans text-[13px] text-ink-2 leading-snug">{cat}</span>
+                  </div>
                 ))}
               </div>
             </div>

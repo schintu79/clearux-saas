@@ -17,13 +17,13 @@ const MODULE_TINTS: Record<string, string> = {
   'SEO structure': '#10B981',
 }
 
-const AUDIT_MODULES: { name: string; Icon: LucideIcon; checks: string[] }[] = [
-  { name: 'Foundation', Icon: Scale, checks: ['Site structure and navigation', 'Mobile responsiveness', 'Performance and load times'] },
-  { name: 'Human experience', Icon: Heart, checks: ['Usability and dark patterns', 'Cognitive accessibility', 'Conversion friction'] },
-  { name: 'Inclusive design', Icon: Accessibility, checks: ['WCAG 2.1 AA accessibility', 'Heading hierarchy', 'Colour contrast'] },
-  { name: 'Future readiness', Icon: Brain, checks: ['AI discoverability and readiness', 'Structured data validation', 'LLM probe accuracy'] },
-  { name: 'Brand consistency', Icon: Eye, checks: ['Brand and messaging consistency', 'Cross-page coherence', 'Tone of voice'] },
-  { name: 'SEO structure', Icon: FileSearch, checks: ['SEO structure and metadata', 'Canonical URLs', 'Internal linking'] },
+const AUDIT_MODULES: { name: string; Icon: LucideIcon; categories: string[] }[] = [
+  { name: 'Foundation', Icon: Scale, categories: ['Visual design and first impression', 'Value proposition and messaging', 'Navigation and information architecture', 'Content quality and readability'] },
+  { name: 'Human experience', Icon: Heart, categories: ['Conversion paths and CTAs', 'Trust and credibility signals', 'Ethical design and dark patterns', 'Emotional design and engagement'] },
+  { name: 'Inclusive design', Icon: Accessibility, categories: ['WCAG 2.1 AA accessibility', 'Cognitive accessibility', 'Digital wellbeing and responsibility', 'Responsive and device support'] },
+  { name: 'Future readiness', Icon: Brain, categories: ['Performance and core web vitals', 'AI discoverability and structured data', 'AI agent readiness', 'Cultural and global readiness'] },
+  { name: 'SEO structure', Icon: FileSearch, categories: ['On-page SEO and metadata', 'Technical SEO and crawlability', 'Rich snippets and social markup', 'Content strategy and link structure'] },
+  { name: 'Brand consistency', Icon: Eye, categories: ['Brand identity and guidelines', 'Brand experience and story', 'Visual asset consistency', 'Brand communication and tone'] },
 ]
 
 /* ── FAQ data ── */
@@ -253,8 +253,8 @@ export function ProductContent() {
                 {AUDIT_MODULES.map((mod) => {
                   const tint = MODULE_TINTS[mod.name] || 'var(--signal)'
                   return (
-                    <div key={mod.name} className="rounded-[4px] border border-rule p-4" style={{ background: 'var(--paper-2)' }}>
-                      <div className="flex items-center gap-2.5 mb-2.5">
+                    <div key={mod.name} className="rounded-[4px] border border-rule p-4" style={{ background: 'var(--paper)' }}>
+                      <div className="flex items-center gap-2.5 mb-3">
                         <span
                           className="w-7 h-7 rounded-[5px] flex items-center justify-center shrink-0"
                           style={{ background: `color-mix(in srgb, ${tint} 12%, transparent)`, color: tint }}
@@ -263,11 +263,11 @@ export function ProductContent() {
                         </span>
                         <span className="font-sans text-[13px] font-semibold text-ink">{mod.name}</span>
                       </div>
-                      <div className="flex flex-col gap-1">
-                        {mod.checks.map((check) => (
-                          <div key={check} className="flex items-center gap-2">
-                            <span className="w-1 h-1 rounded-full shrink-0" style={{ background: tint }} />
-                            <span className="font-sans text-[12px] text-ink-2">{check}</span>
+                      <div className="flex flex-col gap-1.5">
+                        {mod.categories.map((cat) => (
+                          <div key={cat} className="flex items-start gap-2">
+                            <span className="w-1 h-1 rounded-full shrink-0 mt-[6px]" style={{ background: tint }} />
+                            <span className="font-sans text-[12px] text-ink-2 leading-snug">{cat}</span>
                           </div>
                         ))}
                       </div>
@@ -276,7 +276,7 @@ export function ProductContent() {
                 })}
               </div>
               <p className="font-sans text-[14px] text-m-muted">
-                96 checkpoints across six modules. Every finding includes affected pages, evidence, and a
+                24 categories across six modules. Every finding includes affected pages, evidence, and a
                 concrete recommendation.
               </p>
             </div>

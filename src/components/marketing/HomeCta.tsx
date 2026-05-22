@@ -51,7 +51,7 @@ export function HomeCta() {
             color: isDark ? 'var(--m-muted)' : 'color-mix(in srgb, var(--paper) 45%, transparent)',
           }}
         >
-          <span>96 checkpoints · 6 modules</span>
+          <span>24 categories · 6 modules</span>
           <span>Free first audit</span>
         </div>
       </div>
