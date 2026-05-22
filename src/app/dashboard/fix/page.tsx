@@ -46,11 +46,12 @@ import CustomSelect from '@/components/ui/CustomSelect';
 import { groupFindingsForDisplay, type GroupedFinding } from '@/lib/audit-findings-presentation';
 import type { AuditFinding, FindingStatus } from '@/types/database';
 
-const STATUS_META: Record<FindingStatus, { label: string; color: string; bg: string; dot: string }> = {
+const STATUS_META: Record<string, { label: string; color: string; bg: string; dot: string }> = {
   open:        { label: 'Open',        color: 'var(--m-muted)', bg: 'var(--paper-2)',                                       dot: 'var(--m-muted)' },
   in_progress: { label: 'In Progress', color: 'var(--warn)',    bg: 'color-mix(in srgb, var(--warn) 10%, transparent)',     dot: 'var(--warn)' },
   fixed:       { label: 'Fixed',       color: 'var(--ok)',      bg: 'color-mix(in srgb, var(--ok) 10%, transparent)',       dot: 'var(--ok)' },
   backlog:     { label: 'Backlog',     color: 'var(--signal)',  bg: 'color-mix(in srgb, var(--signal) 10%, transparent)',   dot: 'var(--signal)' },
+  deferred:    { label: 'Deferred',    color: 'var(--m-muted)', bg: 'color-mix(in srgb, var(--m-muted) 8%, transparent)',   dot: 'var(--m-muted)' },
 };
 
 const STATUS_KEYS: FindingStatus[] = ['open', 'in_progress', 'fixed', 'backlog'];
@@ -123,7 +124,10 @@ function SidebarItem({
 }) {
   const finding = group.primary;
   const sevColor = severityColor(finding.severity);
-  const meta = STATUS_META[finding.status] || STATUS_META.open;
+  // Prefer fix_status from action model, fall back to legacy status
+  const fixStatus = (finding as AuditFinding & { fix_status?: string }).fix_status;
+  const displayStatus = fixStatus && fixStatus !== 'unreviewed' ? fixStatus : finding.status;
+  const meta = STATUS_META[displayStatus] || STATUS_META.open;
   const host = hostnameOf(finding.page_url);
   const fixType = inferFixType(finding);
   const dbFix = (finding as AuditFinding & { fix_type?: string | null }).fix_type;
@@ -490,7 +494,7 @@ function FixPageInner() {
   const [query, setQuery] = useState('');
   const [moduleFilter, setModuleFilter] = useState<string>('all');
   const [sevFilter, setSevFilter] = useState<typeof SEVERITIES[number]>('all');
-  const [statusFilter, setStatusFilter] = useState<'all' | FindingStatus>('all');
+  const [statusFilter, setStatusFilter] = useState<'all' | FindingStatus | 'deferred'>('all');
 
   const [ftpConnections, setFtpConnections] = useState<FtpConnectionSummary[]>([]);
   const [ftpLoaded, setFtpLoaded] = useState(false);
@@ -584,8 +588,12 @@ function FixPageInner() {
   }, [bundle]);
 
   const stats = useMemo(() => {
-    const s: Record<FindingStatus, number> = { open: 0, in_progress: 0, fixed: 0, backlog: 0 };
-    for (const g of groups) s[g.primary.status]++;
+    const s: Record<string, number> = { open: 0, in_progress: 0, fixed: 0, backlog: 0, deferred: 0 };
+    for (const g of groups) {
+      const fs = (g.primary as AuditFinding & { fix_status?: string }).fix_status;
+      if (fs === 'deferred') { s.deferred++; continue; }
+      s[g.primary.status]++;
+    }
     return s;
   }, [groups]);
 
@@ -610,7 +618,15 @@ function FixPageInner() {
   const filteredGroups = useMemo(() => {
     return groups.filter((g) => {
       const f = g.primary;
-      if (statusFilter !== 'all' && f.status !== statusFilter) return false;
+      const fs = (f as AuditFinding & { fix_status?: string }).fix_status;
+      // Handle 'deferred' as a virtual status filter
+      if (statusFilter === 'deferred' as string) {
+        if (fs !== 'deferred') return false;
+      } else if (statusFilter !== 'all') {
+        if (f.status !== statusFilter) return false;
+        // Exclude deferred findings from non-deferred status views
+        if (fs === 'deferred') return false;
+      }
       if (sevFilter !== 'all' && f.severity !== sevFilter) return false;
       if (moduleFilter !== 'all') {
         const names = g.affectedModuleIndices.filter((i) => i >= 0).map((i) => PHASE1_MODULES[i]);
@@ -904,6 +920,7 @@ function FixPageInner() {
                     options={[
                       { value: 'all', label: `All (${groups.length})` },
                       ...STATUS_KEYS.map((s) => ({ value: s, label: `${STATUS_META[s].label} (${stats[s] || 0})` })),
+                      ...(stats.deferred > 0 ? [{ value: 'deferred', label: `Deferred (${stats.deferred})` }] : []),
                     ]}
                   />
                   <FilterDropdown

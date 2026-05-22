@@ -6,6 +6,18 @@ Last updated: 2026-05-22
 
 ---
 
+## Fix Console UI Rebuild (Fix 1 Phase 2)
+
+### Decision-first action panel replaces tab bar
+- **Feature**: Replaced the 2-tab "Fix it yourself / Let your team handle it" tab bar with a decision-first ActionPanel showing 3 capability-driven choices: "Fix it yourself", "Send to your team", and "Save for later". Each choice is gated by the canonical action model from Phase 1 — only actions the finding supports are shown.
+- **Capability model wiring**: FixConsole now imports and uses `resolveCapability()` from `fix-action-model.ts` instead of scattered heuristic pattern matching. AI helper visibility is driven by `capability.aiAssistAvailable`, deploy controls by `capability.selfFixable`, and default owner is shown from `capability.defaultOwner`.
+- **Save for later (defer)**: New DeferPanel component lets users defer a finding with an optional note. Calls `PATCH /api/findings/:id` with `action_mode='defer'` and `fix_status='deferred'`. Deferred findings show a confirmation state and are filtered from the main Fix queue.
+- **Deferred status filter**: Fix page sidebar now shows `fix_status` when available (falling back to legacy `status`). Status filter dropdown includes a "Deferred" option when deferred findings exist. Deferred findings are excluded from other status filters.
+- **Graceful fallback**: If "Fix it yourself" is selected for a non-self-fixable finding, the UI shows a guidance notice explaining the finding requires manual implementation and falls through to HandoffPanel.
+- **Files**: `src/components/dashboard/v2/FixConsole.tsx`, `src/app/dashboard/fix/page.tsx`
+
+---
+
 ## Fix Action Model (Fix 1 Phase 1)
 
 ### Canonical action model for finding lifecycle

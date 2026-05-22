@@ -57,6 +57,16 @@ import type { AuditFinding, FixType as DbFixType } from '@/types/database';
 import DiffPreview from './DiffPreview';
 import type { SurgicalFixResult } from '@/lib/surgical-fix';
 import { detectBatchPattern } from '@/lib/surgical-fix';
+import {
+  resolveCapability,
+  allowedActions,
+  normalizeForFixConsole,
+  actionModeLabel,
+  ownerLabel,
+  type ActionMode,
+  type FixCapability,
+  type NormalizedFixPayload,
+} from '@/lib/fix-action-model';
 
 export interface FtpConnectionForDeploy {
   id: string;
@@ -709,39 +719,171 @@ function DesignFixGuidance({ finding }: { finding: AuditFinding }) {
   );
 }
 
-/* ── Tab Bar (shared between both panels) ────────────────── */
+/* ── Action Panel (decision-first, 3 choices) ────────────── */
 
-function TabBar({
+const ACTION_PANEL_CONFIG: Record<ActionMode, {
+  icon: React.ReactNode;
+  description: string;
+}> = {
+  self_fix: {
+    icon: <Wrench size={13} />,
+    description: 'Deploy the fix directly from your dashboard',
+  },
+  team_handoff: {
+    icon: <Users size={13} />,
+    description: 'Copy or download the brief for your team',
+  },
+  defer: {
+    icon: <ClipboardList size={13} />,
+    description: 'Acknowledge now, address when ready',
+  },
+  fixed: {
+    icon: <Check size={13} />,
+    description: 'Mark this issue as resolved',
+  },
+};
+
+function ActionPanel({
   active,
-  onSwitch,
+  onSelect,
+  allowedModes,
+  capability,
+  defaultOwner,
 }: {
-  active: 'self' | 'handoff';
-  onSwitch: (tab: 'self' | 'handoff') => void;
+  active: ActionMode | null;
+  onSelect: (mode: ActionMode) => void;
+  allowedModes: ActionMode[];
+  capability: FixCapability;
+  defaultOwner: string;
 }) {
+  // Show only the primary 3 actions (self_fix, team_handoff, defer)
+  // "fixed" is handled via the status dropdown, not as a panel choice
+  const visibleModes = allowedModes.filter((m) => m !== 'fixed');
+
   return (
-    <div
-      className="inline-flex items-center rounded-lg p-0.5"
-      style={{ background: 'var(--paper-2)', border: '1px solid var(--rule)' }}
-    >
-      {(['self', 'handoff'] as const).map((tab) => {
-        const isActive = active === tab;
-        return (
-          <button
-            key={tab}
-            type="button"
-            onClick={() => onSwitch(tab)}
-            className="flex items-center gap-1.5 px-4 py-2 text-[12.5px] font-semibold rounded-md transition-all"
-            style={{
-              color: isActive ? 'var(--ink)' : 'var(--m-muted)',
-              background: isActive ? 'var(--card)' : 'transparent',
-              boxShadow: isActive ? '0 1px 3px rgba(0,0,0,0.08)' : 'none',
-            }}
+    <div className="space-y-2">
+      <div className="flex items-center gap-2 mb-1">
+        <span className="text-[10px] font-semibold uppercase tracking-[0.06em]" style={{ color: 'var(--m-muted)' }}>
+          Choose an action
+        </span>
+        {defaultOwner !== 'self' && (
+          <span
+            className="text-[10px] px-1.5 py-0.5 rounded font-medium"
+            style={{ background: 'color-mix(in srgb, var(--signal) 8%, transparent)', color: 'var(--signal)' }}
           >
-            {tab === 'self' ? <Wrench size={12} /> : <Users size={12} />}
-            {tab === 'self' ? 'Fix it yourself' : 'Let your team handle it'}
-          </button>
-        );
-      })}
+            Suggested owner: {ownerLabel(defaultOwner)}
+          </span>
+        )}
+      </div>
+      <div className="flex gap-2 flex-wrap">
+        {visibleModes.map((mode) => {
+          const isActive = active === mode;
+          const config = ACTION_PANEL_CONFIG[mode];
+          return (
+            <button
+              key={mode}
+              type="button"
+              onClick={() => onSelect(mode)}
+              className="flex items-center gap-2 px-4 py-2.5 rounded-lg text-[12.5px] font-semibold transition-all"
+              style={{
+                color: isActive ? 'var(--paper)' : 'var(--ink)',
+                background: isActive ? 'var(--ink)' : 'var(--card)',
+                border: isActive ? '1.5px solid var(--ink)' : '1px solid var(--rule)',
+                boxShadow: isActive ? '0 2px 6px rgba(0,0,0,0.12)' : 'none',
+              }}
+            >
+              {config.icon}
+              {actionModeLabel(mode)}
+            </button>
+          );
+        })}
+      </div>
+      {active && (
+        <p className="text-[11px] mt-1" style={{ color: 'var(--m-muted)' }}>
+          {ACTION_PANEL_CONFIG[active].description}
+        </p>
+      )}
+    </div>
+  );
+}
+
+/* ── Defer Panel (Save for later) ────────────────────────── */
+
+function DeferPanel({
+  finding,
+  onDefer,
+  pending,
+}: {
+  finding: AuditFinding;
+  onDefer: (note?: string) => void;
+  pending: boolean;
+}) {
+  const [note, setNote] = useState('');
+  const [saved, setSaved] = useState(false);
+
+  // Check if already deferred (from DB field or legacy status)
+  const isDeferred = (finding as AuditFinding & { fix_status?: string }).fix_status === 'deferred'
+    || (finding as AuditFinding & { action_mode?: string }).action_mode === 'defer';
+
+  if (isDeferred || saved) {
+    return (
+      <div className="space-y-3 pt-4">
+        <div
+          className="flex items-center gap-2.5 px-4 py-3 rounded-lg"
+          style={{ background: 'color-mix(in srgb, var(--signal) 6%, transparent)', border: '1px solid color-mix(in srgb, var(--signal) 15%, transparent)' }}
+        >
+          <ClipboardList size={14} style={{ color: 'var(--signal)' }} />
+          <div>
+            <p className="text-[12.5px] font-semibold" style={{ color: 'var(--ink)' }}>
+              Saved for later
+            </p>
+            <p className="text-[11px] mt-0.5" style={{ color: 'var(--m-muted)' }}>
+              This finding is deferred. It will stay in your backlog until you're ready to address it.
+            </p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-3 pt-4">
+      <div
+        className="px-4 py-4 rounded-lg"
+        style={{ background: 'var(--paper-2)', border: '1px solid var(--rule)' }}
+      >
+        <div className="flex items-start gap-2.5 mb-3">
+          <ClipboardList size={14} style={{ color: 'var(--signal)' }} className="mt-0.5 flex-shrink-0" />
+          <div>
+            <p className="text-[12.5px] font-semibold" style={{ color: 'var(--ink)' }}>
+              Save for later
+            </p>
+            <p className="text-[11.5px] mt-0.5 leading-relaxed" style={{ color: 'var(--m-muted)' }}>
+              This finding will move to your deferred backlog. You can come back to it anytime.
+            </p>
+          </div>
+        </div>
+        <input
+          type="text"
+          value={note}
+          onChange={(e) => setNote(e.target.value)}
+          onKeyDown={(e) => { if (e.key === 'Enter') { onDefer(note.trim() || undefined); setSaved(true); } }}
+          placeholder="Optional note (e.g. 'after Q3 launch')"
+          className="w-full px-3 py-1.5 rounded-md text-[12px] outline-none focus-visible:ring-2 focus-visible:ring-signal/30 mb-3"
+          style={{ background: '#ffffff', border: '1px solid var(--rule)', color: 'var(--ink)' }}
+          disabled={pending}
+        />
+        <button
+          type="button"
+          onClick={() => { onDefer(note.trim() || undefined); setSaved(true); }}
+          disabled={pending}
+          className="inline-flex items-center gap-1.5 px-4 py-2 rounded-md text-[12px] font-semibold transition-opacity disabled:opacity-50"
+          style={{ background: 'var(--ink)', color: 'var(--paper)' }}
+        >
+          <ClipboardList size={12} />
+          {pending ? 'Saving...' : 'Save for later'}
+        </button>
+      </div>
     </div>
   );
 }
@@ -1109,10 +1251,9 @@ function SelfServeConsole({
   const classification = useMemo(() => classifyFinding(finding, inferredFixType, pages), [finding, inferredFixType, pages]);
   const impact = useMemo(() => inferImpact(finding), [finding]);
   const deployable = useMemo(() => classification === 'fixable_surgical' || classification === 'fixable_bulk', [classification]);
-  const aiApplicable = useMemo(
-    () => isAiHelperApplicable(fixType, finding.recommendation || ''),
-    [fixType, finding.recommendation],
-  );
+  // Use capability model for AI helper gating (Phase 2)
+  const capability = useMemo(() => resolveCapability(finding), [finding]);
+  const aiApplicable = capability.aiAssistAvailable;
   const isJson = useMemo(() => fixType === 'schema' || looksLikeJson(patch), [fixType, patch]);
   const dirty = patch !== initialPatch;
 
@@ -2052,24 +2193,53 @@ export default function FixConsole({
   /** All unique pages from the entire audit — used for batch patterns with scope:'all-pages'. */
   allCrawledPages?: string[];
 }) {
-  const [activeTab, setActiveTab] = useState<'self' | 'handoff'>('self');
+  // ── Capability model ─────────────────────────────────────
+  const capability = useMemo(() => resolveCapability(finding), [finding]);
+  const allowed = useMemo(() => allowedActions(capability), [capability]);
+
+  // ── Active action mode ───────────────────────────────────
+  // Pre-select from DB if previously set, otherwise null (user must choose)
+  const dbActionMode = (finding as AuditFinding & { action_mode?: string }).action_mode as ActionMode | undefined;
+  const [activeMode, setActiveMode] = useState<ActionMode | null>(dbActionMode || null);
+  const [deferPending, setDeferPending] = useState(false);
+
   const fixType = useMemo(() => inferFixType(finding), [finding]);
-  const classification = useMemo(() => classifyFinding(finding, fixType, affectedPages), [finding, fixType, affectedPages]);
   const basePatch = (finding.recommendation || '').trim();
-  // livePatch state removed — preview panel no longer used
-  const deployable = useMemo(() => classification === 'fixable_surgical' || classification === 'fixable_bulk', [classification]);
+
+  // ── Defer handler ────────────────────────────────────────
+  const handleDefer = async (note?: string) => {
+    setDeferPending(true);
+    try {
+      await fetch(`/api/findings/${finding.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action_mode: 'defer',
+          fix_status: 'deferred',
+          ...(note ? { note } : {}),
+        }),
+      });
+      onStatusChange?.('backlog');
+    } catch {
+      // Silently fail — the DeferPanel handles its own saved state
+    } finally {
+      setDeferPending(false);
+    }
+  };
 
   return (
     <div className="space-y-4">
-      <TabBar active={activeTab} onSwitch={setActiveTab} />
+      {/* Decision-first action panel */}
+      <ActionPanel
+        active={activeMode}
+        onSelect={setActiveMode}
+        allowedModes={allowed}
+        capability={capability}
+        defaultOwner={capability.defaultOwner}
+      />
 
-      {activeTab === 'handoff' ? (
-        <HandoffPanel
-          finding={finding}
-          patch={basePatch}
-          fixType={fixType}
-        />
-      ) : (
+      {/* Render the selected action's panel */}
+      {activeMode === 'self_fix' && capability.selfFixable && (
         <SelfServeConsole
           finding={finding}
           ftpConnections={ftpConnections}
@@ -2077,6 +2247,43 @@ export default function FixConsole({
           affectedPages={affectedPages}
           allCrawledPages={allCrawledPages}
         />
+      )}
+
+      {activeMode === 'team_handoff' && (
+        <HandoffPanel
+          finding={finding}
+          patch={basePatch}
+          fixType={fixType}
+        />
+      )}
+
+      {activeMode === 'defer' && (
+        <DeferPanel
+          finding={finding}
+          onDefer={handleDefer}
+          pending={deferPending || pending}
+        />
+      )}
+
+      {/* Fallback: self_fix selected but not self-fixable → show HandoffPanel with guidance */}
+      {activeMode === 'self_fix' && !capability.selfFixable && (
+        <div className="space-y-3 pt-4">
+          <div
+            className="flex items-start gap-2 px-3 py-2.5 rounded-md text-[11.5px]"
+            style={{ background: 'color-mix(in srgb, var(--warn) 6%, transparent)', color: 'var(--warn)' }}
+          >
+            <Palette size={12} className="mt-0.5 flex-shrink-0" />
+            <span>
+              This finding can't be deployed automatically — it requires manual implementation.
+              Use the team handoff tools below to share it with your {ownerLabel(capability.defaultOwner).toLowerCase()} team.
+            </span>
+          </div>
+          <HandoffPanel
+            finding={finding}
+            patch={basePatch}
+            fixType={fixType}
+          />
+        </div>
       )}
     </div>
   );
