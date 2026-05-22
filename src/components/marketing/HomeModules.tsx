@@ -1,4 +1,15 @@
 import { SectionMarker } from './SectionMarker'
+import { Scale, Heart, Accessibility, Brain, FileSearch, Eye } from 'lucide-react'
+
+/* Dashboard-matching MODULE_TINTS colors */
+const MODULE_TINTS: Record<string, string> = {
+  'Foundation': '#3B82F6',
+  'Human experience': '#EC4899',
+  'Inclusive design': '#8B5CF6',
+  'Future readiness': '#F59E0B',
+  'Brand consistency': '#06B6D4',
+  'SEO structure': '#10B981',
+}
 
 const MODULES = [
   {
@@ -6,74 +17,42 @@ const MODULES = [
     count: 16,
     desc: 'Site structure, navigation, page speed, mobile responsiveness, and technical baseline.',
     checks: ['Page load speed', 'Mobile layout', 'Navigation depth', 'Link integrity'],
-    icon: (
-      <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-        <rect x="3" y="3" width="14" height="14" rx="2" />
-        <path d="M3 8h14M8 8v9" />
-      </svg>
-    ),
+    Icon: Scale,
   },
   {
     name: 'Human experience',
     count: 16,
     desc: 'Usability patterns, dark patterns, cognitive load, emotional design, and conversion friction.',
     checks: ['Dark pattern detection', 'Cognitive load', 'Form usability', 'Trust signals'],
-    icon: (
-      <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-        <circle cx="10" cy="7" r="3" />
-        <path d="M4 17c0-3.3 2.7-6 6-6s6 2.7 6 6" />
-      </svg>
-    ),
+    Icon: Heart,
   },
   {
     name: 'Inclusive design',
     count: 16,
     desc: 'WCAG 2.1 AA compliance, keyboard navigation, screen reader compatibility, and colour contrast.',
     checks: ['Colour contrast', 'Keyboard navigation', 'Screen readers', 'Touch targets'],
-    icon: (
-      <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-        <circle cx="10" cy="10" r="7" />
-        <path d="M10 6v4l2.5 2.5" />
-      </svg>
-    ),
+    Icon: Accessibility,
   },
   {
     name: 'Future readiness',
     count: 16,
     desc: 'AI discoverability, structured data, llms.txt, LLM probe accuracy, and citation quality.',
     checks: ['LLM probe testing', 'Structured data', 'AI discovery files', 'Citation accuracy'],
-    icon: (
-      <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M10 3l6 4v6l-6 4-6-4V7l6-4z" />
-        <path d="M10 10l6-4M10 10v7M10 10L4 7" />
-      </svg>
-    ),
+    Icon: Brain,
   },
   {
     name: 'Brand consistency',
     count: 16,
     desc: 'Visual identity alignment, tone of voice, messaging clarity, and cross-page coherence.',
     checks: ['Visual identity', 'Tone of voice', 'Messaging clarity', 'Cross-page coherence'],
-    icon: (
-      <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-        <rect x="4" y="4" width="5" height="5" rx="1" />
-        <rect x="11" y="4" width="5" height="5" rx="1" />
-        <rect x="4" y="11" width="5" height="5" rx="1" />
-        <rect x="11" y="11" width="5" height="5" rx="1" />
-      </svg>
-    ),
+    Icon: Eye,
   },
   {
     name: 'SEO structure',
     count: 16,
     desc: 'Meta tags, heading hierarchy, canonical URLs, internal linking, and indexability.',
     checks: ['Meta tags', 'Heading hierarchy', 'Canonical URLs', 'Internal linking'],
-    icon: (
-      <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-        <circle cx="10" cy="10" r="7" />
-        <path d="M3 10h14M10 3c-2 2.3-3 4.7-3 7s1 4.7 3 7c2-2.3 3-4.7 3-7s-1-4.7-3-7z" />
-      </svg>
-    ),
+    Icon: FileSearch,
   },
 ]
 
@@ -95,14 +74,17 @@ export function HomeModules() {
         </p>
 
         <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-px" style={{ background: 'var(--rule)' }}>
-          {MODULES.map((mod) => (
+          {MODULES.map((mod) => {
+            const tint = MODULE_TINTS[mod.name] || 'var(--signal)'
+            const IconComp = mod.Icon
+            return (
             <div key={mod.name} className="p-7" style={{ background: 'var(--paper)' }}>
               <div className="flex items-center gap-3 mb-3">
                 <span
                   className="w-9 h-9 rounded-[6px] flex items-center justify-center shrink-0"
-                  style={{ background: 'var(--signal-soft)', color: 'var(--signal)' }}
+                  style={{ background: `color-mix(in srgb, ${tint} 12%, transparent)`, color: tint }}
                 >
-                  {mod.icon}
+                  <IconComp size={20} strokeWidth={1.5} />
                 </span>
                 <div className="flex items-center justify-between flex-1 min-w-0">
                   <h3 className="font-sans text-[16px] font-semibold text-ink">{mod.name}</h3>
@@ -122,7 +104,7 @@ export function HomeModules() {
                 ))}
               </div>
             </div>
-          ))}
+          )})}
         </div>
       </div>
     </section>

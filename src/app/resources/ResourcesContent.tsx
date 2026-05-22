@@ -74,10 +74,11 @@ export function ResourcesContent() {
         <div className="max-w-mkt mx-auto px-8 max-sm:px-5">
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {ARTICLES.map((article) => (
-              <article
+              <Link
                 key={article.slug}
-                className="group rounded-[4px] border border-rule p-6 hover:border-ink transition-colors"
-                style={{ background: 'var(--paper)' }}
+                href={`/resources/${article.slug}`}
+                className="group rounded-[4px] border border-rule p-6 hover:border-ink transition-colors no-underline block"
+                style={{ background: 'var(--paper-2)' }}
               >
                 <div className="flex items-center gap-3 mb-4">
                   <span className="font-mono text-[10px] tracking-[0.08em] uppercase text-signal">{article.category}</span>
@@ -87,7 +88,7 @@ export function ResourcesContent() {
                   {article.title}
                 </h2>
                 <p className="font-sans text-[14px] text-ink-2 leading-relaxed">{article.excerpt}</p>
-              </article>
+              </Link>
             ))}
           </div>
 

@@ -1195,7 +1195,7 @@ function BrandDnaPage({ brand }: { brand: typeof MOCK_BRANDS[number] }) {
             Visual identity
           </p>
           <div className="flex gap-2 mb-3">
-            {['#14130F', '#5E6B2F', '#D4CCB8', '#F2EDE3'].map((c) => (
+            {['#14130F', '#5E6B2F', '#F3F2EE', '#FFFFFF'].map((c) => (
               <div key={c} className="w-9 h-9 rounded-md" style={{ background: c, border: '1px solid #ece8db' }} />
             ))}
           </div>

@@ -44,16 +44,16 @@ select option {
 
 /* ── Light palette — v2 "The Instrument" ──────────────────── */
 :root {
-  /* v2 editorial tokens — warm parchment palette */
-  --paper: #F2EDE3;
-  --paper-2: #EAE3D4;
-  --paper-3: #E0D8C5;
+  /* v2 editorial tokens — light, clean palette */
+  --paper: #FFFFFF;
+  --paper-2: #F3F2EE;
+  --paper-3: #EAE8E3;
   --ink: #14130F;
   --ink-2: #2A2823;
   --m-muted: #6B6759;
   --m-muted-2: #8A857A;
-  --rule: #D4CCB8;
-  --rule-2: #C2B89E;
+  --rule: #E5E3DE;
+  --rule-2: #D4D1CB;
   --signal: #5E6B2F;
   --signal-hot: #4A5424;
   --signal-soft: rgba(94, 107, 47, 0.12);

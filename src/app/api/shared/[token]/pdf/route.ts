@@ -24,7 +24,7 @@ const T = {
   body:      '#3B3830',
   muted:     '#6B6759',
   faint:     '#9B9585',
-  rule:      '#D4CCB8',
+  rule:      '#E5E3DE',
   ruleFaint: '#E8E3D6',
   pageBg:    '#FFFFFF',
   offWhite:  '#F8F6F2',

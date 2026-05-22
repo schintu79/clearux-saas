@@ -472,7 +472,7 @@ export default function WhyClearUX() {
             Why Fixpath
           </h2>
           <p className="text-muted text-base md:text-lg leading-relaxed max-w-2xl mx-auto">
-            User-behavior tools show what happened. Accessibility scanners check WCAG boxes. UX consultants cost $5K&ndash;15K and take weeks. Fixpath is the only audit that covers all four — in minutes, from $9.90 per audit.
+            User-behavior tools show what happened. Accessibility scanners check WCAG boxes. UX consultants cost $5K&ndash;15K and take weeks. Fixpath covers all four and turns findings into structured fixes — in minutes, from $9.90 per audit.
           </p>
         </motion.div>
 
