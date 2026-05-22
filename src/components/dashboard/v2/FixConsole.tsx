@@ -76,7 +76,8 @@ type UiFixType =
   | 'accessibility'
   | 'content'
   | 'technical'
-  | 'design';
+  | 'design'
+  | 'code';
 
 /**
  * Fix classification — the 4-way gate that determines what the console
@@ -197,6 +198,26 @@ export function inferFixType(finding: AuditFinding): UiFixType {
 }
 
 /**
+ * Detect whether a surgical fix result is a code/syntax-level fix.
+ * These are things like trailing commas, invalid JSON, missing brackets,
+ * malformed markup, etc. — distinct from content or design issues.
+ */
+function isCodeLevelFix(result: SurgicalFixResult): boolean {
+  const text = `${result.aiExplanation || ''} ${result.operation || ''}`.toLowerCase();
+  return /trailing\s+comma|extra\s+comma|missing\s+comma|stray\s+comma/.test(text)
+    || /invalid\s+json|malformed\s+json|json\s+syntax|json\s+parse/.test(text)
+    || /syntax\s+error|syntax\s+issue|syntax\s+fix/.test(text)
+    || /missing\s+(closing|opening)\s+(bracket|brace|tag|quote|parenthes)/.test(text)
+    || /unclosed\s+(tag|bracket|brace|quote|string)/.test(text)
+    || /duplicate\s+(key|property|attribute|tag|element)/.test(text)
+    || /removed?\s+(trailing|extra|duplicate|stray)\s/.test(text)
+    || /added?\s+missing\s+(closing|opening|semicolon|bracket|brace|quote)/.test(text)
+    || /fixed?\s+(typo|whitespace|indent|encoding|escaping)\s+in\s+(the\s+)?(code|markup|html|json|script)/.test(text)
+    || /malformed\s+(html|markup|xml|tag|attribute|script)/.test(text)
+    || /\b(nesting|self-closing|void\s+element)\s+(error|issue|fix)/.test(text);
+}
+
+/**
  * Classify a finding into one of the 4 fix categories.
  * This is the HARD GATE — every finding must pass through this before
  * the console decides what UI to show.
@@ -242,12 +263,13 @@ export function classifyFinding(
 /* ── Fix type metadata (for badges) ─────────────────────── */
 
 const FIX_TYPE_META: Record<string, { label: string; icon: React.ReactNode; color: string }> = {
-  html:    { label: 'HTML',    icon: <Code size={10} />,     color: 'var(--signal)' },
-  meta:    { label: 'Meta',    icon: <Tag size={10} />,      color: 'var(--signal)' },
-  schema:  { label: 'Schema',  icon: <FileCode size={10} />, color: 'var(--signal)' },
-  copy:    { label: 'Copy',    icon: <PenLine size={10} />,  color: 'var(--signal)' },
-  file:    { label: 'File',    icon: <FilePlus size={10} />, color: 'var(--signal)' },
-  config:  { label: 'Config',  icon: <Settings size={10} />, color: 'var(--signal)' },
+  html:    { label: 'HTML',      icon: <Code size={10} />,     color: 'var(--signal)' },
+  meta:    { label: 'Meta',      icon: <Tag size={10} />,      color: 'var(--signal)' },
+  schema:  { label: 'Schema',    icon: <FileCode size={10} />, color: 'var(--signal)' },
+  copy:    { label: 'Copy',      icon: <PenLine size={10} />,  color: 'var(--signal)' },
+  file:    { label: 'File',      icon: <FilePlus size={10} />, color: 'var(--signal)' },
+  config:  { label: 'Config',    icon: <Settings size={10} />, color: 'var(--signal)' },
+  code:    { label: 'Code fix',  icon: <Code size={10} />,     color: 'var(--signal)' },
 };
 
 const CLASSIFICATION_META: Record<FixClassification, { label: string; color: string; icon: React.ReactNode }> = {
@@ -436,7 +458,7 @@ function WhatWillChange({
               Fix type
             </span>
             <span className="text-[12px]" style={{ color: 'var(--ink)' }}>
-              {dbType ? FIX_TYPE_META[dbType]?.label || dbType : uiFixType.charAt(0).toUpperCase() + uiFixType.slice(1)}
+              {dbType ? FIX_TYPE_META[dbType]?.label || dbType : FIX_TYPE_META[uiFixType]?.label || uiFixType.charAt(0).toUpperCase() + uiFixType.slice(1)}
             </span>
           </div>
           <div>
@@ -1081,8 +1103,10 @@ function SelfServeConsole({
   }, [selectedConn, pages.length]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const hasFtp = ftpConnections.length > 0;
-  const fixType = useMemo(() => inferFixType(finding), [finding]);
-  const classification = useMemo(() => classifyFinding(finding, fixType, pages), [finding, fixType, pages]);
+  const [fixTypeOverride, setFixTypeOverride] = useState<UiFixType | null>(null);
+  const inferredFixType = useMemo(() => inferFixType(finding), [finding]);
+  const fixType = fixTypeOverride || inferredFixType;
+  const classification = useMemo(() => classifyFinding(finding, inferredFixType, pages), [finding, inferredFixType, pages]);
   const impact = useMemo(() => inferImpact(finding), [finding]);
   const deployable = useMemo(() => classification === 'fixable_surgical' || classification === 'fixable_bulk', [classification]);
   const aiApplicable = useMemo(
@@ -1199,7 +1223,20 @@ function SelfServeConsole({
         setSurgicalError(data?.error || `Surgical fix failed (${res.status}).`);
         return;
       }
-      setSurgicalResult(data as SurgicalFixResult);
+      const result = data as SurgicalFixResult;
+      setSurgicalResult(result);
+      // Replace the generic finding recommendation with the specific
+      // surgical fix explanation so the user sees exactly what changed
+      // (e.g. "Removed trailing comma in JSON-LD" instead of the vague
+      // "Add an Organization JSON-LD block").
+      if (result.aiExplanation?.trim()) {
+        setPatch(result.aiExplanation.trim());
+      }
+      // Detect code/syntax fixes — override the fix type label so the
+      // "What will change" card shows "Code fix" instead of "Schema" or "HTML"
+      if (isCodeLevelFix(result)) {
+        setFixTypeOverride('code');
+      }
     } catch (err: any) {
       setSurgicalError(err?.message || 'Network error generating surgical fix.');
     } finally {
