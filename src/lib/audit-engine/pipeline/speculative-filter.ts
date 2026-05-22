@@ -91,12 +91,16 @@ export const UNVERIFIABLE_TOPICS: RegExp[] = [
   /(?:font[\s-]?size|line[\s-]?height|line[\s-]?length|text[\s-]?size)\s+(?:below|above|not|does\s+not)/i,
   /(?:body|base)\s+(?:text|font)\s+(?:size|readability)/i,
 
-  // HTML attribute-dependent
+  // HTML attribute-dependent (missing OR wrong lang — both unverifiable from text)
   /missing\s+lang\s+attribute/i,
   /(?:html|root)\s+(?:element\s+)?lang/i,
   /(?:does\s+not|doesn.t)\s+declare\s+(?:its\s+)?language/i,
   /lang\s+attribute\s+(?:missing|absent|not\s+set|not\s+declared)/i,
   /(?:missing|no|absent|lacks?)\s+(?:html\s+)?lang(?:uage)?\s+(?:attribute|declaration|tag)/i,
+  /lang(?:uage)?\s+(?:attribute\s+)?(?:does\s+not|doesn.t|does\s*n.t)\s+match/i,
+  /(?:incorrect|wrong|invalid|mismatched?)\s+(?:html\s+)?lang(?:uage)?\s+(?:attribute|value|tag|declaration)/i,
+  /lang\s+(?:attribute\s+)?(?:should\s+be|set\s+to|is\s+not|mismatch)/i,
+  /(?:html|page)\s+lang(?:uage)?\s+(?:is|set\s+to)\s+['"]?\w+['"]?\s+(?:but|instead\s+of|should)/i,
   /(?:missing|lacks?)\s+(?:aria|autocomplete|htmlfor|for=)/i,
   // REMOVED: form label/labeling IS a valid Inclusive Design concern (modules 8-11)
   // /(?:missing|lacks?)\s+(?:form\s+)?(?:label|labeling|labelling)\s+(?:attribute|association)/i,
@@ -150,6 +154,10 @@ const HEAD_TAG_VERIFIABLE: RegExp[] = [
   /(?:does\s+not|doesn.t)\s+declare\s+(?:its\s+)?language/i,
   /lang\s+attribute\s+(?:missing|absent|not\s+set|not\s+declared)/i,
   /(?:missing|no|absent|lacks?)\s+(?:html\s+)?lang(?:uage)?\s+(?:attribute|declaration|tag)/i,
+  /lang(?:uage)?\s+(?:attribute\s+)?(?:does\s+not|doesn.t|does\s*n.t)\s+match/i,
+  /(?:incorrect|wrong|invalid|mismatched?)\s+(?:html\s+)?lang(?:uage)?\s+(?:attribute|value|tag|declaration)/i,
+  /lang\s+(?:attribute\s+)?(?:should\s+be|set\s+to|is\s+not|mismatch)/i,
+  /(?:html|page)\s+lang(?:uage)?\s+(?:is|set\s+to)\s+['"]?\w+['"]?\s+(?:but|instead\s+of|should)/i,
   /(?:missing|lacks?)\s+hreflang/i,
 ]
 

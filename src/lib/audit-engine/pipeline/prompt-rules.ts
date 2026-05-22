@@ -154,7 +154,7 @@ DO NOT flag these common false positives:
 - "Missing focus indicators" or "missing focus states" — you cannot see CSS from text content
 - "Missing form validation" or "missing error messages" — you cannot see JavaScript behavior from text
 - "Missing responsive design" or "touch target too small" — you cannot verify this from text
-- "Missing lang attribute" — you cannot see HTML attributes from text content
+- "Missing lang attribute" or "wrong/incorrect lang attribute value" — you cannot see HTML attributes from text content, so you cannot know what lang value is set
 - "Missing meta tags" or "missing OG tags" — you cannot see <head> content from text extraction
 `.trim()
 
