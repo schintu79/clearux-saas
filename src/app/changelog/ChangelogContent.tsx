@@ -48,10 +48,10 @@ export function ChangelogContent() {
   return (
     <main>
       {/* Hero */}
-      <section className="py-20 sm:py-[80px] border-b border-rule">
+      <section className="py-20 sm:py-[100px] border-b border-rule">
         <div className="max-w-mkt mx-auto px-8 max-sm:px-5">
           <p className="font-mono text-[11px] tracking-[0.12em] uppercase text-signal mb-6">Changelog</p>
-          <h1 className="font-serif font-normal text-ink leading-[0.94] tracking-[-0.025em] mb-5" style={{ fontSize: 'clamp(44px, 6vw, 72px)' }}>
+          <h1 className="font-serif font-normal text-ink leading-[0.94] tracking-[-0.025em] mb-6" style={{ fontSize: 'clamp(44px, 6vw, 80px)' }}>
             What&apos;s{' '}
             <em className="italic text-signal">new.</em>
           </h1>
@@ -62,7 +62,7 @@ export function ChangelogContent() {
       </section>
 
       {/* Entries */}
-      <section className="py-[60px] max-sm:py-10">
+      <section className="py-[80px] max-sm:py-12">
         <div className="max-w-mkt mx-auto px-8 max-sm:px-5">
           <div className="max-w-3xl">
             {ENTRIES.map((entry, i) => (

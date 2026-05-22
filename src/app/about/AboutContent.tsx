@@ -13,11 +13,11 @@ export default function AboutContent() {
       <section className="py-[100px] border-b border-rule max-sm:py-16">
         <div className="max-w-mkt mx-auto px-8 max-sm:px-5">
           <SectionMarker number="01" label="About" />
-          <h1 className="font-serif font-normal text-ink leading-[0.94] tracking-[-0.025em] mb-8" style={{ fontSize: 'clamp(48px, 7vw, 96px)' }}>
+          <h1 className="font-serif font-normal text-ink leading-[0.94] tracking-[-0.025em] mb-6" style={{ fontSize: 'clamp(44px, 6vw, 80px)' }}>
             Full clarity, <em className="italic text-signal">at your fingertips.</em>
           </h1>
-          <p className="text-[19px] leading-[1.55] text-ink-2 max-w-[600px] font-sans">
-            Fixpath exists because great user experience shouldn&apos;t be a luxury reserved for companies with six-figure consultancy budgets. We audit your website, brand identity, and design — giving every team access to professional-grade insights in minutes.
+          <p className="text-[18px] leading-[1.6] text-ink-2 max-w-[600px] font-sans">
+            Fixpath exists because great user experience shouldn&apos;t require a six-figure consultancy budget. We help teams find the issues hurting their site, fix them directly from the dashboard, and track improvement over time — giving every team access to professional-grade website audits in minutes.
           </p>
         </div>
       </section>
@@ -26,7 +26,7 @@ export default function AboutContent() {
       <section className="py-[100px] border-b border-rule max-sm:py-16">
         <div className="max-w-mkt mx-auto px-8 max-sm:px-5">
           <SectionMarker number="02" label="Origin" />
-          <h2 className="font-serif font-normal text-ink leading-[0.96] tracking-[-0.02em] mb-12" style={{ fontSize: 'clamp(36px, 5vw, 64px)' }}>
+          <h2 className="font-serif font-normal text-ink leading-[0.94] tracking-[-0.025em] mb-12" style={{ fontSize: 'clamp(36px, 5vw, 64px)' }}>
             Why Fixpath <em className="italic text-signal">exists</em>
           </h2>
 
@@ -68,7 +68,7 @@ export default function AboutContent() {
       <section className="py-[100px] border-b border-rule max-sm:py-16">
         <div className="max-w-mkt mx-auto px-8 max-sm:px-5">
           <SectionMarker number="03" label="Founder" />
-          <h2 className="font-serif font-normal text-ink leading-[0.96] tracking-[-0.02em] mb-12" style={{ fontSize: 'clamp(36px, 5vw, 64px)' }}>
+          <h2 className="font-serif font-normal text-ink leading-[0.94] tracking-[-0.025em] mb-12" style={{ fontSize: 'clamp(36px, 5vw, 64px)' }}>
             Built by someone who <em className="italic text-signal">lived the problem</em>
           </h2>
 
@@ -115,7 +115,7 @@ export default function AboutContent() {
       <section className="py-[100px] border-b border-rule max-sm:py-16">
         <div className="max-w-mkt mx-auto px-8 max-sm:px-5">
           <SectionMarker number="04" label="Values" />
-          <h2 className="font-serif font-normal text-ink leading-[0.96] tracking-[-0.02em] mb-5" style={{ fontSize: 'clamp(36px, 5vw, 64px)' }}>
+          <h2 className="font-serif font-normal text-ink leading-[0.94] tracking-[-0.025em] mb-5" style={{ fontSize: 'clamp(36px, 5vw, 64px)' }}>
             Clarity. Rigour. <em className="italic text-signal">Speed.</em>
           </h2>
           <p className="text-[17px] text-ink-2 leading-[1.55] max-w-[520px] mb-14 font-sans">

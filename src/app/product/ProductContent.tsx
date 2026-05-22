@@ -15,14 +15,19 @@ const PRODUCT_FAQS = [
   { q: 'How is this different from Lighthouse or PageSpeed?', a: 'Lighthouse focuses on performance and basic accessibility. Fixpath covers 96 checkpoints across UX, accessibility, AI readiness, brand consistency, SEO, and more. It also helps you fix issues and tracks improvement, rather than just listing problems.' },
 ]
 
-/* ── Mockup: Finding detail card ── */
+/* ── Mockup: Finding detail card — mirrors real findings panel ── */
 function FindingMockup() {
   return (
     <div className="rounded-[4px] border border-rule overflow-hidden" style={{ background: 'var(--paper)' }}>
-      <div className="px-5 py-3.5 border-b border-rule flex items-center justify-between">
-        <span className="font-mono text-[10px] tracking-[0.08em] uppercase text-m-muted">Finding detail</span>
-        <span className="font-mono text-[9px] font-semibold tracking-[0.08em] uppercase px-2 py-0.5 rounded-[2px]" style={{ color: 'var(--severe)', background: 'color-mix(in srgb, var(--severe) 12%, transparent)' }}>Critical</span>
+      {/* Header bar with severity + module */}
+      <div className="px-5 py-3 border-b border-rule flex items-center justify-between" style={{ background: 'var(--paper-2)' }}>
+        <div className="flex items-center gap-2.5">
+          <span className="font-mono text-[9px] font-semibold tracking-[0.08em] uppercase px-2 py-0.5 rounded-[2px]" style={{ color: 'var(--severe)', background: 'color-mix(in srgb, var(--severe) 12%, transparent)' }}>Critical</span>
+          <span className="font-mono text-[10px] tracking-[0.06em] uppercase text-m-muted">Human experience</span>
+        </div>
+        <span className="font-mono text-[9px] tracking-[0.06em] uppercase text-m-muted">HX-04</span>
       </div>
+      {/* Finding content */}
       <div className="p-5">
         <h4 className="font-sans text-[15px] font-semibold text-ink mb-2">Login flow uses 3 dark-pattern signals that erode trust</h4>
         <p className="font-sans text-[13px] text-ink-2 leading-relaxed mb-4">
@@ -30,75 +35,153 @@ function FindingMockup() {
           on the modal overlay. These patterns reduce user trust and may violate consumer protection
           regulations in the EU.
         </p>
-        <div className="flex items-center gap-4 text-[11px] font-mono text-m-muted tracking-[0.06em] uppercase">
-          <span>Module: Human experience</span>
-          <span>Pages: /login, /signup</span>
+        {/* Evidence + affected pages — mirrors real layout */}
+        <div className="rounded border border-rule p-3 mb-4" style={{ background: 'var(--paper-2)' }}>
+          <p className="font-mono text-[9px] tracking-[0.08em] uppercase text-m-muted mb-2">Evidence</p>
+          <p className="font-mono text-[11px] text-ink-2 leading-relaxed">
+            &quot;Only 2 spots left!&quot; urgency text + pre-checked newsletter opt-in + modal close button opacity: 0.15
+          </p>
+        </div>
+        <div className="flex items-center gap-4 text-[11px] font-mono text-m-muted tracking-[0.06em]">
+          <span className="uppercase">Affected: /login, /signup</span>
+          <span className="flex items-center gap-1.5">
+            <span className="w-1.5 h-1.5 rounded-full bg-signal" />
+            <span className="uppercase text-signal">Fix available</span>
+          </span>
         </div>
       </div>
-      <div className="px-5 py-3.5 border-t border-rule" style={{ background: 'var(--paper-2)' }}>
-        <p className="font-mono text-[10px] tracking-[0.08em] uppercase text-signal">Fix available</p>
+      {/* Action bar */}
+      <div className="px-5 py-3 border-t border-rule flex items-center gap-3">
+        <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[11px] font-sans font-medium bg-ink text-paper">
+          View fix
+        </span>
+        <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[11px] font-sans font-medium border border-rule text-ink">
+          Export finding
+        </span>
       </div>
     </div>
   )
 }
 
-/* ── Mockup: Fix console ── */
+/* ── Mockup: Fix console — mirrors real diff-preview + deploy flow ── */
 function FixMockup() {
   return (
     <div className="rounded-[4px] border border-rule overflow-hidden" style={{ background: 'var(--paper)' }}>
-      <div className="px-5 py-3.5 border-b border-rule flex items-center justify-between">
-        <span className="font-mono text-[10px] tracking-[0.08em] uppercase text-m-muted">Fix console</span>
-        <span className="font-mono text-[10px] tracking-[0.08em] uppercase text-signal">Ready to deploy</span>
-      </div>
-      <div className="p-5 space-y-3">
-        <div className="rounded border border-rule p-3" style={{ background: 'var(--paper-2)' }}>
-          <p className="font-mono text-[11px] text-m-muted mb-1">Before</p>
-          <p className="font-mono text-[12px] text-severe leading-relaxed line-through">&lt;input type=&quot;checkbox&quot; checked&gt; Subscribe to newsletter</p>
+      {/* Header with finding reference */}
+      <div className="px-5 py-3 border-b border-rule flex items-center justify-between" style={{ background: 'var(--paper-2)' }}>
+        <div className="flex items-center gap-2.5">
+          <span className="font-mono text-[10px] tracking-[0.08em] uppercase text-m-muted">Fix console</span>
+          <span className="font-mono text-[9px] tracking-[0.06em] uppercase text-m-muted">HX-04</span>
         </div>
-        <div className="rounded border border-rule p-3" style={{ background: 'color-mix(in srgb, var(--signal) 6%, var(--paper))' }}>
-          <p className="font-mono text-[11px] text-m-muted mb-1">After</p>
-          <p className="font-mono text-[12px] text-signal leading-relaxed">&lt;input type=&quot;checkbox&quot;&gt; Subscribe to newsletter</p>
-        </div>
-      </div>
-      <div className="px-5 py-3.5 border-t border-rule flex items-center gap-3">
-        <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[12px] font-sans font-medium bg-ink text-paper">
-          Deploy fix
+        <span className="flex items-center gap-1.5">
+          <span className="w-1.5 h-1.5 rounded-full bg-signal" />
+          <span className="font-mono text-[10px] tracking-[0.08em] uppercase text-signal">Ready to deploy</span>
         </span>
-        <span className="font-mono text-[10px] text-m-muted tracking-[0.06em] uppercase">via SFTP to /login.html</span>
+      </div>
+      {/* File path */}
+      <div className="px-5 py-2 border-b border-rule">
+        <span className="font-mono text-[11px] text-ink-2">/login.html</span>
+      </div>
+      {/* Diff preview */}
+      <div className="p-5 space-y-2">
+        <div className="rounded border border-rule p-3" style={{ background: 'color-mix(in srgb, var(--severe) 4%, var(--paper))' }}>
+          <div className="flex items-center gap-2 mb-1.5">
+            <span className="font-mono text-[10px] text-severe">-</span>
+            <span className="font-mono text-[10px] text-m-muted">line 47</span>
+          </div>
+          <p className="font-mono text-[11px] text-severe leading-relaxed line-through">&lt;input type=&quot;checkbox&quot; checked&gt; Subscribe to newsletter</p>
+        </div>
+        <div className="rounded border border-rule p-3" style={{ background: 'color-mix(in srgb, var(--signal) 4%, var(--paper))' }}>
+          <div className="flex items-center gap-2 mb-1.5">
+            <span className="font-mono text-[10px] text-signal">+</span>
+            <span className="font-mono text-[10px] text-m-muted">line 47</span>
+          </div>
+          <p className="font-mono text-[11px] text-signal leading-relaxed">&lt;input type=&quot;checkbox&quot;&gt; Subscribe to newsletter</p>
+        </div>
+        <div className="rounded border border-rule p-3" style={{ background: 'color-mix(in srgb, var(--severe) 4%, var(--paper))' }}>
+          <div className="flex items-center gap-2 mb-1.5">
+            <span className="font-mono text-[10px] text-severe">-</span>
+            <span className="font-mono text-[10px] text-m-muted">line 52</span>
+          </div>
+          <p className="font-mono text-[11px] text-severe leading-relaxed line-through">&lt;p class=&quot;urgency&quot;&gt;Only 2 spots left!&lt;/p&gt;</p>
+        </div>
+      </div>
+      {/* Deploy bar */}
+      <div className="px-5 py-3 border-t border-rule flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[11px] font-sans font-medium bg-ink text-paper">
+            Deploy fix
+          </span>
+          <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[11px] font-sans font-medium border border-rule text-ink">
+            Edit diff
+          </span>
+        </div>
+        <span className="font-mono text-[9px] text-m-muted tracking-[0.06em] uppercase">SFTP</span>
       </div>
     </div>
   )
 }
 
-/* ── Mockup: Score tracking ── */
+/* ── Mockup: Score tracking — mirrors real score history + comparison view ── */
 function TrackMockup() {
   return (
     <div className="rounded-[4px] border border-rule overflow-hidden" style={{ background: 'var(--paper)' }}>
-      <div className="px-5 py-3.5 border-b border-rule">
+      <div className="px-5 py-3 border-b border-rule flex items-center justify-between" style={{ background: 'var(--paper-2)' }}>
         <span className="font-mono text-[10px] tracking-[0.08em] uppercase text-m-muted">Score history</span>
+        <span className="font-mono text-[9px] tracking-[0.06em] uppercase text-m-muted">5 audits / 12 weeks</span>
       </div>
       <div className="p-5">
-        <div className="flex items-end gap-4 mb-6">
-          {[42, 55, 62, 71, 78].map((score, i) => (
+        {/* Score trend bars */}
+        <div className="flex items-end gap-3 mb-5">
+          {[
+            { score: 42, date: 'Feb 3' },
+            { score: 55, date: 'Mar 1' },
+            { score: 62, date: 'Mar 22' },
+            { score: 71, date: 'Apr 10' },
+            { score: 78, date: 'May 2' },
+          ].map((audit, i) => (
             <div key={i} className="flex-1 flex flex-col items-center gap-1.5">
+              <span className="font-mono text-[10px] font-medium" style={{ color: i === 4 ? 'var(--signal)' : 'var(--ink-2)' }}>{audit.score}</span>
               <div
                 className="w-full rounded-[2px]"
                 style={{
-                  height: `${score * 0.8}px`,
-                  background: i === 4 ? 'var(--signal)' : 'var(--rule)',
-                  transition: 'height 0.3s ease',
+                  height: `${audit.score * 0.7}px`,
+                  background: i === 4 ? 'var(--signal)' : 'var(--rule-2)',
                 }}
               />
-              <span className="font-mono text-[10px] text-m-muted">{score}</span>
+              <span className="font-mono text-[8px] text-m-muted">{audit.date}</span>
             </div>
           ))}
         </div>
-        <div className="flex items-center justify-between">
+
+        {/* Module comparison — last two audits */}
+        <div className="border-t border-rule pt-4 mb-4">
+          <p className="font-mono text-[9px] tracking-[0.08em] uppercase text-m-muted mb-3">Module changes (last audit)</p>
+          <div className="space-y-2">
+            {[
+              { name: 'Foundation', prev: 65, curr: 72, delta: '+7' },
+              { name: 'Human exp.', prev: 58, curr: 68, delta: '+10' },
+              { name: 'Inclusive', prev: 74, curr: 81, delta: '+7' },
+              { name: 'Future', prev: 51, curr: 59, delta: '+8' },
+            ].map((mod) => (
+              <div key={mod.name} className="flex items-center gap-3">
+                <span className="font-sans text-[11px] text-ink-2 w-[72px] shrink-0">{mod.name}</span>
+                <div className="flex-1 h-1.5 rounded-full" style={{ background: 'var(--rule)' }}>
+                  <div className="h-full rounded-full bg-signal" style={{ width: `${mod.curr}%` }} />
+                </div>
+                <span className="font-mono text-[10px] text-signal w-[28px] text-right shrink-0">{mod.delta}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Summary stat */}
+        <div className="flex items-center justify-between pt-3 border-t border-rule">
           <div className="flex items-center gap-2">
             <span className="w-2 h-2 rounded-full bg-signal" />
             <span className="font-sans text-[12px] text-ink">+36 points over 5 audits</span>
           </div>
-          <span className="font-mono text-[10px] text-m-muted tracking-[0.06em] uppercase">12 weeks</span>
+          <span className="font-mono text-[10px] text-m-muted tracking-[0.06em] uppercase">14 findings resolved</span>
         </div>
       </div>
     </div>
@@ -135,14 +218,15 @@ export function ProductContent() {
           <div className="grid lg:grid-cols-2 gap-16 items-start">
             <div>
               <SectionMarker number="01" label="Find" />
-              <h2 className="font-serif font-normal text-ink leading-[0.94] tracking-[-0.025em] mb-5" style={{ fontSize: 'clamp(36px, 4.5vw, 56px)' }}>
+              <h2 className="font-serif font-normal text-ink leading-[0.94] tracking-[-0.025em] mb-5" style={{ fontSize: 'clamp(36px, 5vw, 64px)' }}>
                 Audit your entire site{' '}
                 <em className="italic text-signal">in minutes.</em>
               </h2>
-              <p className="text-[17px] leading-[1.6] text-ink-2 font-sans mb-8">
-                Enter your URL and Fixpath crawls every page, tests 96 checkpoints across six modules,
-                and delivers severity-ranked findings with evidence and context. Most audits complete in
-                under ten minutes.
+              <p className="text-[18px] leading-[1.6] text-ink-2 font-sans mb-8">
+                Enter your URL. Fixpath crawls every page, runs 96 checkpoints across six modules,
+                and delivers severity-ranked findings with real evidence from your site content. Each
+                finding shows affected pages, what went wrong, and a concrete recommendation. Most
+                audits complete in under ten minutes.
               </p>
               <h3 className="font-sans text-[16px] font-semibold text-ink mb-4">What the audit covers</h3>
               <div className="grid sm:grid-cols-2 gap-x-8 gap-y-3 mb-8">
@@ -185,30 +269,31 @@ export function ProductContent() {
             </div>
             <div className="order-1 lg:order-2">
               <SectionMarker number="02" label="Fix" />
-              <h2 className="font-serif font-normal text-ink leading-[0.94] tracking-[-0.025em] mb-5" style={{ fontSize: 'clamp(36px, 4.5vw, 56px)' }}>
+              <h2 className="font-serif font-normal text-ink leading-[0.94] tracking-[-0.025em] mb-5" style={{ fontSize: 'clamp(36px, 5vw, 64px)' }}>
                 Fix issues directly.{' '}
                 <em className="italic text-signal">Or send the fix path.</em>
               </h2>
-              <p className="text-[17px] leading-[1.6] text-ink-2 font-sans mb-8">
-                Most audit tools stop at a list of problems. Fixpath turns every finding into an action.
+              <p className="text-[18px] leading-[1.6] text-ink-2 font-sans mb-8">
+                Most audit tools stop at a list of problems. Fixpath turns every finding into an
+                action you can take right from the dashboard — or hand off to your team with full context.
               </p>
               <div className="space-y-6">
                 <div>
-                  <h3 className="font-sans text-[15px] font-semibold text-ink mb-1.5">Deploy code fixes directly</h3>
+                  <h3 className="font-sans text-[16px] font-semibold text-ink mb-1.5">Deploy code fixes directly</h3>
                   <p className="font-sans text-[14px] text-ink-2 leading-relaxed">
                     For code-level issues, Fixpath generates a surgical fix. Preview the diff, edit if needed,
                     and deploy to your server via FTP or SFTP with one click.
                   </p>
                 </div>
                 <div>
-                  <h3 className="font-sans text-[15px] font-semibold text-ink mb-1.5">Send clear recommendations</h3>
+                  <h3 className="font-sans text-[16px] font-semibold text-ink mb-1.5">Send clear recommendations</h3>
                   <p className="font-sans text-[14px] text-ink-2 leading-relaxed">
                     For content, strategy, or design issues, export findings as a PDF or Word report. Share a
                     live link with stakeholders. Everyone sees the same evidence and priority.
                   </p>
                 </div>
                 <div>
-                  <h3 className="font-sans text-[15px] font-semibold text-ink mb-1.5">WordPress integration</h3>
+                  <h3 className="font-sans text-[16px] font-semibold text-ink mb-1.5">WordPress integration</h3>
                   <p className="font-sans text-[14px] text-ink-2 leading-relaxed">
                     The Fixpath WordPress plugin surfaces recommendations directly in your admin panel.
                     See which pages need attention and apply fixes without leaving your CMS.
@@ -226,31 +311,31 @@ export function ProductContent() {
           <div className="grid lg:grid-cols-2 gap-16 items-start">
             <div>
               <SectionMarker number="03" label="Track" />
-              <h2 className="font-serif font-normal text-ink leading-[0.94] tracking-[-0.025em] mb-5" style={{ fontSize: 'clamp(36px, 4.5vw, 56px)' }}>
+              <h2 className="font-serif font-normal text-ink leading-[0.94] tracking-[-0.025em] mb-5" style={{ fontSize: 'clamp(36px, 5vw, 64px)' }}>
                 Track improvement.{' '}
                 <em className="italic text-signal">See what moved.</em>
               </h2>
-              <p className="text-[17px] leading-[1.6] text-ink-2 font-sans mb-8">
+              <p className="text-[18px] leading-[1.6] text-ink-2 font-sans mb-8">
                 Re-audit after making changes and see exactly what improved. Your Website Health Score
                 gives your team a single metric to optimise around.
               </p>
               <div className="space-y-6">
                 <div>
-                  <h3 className="font-sans text-[15px] font-semibold text-ink mb-1.5">Score history</h3>
+                  <h3 className="font-sans text-[16px] font-semibold text-ink mb-1.5">Score history</h3>
                   <p className="font-sans text-[14px] text-ink-2 leading-relaxed">
                     Track your Website Health Score over time. See which fixes had the biggest impact
                     and identify trends across audit cycles.
                   </p>
                 </div>
                 <div>
-                  <h3 className="font-sans text-[15px] font-semibold text-ink mb-1.5">Before/after comparison</h3>
+                  <h3 className="font-sans text-[16px] font-semibold text-ink mb-1.5">Before/after comparison</h3>
                   <p className="font-sans text-[14px] text-ink-2 leading-relaxed">
                     Compare any two audits side by side. See resolved findings, new issues, and
                     score changes by module.
                   </p>
                 </div>
                 <div>
-                  <h3 className="font-sans text-[15px] font-semibold text-ink mb-1.5">Competitor benchmarking</h3>
+                  <h3 className="font-sans text-[16px] font-semibold text-ink mb-1.5">Competitor benchmarking</h3>
                   <p className="font-sans text-[14px] text-ink-2 leading-relaxed">
                     See how your site stacks up against competitors across all six modules.
                     Identify where you lead and where to focus next.
@@ -267,7 +352,7 @@ export function ProductContent() {
       <section className="py-[100px] border-b border-rule max-sm:py-16">
         <div className="max-w-mkt mx-auto px-8 max-sm:px-5">
           <SectionMarker number="04" label="AI readiness" />
-          <h2 className="font-serif font-normal text-ink leading-[0.94] tracking-[-0.025em] mb-5" style={{ fontSize: 'clamp(36px, 4.5vw, 56px)' }}>
+          <h2 className="font-serif font-normal text-ink leading-[0.94] tracking-[-0.025em] mb-5" style={{ fontSize: 'clamp(36px, 5vw, 64px)' }}>
             The only audit platform that checks{' '}
             <em className="italic text-signal">how AI sees your site.</em>
           </h2>
@@ -283,7 +368,7 @@ export function ProductContent() {
               { title: 'Citation monitoring', desc: 'Tracks when and how AI models cite your content, and whether the citations are accurate.' },
             ].map((item) => (
               <div key={item.title} className="p-6" style={{ background: 'var(--paper)' }}>
-                <h3 className="font-sans text-[15px] font-semibold text-ink mb-2">{item.title}</h3>
+                <h3 className="font-sans text-[16px] font-semibold text-ink mb-2">{item.title}</h3>
                 <p className="font-sans text-[13px] text-ink-2 leading-relaxed">{item.desc}</p>
               </div>
             ))}
@@ -295,7 +380,7 @@ export function ProductContent() {
       <section className="py-[100px] border-b border-rule max-sm:py-16">
         <div className="max-w-mkt mx-auto px-8 max-sm:px-5">
           <SectionMarker number="05" label="Reports" />
-          <h2 className="font-serif font-normal text-ink leading-[0.94] tracking-[-0.025em] mb-5" style={{ fontSize: 'clamp(36px, 4.5vw, 56px)' }}>
+          <h2 className="font-serif font-normal text-ink leading-[0.94] tracking-[-0.025em] mb-5" style={{ fontSize: 'clamp(36px, 5vw, 64px)' }}>
             Share results{' '}
             <em className="italic text-signal">your way.</em>
           </h2>
@@ -311,7 +396,7 @@ export function ProductContent() {
               { format: 'Shareable link', desc: 'A live web page anyone can view. No login required. Includes score, findings, and module breakdown.' },
             ].map((item) => (
               <div key={item.format} className="p-6 rounded-[4px] border border-rule" style={{ background: 'var(--paper)' }}>
-                <h3 className="font-sans text-[15px] font-semibold text-ink mb-2">{item.format}</h3>
+                <h3 className="font-sans text-[16px] font-semibold text-ink mb-2">{item.format}</h3>
                 <p className="font-sans text-[13px] text-ink-2 leading-relaxed">{item.desc}</p>
               </div>
             ))}

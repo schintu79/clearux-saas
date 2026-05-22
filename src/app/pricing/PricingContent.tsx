@@ -38,11 +38,11 @@ export default function PricingContent() {
       <section className="py-[100px] border-b border-rule max-sm:py-16">
         <div className="max-w-mkt mx-auto px-8 max-sm:px-5">
           <SectionMarker number="01" label="Pricing" />
-          <h1 className="font-serif font-normal text-ink leading-[0.92] tracking-[-0.03em] mb-6" style={{ fontSize: 'clamp(48px, 7vw, 96px)' }}>
+          <h1 className="font-serif font-normal text-ink leading-[0.94] tracking-[-0.025em] mb-6" style={{ fontSize: 'clamp(44px, 6vw, 80px)' }}>
             Plans that <em className="italic text-signal">scale with you.</em>
           </h1>
-          <p className="text-[19px] leading-[1.55] text-ink-2 max-w-[600px] mb-10 font-sans">
-            Subscribe for ongoing audits and unlimited re-audits, or buy credit packs for project-based work. Every plan runs the full 96-checkpoint analysis. No feature gates. First audit free, always.
+          <p className="text-[18px] leading-[1.6] text-ink-2 max-w-[600px] mb-10 font-sans">
+            Every plan runs the full 96-checkpoint audit, lets you fix issues directly from the dashboard, and tracks improvement over time. Subscribe for ongoing audits or buy credit packs for project work. First audit free, always.
           </p>
 
           {/* Mode toggle */}
@@ -229,7 +229,7 @@ export default function PricingContent() {
       <section className="py-[80px] border-b border-rule max-sm:py-12">
         <div className="max-w-mkt mx-auto px-8 max-sm:px-5">
           <SectionMarker number="02" label="Compare" />
-          <h2 className="font-serif font-normal text-ink leading-[0.96] tracking-[-0.02em] mb-12" style={{ fontSize: 'clamp(36px, 5vw, 64px)' }}>
+          <h2 className="font-serif font-normal text-ink leading-[0.94] tracking-[-0.025em] mb-12" style={{ fontSize: 'clamp(36px, 5vw, 64px)' }}>
             Compare <em className="italic text-signal">plans</em>
           </h2>
 

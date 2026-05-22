@@ -20,9 +20,9 @@ export function HomeCta() {
       <div className="max-w-mkt mx-auto px-8 max-sm:px-5 relative">
         <div className="max-w-[680px] mx-auto text-center">
           <h2
-            className="font-serif font-normal leading-[0.95] tracking-[-0.025em] mb-6"
+            className="font-serif font-normal leading-[0.94] tracking-[-0.025em] mb-6"
             style={{
-              fontSize: 'clamp(40px, 5.5vw, 72px)',
+              fontSize: 'clamp(36px, 5vw, 64px)',
               color: isDark ? 'var(--ink)' : 'var(--paper)',
             }}
           >
@@ -35,8 +35,8 @@ export function HomeCta() {
             className="text-[18px] leading-[1.6] mb-10 font-sans"
             style={{ color: isDark ? 'var(--m-muted)' : 'color-mix(in srgb, var(--paper) 75%, transparent)' }}
           >
-            Your first audit is free, no credit card required. Run 96 checkpoints across
-            six modules and get your Website Health Score in under ten minutes.
+            Your first audit is free, no credit card required. Find every issue, fix it
+            from the dashboard, and track your Website Health Score over time.
           </p>
           <Button href="/register" size="large" className={isDark ? '' : '!bg-signal !border-signal !text-white hover:!opacity-90'}>
             Start free audit

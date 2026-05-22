@@ -23,11 +23,11 @@ export function Pricing() {
   const [interval, setInterval] = useState<BillingInterval>('monthly')
 
   return (
-    <section className="py-[120px] border-b border-rule" id="pricing">
+    <section className="py-[100px] max-sm:py-16 border-b border-rule" id="pricing">
       <div className="max-w-mkt mx-auto px-8 max-sm:px-5">
         <div className="text-center mb-16">
           <SectionMarker number="09" label="The economics" centered />
-          <h2 className="font-serif font-normal text-ink leading-[0.92] tracking-[-0.03em] mb-6 max-w-[900px] mx-auto" style={{ fontSize: 'clamp(50px, 7vw, 110px)' }}>
+          <h2 className="font-serif font-normal text-ink leading-[0.94] tracking-[-0.025em] mb-6 max-w-[900px] mx-auto" style={{ fontSize: 'clamp(36px, 5vw, 64px)' }}>
             One tool. <em className="italic text-signal">Two ways in.</em>
           </h2>
           <p className="text-[18px] text-ink-2 max-w-[560px] mx-auto leading-[1.55] mb-10 font-sans">

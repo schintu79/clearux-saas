@@ -22,7 +22,7 @@ export function WordPressContent() {
           <div className="grid lg:grid-cols-2 gap-16 items-center">
             <div>
               <p className="font-mono text-[11px] tracking-[0.12em] uppercase text-signal mb-6">WordPress plugin</p>
-              <h1 className="font-serif font-normal text-ink leading-[0.94] tracking-[-0.025em] mb-6" style={{ fontSize: 'clamp(44px, 5.5vw, 72px)' }}>
+              <h1 className="font-serif font-normal text-ink leading-[0.94] tracking-[-0.025em] mb-6" style={{ fontSize: 'clamp(44px, 6vw, 80px)' }}>
                 Audit and fix your site{' '}
                 <em className="italic text-signal">inside WordPress.</em>
               </h1>
@@ -67,32 +67,48 @@ export function WordPressContent() {
                     </div>
                   ))}
                 </div>
-                {/* Content */}
+                {/* Content — mirrors real plugin findings list */}
                 <div className="flex-1 p-5">
-                  <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center justify-between mb-3">
                     <span className="font-sans text-[14px] font-medium text-ink">Audit results</span>
-                    <span className="font-mono text-[10px] text-m-muted tracking-[0.06em] uppercase">Score: 62</span>
+                    <div className="flex items-center gap-3">
+                      <span className="font-serif text-[20px] font-normal text-ink leading-none">62</span>
+                      <span className="font-mono text-[9px] text-warn tracking-[0.06em] uppercase">Needs work</span>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-3 mb-3 pb-3 border-b border-rule">
+                    {[
+                      { label: 'Critical', count: 4, color: 'var(--severe)' },
+                      { label: 'Medium', count: 8, color: 'var(--warn)' },
+                      { label: 'Minor', count: 5, color: 'var(--m-muted)' },
+                    ].map((s) => (
+                      <div key={s.label} className="flex items-center gap-1.5">
+                        <span className="w-1.5 h-1.5 rounded-full" style={{ background: s.color }} />
+                        <span className="font-mono text-[9px] text-ink-2">{s.count} {s.label.toLowerCase()}</span>
+                      </div>
+                    ))}
                   </div>
                   <div className="space-y-2">
                     {[
-                      { sev: 'Critical', label: 'Missing alt text on 12 images', page: '/about' },
-                      { sev: 'Medium', label: 'H1 tag missing on pricing page', page: '/pricing' },
-                      { sev: 'Minor', label: 'Meta description too long', page: '/blog/guide' },
+                      { sev: 'Critical', label: 'Missing alt text on 12 images', page: '/about', fixable: true },
+                      { sev: 'Critical', label: 'Pre-checked newsletter opt-in', page: '/signup', fixable: true },
+                      { sev: 'Medium', label: 'H1 tag missing on pricing page', page: '/pricing', fixable: true },
+                      { sev: 'Minor', label: 'Meta description too long', page: '/blog/guide', fixable: false },
                     ].map((f) => (
-                      <div key={f.label} className="p-3 rounded border border-rule" style={{ background: 'var(--paper)' }}>
-                        <div className="flex items-center gap-2 mb-1">
-                          <span
-                            className="font-mono text-[9px] font-semibold tracking-[0.06em] uppercase px-1.5 py-0.5 rounded-[2px]"
-                            style={{
-                              color: f.sev === 'Critical' ? 'var(--severe)' : f.sev === 'Medium' ? 'var(--warn)' : 'var(--m-muted)',
-                              background: f.sev === 'Critical' ? 'color-mix(in srgb, var(--severe) 12%, transparent)' : f.sev === 'Medium' ? 'color-mix(in srgb, var(--warn) 12%, transparent)' : 'color-mix(in srgb, var(--m-muted) 12%, transparent)',
-                            }}
-                          >
-                            {f.sev}
-                          </span>
-                          <span className="font-mono text-[10px] text-m-muted">{f.page}</span>
+                      <div key={f.label} className="p-2.5 rounded border border-rule flex items-center gap-3" style={{ background: 'var(--paper)' }}>
+                        <span
+                          className="w-1.5 h-1.5 rounded-full shrink-0"
+                          style={{
+                            background: f.sev === 'Critical' ? 'var(--severe)' : f.sev === 'Medium' ? 'var(--warn)' : 'var(--m-muted)',
+                          }}
+                        />
+                        <div className="flex-1 min-w-0">
+                          <p className="font-sans text-[12px] text-ink truncate">{f.label}</p>
+                          <span className="font-mono text-[9px] text-m-muted">{f.page}</span>
                         </div>
-                        <p className="font-sans text-[13px] text-ink">{f.label}</p>
+                        {f.fixable && (
+                          <span className="font-mono text-[8px] tracking-[0.06em] uppercase text-signal shrink-0">Fix</span>
+                        )}
                       </div>
                     ))}
                   </div>
@@ -107,7 +123,7 @@ export function WordPressContent() {
       <section className="py-[100px] border-b border-rule max-sm:py-16">
         <div className="max-w-mkt mx-auto px-8 max-sm:px-5">
           <SectionMarker number="01" label="How it works" />
-          <h2 className="font-serif font-normal text-ink leading-[0.94] tracking-[-0.025em] mb-12" style={{ fontSize: 'clamp(36px, 4.5vw, 56px)' }}>
+          <h2 className="font-serif font-normal text-ink leading-[0.94] tracking-[-0.025em] mb-12" style={{ fontSize: 'clamp(36px, 5vw, 64px)' }}>
             Three steps to a{' '}
             <em className="italic text-signal">healthier WordPress site.</em>
           </h2>
@@ -137,7 +153,7 @@ export function WordPressContent() {
                 >
                   {s.step}
                 </span>
-                <h3 className="font-sans text-[17px] font-semibold text-ink mb-2">{s.title}</h3>
+                <h3 className="font-sans text-[16px] font-semibold text-ink mb-2">{s.title}</h3>
                 <p className="font-sans text-[15px] text-ink-2 leading-[1.65]">{s.desc}</p>
               </div>
             ))}
@@ -149,7 +165,7 @@ export function WordPressContent() {
       <section className="py-[100px] border-b border-rule max-sm:py-16">
         <div className="max-w-mkt mx-auto px-8 max-sm:px-5">
           <SectionMarker number="02" label="Features" />
-          <h2 className="font-serif font-normal text-ink leading-[0.94] tracking-[-0.025em] mb-12" style={{ fontSize: 'clamp(36px, 4.5vw, 56px)' }}>
+          <h2 className="font-serif font-normal text-ink leading-[0.94] tracking-[-0.025em] mb-12" style={{ fontSize: 'clamp(36px, 5vw, 64px)' }}>
             Everything you need{' '}
             <em className="italic text-signal">inside your CMS.</em>
           </h2>
