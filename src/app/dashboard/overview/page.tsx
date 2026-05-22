@@ -200,6 +200,22 @@ function OverviewInner() {
     window.history.replaceState({}, '', '/dashboard/overview');
   }, [searchParams]);
 
+  // Force-set brand/site selection when arriving from new-audit redirect.
+  // The URL carries ?site=hostname or ?brand=brandId so the overview
+  // always opens scoped to the newly created audit target, even if the
+  // previous localStorage selection hasn't propagated yet.
+  useEffect(() => {
+    const siteParam = searchParams.get('site');
+    const brandParam = searchParams.get('brand');
+    if (siteParam) {
+      writeSelection({ kind: 'site', host: siteParam });
+      window.history.replaceState({}, '', '/dashboard/overview');
+    } else if (brandParam) {
+      writeSelection({ kind: 'brand', brandId: brandParam });
+      window.history.replaceState({}, '', '/dashboard/overview');
+    }
+  }, [searchParams]);
+
   // Reset derived data when selection changes (bundle itself is managed by context).
   useEffect(() => {
     setScoreTrend([]);

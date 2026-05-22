@@ -1,5 +1,8 @@
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
+import { MarketingBody } from '@/components/marketing/MarketingBody'
+import { Nav } from '@/components/marketing/Nav'
+import { Footer } from '@/components/marketing/Footer'
 
 /* ── Content block types ── */
 type ContentBlock =
@@ -247,7 +250,9 @@ export default async function ResourceArticlePage({ params }: { params: Promise<
   const related = getRelatedArticles(slug)
 
   return (
-    <main>
+    <MarketingBody>
+      <Nav />
+      <main>
       {/* Hero */}
       <section className="py-20 sm:py-[100px] border-b border-rule">
         <div className="max-w-mkt mx-auto px-8 max-sm:px-5">
@@ -362,5 +367,7 @@ export default async function ResourceArticlePage({ params }: { params: Promise<
         </div>
       </section>
     </main>
+      <Footer />
+    </MarketingBody>
   )
 }
