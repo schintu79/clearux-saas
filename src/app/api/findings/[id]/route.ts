@@ -204,7 +204,7 @@ export async function GET(
 
     const { data: finding, error } = await db
       .from('audit_findings')
-      .select('id, audit_id, title, description, severity, status, recommendation, estimated_impact, page_url, sort_order, dismissed, dismissal_reason')
+      .select('id, audit_id, title, description, severity, status, recommendation, estimated_impact, page_url, sort_order, dismissed, dismissal_reason, action_mode, fix_status, fix_format, is_editable, is_deployable, approval_required, deployable_type, default_owner, fix_payload')
       .eq('id', findingId)
       .single()
 
@@ -247,14 +247,14 @@ export async function PATCH(
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-    const { status, note, dismiss, dismissal_reason } = await request.json()
+    const { status, note, dismiss, dismissal_reason, action_mode, fix_status: newFixStatus } = await request.json()
 
     const db = createServiceSupabase()
 
     // Fetch finding (no verification_status — column may not exist)
     const { data: finding } = await db
       .from('audit_findings')
-      .select('audit_id, title, severity, recommendation, status')
+      .select('audit_id, title, severity, recommendation, status, action_mode, fix_status')
       .eq('id', findingId)
       .single()
 
@@ -386,7 +386,72 @@ export async function PATCH(
       })
     }
 
-    return NextResponse.json({ error: 'Provide status or dismiss' }, { status: 400 })
+    // Handle action model updates (action_mode, fix_status)
+    if (action_mode || newFixStatus) {
+      const validActionModes = ['self_fix', 'team_handoff', 'defer', 'fixed']
+      const validFixStatuses = ['unreviewed', 'in_progress', 'approved', 'deferred', 'fixed', 'failed']
+
+      if (action_mode && !validActionModes.includes(action_mode)) {
+        return NextResponse.json({ error: 'Invalid action_mode' }, { status: 400 })
+      }
+      if (newFixStatus && !validFixStatuses.includes(newFixStatus)) {
+        return NextResponse.json({ error: 'Invalid fix_status' }, { status: 400 })
+      }
+
+      const updates: Record<string, unknown> = {}
+      if (action_mode) updates.action_mode = action_mode
+      if (newFixStatus) updates.fix_status = newFixStatus
+
+      // Map action_mode to legacy status for backward compat
+      if (action_mode === 'fixed') {
+        updates.status = 'fixed'
+        updates.fix_status = 'fixed'
+      } else if (action_mode === 'defer') {
+        updates.status = 'backlog'
+        updates.fix_status = 'deferred'
+      } else if (action_mode === 'self_fix') {
+        updates.status = 'in_progress'
+        if (!newFixStatus) updates.fix_status = 'in_progress'
+      }
+
+      updates.status_updated_at = new Date().toISOString()
+
+      const { error: updateErr } = await db
+        .from('audit_findings')
+        .update(updates as any)
+        .eq('id', findingId)
+
+      if (updateErr) {
+        return NextResponse.json({ error: updateErr.message }, { status: 500 })
+      }
+
+      // Record action history
+      const prevFixStatus = (finding as any).fix_status || 'unreviewed'
+      const resolvedFixStatus = (updates.fix_status || newFixStatus || prevFixStatus) as string
+      await db.from('finding_action_history').insert({
+        finding_id: findingId,
+        user_id: user.id,
+        action: action_mode || 'status_change',
+        from_status: prevFixStatus,
+        to_status: resolvedFixStatus,
+        note: note || null,
+      } as any)
+
+      // Recalculate score if status changed to/from fixed
+      let scoreUpdate = null
+      if (updates.status === 'fixed' || (finding as any).status === 'fixed') {
+        scoreUpdate = await recalculateFromFindings(db, (finding as any).audit_id)
+      }
+
+      return NextResponse.json({
+        success: true,
+        action_mode,
+        fix_status: resolvedFixStatus,
+        scoreUpdate: scoreUpdate || undefined,
+      })
+    }
+
+    return NextResponse.json({ error: 'Provide status, dismiss, action_mode, or fix_status' }, { status: 400 })
   } catch (err) {
     console.error('PATCH /api/findings error:', err)
     return NextResponse.json({ error: 'Failed to update finding' }, { status: 500 })

@@ -272,7 +272,37 @@ export interface AuditFinding {
   ai_interpretation:   string | null
   /** AI X-Ray: how a human interprets the same element */
   human_interpretation: string | null
+  /** Action model: user-selected action mode */
+  action_mode:         'self_fix' | 'team_handoff' | 'defer' | 'fixed' | null
+  /** Action model: normalized fix payload from capability map */
+  fix_payload:         Record<string, unknown> | null
+  /** Action model: patch format (text, html, json, meta, schema) */
+  fix_format:          string | null
+  /** Action model: whether patch content is user-editable */
+  is_editable:         boolean
+  /** Action model: whether finding can be deployed via surgical fix */
+  is_deployable:       boolean
+  /** Action model: whether user must approve before deploy */
+  approval_required:   boolean
+  /** Action model: fix lifecycle status */
+  fix_status:          'unreviewed' | 'in_progress' | 'approved' | 'deferred' | 'fixed' | 'failed'
+  /** Action model: deployable fix type key (meta_title, schema_jsonld, etc.) */
+  deployable_type:     string | null
+  /** Action model: default owner team */
+  default_owner:       'self' | 'engineering' | 'marketing' | 'design' | 'product'
   created_at:        string
+}
+
+export interface FindingActionHistory {
+  id:          string
+  finding_id:  string
+  user_id:     string
+  action:      'self_fix' | 'team_handoff' | 'defer' | 'fixed' | 'approve' | 'deploy' | 'reject'
+  from_status: string | null
+  to_status:   string
+  note:        string | null
+  metadata:    Record<string, unknown> | null
+  created_at:  string
 }
 
 export interface Report {

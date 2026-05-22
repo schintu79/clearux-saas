@@ -47,6 +47,7 @@ import { detectIndustry, getUserBenchmarkPosition } from '@/lib/audit-engine/ind
 import { generatePredictiveRecommendations } from '@/lib/audit-engine/predictive-recommendations'
 import { checkWcagAutomated, buildWcagResults, parseHeuristicResponse, formatWcagForPrompt, type WcagCheckResult, type WcagAuditResult } from '@/lib/audit-engine/pipeline/wcag-checker'
 import type { AuditFinding } from '@/types/database'
+import { resolveCapability, inferDeployableType } from '@/lib/fix-action-model'
 
 /* ── DB helpers (duplicated from index.ts to keep self-contained) ── */
 
@@ -63,6 +64,39 @@ async function setStatus(auditId: string, status: string, progressPercent?: numb
     .update(update as any)
     .eq('id', auditId)
   if (error) throw new Error(`Failed to update status: ${error.message}`)
+}
+
+/**
+ * Compute the action model fields to spread into an audit_findings insert.
+ * Centralises the capability map resolution so every insertion path gets
+ * consistent action model data.
+ */
+function computeActionModelFields(finding: {
+  title: string; description: string; recommendation: string;
+  fix_type?: string | null; finding_type?: string | null;
+}) {
+  const cap = resolveCapability({
+    title: finding.title,
+    description: finding.description,
+    recommendation: finding.recommendation,
+    fix_type: (finding.fix_type ?? null) as any,
+    finding_type: (finding.finding_type ?? 'fixable') as any,
+  })
+  const deployableType = inferDeployableType({
+    title: finding.title,
+    description: finding.description,
+    recommendation: finding.recommendation,
+    fix_type: (finding.fix_type ?? null) as any,
+  })
+  return {
+    fix_format: cap.patchFormat,
+    is_editable: cap.editable,
+    is_deployable: cap.deployable,
+    approval_required: cap.approvalRequired,
+    fix_status: 'unreviewed',
+    deployable_type: deployableType,
+    default_owner: cap.defaultOwner,
+  }
 }
 
 async function setProgress(auditId: string, progressPercent: number) {
@@ -381,6 +415,7 @@ export const processAuditFn = inngest.createFunction(
               target_element: finding.targetElement || null,
               screenshot_url: null,
               sort_order: sortOrder++,
+              ...computeActionModelFields({ title: finding.title, description: finding.description, recommendation: finding.recommendation, fix_type: cls.fixType, finding_type: cls.findingType }),
             } as any)
           }
         }
@@ -492,6 +527,7 @@ export const processAuditFn = inngest.createFunction(
                 severity: finding.severity,
                 categoryIndex: 8, // Accessibility & WCAG Compliance
               })
+              const wcagDesc = `[WCAG ${finding.wcagCriterion}] ${finding.description}`
               await db.from('audit_findings').insert({
                 audit_id: auditId,
                 checklist_item_id: null,
@@ -500,7 +536,7 @@ export const processAuditFn = inngest.createFunction(
                 fix_type: cls.fixType,
                 severity: finding.severity,
                 title: finding.title,
-                description: `[WCAG ${finding.wcagCriterion}] ${finding.description}`,
+                description: wcagDesc,
                 evidence: finding.evidence || null,
                 page_url: finding.pageUrl || crawlResult.firstPageUrl,
                 recommendation: finding.recommendation,
@@ -508,6 +544,7 @@ export const processAuditFn = inngest.createFunction(
                 target_element: finding.element || null,
                 screenshot_url: null,
                 sort_order: sortOrder++,
+                ...computeActionModelFields({ title: finding.title, description: wcagDesc, recommendation: finding.recommendation, fix_type: cls.fixType, finding_type: cls.findingType }),
               } as any)
             }
           }
@@ -629,6 +666,7 @@ export const processAuditFn = inngest.createFunction(
                 dismissed: false,
                 finding_type: validated.findingType,
                 fix_type: validated.fixType,
+                ...computeActionModelFields({ title: finding.title, description: finding.description, recommendation: finding.recommendation, fix_type: validated.fixType, finding_type: validated.findingType }),
               } as any)
             }
           }
@@ -1191,6 +1229,8 @@ RULES FOR RE-AUDIT:
           }
           // Copy [OPEN], [IN PROGRESS], [BACKLOG] findings as-is
           // Preserve finding_type/fix_type from previous audit if available
+          const pfFindingType = (pf as any).finding_type || 'fixable'
+          const pfFixType = (pf as any).fix_type || null
           await db.from('audit_findings').insert({
             audit_id: auditId,
             checklist_item_id: null,
@@ -1205,8 +1245,9 @@ RULES FOR RE-AUDIT:
             target_element: pf.target_element || null,
             screenshot_url: null,
             sort_order: sortOrder++,
-            finding_type: (pf as any).finding_type || 'fixable',
-            fix_type: (pf as any).fix_type || null,
+            finding_type: pfFindingType,
+            fix_type: pfFixType,
+            ...computeActionModelFields({ title: pf.title, description: pf.description, recommendation: pf.recommendation, fix_type: pfFixType, finding_type: pfFindingType }),
           } as any)
           copiedCount++
         }
@@ -1453,6 +1494,7 @@ RULES FOR RE-AUDIT:
                 sort_order: sortOrder++,
                 finding_type: validated.findingType,
                 fix_type: validated.fixType,
+                ...computeActionModelFields({ title: finding.title, description: finding.description, recommendation: finding.recommendation, fix_type: validated.fixType, finding_type: validated.findingType }),
               } as any)
               findingsInGap++
             }
@@ -1648,6 +1690,7 @@ RULES FOR RE-AUDIT:
                 sort_order: sortOrder++,
                 ai_interpretation: finding.aiInterpretation || null,
                 human_interpretation: finding.humanInterpretation || null,
+                ...computeActionModelFields({ title: finding.title, description: finding.description, recommendation: finding.recommendation, fix_type: classification.fixType, finding_type: classification.findingType }),
               } as any)
             }
 

@@ -516,7 +516,6 @@ const DashboardShell: React.FC<DashboardShellProps> = ({ children }) => {
                           onClick={() => {
                             selectSiteInternal(s.id);
                             setBrandMenuOpen(false);
-                            writeSelection(selectionFromSidebarId(s.id));
                             router.push('/dashboard/overview');
                           }}
                           className="w-full flex items-center gap-2 px-3 py-2 text-left transition-colors hover:bg-black/[0.04]"
