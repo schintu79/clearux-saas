@@ -2,7 +2,41 @@
 
 Structured record of every bug fix, feature, and architectural change. Organized by system area, each entry includes the root cause, what was changed, and which files were touched.
 
-Last updated: 2026-05-21
+Last updated: 2026-05-22
+
+---
+
+## Fix Action Model (Fix 1 Phase 1)
+
+### Canonical action model for finding lifecycle
+- **Feature**: Built a data-driven action model that replaces scattered pattern matching across the Fix Console and API with a single capability map. Every finding now gets pre-computed action model fields at pipeline creation time.
+- **Action modes**: `self_fix` (inline deploy), `team_handoff` (copy/export), `defer` (save for later), `fixed` (manually resolved).
+- **Fix status lifecycle**: `unreviewed` > `in_progress` > `approved` > `fixed` (or `deferred` / `failed`).
+- **Capability map**: 13 deployable fix types across two tiers. Tier 1 (deterministic, instant): `lang_attribute`, `viewport_meta`, `meta_charset`, `canonical_url`. Tier 2 (AI-assisted, editable): `meta_title`, `meta_description`, `heading_copy`, `alt_text`, `og_tags`, `schema_jsonld`, `faq_block`, `robots_llms`, `ai_summary`. Each entry specifies selfFixable, editable, deployable, aiAssistAvailable, approvalRequired, patchFormat, and defaultOwner.
+- **Fallback capabilities**: `FIXABLE_NON_DEPLOYABLE` (team handoff only), `DESIGN_REQUIRED` (design team), `STRATEGIC` (product team).
+- **Pipeline wiring**: `computeActionModelFields()` helper added to `process-audit.ts` and called at all 6 finding insertion points (responsive, WCAG, structured data, baseline copy, gap-fill, deep-mode analysis).
+- **API support**: `PATCH /api/findings/:id` now accepts `action_mode` and `fix_status` with backward-compatible mapping to legacy `status`. Records every action in `finding_action_history`.
+- **DB migration 039**: Adds 9 columns to `audit_findings` (`action_mode`, `fix_payload`, `fix_format`, `is_editable`, `is_deployable`, `approval_required`, `fix_status`, `deployable_type`, `default_owner`) and creates `finding_action_history` table with RLS policies.
+- **Files**: `src/lib/fix-action-model.ts` (new), `supabase/migrations/039_fix_action_model.sql` (new), `src/lib/inngest/functions/process-audit.ts`, `src/app/api/findings/[id]/route.ts`, `src/types/database.ts`
+
+---
+
+## Brand Dropdown
+
+### Selection doesn't change on first click
+- **Bug**: Switching brands in the sidebar dropdown required 2-3 clicks before the selection actually changed. The brand menu would close but the dashboard would still show the previous brand's data.
+- **Root cause**: The click handler called both `selectSiteInternal(s.id)` (which sets `internalChangeRef` and triggers a React state update) AND `writeSelection(selectionFromSidebarId(s.id))` (which directly writes to localStorage and dispatches a synchronous CustomEvent). The subscription listener fired synchronously from the CustomEvent before the React effect had a chance to run, causing a race where the old value was re-written to localStorage by the effect, clobbering the new selection.
+- **Fix**: Removed the direct `writeSelection()` call from the click handler. The write-back effect at lines 238-253 already handles persistence correctly through the `internalChangeRef` flag, so there's no need for a second write path.
+- **Files**: `src/components/layout/DashboardShell.tsx`
+
+---
+
+## Export Pipeline
+
+### Proprietary dedup, enrich, classify, and group engines
+- **Feature**: Built four proprietary export pipeline engines to improve audit report quality. (1) Dedup engine: Jaccard similarity on 3-gram shingle sets with Union-Find clustering to merge near-duplicate findings (threshold 0.35). (2) Page enrichment: extracts URLs from finding description/recommendation text to populate sparse `affected_pages`. (3) Evidence classifier: tags findings as verified/observed/unverified based on pattern matching against description text. (4) Related-finding grouper: clusters findings by UI element using keyword rules (signup-consent, meta-tags, structured-data, canonical-urls, accessibility, i18n, social-proof).
+- **Pipeline orchestrator**: `processExportPipeline()` runs all four engines in sequence. Export button on Fix page now uses the full pipeline instead of raw findings.
+- **Files**: `src/lib/export/dedup-findings.ts` (new), `src/lib/export/enrich-pages.ts` (new), `src/lib/export/classify-evidence.ts` (new), `src/lib/export/group-related.ts` (new), `src/lib/export/findings-formatter.ts`, `src/app/dashboard/fix/page.tsx`
 
 ---
 
