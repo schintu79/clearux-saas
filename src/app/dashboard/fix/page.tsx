@@ -26,6 +26,7 @@ import {
   X,
   AlertTriangle,
   Info,
+  Download,
 } from 'lucide-react';
 import {
   severityColor,
@@ -39,6 +40,7 @@ import EmptyAudit from '@/components/dashboard/v2/EmptyAudit';
 import OverviewBreadcrumb from '@/components/dashboard/OverviewBreadcrumb';
 import PageHeader from '@/components/dashboard/v2/PageHeader';
 import FixConsole, { inferFixType } from '@/components/dashboard/v2/FixConsole';
+import { prepareFindingsForExport, buildExportMeta, renderMarkdown } from '@/lib/export/findings-formatter';
 import FindingText from '@/components/dashboard/v2/FindingText';
 import CustomSelect from '@/components/ui/CustomSelect';
 import { groupFindingsForDisplay, type GroupedFinding } from '@/lib/audit-findings-presentation';
@@ -772,6 +774,44 @@ function FixPageInner() {
         title="Fix"
         subtitle="Your action queue. Select a finding to resolve, deploy, or hand off to your team."
       />
+
+      {groups.length > 0 && (
+        <div className="flex items-center gap-3 mb-4">
+          <button
+            onClick={() => {
+              const exportFindings = prepareFindingsForExport(filteredGroups, PHASE1_MODULES);
+              const siteName = selection?.kind === 'site' ? selection.host : 'brand';
+              const auditDate = bundle.audit?.completed_at || bundle.audit?.created_at || new Date().toISOString();
+              const auditId = bundle.audit?.id || 'unknown';
+              const meta = buildExportMeta(exportFindings, siteName, auditDate, auditId);
+              const md = renderMarkdown(exportFindings, meta);
+
+              const blob = new Blob([md], { type: 'text/markdown;charset=utf-8' });
+              const url = URL.createObjectURL(blob);
+              const hostname = selection?.kind === 'site' ? selection.host : 'brand';
+              const dateStr = new Date().toISOString().slice(0, 10);
+              const a = document.createElement('a');
+              a.href = url;
+              a.download = `fixpath-fixes-${hostname}-${dateStr}.md`;
+              document.body.appendChild(a);
+              a.click();
+              document.body.removeChild(a);
+              URL.revokeObjectURL(url);
+            }}
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-[12px] font-medium transition-colors"
+            style={{
+              border: '1px solid var(--rule)',
+              color: 'var(--ink)',
+              background: 'transparent',
+            }}
+            onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(0,0,0,0.04)'; }}
+            onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; }}
+          >
+            <Download size={13} strokeWidth={1.75} />
+            Export fixes
+          </button>
+        </div>
+      )}
 
       {groups.length === 0 ? (
         <div

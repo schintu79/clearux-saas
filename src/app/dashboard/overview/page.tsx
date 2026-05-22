@@ -76,6 +76,7 @@ import { useBrandSelection } from '@/lib/dashboard/useBrandSelection';
 import { writeSelection } from '@/lib/dashboard/brand-selection';
 import EmptyAudit from '@/components/dashboard/v2/EmptyAudit';
 import type { Audit, Report, AuditFinding } from '@/types/database';
+import SiteFavicon from '@/components/ui/SiteFavicon';
 
 /* ── Pillar / module config (mirrors audit detail page) ─── */
 const PILLAR_NAMES = ['Foundation', 'Human Experience', 'Inclusive Design', 'Future Readiness', 'SEO Structure & Rules', 'Brand Consistency'];
@@ -566,8 +567,7 @@ function OverviewInner() {
   const displayTitle = selection?.kind === 'brand' && brandName
     ? brandName
     : (domain || 'Latest audit');
-  const headerIcon = selection?.kind === 'brand' ? Fingerprint : Globe;
-  const HeaderIcon = headerIcon;
+  const isBrand = selection?.kind === 'brand';
   const productUrl = audit.product_url || (domain ? `https://${domain}` : '');
 
   const openFindings = findings.filter((f) => f.status !== 'fixed' && !f.dismissed);
@@ -642,7 +642,9 @@ function OverviewInner() {
       <div className="flex items-start justify-between gap-4 mb-6">
         <div className="min-w-0">
           <div className="flex items-center gap-3 mb-1.5">
-            <HeaderIcon size={20} className="text-muted flex-shrink-0" />
+            {isBrand
+              ? <Fingerprint size={20} className="text-muted flex-shrink-0" />
+              : <SiteFavicon hostname={domain || ''} size={18} className="text-muted flex-shrink-0" />}
             <h1 className="text-2xl font-medium font-sans text-text truncate" style={{ color: 'var(--ink)' }}>
               {displayTitle}
             </h1>
@@ -2228,7 +2230,7 @@ function InProgressOverview({
   const displayTitle = selection?.kind === 'brand' && brandName
     ? brandName
     : (domain || 'Your website');
-  const HeaderIcon = selection?.kind === 'brand' ? Fingerprint : Globe;
+  const isBrand = selection?.kind === 'brand';
   const meta = statusMeta[audit.status] || statusMeta.payment_received;
   const StatusIcon = meta.icon;
 
@@ -2240,7 +2242,9 @@ function InProgressOverview({
       <div className="flex items-start justify-between gap-4 mb-6">
         <div className="min-w-0">
           <div className="flex items-center gap-3 mb-1.5">
-            <HeaderIcon size={20} className="text-muted flex-shrink-0" />
+            {isBrand
+              ? <Fingerprint size={20} className="text-muted flex-shrink-0" />
+              : <SiteFavicon hostname={domain || ''} size={18} className="text-muted flex-shrink-0" />}
             <h1 className="text-2xl font-medium font-sans text-text truncate" style={{ color: 'var(--ink)' }}>
               {displayTitle}
             </h1>
@@ -2411,7 +2415,7 @@ function FailedAuditOverview({
   const displayTitle = selection?.kind === 'brand' && brandName
     ? brandName
     : (domain || 'Your website');
-  const HeaderIcon = selection?.kind === 'brand' ? Fingerprint : Globe;
+  const isBrand = selection?.kind === 'brand';
   const productUrl = audit.product_url || (domain ? `https://${domain}` : '');
   const retryHref = productUrl
     ? `/dashboard/new-audit?url=${encodeURIComponent(productUrl)}`
@@ -2422,7 +2426,9 @@ function FailedAuditOverview({
       <div className="flex items-start justify-between gap-4 mb-6">
         <div className="min-w-0">
           <div className="flex items-center gap-3 mb-1.5">
-            <HeaderIcon size={20} className="text-muted flex-shrink-0" />
+            {isBrand
+              ? <Fingerprint size={20} className="text-muted flex-shrink-0" />
+              : <SiteFavicon hostname={domain || ''} size={18} className="text-muted flex-shrink-0" />}
             <h1 className="text-2xl font-medium font-sans text-text truncate" style={{ color: 'var(--ink)' }}>
               {displayTitle}
             </h1>

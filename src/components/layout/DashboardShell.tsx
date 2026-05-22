@@ -32,6 +32,7 @@ import { AuditBundleProvider } from '@/context/AuditBundleContext';
 import { useAuth } from '@/context/AuthContext';
 import { createBrowserSupabase } from '@/lib/supabase-ssr';
 import ThemeToggle from '@/components/ui/ThemeToggle';
+import SiteFavicon from '@/components/ui/SiteFavicon';
 import Logo, { Iconmark } from '@/components/ui/Logo';
 import {
   readSelection,
@@ -480,7 +481,7 @@ const DashboardShell: React.FC<DashboardShellProps> = ({ children }) => {
                 >
                   {selectedSite?.kind === 'brand'
                     ? <Fingerprint size={13} strokeWidth={1.75} />
-                    : <Globe size={13} strokeWidth={1.75} />}
+                    : <SiteFavicon hostname={selectedSite?.label || ''} size={13} />}
                 </span>
                 <span className="flex-1 min-w-0 text-left">
                   <span className="block text-[13px] font-medium truncate leading-tight" style={{ color: 'var(--ink)' }}>
@@ -526,7 +527,7 @@ const DashboardShell: React.FC<DashboardShellProps> = ({ children }) => {
                           >
                             {s.kind === 'brand'
                               ? <Fingerprint size={12} strokeWidth={1.75} />
-                              : <Globe size={12} strokeWidth={1.75} />}
+                              : <SiteFavicon hostname={s.label} size={12} />}
                           </span>
                           <span className="flex-1 min-w-0">
                             <span className="block text-[13px] font-medium truncate leading-tight" style={{ color: 'var(--ink)' }}>
@@ -567,7 +568,7 @@ const DashboardShell: React.FC<DashboardShellProps> = ({ children }) => {
             >
               {selectedSite?.kind === 'brand'
                 ? <Fingerprint size={17} strokeWidth={1.75} />
-                : <Globe size={17} strokeWidth={1.75} />}
+                : <SiteFavicon hostname={selectedSite?.label || ''} size={17} />}
             </button>
           </div>
         )}

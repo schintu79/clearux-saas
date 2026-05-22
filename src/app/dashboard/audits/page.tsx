@@ -21,6 +21,7 @@ import { useAuth } from '@/context/AuthContext';
 import { createBrowserSupabase } from '@/lib/supabase-ssr';
 import Badge from '@/components/ui/Badge';
 import type { Audit, AuditType, Report } from '@/types/database';
+import SiteFavicon from '@/components/ui/SiteFavicon';
 
 /* ── Helpers ───────────────────────────────────────────────── */
 
@@ -112,7 +113,7 @@ function WebsiteAuditGroup({ domain, audits }: {
           <div className="flex items-center justify-between gap-3">
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-1.5 mb-0.5">
-                <Globe size={12} className="text-muted flex-shrink-0" />
+                <SiteFavicon hostname={domain} size={12} className="text-muted flex-shrink-0" />
                 <p className="font-medium text-sm text-text truncate">{domain}</p>
                 {lang && <span className="text-[11px] font-medium text-muted bg-off px-1.5 py-0.5 rounded">{lang}</span>}
                 <ExternalLink size={10} className="text-muted opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0" />
@@ -149,7 +150,7 @@ function WebsiteAuditGroup({ domain, audits }: {
         <div className="flex items-center justify-between gap-3">
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-1.5 mb-0.5">
-              <Globe size={12} className="text-muted flex-shrink-0" />
+              <SiteFavicon hostname={domain} size={12} className="text-muted flex-shrink-0" />
               <p className="font-medium text-sm text-text truncate">{domain}</p>
               <span className="text-[11px] font-medium px-1.5 py-0.5 rounded-full" style={{ color: 'var(--ink)', background: 'color-mix(in srgb, var(--ink) 8%, transparent)' }}>
                 {audits.length} audits
