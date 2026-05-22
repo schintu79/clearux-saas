@@ -40,7 +40,7 @@ import EmptyAudit from '@/components/dashboard/v2/EmptyAudit';
 import OverviewBreadcrumb from '@/components/dashboard/OverviewBreadcrumb';
 import PageHeader from '@/components/dashboard/v2/PageHeader';
 import FixConsole, { inferFixType } from '@/components/dashboard/v2/FixConsole';
-import { prepareFindingsForExport, buildExportMeta, renderMarkdown } from '@/lib/export/findings-formatter';
+import { prepareFindingsForExport, buildExportMeta, renderMarkdown, processExportPipeline } from '@/lib/export/findings-formatter';
 import FindingText from '@/components/dashboard/v2/FindingText';
 import CustomSelect from '@/components/ui/CustomSelect';
 import { groupFindingsForDisplay, type GroupedFinding } from '@/lib/audit-findings-presentation';
@@ -781,10 +781,17 @@ function FixPageInner() {
             onClick={() => {
               const exportFindings = prepareFindingsForExport(filteredGroups, PHASE1_MODULES);
               const siteName = selection?.kind === 'site' ? selection.host : 'brand';
+              const siteHostname = selection?.kind === 'site' ? selection.host : '';
               const auditDate = bundle.audit?.completed_at || bundle.audit?.created_at || new Date().toISOString();
               const auditId = bundle.audit?.id || 'unknown';
-              const meta = buildExportMeta(exportFindings, siteName, auditDate, auditId);
-              const md = renderMarkdown(exportFindings, meta);
+
+              // Run the full export pipeline: dedup → enrich → classify → group
+              const { clusters, originalCount, uniqueCount } = processExportPipeline(exportFindings, siteHostname);
+
+              // Build metadata from the deduplicated findings
+              const dedupedFindings = clusters.flatMap((c) => c.members);
+              const meta = buildExportMeta(dedupedFindings, siteName, auditDate, auditId, { originalCount, uniqueCount });
+              const md = renderMarkdown(dedupedFindings, meta, clusters);
 
               const blob = new Blob([md], { type: 'text/markdown;charset=utf-8' });
               const url = URL.createObjectURL(blob);
