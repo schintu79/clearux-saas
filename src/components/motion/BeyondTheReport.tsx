@@ -308,7 +308,7 @@ function ShareVisual({ inView }: { inView: boolean }) {
                 initial={{ opacity: 0 }}
                 animate={step >= 1 ? { opacity: 1 } : {}}
               >
-                clearux.ai/s/a3x9k2
+                fixpath.ai/s/a3x9k2
               </motion.span>
             </div>
             <motion.div

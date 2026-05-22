@@ -8,7 +8,7 @@ export default function CookieConsent() {
 
   useEffect(() => {
     const cookies = document.cookie.split(';').map(c => c.trim());
-    const consentCookie = cookies.find(c => c.startsWith('clearux-cookie-consent='));
+    const consentCookie = cookies.find(c => c.startsWith('fixpath-cookie-consent='));
 
     if (!consentCookie) {
       setIsVisible(true);
@@ -16,12 +16,12 @@ export default function CookieConsent() {
   }, []);
 
   const handleAccept = () => {
-    document.cookie = 'clearux-cookie-consent=accepted; path=/; max-age=31536000';
+    document.cookie = 'fixpath-cookie-consent=accepted; path=/; max-age=31536000';
     setIsVisible(false);
   };
 
   const handleReject = () => {
-    document.cookie = 'clearux-cookie-consent=rejected; path=/; max-age=31536000';
+    document.cookie = 'fixpath-cookie-consent=rejected; path=/; max-age=31536000';
     setIsVisible(false);
   };
 

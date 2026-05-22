@@ -295,7 +295,7 @@ export async function GET(
     }
     if (!logoLoaded) {
       try {
-        const logoPath = path.join(process.cwd(), 'public', 'logo-clearux.png')
+        const logoPath = path.join(process.cwd(), 'public', 'logo-fixpath.png')
         if (fs.existsSync(logoPath)) {
           doc.image(logoPath, (pageW - 200) / 2, doc.y, { fit: [200, 80], align: 'center', valign: 'center' })
           doc.y += 85

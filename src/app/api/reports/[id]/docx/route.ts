@@ -358,7 +358,7 @@ export async function buildDocx(auditId: string): Promise<{ buffer: Buffer; safe
     }
     if (!logoBuffer) {
       try {
-        const logoPath = path.join(process.cwd(), 'public', 'logo-clearux.png')
+        const logoPath = path.join(process.cwd(), 'public', 'logo-fixpath.png')
         logoBuffer = fs.readFileSync(logoPath)
       } catch { console.warn('[DOCX] Logo PNG not found, falling back to text') }
     }

@@ -49,12 +49,12 @@ export default function CookiesPage() {
                       <td className="px-5 py-3">Session</td>
                     </tr>
                     <tr className="border-b border-rule">
-                      <td className="px-5 py-3 font-mono text-[12px]">clearux-theme</td>
+                      <td className="px-5 py-3 font-mono text-[12px]">fixpath-theme</td>
                       <td className="px-5 py-3">Remembers your light/dark theme choice</td>
                       <td className="px-5 py-3">1 year</td>
                     </tr>
                     <tr>
-                      <td className="px-5 py-3 font-mono text-[12px]">clearux-cookie-consent</td>
+                      <td className="px-5 py-3 font-mono text-[12px]">fixpath-cookie-consent</td>
                       <td className="px-5 py-3">Records your cookie consent choice</td>
                       <td className="px-5 py-3">1 year</td>
                     </tr>

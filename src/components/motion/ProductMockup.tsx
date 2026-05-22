@@ -42,7 +42,7 @@ export function HeroReportMockup() {
           </div>
           <div className="flex-1 mx-8 hidden sm:block">
             <div className="max-w-sm mx-auto px-4 py-1.5 rounded-lg bg-card border border-border text-center">
-              <span className="text-xs text-muted font-mono">clearux.ai/audit/acme-com</span>
+              <span className="text-xs text-muted font-mono">fixpath.ai/audit/acme-com</span>
             </div>
           </div>
           <div className="flex items-center gap-2">

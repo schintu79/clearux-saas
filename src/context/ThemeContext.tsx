@@ -15,12 +15,12 @@ const ThemeContext = createContext<ThemeContextValue | undefined>(undefined)
 // Cookie helpers — 400-day expiry (max recommended by browsers)
 function getThemeCookie(): Theme | null {
   if (typeof document === 'undefined') return null
-  const match = document.cookie.match(/(?:^|; )clearux-theme=(light|dark)/)
+  const match = document.cookie.match(/(?:^|; )fixpath-theme=(light|dark)/)
   return (match?.[1] as Theme) ?? null
 }
 
 function setThemeCookie(theme: Theme) {
-  document.cookie = `clearux-theme=${theme}; path=/; max-age=${60 * 60 * 24 * 400}; SameSite=Lax`
+  document.cookie = `fixpath-theme=${theme}; path=/; max-age=${60 * 60 * 24 * 400}; SameSite=Lax`
 }
 
 export function ThemeProvider({

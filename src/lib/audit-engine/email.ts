@@ -19,7 +19,7 @@ function getResend(): Resend | null {
   return _resend
 }
 
-const APP_URL = process.env.NEXT_PUBLIC_APP_URL || 'https://clearux.ai'
+const APP_URL = process.env.NEXT_PUBLIC_APP_URL || 'https://fixpath.ai'
 
 /* ── Shared template wrapper ─────────────────────────────────── */
 
@@ -139,7 +139,7 @@ export async function sendWelcomeEmail(
   `
 
   return send(
-    'Fixpath <hello@clearux.ai>',
+    'Fixpath <hello@fixpath.ai>',
     email,
     'Welcome to Fixpath -- your first audit is free',
     emailLayout(content, `Welcome ${name}! Run your first UX audit for free.`),
@@ -199,7 +199,7 @@ export async function sendAuditComplete(
   `
 
   return send(
-    'Fixpath <audits@clearux.ai>',
+    'Fixpath <audits@fixpath.ai>',
     email,
     `Your ${typeLabel} for ${displayName} is ready`,
     emailLayout(content, `Your ${typeLabel} for ${displayName} is complete. View your report now.`),
@@ -257,7 +257,7 @@ export async function sendPaymentConfirmation(
   `
 
   return send(
-    'Fixpath <billing@clearux.ai>',
+    'Fixpath <billing@fixpath.ai>',
     email,
     `Payment received -- your ${typeLabel} is starting`,
     emailLayout(content, `Payment of $${amountUSD} received. Your ${typeLabel} for ${displayName} is processing.`),
@@ -306,7 +306,7 @@ export async function sendCreditsPurchased(
   `
 
   return send(
-    'Fixpath <billing@clearux.ai>',
+    'Fixpath <billing@fixpath.ai>',
     email,
     `${creditsAdded} audit credits added to your account`,
     emailLayout(content, `${creditsAdded} credits added. Your new balance is ${newBalance}.`),
@@ -342,14 +342,14 @@ export async function sendAccountDeleted(
       </table>
     </div>
 
-    <p>If this was a mistake or you did not request this deletion, please contact us immediately at <a href="mailto:support@clearux.ai" style="color:#111;font-weight:600">support@clearux.ai</a>.</p>
+    <p>If this was a mistake or you did not request this deletion, please contact us immediately at <a href="mailto:support@fixpath.ai" style="color:#111;font-weight:600">support@fixpath.ai</a>.</p>
 
-    <p style="font-size:13px;color:#71717a">We are sorry to see you go. If you ever want to come back, you are always welcome to create a new account at <a href="${APP_URL}" style="color:#111;font-weight:600">clearux.ai</a>.</p>
+    <p style="font-size:13px;color:#71717a">We are sorry to see you go. If you ever want to come back, you are always welcome to create a new account at <a href="${APP_URL}" style="color:#111;font-weight:600">fixpath.ai</a>.</p>
     <!--FOOTER-->
   `
 
   return send(
-    'Fixpath <hello@clearux.ai>',
+    'Fixpath <hello@fixpath.ai>',
     email,
     'Your Fixpath account has been deleted',
     emailLayout(content, 'Your Fixpath account and all data have been permanently deleted.'),
@@ -409,7 +409,7 @@ export async function sendFreeAuditReady(
   `
 
   return send(
-    'Fixpath <audits@clearux.ai>',
+    'Fixpath <audits@fixpath.ai>',
     email,
     `Your free ${typeLabel} for ${displayName} is ready`,
     emailLayout(content, `Your free ${typeLabel} for ${displayName} is complete. View your report now.`),

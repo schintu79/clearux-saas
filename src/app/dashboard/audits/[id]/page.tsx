@@ -1347,8 +1347,8 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
         // Sync the global brand/site selection to this audit's identity
         // so the sidebar selector + topbar "Viewing X" mirror the audit
         // the operator just opened. Without this, clicking a supabase.com
-        // audit while the selector is on clearux.ai would leave the
-        // selector on clearux.ai and the audit body on supabase.com —
+        // audit while the selector is on fixpath.ai would leave the
+        // selector on fixpath.ai and the audit body on supabase.com —
         // the divergence reported in the bug.
         //
         // Prefer brand selection when the audit is tied to a brand
