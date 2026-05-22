@@ -63,8 +63,10 @@ import {
   normalizeForFixConsole,
   actionModeLabel,
   ownerLabel,
+  fixStatusLabel,
   type ActionMode,
   type FixCapability,
+  type FixStatus,
   type NormalizedFixPayload,
 } from '@/lib/fix-action-model';
 
@@ -1250,9 +1252,9 @@ function SelfServeConsole({
   const fixType = fixTypeOverride || inferredFixType;
   const classification = useMemo(() => classifyFinding(finding, inferredFixType, pages), [finding, inferredFixType, pages]);
   const impact = useMemo(() => inferImpact(finding), [finding]);
-  const deployable = useMemo(() => classification === 'fixable_surgical' || classification === 'fixable_bulk', [classification]);
-  // Use capability model for AI helper gating (Phase 2)
+  // Use capability model for deploy and AI helper gating
   const capability = useMemo(() => resolveCapability(finding), [finding]);
+  const deployable = useMemo(() => capability.deployable && (classification === 'fixable_surgical' || classification === 'fixable_bulk'), [capability.deployable, classification]);
   const aiApplicable = capability.aiAssistAvailable;
   const isJson = useMemo(() => fixType === 'schema' || looksLikeJson(patch), [fixType, patch]);
   const dirty = patch !== initialPatch;
@@ -1417,10 +1419,25 @@ function SelfServeConsole({
         deployLogId: data?.deployLogId,
       });
       if (data?.deployLogId) setLastDeployId(data.deployLogId);
-      // Auto-set finding status to "fixed" after successful deploy
+      // Transition fix_status → fixed via API
+      try {
+        await fetch(`/api/findings/${finding.id}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action_mode: 'fixed', fix_status: 'fixed' }),
+        });
+      } catch { /* non-blocking */ }
       onStatusChange?.('fixed');
     } catch (err: any) {
       setDeployResult({ ok: false, msg: err?.message || 'Network error during deploy.' });
+      // Transition fix_status → failed via API
+      try {
+        await fetch(`/api/findings/${finding.id}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ fix_status: 'failed' }),
+        });
+      } catch { /* non-blocking */ }
     } finally {
       setDeploying(false);
     }
@@ -1446,7 +1463,14 @@ function SelfServeConsole({
       } else {
         setDeployResult({ ok: true, msg: 'Original file restored.' });
         setLastDeployId(null);
-        // Revert finding status after successful rollback
+        // Revert fix_status → in_progress after successful rollback
+        try {
+          await fetch(`/api/findings/${finding.id}`, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ action_mode: 'self_fix', fix_status: 'in_progress' }),
+          });
+        } catch { /* non-blocking */ }
         onStatusChange?.('in_progress');
       }
     } catch (err: any) {
@@ -2200,11 +2224,30 @@ export default function FixConsole({
   // ── Active action mode ───────────────────────────────────
   // Pre-select from DB if previously set, otherwise null (user must choose)
   const dbActionMode = (finding as AuditFinding & { action_mode?: string }).action_mode as ActionMode | undefined;
+  const dbFixStatus = ((finding as AuditFinding & { fix_status?: string }).fix_status || 'unreviewed') as FixStatus;
   const [activeMode, setActiveMode] = useState<ActionMode | null>(dbActionMode || null);
+  const [currentFixStatus, setCurrentFixStatus] = useState<FixStatus>(dbFixStatus);
   const [deferPending, setDeferPending] = useState(false);
 
   const fixType = useMemo(() => inferFixType(finding), [finding]);
   const basePatch = (finding.recommendation || '').trim();
+
+  // ── Persist action mode selection to DB ──────────────────
+  const handleModeSelect = async (mode: ActionMode) => {
+    setActiveMode(mode);
+    // Only persist self_fix and team_handoff — defer has its own handler
+    if (mode === 'self_fix' || mode === 'team_handoff') {
+      const newStatus: FixStatus = mode === 'self_fix' ? 'in_progress' : 'in_progress';
+      setCurrentFixStatus(newStatus);
+      try {
+        await fetch(`/api/findings/${finding.id}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action_mode: mode, fix_status: newStatus }),
+        });
+      } catch { /* non-blocking */ }
+    }
+  };
 
   // ── Defer handler ────────────────────────────────────────
   const handleDefer = async (note?: string) => {
@@ -2229,10 +2272,45 @@ export default function FixConsole({
 
   return (
     <div className="space-y-4">
+      {/* Inline fix status indicator */}
+      {currentFixStatus !== 'unreviewed' && (
+        <div
+          className="flex items-center gap-2 px-3 py-2 rounded-md text-[11px] font-medium"
+          style={{
+            background: currentFixStatus === 'fixed'
+              ? 'color-mix(in srgb, var(--ok) 8%, transparent)'
+              : currentFixStatus === 'failed'
+              ? 'color-mix(in srgb, var(--err) 8%, transparent)'
+              : currentFixStatus === 'deferred'
+              ? 'color-mix(in srgb, var(--m-muted) 8%, transparent)'
+              : 'color-mix(in srgb, var(--ink) 5%, transparent)',
+            color: currentFixStatus === 'fixed'
+              ? 'var(--ok)'
+              : currentFixStatus === 'failed'
+              ? 'var(--err)'
+              : 'var(--ink)',
+          }}
+        >
+          <span
+            className="w-1.5 h-1.5 rounded-full flex-shrink-0"
+            style={{
+              background: currentFixStatus === 'fixed'
+                ? 'var(--ok)'
+                : currentFixStatus === 'failed'
+                ? 'var(--err)'
+                : currentFixStatus === 'deferred'
+                ? 'var(--m-muted)'
+                : 'var(--ink)',
+            }}
+          />
+          {fixStatusLabel(currentFixStatus)}
+        </div>
+      )}
+
       {/* Decision-first action panel */}
       <ActionPanel
         active={activeMode}
-        onSelect={setActiveMode}
+        onSelect={handleModeSelect}
         allowedModes={allowed}
         capability={capability}
         defaultOwner={capability.defaultOwner}

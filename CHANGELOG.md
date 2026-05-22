@@ -6,6 +6,18 @@ Last updated: 2026-05-22
 
 ---
 
+## Fix Console Workflow Logic (Fix 1 Phase 3)
+
+### fix_status state transitions and capability gating
+- **State transitions**: FixConsole now persists `action_mode` and `fix_status` to the API at every workflow step. Selecting "Fix it yourself" sets `fix_status='in_progress'` and `action_mode='self_fix'`. Successful deploy transitions to `fix_status='fixed'`. Failed deploy transitions to `fix_status='failed'`. Rollback reverts to `fix_status='in_progress'`.
+- **Inline status indicator**: A colored status pill appears above the ActionPanel showing the current `fix_status` (In progress, Fixed, Failed, Deferred) with semantic colors — green for fixed, red for failed, muted for deferred.
+- **Capability-gated deploy**: Deploy section is now gated by both `capability.deployable` and the existing classification check. Findings where the capability model says "not deployable" will never show deploy controls regardless of classification heuristics.
+- **Strict approval enforcement**: DiffPreview requires explicit "Approve and deploy" click before any live mutation. No deploy path bypasses this approval step.
+- **Deep links verified**: `#finding-<id>` hash-based deep links work correctly from Find tab, Overview, and direct URLs with auto-select and scroll-into-view.
+- **Files**: `src/components/dashboard/v2/FixConsole.tsx`
+
+---
+
 ## Fix Console UI Rebuild (Fix 1 Phase 2)
 
 ### Decision-first action panel replaces tab bar
