@@ -6,6 +6,31 @@ Last updated: 2026-05-23
 
 ---
 
+## Crawl Quality and Audit Transparency (Fix 4)
+
+### Data model — crawl visibility contract (Phase 1)
+- **Migration 041**: Added `crawl_summary` (jsonb), `crawl_started_at`, `crawl_completed_at` to `audits` table. Added `crawl_status`, `skip_reason`, `canonical_url`, `is_duplicate`, `page_type`, `fetch_strategy` to `audit_pages` table.
+- **CrawlSummary type**: New interface tracking URLs discovered, pages analyzed/skipped/blocked/duplicate/excluded, JS pages detected, average load time, discovery sources (sitemap/html_links/common_paths), excluded URLs with reasons, and coverage notes.
+- **CrawlStats**: New runtime interface returned from `crawlPages()` alongside pages, collecting all crawl metrics for pipeline consumption.
+- **Crawler enrichment**: `fetchStrategy` tracked per page (direct/jina/google_cache). Discovery sources counted after parallel discovery. Exclusion tracking captures URL and reason. Both return paths now return `{ pages, stats }`.
+- **Pipeline wiring**: `process-audit.ts` destructures crawl output, enriches `audit_pages` inserts with per-page crawl metadata, builds `crawl_summary` from stats, and stores crawl timeline on audits.
+- **Files**: `supabase/migrations/041_crawl_summary.sql`, `src/types/database.ts`, `src/lib/audit-engine/crawler.ts`, `src/lib/inngest/functions/process-audit.ts`, `src/lib/audit-engine/index.ts`
+
+### Crawl coverage UI panel (Phase 2)
+- **Overview tab**: Added "Audit coverage" panel between CheckpointHealth and AI transparency note. Shows stats grid (URLs discovered, pages analyzed, skipped, coverage %), coverage progress bar, discovery sources breakdown, skipped breakdown (blocked/duplicates/excluded/other), JS-rendered page count, crawl duration, coverage notes, and expandable excluded URLs drill-down.
+- **Freshness badge**: Added age-based badge (Fresh/Xd ago) in audit header next to Deep Mode badge. Uses `crawl_completed_at` or `created_at` with color coding: green (<= 7d), yellow (<= 30d), muted (> 30d).
+- **Pages tab**: Added fetch strategy badge per page (shows "JS rendered" for Jina-fetched pages).
+- **Files**: `src/app/dashboard/audits/[id]/page.tsx`
+
+### Crawl logic improvements (Phase 3)
+- **URL normalization**: Enhanced `normalizeUrlForDedup()` to strip 30+ tracking query parameters (UTM, fbclid, gclid, msclkid, etc.) before deduplication. Prevents duplicate crawling of the same page with different tracking params.
+- **Canonical dedup**: When a crawled page's `<link rel="canonical">` points to an already-visited URL, the page is skipped and counted as a duplicate. Applied to both level 1 and level 2 crawl passes.
+- **JS detection tracking**: Pages fetched via non-direct strategies (Jina, Google Cache) are counted as JS-rendered in crawl stats. Final count is authoritative from all pages.
+- **Stats accuracy**: Replaced hardcoded `pagesDuplicate: 0` placeholders with actual runtime count in all three return paths (early return, normal return, catch block).
+- **Files**: `src/lib/audit-engine/crawler.ts`
+
+---
+
 ## QA and Calibration (Fix 2 Phase 4)
 
 ### Template grouping consumed-set bug fix

@@ -51,6 +51,9 @@ import {
   Heading1,
   FileCode,
   ChevronRight,
+  Scan,
+  Ban,
+  Layers,
 } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { createBrowserSupabase } from '@/lib/supabase-ssr';
@@ -63,6 +66,7 @@ import type {
   AuditFinding,
   FindingSeverity,
   Report,
+  CrawlSummary,
 } from '@/types/database';
 import { getUILabels, getReportLabels, getCategoryNames, getPillarNames, getScoreLabel, getSeverityLabel, getLocale, type UILabels } from '@/lib/languages';
 import { CHECKPOINT_LABELS } from '@/lib/audit-checkpoints';
@@ -1926,6 +1930,28 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
                 Deep Mode
               </span>
             )}
+            {/* Freshness badge — how old is this audit */}
+            {(() => {
+              const auditDate = audit.crawl_completed_at || audit.created_at;
+              if (!auditDate) return null;
+              const ageMs = Date.now() - new Date(auditDate).getTime();
+              const ageDays = Math.floor(ageMs / (1000 * 60 * 60 * 24));
+              if (ageDays <= 7) return (
+                <span className="inline-flex items-center gap-1 text-[11px] font-medium text-ok bg-ok/10 px-2 py-0.5 rounded-full">
+                  <Clock size={10} /> Fresh
+                </span>
+              );
+              if (ageDays <= 30) return (
+                <span className="inline-flex items-center gap-1 text-[11px] font-medium text-warn bg-warn/10 px-2 py-0.5 rounded-full">
+                  <Clock size={10} /> {ageDays}d ago
+                </span>
+              );
+              return (
+                <span className="inline-flex items-center gap-1 text-[11px] font-medium text-m-muted bg-paper-2 px-2 py-0.5 rounded-full border border-rule/30">
+                  <Clock size={10} /> {ageDays}d ago
+                </span>
+              );
+            })()}
             <a
               href={audit.product_url || ''}
               target="_blank"
@@ -2558,6 +2584,190 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
               {/* Checkpoint Health — category-level pass/fail summary */}
               <CheckpointHealth categoryScores={categoryScores} findings={findings} />
 
+              {/* Crawl Coverage — audit scope transparency */}
+              {(() => {
+                const cs = (audit as any)?.crawl_summary as CrawlSummary | null | undefined;
+                if (!cs) return null;
+
+                const crawlStart = (audit as any)?.crawl_started_at;
+                const crawlEnd = (audit as any)?.crawl_completed_at;
+                const crawlDurationMs = crawlStart && crawlEnd
+                  ? new Date(crawlEnd).getTime() - new Date(crawlStart).getTime()
+                  : null;
+                const crawlDuration = crawlDurationMs != null
+                  ? crawlDurationMs < 60_000
+                    ? `${Math.round(crawlDurationMs / 1000)}s`
+                    : `${Math.round(crawlDurationMs / 60_000)}m ${Math.round((crawlDurationMs % 60_000) / 1000)}s`
+                  : null;
+
+                const coveragePercent = cs.urls_discovered > 0
+                  ? Math.round((cs.pages_analyzed / cs.urls_discovered) * 100)
+                  : 100;
+
+                const skippedTotal = cs.pages_skipped + cs.pages_blocked + cs.pages_duplicate + cs.pages_excluded;
+
+                return (
+                  <div className="mb-6 rounded-xl border border-rule bg-card overflow-hidden">
+                    {/* Header */}
+                    <div className="flex items-center gap-3 px-5 py-4 border-b border-rule/40 bg-paper-2/30">
+                      <div className="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0 bg-ink/5">
+                        <Scan size={13} className="text-ink" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium text-ink">Audit coverage</p>
+                        <p className="text-[11px] text-m-muted">How much of your site was analyzed</p>
+                      </div>
+                      {crawlEnd && (
+                        <span className="text-[10px] text-m-muted bg-paper-2 px-2 py-0.5 rounded-full border border-rule/30">
+                          {new Date(crawlEnd).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}
+                        </span>
+                      )}
+                    </div>
+
+                    {/* Stats grid */}
+                    <div className="grid grid-cols-2 sm:grid-cols-4 divide-x divide-rule/30 border-b border-rule/30">
+                      <div className="px-4 py-3 text-center">
+                        <p className="text-[18px] font-bold text-ink">{cs.urls_discovered}</p>
+                        <p className="text-[11px] text-m-muted">URLs discovered</p>
+                      </div>
+                      <div className="px-4 py-3 text-center">
+                        <p className="text-[18px] font-bold text-ok">{cs.pages_analyzed}</p>
+                        <p className="text-[11px] text-m-muted">Pages analyzed</p>
+                      </div>
+                      <div className="px-4 py-3 text-center">
+                        <p className={clsx('text-[18px] font-bold', skippedTotal > 0 ? 'text-warn' : 'text-m-muted')}>{skippedTotal}</p>
+                        <p className="text-[11px] text-m-muted">Skipped</p>
+                      </div>
+                      <div className="px-4 py-3 text-center">
+                        <p className="text-[18px] font-bold text-ink">{coveragePercent}%</p>
+                        <p className="text-[11px] text-m-muted">Coverage</p>
+                      </div>
+                    </div>
+
+                    {/* Coverage bar */}
+                    <div className="px-5 py-3 border-b border-rule/30">
+                      <div className="flex items-center gap-3">
+                        <div className="flex-1 h-2 bg-rule/15 rounded-full overflow-hidden">
+                          <div
+                            className="h-full rounded-full bg-ok transition-all duration-500"
+                            style={{ width: `${coveragePercent}%` }}
+                          />
+                        </div>
+                        <span className="text-[11px] font-medium text-m-muted flex-shrink-0">
+                          {cs.pages_analyzed} of {cs.urls_discovered}
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Breakdown details */}
+                    <div className="px-5 py-3 space-y-2">
+                      {/* Discovery sources */}
+                      {cs.discovery_sources && (
+                        <div className="flex items-center gap-4 text-[11px] text-m-muted">
+                          <span className="font-medium text-ink/70">Found via:</span>
+                          {cs.discovery_sources.sitemap > 0 && (
+                            <span className="flex items-center gap-1">
+                              <Map size={10} /> Sitemap ({cs.discovery_sources.sitemap})
+                            </span>
+                          )}
+                          {cs.discovery_sources.html_links > 0 && (
+                            <span className="flex items-center gap-1">
+                              <LinkIcon size={10} /> Links ({cs.discovery_sources.html_links})
+                            </span>
+                          )}
+                          {cs.discovery_sources.common_paths > 0 && (
+                            <span className="flex items-center gap-1">
+                              <Globe size={10} /> Common paths ({cs.discovery_sources.common_paths})
+                            </span>
+                          )}
+                        </div>
+                      )}
+
+                      {/* Skipped breakdown */}
+                      {skippedTotal > 0 && (
+                        <div className="flex items-center gap-4 text-[11px] text-m-muted flex-wrap">
+                          <span className="font-medium text-ink/70">Skipped:</span>
+                          {cs.pages_blocked > 0 && (
+                            <span className="flex items-center gap-1">
+                              <Ban size={10} /> Blocked ({cs.pages_blocked})
+                            </span>
+                          )}
+                          {cs.pages_duplicate > 0 && (
+                            <span className="flex items-center gap-1">
+                              <Layers size={10} /> Duplicates ({cs.pages_duplicate})
+                            </span>
+                          )}
+                          {cs.pages_excluded > 0 && (
+                            <span className="flex items-center gap-1">
+                              <X size={10} /> Excluded ({cs.pages_excluded})
+                            </span>
+                          )}
+                          {cs.pages_skipped > 0 && (
+                            <span className="flex items-center gap-1">
+                              <AlertTriangle size={10} /> Other ({cs.pages_skipped})
+                            </span>
+                          )}
+                        </div>
+                      )}
+
+                      {/* JS pages */}
+                      {cs.js_pages_detected > 0 && (
+                        <div className="flex items-center gap-2 text-[11px] text-m-muted">
+                          <span className="font-medium text-ink/70">JS-rendered pages:</span>
+                          <span>{cs.js_pages_detected} page{cs.js_pages_detected !== 1 ? 's' : ''} required alternative fetch strategies</span>
+                        </div>
+                      )}
+
+                      {/* Crawl duration */}
+                      {crawlDuration && (
+                        <div className="flex items-center gap-2 text-[11px] text-m-muted">
+                          <Clock size={10} />
+                          <span>Crawl completed in {crawlDuration}</span>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Coverage notes */}
+                    {cs.coverage_notes && cs.coverage_notes.length > 0 && (
+                      <div className="px-5 py-3 border-t border-rule/30 bg-paper-2/20">
+                        <p className="text-[11px] font-medium text-ink/70 mb-1.5">Coverage notes</p>
+                        <ul className="space-y-1">
+                          {cs.coverage_notes.map((note, i) => (
+                            <li key={i} className="text-[11px] text-m-muted leading-relaxed flex items-start gap-1.5">
+                              <Info size={10} className="flex-shrink-0 mt-0.5 text-m-muted/60" />
+                              {note}
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+
+                    {/* Excluded URLs drill-down */}
+                    {cs.excluded_urls && cs.excluded_urls.length > 0 && (
+                      <details className="group">
+                        <summary className="px-5 py-2.5 border-t border-rule/30 cursor-pointer flex items-center gap-2 text-[11px] font-medium text-m-muted hover:text-ink transition-colors">
+                          <ChevronRight size={12} className="transition-transform group-open:rotate-90" />
+                          Why {cs.excluded_urls.length} URL{cs.excluded_urls.length !== 1 ? 's were' : ' was'} excluded
+                        </summary>
+                        <div className="px-5 pb-3 space-y-1">
+                          {cs.excluded_urls.slice(0, 20).map((item, i) => (
+                            <div key={i} className="flex items-start gap-2 text-[11px] text-m-muted py-0.5">
+                              <span className="truncate flex-1 font-mono text-[10px]">{item.url.replace(/^https?:\/\//, '')}</span>
+                              <span className="flex-shrink-0 text-m-muted/60">{item.reason}</span>
+                            </div>
+                          ))}
+                          {cs.excluded_urls.length > 20 && (
+                            <p className="text-[10px] text-m-muted/50 pt-1">
+                              and {cs.excluded_urls.length - 20} more
+                            </p>
+                          )}
+                        </div>
+                      </details>
+                    )}
+                  </div>
+                );
+              })()}
+
               {/* AI transparency note */}
               <div className="mb-6 px-4 py-3 rounded-xl bg-paper-2/40 border border-rule/15">
                 <p className="text-[11px] text-m-muted/70 leading-relaxed">
@@ -2956,6 +3166,12 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
                       {pg.status_code && pg.status_code !== 200 && (
                         <span className="text-xs font-semibold px-1.5 py-0.5 rounded text-orange-600 bg-orange-50">
                           {pg.status_code}
+                        </span>
+                      )}
+                      {/* Fetch strategy badge — shows when page was fetched via non-standard method */}
+                      {(pg as any).fetch_strategy && (pg as any).fetch_strategy !== 'direct' && (
+                        <span className="text-[10px] font-medium text-m-muted bg-paper-2 px-1.5 py-0.5 rounded border border-rule/30">
+                          {(pg as any).fetch_strategy === 'jina' ? 'JS rendered' : (pg as any).fetch_strategy}
                         </span>
                       )}
                     </div>

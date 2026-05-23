@@ -107,6 +107,29 @@ export interface Audit {
   previous_audit_id:  string | null
   // Industry classification (Phase 4)
   detected_industry:  string | null
+  // Crawl summary (Fix 4 — crawl transparency)
+  crawl_summary:      CrawlSummary | null
+  crawl_started_at:   string | null
+  crawl_completed_at: string | null
+}
+
+/** Structured crawl summary stored as jsonb on audits table */
+export interface CrawlSummary {
+  urls_discovered:      number
+  pages_analyzed:       number
+  pages_skipped:        number
+  pages_blocked:        number
+  pages_duplicate:      number
+  pages_excluded:       number
+  js_pages_detected:    number
+  avg_load_time_ms:     number | null
+  discovery_sources:    {
+    sitemap:       number
+    html_links:    number
+    common_paths:  number
+  }
+  excluded_urls:        Array<{ url: string; reason: string }>
+  coverage_notes:       string[]
 }
 
 export interface ScheduledAudit {
@@ -181,6 +204,13 @@ export interface AuditPage {
   wcag_checklist:      string | null       // JSON-stringified WcagCheckResult[]
   wcag_score:          number | null       // 0-100 WCAG conformance score
   crawled_at:          string
+  // Crawl metadata (Fix 4)
+  crawl_status:        string | null       // 'success' | 'failed' | 'skipped' | 'blocked'
+  skip_reason:         string | null       // why the page was skipped
+  canonical_url:       string | null       // canonical URL if different from page URL
+  is_duplicate:        boolean             // true if canonicalized to another URL
+  page_type:           string | null       // 'content' | 'auth_gate' | 'redirect' | 'error'
+  fetch_strategy:      string | null       // 'direct' | 'jina' | 'google_cache'
 }
 
 /** Per-page AI readability breakdown — stored as jsonb on audit_pages */

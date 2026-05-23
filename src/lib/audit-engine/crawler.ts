@@ -19,7 +19,16 @@ function isSameHost(a: string, b: string): boolean {
   return normalizeHostname(a) === normalizeHostname(b)
 }
 
-/** Normalize a URL string for deduplication (strip www, trailing slash, fragment, lowercase) */
+/** Tracking / analytics query params that never change page content */
+const TRACKING_PARAMS = new Set([
+  'utm_source', 'utm_medium', 'utm_campaign', 'utm_term', 'utm_content',
+  'fbclid', 'gclid', 'gclsrc', 'dclid', 'msclkid', 'twclid',
+  'mc_cid', 'mc_eid', 'ref', '_ga', '_gl', 'hsCtaTracking',
+  'hsa_cam', 'hsa_grp', 'hsa_mt', 'hsa_src', 'hsa_ad', 'hsa_acc',
+  'hsa_net', 'hsa_ver', 'hsa_kw', 'hsa_tgt', 'hsa_la', 'hsa_ol',
+])
+
+/** Normalize a URL string for deduplication (strip www, trailing slash, fragment, tracking params, lowercase) */
 function normalizeUrlForDedup(urlStr: string): string {
   try {
     const u = new URL(urlStr)
@@ -29,6 +38,14 @@ function normalizeUrlForDedup(urlStr: string): string {
     if (u.pathname.length > 1 && u.pathname.endsWith('/')) {
       u.pathname = u.pathname.slice(0, -1)
     }
+    // Strip tracking / analytics query params
+    for (const param of [...u.searchParams.keys()]) {
+      if (TRACKING_PARAMS.has(param.toLowerCase())) {
+        u.searchParams.delete(param)
+      }
+    }
+    // If no params left, remove the trailing ?
+    u.search = u.searchParams.toString() ? `?${u.searchParams.toString()}` : ''
     return u.toString().toLowerCase()
   } catch {
     return urlStr.toLowerCase()
@@ -71,6 +88,27 @@ export interface CrawledPage {
   blockedByBot?: boolean
   /** Human-readable description of the blocking mechanism detected */
   blockReason?: string
+  /** Which fetch strategy succeeded: 'direct' | 'jina' | 'google_cache' | null */
+  fetchStrategy?: string
+}
+
+/** Statistics collected during the crawl for transparency reporting */
+export interface CrawlStats {
+  urlsDiscovered: number
+  pagesAnalyzed: number
+  pagesSkipped: number
+  pagesBlocked: number
+  pagesDuplicate: number
+  pagesExcluded: number
+  jsPagesDetected: number
+  discoverySources: {
+    sitemap: number
+    htmlLinks: number
+    commonPaths: number
+  }
+  excludedUrls: Array<{ url: string; reason: string }>
+  crawlStartedAt: string
+  crawlCompletedAt: string
 }
 
 /* ── HTML parsing helpers ──────────────────────────────────── */
@@ -650,6 +688,7 @@ async function fetchPageRobust(url: string): Promise<CrawledPage | null> {
   let page = await directFetch(url)
   if (page && page.contentText && page.contentText.length >= 100) {
     console.log(`[crawler] Direct fetch succeeded for ${url} (${page.contentText.length} chars)`)
+    page.fetchStrategy = 'direct'
     return page
   }
   if (page?.blockedByBot) lastBlockedPage = page
@@ -658,6 +697,7 @@ async function fetchPageRobust(url: string): Promise<CrawledPage | null> {
   page = await jinaFetch(url)
   if (page && page.contentText && page.contentText.length >= 50) {
     console.log(`[crawler] Jina Reader succeeded for ${url} (${page.contentText.length} chars)`)
+    page.fetchStrategy = 'jina'
     return page
   }
 
@@ -665,6 +705,7 @@ async function fetchPageRobust(url: string): Promise<CrawledPage | null> {
   page = await googleCacheFetch(url)
   if (page && page.contentText && page.contentText.length >= 100) {
     console.log(`[crawler] Google Cache succeeded for ${url} (${page.contentText.length} chars)`)
+    page.fetchStrategy = 'google_cache'
     return page
   }
 
@@ -1025,9 +1066,16 @@ async function fetchLinksOnly(url: string): Promise<URL[]> {
 export async function crawlPages(
   url: string,
   maxPages: number = 5,
-): Promise<CrawledPage[]> {
+): Promise<{ pages: CrawledPage[]; stats: CrawlStats }> {
   const pages: CrawledPage[] = []
   const visited = new Set<string>()
+  const crawlStartedAt = new Date().toISOString()
+  const excludedUrls: Array<{ url: string; reason: string }> = []
+  let discoverySources = { sitemap: 0, htmlLinks: 0, commonPaths: 0 }
+  let totalDiscovered = 0
+  let jsPagesDetected = 0
+  let pagesBlocked = 0
+  let pagesDuplicate = 0
 
   /** Mark a URL as visited using normalized key */
   function markVisited(urlStr: string) {
@@ -1058,7 +1106,25 @@ export async function crawlPages(
       firstPage = await fetchPageRobust(altUrl)
     }
 
-    if (!firstPage) return pages
+    if (!firstPage) {
+      const crawlCompletedAt = new Date().toISOString()
+      return {
+        pages,
+        stats: {
+          urlsDiscovered: totalDiscovered,
+          pagesAnalyzed: 0,
+          pagesSkipped: 0,
+          pagesBlocked,
+          pagesDuplicate,
+          pagesExcluded: excludedUrls.length,
+          jsPagesDetected,
+          discoverySources,
+          excludedUrls,
+          crawlStartedAt,
+          crawlCompletedAt,
+        }
+      }
+    }
 
     // Resolve actual hostname from fetched page URL (handles redirects like keycense.com → www.keycense.com)
     try {
@@ -1123,6 +1189,13 @@ export async function crawlPages(
         })(),
       ])
 
+      // Track discovery source counts for transparency
+      discoverySources = {
+        sitemap: sitemapUrls.length,
+        htmlLinks: htmlLinks.length,
+        commonPaths: commonPathUrls.length,
+      }
+
       console.log(`[crawler] Discovery results — sitemap: ${sitemapUrls.length}, common paths: ${commonPathUrls.length}, HTML links: ${htmlLinks.length}`)
       if (sitemapUrls.length > 0) console.log(`[crawler] Sitemap URLs: ${sitemapUrls.slice(0, 5).map(u => u.pathname).join(', ')}${sitemapUrls.length > 5 ? '...' : ''}`)
       if (commonPathUrls.length > 0) console.log(`[crawler] Common paths found: ${commonPathUrls.slice(0, 5).map(u => u.pathname).join(', ')}${commonPathUrls.length > 5 ? '...' : ''}`)
@@ -1145,6 +1218,7 @@ export async function crawlPages(
       }
 
       const allDiscovered = [...allDiscoveredMap.values()]
+      totalDiscovered = allDiscovered.length + 1 // +1 for homepage already crawled
 
       // Filter out infrastructure/non-content URLs before queuing
       const EXCLUDED_PATH_PREFIXES = [
@@ -1177,9 +1251,17 @@ export async function crawlPages(
       }
 
       // Level 1: pages to crawl from all sources
-      const level1ToVisit = allDiscovered
-        .filter((link) => isSameHost(link.hostname, baseHostname) && !isVisited(link.toString()) && !isExcludedPath(link))
-        .slice(0, Math.min(40, maxPages - 1))
+      const level1ToVisit: URL[] = []
+      for (const link of allDiscovered) {
+        if (!isSameHost(link.hostname, baseHostname) || isVisited(link.toString())) continue
+        if (isExcludedPath(link)) {
+          excludedUrls.push({ url: link.toString(), reason: 'Non-content path (infrastructure, assets, or API)' })
+          continue
+        }
+        if (level1ToVisit.length < Math.min(40, maxPages - 1)) {
+          level1ToVisit.push(link)
+        }
+      }
 
       console.log(`[crawler] Level 1: ${level1ToVisit.length} pages to crawl (merged from all strategies)`)
 
@@ -1195,6 +1277,27 @@ export async function crawlPages(
 
         for (const page of results) {
           if (page && pages.length < maxPages) {
+            // Canonical dedup: if this page's canonical URL resolves to a
+            // different page we've already crawled, mark it as duplicate
+            const pageCanonical = page.headTags?.canonical
+            if (pageCanonical) {
+              try {
+                const canonicalNorm = normalizeUrlForDedup(new URL(pageCanonical, page.url).toString())
+                const pageNorm = normalizeUrlForDedup(page.url)
+                if (canonicalNorm !== pageNorm && isVisited(canonicalNorm)) {
+                  // Page is a duplicate of an already-crawled canonical — skip
+                  pagesDuplicate++
+                  excludedUrls.push({ url: page.url, reason: `Canonical duplicate of ${pageCanonical}` })
+                  continue
+                }
+              } catch { /* invalid canonical URL — proceed normally */ }
+            }
+
+            // Track JS-rendered pages
+            if (page.fetchStrategy && page.fetchStrategy !== 'direct') {
+              jsPagesDetected++
+            }
+
             pages.push(page)
             markVisited(page.url)
             level1Pages.push(page)
@@ -1250,7 +1353,21 @@ export async function crawlPages(
 
           for (const page of results) {
             if (page && pages.length < maxPages) {
+              // Canonical dedup for level 2
+              const pageCanonical = page.headTags?.canonical
+              if (pageCanonical) {
+                try {
+                  const canonicalNorm = normalizeUrlForDedup(new URL(pageCanonical, page.url).toString())
+                  const pageNorm = normalizeUrlForDedup(page.url)
+                  if (canonicalNorm !== pageNorm && isVisited(canonicalNorm)) {
+                    pagesDuplicate++
+                    excludedUrls.push({ url: page.url, reason: `Canonical duplicate of ${pageCanonical}` })
+                    continue
+                  }
+                } catch { /* invalid canonical URL — proceed normally */ }
+              }
               pages.push(page)
+              markVisited(page.url)
             }
           }
 
@@ -1263,13 +1380,48 @@ export async function crawlPages(
 
     console.log(`[crawler] Finished: ${pages.length} pages crawled for ${url}`)
 
-    // Strip internal fields before returning. rawHtml is kept so downstream
-    // technical checks can inspect markup; consumers that don't need it
-    // should treat it as optional and drop it before persistence.
-    return pages.map(({ discoveredUrls, ...rest }) => rest)
+    // Final counts — authoritative from all pages
+    jsPagesDetected = pages.filter(p => p.fetchStrategy === 'jina' || p.fetchStrategy === 'google_cache').length
+    pagesBlocked = pages.filter(p => p.blockedByBot).length
+
+    const crawlCompletedAt = new Date().toISOString()
+    const cleanPages = pages.map(({ discoveredUrls, ...rest }) => rest)
+
+    const stats: CrawlStats = {
+      urlsDiscovered: totalDiscovered || cleanPages.length,
+      pagesAnalyzed: cleanPages.filter(p => p.contentText && p.contentText.length > 50).length,
+      pagesSkipped: (totalDiscovered || cleanPages.length) - cleanPages.length,
+      pagesBlocked,
+      pagesDuplicate,
+      pagesExcluded: excludedUrls.length,
+      jsPagesDetected,
+      discoverySources,
+      excludedUrls: excludedUrls.slice(0, 20), // Cap at 20 for storage
+      crawlStartedAt,
+      crawlCompletedAt,
+    }
+
+    return { pages: cleanPages, stats }
   } catch (err) {
     const message = err instanceof Error ? err.message : 'Unknown error'
     console.error('[crawler] Error in crawlPages:', message)
-    return pages.map(({ discoveredUrls, ...rest }) => rest)
+    const crawlCompletedAt = new Date().toISOString()
+    const cleanPages = pages.map(({ discoveredUrls, ...rest }) => rest)
+
+    const stats: CrawlStats = {
+      urlsDiscovered: totalDiscovered || cleanPages.length,
+      pagesAnalyzed: cleanPages.filter(p => p.contentText && p.contentText.length > 50).length,
+      pagesSkipped: 0,
+      pagesBlocked,
+      pagesDuplicate,
+      pagesExcluded: excludedUrls.length,
+      jsPagesDetected,
+      discoverySources,
+      excludedUrls: excludedUrls.slice(0, 20),
+      crawlStartedAt,
+      crawlCompletedAt,
+    }
+
+    return { pages: cleanPages, stats }
   }
 }

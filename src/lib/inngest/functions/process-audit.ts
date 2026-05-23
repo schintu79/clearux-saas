@@ -253,7 +253,9 @@ export const processAuditFn = inngest.createFunction(
       await auditLog(auditId, 'crawl_started', 'info', `Crawling ${auditDetails.productUrl}`)
 
       const maxPages = auditDetails.plan === 'free_preview' ? 5 : auditDetails.plan === 'starter' ? 8 : 25
-      const crawledPages = await crawlPages(auditDetails.productUrl, maxPages)
+      const crawlOutput = await crawlPages(auditDetails.productUrl, maxPages)
+      const crawledPages = crawlOutput.pages
+      const crawlStats = crawlOutput.stats
 
       if (crawledPages.length === 0 || !crawledPages[0].contentText) {
         // Check if the site was blocked by anti-bot protection
@@ -298,12 +300,58 @@ export const processAuditFn = inngest.createFunction(
           is_mobile_friendly: null,
           viewport_meta: null,
           crawled_at: page.crawledAt,
+          // Crawl metadata (Fix 4)
+          crawl_status: page.contentText && page.contentText.length > 50 ? 'success' : (page.blockedByBot ? 'blocked' : 'failed'),
+          skip_reason: page.blockedByBot ? (page.blockReason || 'Bot protection') : null,
+          canonical_url: page.headTags?.canonical || null,
+          is_duplicate: false,
+          page_type: 'content',
+          fetch_strategy: page.fetchStrategy || null,
         } as any)
+      }
+
+      // Build crawl summary payload
+      const avgLoadTime = crawledPages.filter(p => p.loadTimeMs).length > 0
+        ? Math.round(crawledPages.filter(p => p.loadTimeMs).reduce((sum, p) => sum + (p.loadTimeMs || 0), 0) / crawledPages.filter(p => p.loadTimeMs).length)
+        : null
+
+      const crawlSummary = {
+        urls_discovered: crawlStats.urlsDiscovered,
+        pages_analyzed: crawlStats.pagesAnalyzed,
+        pages_skipped: crawlStats.pagesSkipped,
+        pages_blocked: crawlStats.pagesBlocked,
+        pages_duplicate: crawlStats.pagesDuplicate,
+        pages_excluded: crawlStats.pagesExcluded,
+        js_pages_detected: crawlStats.jsPagesDetected,
+        avg_load_time_ms: avgLoadTime,
+        discovery_sources: crawlStats.discoverySources,
+        excluded_urls: crawlStats.excludedUrls,
+        coverage_notes: [] as string[],
+      }
+
+      // Generate coverage notes
+      if (crawlStats.jsPagesDetected > 0) {
+        crawlSummary.coverage_notes.push(`${crawlStats.jsPagesDetected} page(s) required JavaScript rendering`)
+      }
+      if (crawlStats.pagesBlocked > 0) {
+        crawlSummary.coverage_notes.push(`${crawlStats.pagesBlocked} page(s) blocked by bot protection`)
+      }
+      if (crawlStats.pagesExcluded > 0) {
+        crawlSummary.coverage_notes.push(`${crawlStats.pagesExcluded} URL(s) excluded (infrastructure, assets, or API paths)`)
+      }
+      if (crawlStats.discoverySources.sitemap > 0) {
+        crawlSummary.coverage_notes.push(`Sitemap found with ${crawlStats.discoverySources.sitemap} URLs`)
       }
 
       await db
         .from('audits')
-        .update({ pages_crawled: crawledPages.length, updated_at: new Date().toISOString() } as any)
+        .update({
+          pages_crawled: crawledPages.length,
+          crawl_summary: crawlSummary,
+          crawl_started_at: crawlStats.crawlStartedAt,
+          crawl_completed_at: crawlStats.crawlCompletedAt,
+          updated_at: new Date().toISOString(),
+        } as any)
         .eq('id', auditId)
 
       // Build the aggregated page content for analysis
