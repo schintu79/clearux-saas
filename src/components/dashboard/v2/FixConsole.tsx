@@ -1409,6 +1409,14 @@ function SelfServeConsole({
       const data = await res.json().catch(() => ({} as any));
       if (!res.ok) {
         setDeployResult({ ok: false, msg: data?.error || `Deploy failed (${res.status}).` });
+        // Transition fix_status → failed via API
+        try {
+          await fetch(`/api/findings/${finding.id}`, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ fix_status: 'failed' }),
+          });
+        } catch { /* non-blocking */ }
         return;
       }
       setDeployResult({
@@ -1568,7 +1576,25 @@ function SelfServeConsole({
 
     // Mark finding as fixed if all pages succeeded
     const allOk = Object.values(results).every((r) => r.ok);
-    if (allOk) onStatusChange?.('fixed');
+    if (allOk) {
+      try {
+        await fetch(`/api/findings/${finding.id}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action_mode: 'fixed', fix_status: 'fixed' }),
+        });
+      } catch { /* non-blocking */ }
+      onStatusChange?.('fixed');
+    } else {
+      // At least one page failed
+      try {
+        await fetch(`/api/findings/${finding.id}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ fix_status: 'failed' }),
+        });
+      } catch { /* non-blocking */ }
+    }
 
     setBatchFixRunning(false);
   };

@@ -6,6 +6,19 @@ Last updated: 2026-05-22
 
 ---
 
+## Fix Console QA Hardening (Fix 1 Phase 4)
+
+### Deploy failure and batch fix state transitions
+- **Bug fix**: HTTP error responses from the deploy API (`!res.ok`) were not transitioning `fix_status` to `failed`. Only network exceptions (caught by `catch`) triggered the transition. Now both paths update `fix_status='failed'` via the findings API.
+- **Bug fix**: Batch fix (`handleBatchFix`) was not persisting `fix_status` transitions. Now transitions to `fixed` when all pages succeed, or `failed` when any page fails.
+- **Verified**: No stale state bugs when switching between findings — `key={finding.id}` on `ActiveFindingDetail` forces full remount of FixConsole and all children.
+- **Verified**: All 13 deployable fix types resolve correct capability flags. Tier 1 (deterministic) correctly sets `aiAssistAvailable: false`. Tier 2 (AI-assisted) correctly sets `editable: true`.
+- **Verified**: Copy-only, download-only, handoff-only, and deferred flows work independently of FTP connections.
+- **Verified**: Deep links (`#finding-<id>`) auto-select and scroll correctly from all entry points.
+- **Files**: `src/components/dashboard/v2/FixConsole.tsx`
+
+---
+
 ## Fix Console Workflow Logic (Fix 1 Phase 3)
 
 ### fix_status state transitions and capability gating
