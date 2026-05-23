@@ -6,6 +6,22 @@ Last updated: 2026-05-23
 
 ---
 
+## FixConsole Panel Cleanup and Brand Selector Bug Fix
+
+### Resolve issue panel cleanup
+- **Merged Evidence and What Will Change cards**: Removed the separate "What will change" card entirely. Merged its fields (Fix type, Scope, Impact, Deploy target) into the unified Evidence card. Evidence card now has a 3-column grid with 7 fields: Fix type, Scope, Impact, Deploy target, Confidence, Detected by, Affected URL.
+- **Removed redundant fields**: Removed "Affected page" (duplicate of Affected URL) and "Issue rationale" (redundant restatement of finding description).
+- **Removed Suggested owner label**: Removed the "Suggested owner: Engineering" tag from the action selection panel — ownership is already indicated by the role-based handoff system.
+- **Preserved contextual notices**: Design work gate notice and strategic comment notice moved into the Evidence card.
+- Files changed: `src/components/dashboard/v2/FixConsole.tsx`
+
+### Brand selector double-navigation bug
+- **Root cause**: Brand selector `onClick` unconditionally called `router.push('/dashboard/overview')` alongside `selectSiteInternal()`, causing a visible double-navigation when switching brands from a non-overview page.
+- **Fix**: Conditionally navigate to overview only if not already on that page (`pathname !== '/dashboard/overview'`).
+- Files changed: `src/components/layout/DashboardShell.tsx`
+
+---
+
 ## Role-based Output and Handoff Workflows (Fix 5)
 
 ### Data model and role mapping engine (Phase 1)

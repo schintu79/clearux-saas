@@ -432,16 +432,31 @@ const SOURCE_LABELS: Record<string, string> = {
 
 /* ── Evidence Section ──────────────────────────────────── */
 
-function EvidenceSection({ finding }: { finding: AuditFinding }) {
+function EvidenceSection({
+  finding,
+  uiFixType,
+  classification,
+  impact,
+  deployable: deployableProp,
+}: {
+  finding: AuditFinding;
+  uiFixType?: UiFixType;
+  classification?: FixClassification;
+  impact?: ImpactCategory;
+  deployable?: boolean;
+}) {
   const confidence = (finding as AuditFinding & { confidence_level?: string }).confidence_level;
   const source = (finding as AuditFinding & { detection_source?: string }).detection_source;
-
-  // Only render if we have evidence metadata
-  if (!confidence && !source) return null;
 
   const meta = confidence ? CONFIDENCE_META[confidence] || CONFIDENCE_META.heuristic : CONFIDENCE_META.heuristic;
   const sourceLabel = source ? SOURCE_LABELS[source] || source : null;
   const evidenceSnippet = finding.target_element || finding.evidence || null;
+
+  // Derive fix-type and classification metadata when provided
+  const dbType = finding.fix_type;
+  const classificationMeta = classification ? CLASSIFICATION_META[classification] : null;
+  const impactMeta = impact ? IMPACT_META[impact] : null;
+  const isDeployable = deployableProp ?? (classification === 'fixable_surgical' || classification === 'fixable_bulk');
 
   return (
     <div
@@ -460,6 +475,65 @@ function EvidenceSection({ finding }: { finding: AuditFinding }) {
 
       <div className="px-4 py-3 space-y-3 text-[12px]" style={{ background: '#ffffff' }}>
         <div className="grid grid-cols-3 gap-x-4 gap-y-3">
+          {/* Fix type */}
+          {uiFixType && (
+            <div>
+              <span className="text-[10px] font-semibold uppercase tracking-[0.06em] block mb-1" style={{ color: 'var(--m-muted)' }}>
+                Fix type
+              </span>
+              <span className="text-[12px]" style={{ color: 'var(--ink)' }}>
+                {dbType ? FIX_TYPE_META[dbType]?.label || dbType : FIX_TYPE_META[uiFixType]?.label || uiFixType.charAt(0).toUpperCase() + uiFixType.slice(1)}
+              </span>
+            </div>
+          )}
+
+          {/* Scope */}
+          {classificationMeta && (
+            <div>
+              <span className="text-[10px] font-semibold uppercase tracking-[0.06em] block mb-1" style={{ color: 'var(--m-muted)' }}>
+                Scope
+              </span>
+              <span
+                className="inline-flex items-center gap-1 text-[12px]"
+                style={{ color: classificationMeta.color }}
+              >
+                {classificationMeta.icon}
+                {classificationMeta.label}
+              </span>
+            </div>
+          )}
+
+          {/* Impact */}
+          {impactMeta && (
+            <div>
+              <span className="text-[10px] font-semibold uppercase tracking-[0.06em] block mb-1" style={{ color: 'var(--m-muted)' }}>
+                Impact
+              </span>
+              <span
+                className="inline-flex items-center gap-1 text-[11px] font-medium px-1.5 py-0.5 rounded"
+                style={{ background: 'color-mix(in srgb, var(--signal) 8%, transparent)', color: impactMeta.color }}
+              >
+                {impactMeta.label}
+              </span>
+            </div>
+          )}
+
+          {/* Deploy target */}
+          {isDeployable && uiFixType && (
+            <div>
+              <span className="text-[10px] font-semibold uppercase tracking-[0.06em] block mb-1" style={{ color: 'var(--m-muted)' }}>
+                Deploy target
+              </span>
+              <span className="text-[12px]" style={{ color: 'var(--ink-2)' }}>
+                {uiFixType === 'schema' || uiFixType === 'meta'
+                  ? 'HTML <head> section'
+                  : uiFixType === 'technical'
+                    ? 'Server config / root files'
+                    : 'Page HTML body'}
+              </span>
+            </div>
+          )}
+
           {/* Confidence badge */}
           <div>
             <span className="text-[10px] font-semibold uppercase tracking-[0.06em] block mb-1" style={{ color: 'var(--m-muted)' }}>
@@ -518,221 +592,6 @@ function EvidenceSection({ finding }: { finding: AuditFinding }) {
             >
               {evidenceSnippet.length > 200 ? evidenceSnippet.slice(0, 200) + '...' : evidenceSnippet}
             </div>
-          </div>
-        )}
-
-        {/* Issue rationale — show the description as a brief summary */}
-        {finding.description && (
-          <div>
-            <span className="text-[10px] font-semibold uppercase tracking-[0.06em] block mb-1" style={{ color: 'var(--m-muted)' }}>
-              Issue rationale
-            </span>
-            <p className="text-[11.5px] leading-[1.5]" style={{ color: 'var(--ink-2)' }}>
-              {finding.description.length > 300 ? finding.description.slice(0, 300) + '...' : finding.description}
-            </p>
-          </div>
-        )}
-      </div>
-    </div>
-  );
-}
-
-/* ── "What will change" Panel (mandatory) ────────────────── */
-
-function WhatWillChange({
-  finding,
-  uiFixType,
-  classification,
-  impact,
-  pageTargets,
-  langGroups,
-}: {
-  finding: AuditFinding;
-  uiFixType: UiFixType;
-  classification: FixClassification;
-  impact: ImpactCategory;
-  pageTargets: PageTarget[];
-  langGroups: Map<string, PageTarget[]>;
-}) {
-  const deployable = classification === 'fixable_surgical' || classification === 'fixable_bulk';
-  const classificationMeta = CLASSIFICATION_META[classification];
-  const dbType = finding.fix_type;
-  const hasMultiplePages = pageTargets.length > 1;
-  const hasMultipleLangs = langGroups.size > 1;
-  const currentValue = finding.target_element || finding.evidence || null;
-  const impactMeta = IMPACT_META[impact];
-
-  // Always resolve an affected page — even if no explicit page_url
-  const resolvedPageLabel = pageTargets.length > 0
-    ? null // will render the list
-    : finding.page_url
-      ? (() => { try { const p = new URL(finding.page_url).pathname; return p || '/'; } catch { return finding.page_url; } })()
-      : '/';
-
-  // Detect language from the primary page
-  const primaryLang = pageTargets.length > 0
-    ? pageTargets[0].lang
-    : finding.page_url
-      ? detectLang(finding.page_url)
-      : 'Default';
-
-  return (
-    <div
-      className="rounded-lg overflow-hidden mb-4"
-      style={{ border: '1px solid var(--rule)' }}
-    >
-      <div
-        className="px-4 py-2.5 flex items-center gap-2"
-        style={{ background: 'var(--paper)', borderBottom: '1px solid var(--rule)' }}
-      >
-        <Eye size={12} style={{ color: 'var(--ink)' }} />
-        <span className="text-[11px] font-semibold uppercase tracking-[0.06em]" style={{ color: 'var(--ink)' }}>
-          What will change
-        </span>
-      </div>
-
-      <div className="px-4 py-3 space-y-3 text-[12px]" style={{ background: '#ffffff' }}>
-        {/* Uniform 3-column grid for all metadata */}
-        <div className="grid grid-cols-3 gap-x-4 gap-y-3">
-          {/* Row 1 */}
-          <div>
-            <span className="text-[10px] font-semibold uppercase tracking-[0.06em] block mb-1" style={{ color: 'var(--m-muted)' }}>
-              Fix type
-            </span>
-            <span className="text-[12px]" style={{ color: 'var(--ink)' }}>
-              {dbType ? FIX_TYPE_META[dbType]?.label || dbType : FIX_TYPE_META[uiFixType]?.label || uiFixType.charAt(0).toUpperCase() + uiFixType.slice(1)}
-            </span>
-          </div>
-          <div>
-            <span className="text-[10px] font-semibold uppercase tracking-[0.06em] block mb-1" style={{ color: 'var(--m-muted)' }}>
-              Scope
-            </span>
-            <span
-              className="inline-flex items-center gap-1 text-[12px]"
-              style={{ color: classificationMeta.color }}
-            >
-              {classificationMeta.icon}
-              {classificationMeta.label}
-            </span>
-          </div>
-          <div>
-            <span className="text-[10px] font-semibold uppercase tracking-[0.06em] block mb-1" style={{ color: 'var(--m-muted)' }}>
-              Impact
-            </span>
-            <span
-              className="inline-flex items-center gap-1 text-[11px] font-medium px-1.5 py-0.5 rounded"
-              style={{ background: 'color-mix(in srgb, var(--signal) 8%, transparent)', color: impactMeta.color }}
-            >
-              {impactMeta.label}
-            </span>
-          </div>
-
-          {/* Row 2 */}
-          <div>
-            <span className="text-[10px] font-semibold uppercase tracking-[0.06em] block mb-1" style={{ color: 'var(--m-muted)' }}>
-              Affected {hasMultiplePages ? `pages (${pageTargets.length})` : 'page'}
-            </span>
-            {pageTargets.length > 0 ? (
-              hasMultipleLangs ? (
-                <div className="space-y-2">
-                  {Array.from(langGroups.entries()).map(([lang, targets]) => (
-                    <div key={lang}>
-                      <span
-                        className="inline-flex items-center gap-1 text-[10px] font-semibold px-1.5 py-0.5 rounded mb-1"
-                        style={{ background: 'color-mix(in srgb, var(--signal) 8%, transparent)', color: 'var(--signal)' }}
-                      >
-                        <Languages size={9} />
-                        {lang}
-                      </span>
-                      <ul className="mt-1 space-y-0.5">
-                        {targets.map((t) => (
-                          <li key={t.url} className="text-[11px] font-mono truncate" style={{ color: 'var(--ink-2)' }}>
-                            {t.path}
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <ul className="space-y-0.5">
-                  {pageTargets.slice(0, 8).map((t) => (
-                    <li key={t.url} className="text-[11px] font-mono truncate" style={{ color: 'var(--ink-2)' }}>
-                      {t.path || '/'}
-                      {pageTargets.length === 1 && t.lang !== 'Default' && (
-                        <span className="ml-2 text-[10px] font-sans" style={{ color: 'var(--m-muted)' }}>({t.lang})</span>
-                      )}
-                    </li>
-                  ))}
-                  {pageTargets.length > 8 && (
-                    <li className="text-[10px]" style={{ color: 'var(--m-muted)' }}>
-                      +{pageTargets.length - 8} more pages
-                    </li>
-                  )}
-                </ul>
-              )
-            ) : (
-              <span className="text-[11px] font-mono" style={{ color: 'var(--ink-2)' }}>
-                {resolvedPageLabel}
-              </span>
-            )}
-          </div>
-          {deployable && (
-            <div>
-              <span className="text-[10px] font-semibold uppercase tracking-[0.06em] block mb-1" style={{ color: 'var(--m-muted)' }}>
-                Deploy target
-              </span>
-              <span className="text-[12px]" style={{ color: 'var(--ink-2)' }}>
-                {uiFixType === 'schema' || uiFixType === 'meta'
-                  ? 'HTML <head> section'
-                  : uiFixType === 'technical'
-                    ? 'Server config / root files'
-                    : 'Page HTML body'}
-              </span>
-            </div>
-          )}
-          {primaryLang !== 'Default' && (
-            <div>
-              <span className="text-[10px] font-semibold uppercase tracking-[0.06em] block mb-1" style={{ color: 'var(--m-muted)' }}>
-                Language
-              </span>
-              <span
-                className="inline-flex items-center gap-1 text-[10px] font-semibold px-1.5 py-0.5 rounded"
-                style={{ background: 'color-mix(in srgb, var(--signal) 8%, transparent)', color: 'var(--signal)' }}
-              >
-                <Languages size={9} />
-                {primaryLang}
-              </span>
-            </div>
-          )}
-        </div>
-
-        {/* Current value */}
-        {currentValue && (
-          <div>
-            <span className="text-[10px] font-semibold uppercase tracking-[0.06em] block mb-1" style={{ color: 'var(--severe)' }}>
-              Current
-            </span>
-            <div
-              className="px-2.5 py-1.5 rounded text-[11px] font-mono leading-relaxed whitespace-pre-wrap max-h-[80px] overflow-y-auto"
-              style={{ background: 'color-mix(in srgb, var(--severe) 5%, transparent)', border: '1px solid color-mix(in srgb, var(--severe) 15%, transparent)', color: 'var(--ink-2)' }}
-            >
-              {currentValue.length > 200 ? currentValue.slice(0, 200) + '...' : currentValue}
-            </div>
-          </div>
-        )}
-
-        {/* Bulk action info */}
-        {hasMultiplePages && deployable && (
-          <div
-            className="flex items-start gap-2 px-3 py-2 rounded-md text-[11px]"
-            style={{ background: 'color-mix(in srgb, var(--signal) 6%, transparent)', color: 'var(--signal)' }}
-          >
-            <Layers size={11} className="mt-0.5 flex-shrink-0" />
-            <span>
-              This fix affects {pageTargets.length} pages{hasMultipleLangs ? ` in ${langGroups.size} languages` : ''}.
-              You can deploy to each page individually, or review all targets before bulk deployment.
-            </span>
           </div>
         )}
 
@@ -898,14 +757,6 @@ function ActionPanel({
         <span className="text-[10px] font-semibold uppercase tracking-[0.06em]" style={{ color: 'var(--m-muted)' }}>
           Choose an action
         </span>
-        {defaultOwner !== 'self' && (
-          <span
-            className="text-[10px] px-1.5 py-0.5 rounded font-medium"
-            style={{ background: 'color-mix(in srgb, var(--signal) 8%, transparent)', color: 'var(--signal)' }}
-          >
-            Suggested owner: {ownerLabel(defaultOwner)}
-          </span>
-        )}
       </div>
       <div className="flex gap-2 flex-wrap">
         {visibleModes.map((mode) => {
@@ -1509,7 +1360,7 @@ function SelfServeConsole({
         setPatch(result.aiExplanation.trim());
       }
       // Detect code/syntax fixes — override the fix type label so the
-      // "What will change" card shows "Code fix" instead of "Schema" or "HTML"
+      // Evidence card shows "Code fix" instead of "Schema" or "HTML"
       if (isCodeLevelFix(result)) {
         setFixTypeOverride('code');
       }
@@ -1741,18 +1592,14 @@ function SelfServeConsole({
 
   return (
     <section aria-label="Self-serve deploy console" className="text-[12px] space-y-5 pt-4">
-      {/* ── What will change (mandatory) ───────────────────── */}
-      <WhatWillChange
+      {/* ── Evidence ────────────────────────────────────────── */}
+      <EvidenceSection
         finding={finding}
         uiFixType={fixType}
         classification={classification}
         impact={impact}
-        pageTargets={pageTargets}
-        langGroups={langGroups}
+        deployable={deployable}
       />
-
-      {/* ── Evidence ────────────────────────────────────────── */}
-      <EvidenceSection finding={finding} />
 
       {/* ── Section 1: Review the fix ─────────────────────── */}
       <div>
