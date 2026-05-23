@@ -415,6 +415,8 @@ export const processAuditFn = inngest.createFunction(
               target_element: finding.targetElement || null,
               screenshot_url: null,
               sort_order: sortOrder++,
+              confidence_level: 'deterministic',
+              detection_source: 'responsive_checker',
               ...computeActionModelFields({ title: finding.title, description: finding.description, recommendation: finding.recommendation, fix_type: cls.fixType, finding_type: cls.findingType }),
             } as any)
           }
@@ -544,6 +546,8 @@ export const processAuditFn = inngest.createFunction(
                 target_element: finding.element || null,
                 screenshot_url: null,
                 sort_order: sortOrder++,
+                confidence_level: 'deterministic',
+                detection_source: 'wcag_checker',
                 ...computeActionModelFields({ title: finding.title, description: wcagDesc, recommendation: finding.recommendation, fix_type: cls.fixType, finding_type: cls.findingType }),
               } as any)
             }
@@ -666,6 +670,8 @@ export const processAuditFn = inngest.createFunction(
                 dismissed: false,
                 finding_type: validated.findingType,
                 fix_type: validated.fixType,
+                confidence_level: 'deterministic',
+                detection_source: 'structured_data',
                 ...computeActionModelFields({ title: finding.title, description: finding.description, recommendation: finding.recommendation, fix_type: validated.fixType, finding_type: validated.findingType }),
               } as any)
             }
@@ -1247,6 +1253,8 @@ RULES FOR RE-AUDIT:
             sort_order: sortOrder++,
             finding_type: pfFindingType,
             fix_type: pfFixType,
+            confidence_level: (pf as any).confidence_level || 'heuristic',
+            detection_source: 'gap_fill',
             ...computeActionModelFields({ title: pf.title, description: pf.description, recommendation: pf.recommendation, fix_type: pfFixType, finding_type: pfFindingType }),
           } as any)
           copiedCount++
@@ -1494,6 +1502,8 @@ RULES FOR RE-AUDIT:
                 sort_order: sortOrder++,
                 finding_type: validated.findingType,
                 fix_type: validated.fixType,
+                confidence_level: 'heuristic',
+                detection_source: 'deep_analyzer',
                 ...computeActionModelFields({ title: finding.title, description: finding.description, recommendation: finding.recommendation, fix_type: validated.fixType, finding_type: validated.findingType }),
               } as any)
               findingsInGap++
@@ -1690,6 +1700,8 @@ RULES FOR RE-AUDIT:
                 sort_order: sortOrder++,
                 ai_interpretation: finding.aiInterpretation || null,
                 human_interpretation: finding.humanInterpretation || null,
+                confidence_level: 'heuristic',
+                detection_source: 'analyzer',
                 ...computeActionModelFields({ title: finding.title, description: finding.description, recommendation: finding.recommendation, fix_type: classification.fixType, finding_type: classification.findingType }),
               } as any)
             }
@@ -2243,6 +2255,8 @@ RULES FOR RE-AUDIT:
               sort_order: sortOrder++,
               finding_type: validated.findingType,
               fix_type: validated.fixType,
+              confidence_level: 'interpretive',
+              detection_source: 'analyzer',
             } as any)
             totalInserted++
           }

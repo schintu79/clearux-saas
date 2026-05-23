@@ -2,7 +2,25 @@
 
 Structured record of every bug fix, feature, and architectural change. Organized by system area, each entry includes the root cause, what was changed, and which files were touched.
 
-Last updated: 2026-05-22
+Last updated: 2026-05-23
+
+---
+
+## Evidence Contract for Findings Precision (Fix 2 Phase 1)
+
+### Standardized evidence metadata on every finding
+- **DB migration**: Added `confidence_level` and `detection_source` columns to `audit_findings` with CHECK constraints. `confidence_level` classifies certainty: `deterministic` (measurable), `heuristic` (rule-based), `interpretive` (AI judgment). `detection_source` identifies the pipeline stage that produced the finding.
+- **Type update**: Extended `AuditFinding` interface in `database.ts` with the two new typed fields.
+- **Pipeline population**: All 8 finding insertion points now set both fields correctly:
+  - Responsive checker findings: `deterministic` / `responsive_checker`
+  - WCAG checker findings: `deterministic` / `wcag_checker`
+  - Structured data validator findings: `deterministic` / `structured_data`
+  - Main analyzer (24-category LLM analysis): `heuristic` / `analyzer`
+  - Gap-fill (baseline carry-forward): inherits `confidence_level` from previous audit / `gap_fill`
+  - Deep analyzer (gap-fill re-analysis): `heuristic` / `deep_analyzer`
+  - Starved-category generator: `interpretive` / `analyzer`
+  - Brand analyzer: `interpretive` / `brand_analyzer`
+- **Files**: `supabase/migrations/040_evidence_contract.sql`, `src/types/database.ts`, `src/lib/inngest/functions/process-audit.ts`, `src/lib/inngest/functions/process-brand-audit.ts`
 
 ---
 

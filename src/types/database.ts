@@ -290,6 +290,10 @@ export interface AuditFinding {
   deployable_type:     string | null
   /** Action model: default owner team */
   default_owner:       'self' | 'engineering' | 'marketing' | 'design' | 'product'
+  /** Evidence contract: how certain the detection is */
+  confidence_level:    'deterministic' | 'heuristic' | 'interpretive'
+  /** Evidence contract: which pipeline stage produced this finding */
+  detection_source:    'analyzer' | 'deep_analyzer' | 'wcag_checker' | 'responsive_checker' | 'structured_data' | 'head_tag' | 'crawler' | 'gap_fill' | 'brand_analyzer'
   created_at:        string
 }
 

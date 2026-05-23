@@ -324,6 +324,8 @@ export const processBrandAuditFn = inngest.createFunction(
               status: 'open',
               finding_type: validated.findingType,
               fix_type: validated.fixType,
+              confidence_level: 'interpretive',
+              detection_source: 'brand_analyzer',
             } as any)
           }
         }
