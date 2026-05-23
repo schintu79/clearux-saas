@@ -37,6 +37,7 @@ export interface FindingForScoring {
   title: string
   description: string
   severity: string
+  confidence_level?: 'deterministic' | 'heuristic' | 'interpretive'
 }
 
 export interface ScoredFinding {
@@ -104,10 +105,19 @@ function calculateConfidence(dataPoints: number): number {
   return 1 - Math.exp(-dataPoints / RELEVANCE_CONFIG.CONFIDENCE_RAMP)
 }
 
+// Confidence level weights — deterministic findings get a boost,
+// interpretive findings get a slight penalty in relevance scoring.
+const EVIDENCE_CONFIDENCE_BOOST: Record<string, number> = {
+  deterministic: 0.10,   // +10% relevance boost
+  heuristic: 0.0,        // neutral
+  interpretive: -0.05,   // -5% relevance penalty
+}
+
 function calculateRelevanceScore(
   dismissRate: number,
   fixRate: number,
   confidence: number,
+  confidenceLevel?: string,
 ): number {
   // Base relevance: inverse of dismiss rate
   // High dismiss rate → low relevance
@@ -121,7 +131,10 @@ function calculateRelevanceScore(
   const neutralScore = 0.5
   const weightedScore = neutralScore + (rawScore - neutralScore) * confidence
 
-  return Math.max(0, Math.min(1, weightedScore))
+  // Apply evidence confidence boost/penalty
+  const evidenceBoost = EVIDENCE_CONFIDENCE_BOOST[confidenceLevel ?? 'heuristic'] ?? 0
+
+  return Math.max(0, Math.min(1, weightedScore + evidenceBoost))
 }
 
 function classifyRelevance(
@@ -204,7 +217,7 @@ export async function scoreFindings(
     const dismissRate = pattern.total_dismissed / pattern.total_shown
     const fixRate = pattern.total_fixed / pattern.total_shown
     const confidence = calculateConfidence(pattern.total_shown)
-    const relevanceScore = calculateRelevanceScore(dismissRate, fixRate, confidence)
+    const relevanceScore = calculateRelevanceScore(dismissRate, fixRate, confidence, finding.confidence_level)
     const flag = classifyRelevance(relevanceScore, pattern.total_shown)
 
     const scoredFinding: ScoredFinding = {

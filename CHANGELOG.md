@@ -6,6 +6,34 @@ Last updated: 2026-05-23
 
 ---
 
+## Logic and Deduplication Refinement (Fix 2 Phase 3)
+
+### Confidence-aware deduplication
+- **Dedup engine enhanced**: When merging duplicate findings, the engine now prefers findings with higher confidence (deterministic > heuristic > interpretive) instead of only using severity as tiebreaker. Added `confidence_level` and `detection_source` to `FindingForDedup` interface.
+- **Files**: `src/lib/audit-engine/pipeline/dedup.ts`
+
+### Template-based issue grouping
+- **New `identifyTemplateGroups()` function**: Detects findings with very high title similarity (>= 0.85) repeated across 3+ different page URLs. Groups them into a single finding annotated with "This issue affects X pages" instead of showing N near-identical entries. Keeps the highest-confidence/severity finding as primary.
+- **Files**: `src/lib/audit-engine/pipeline/dedup.ts`, `src/lib/inngest/functions/process-audit.ts`
+
+### Confidence rules by detector type
+- **Relevance scorer boost/penalty**: Deterministic findings get a +10% relevance boost, interpretive findings get a -5% penalty. This ensures machine-verified findings rank higher than AI-interpreted ones in relevance scoring.
+- **Files**: `src/lib/audit-engine/pipeline/relevance-scorer.ts`
+
+### Interpretive language softener
+- **New `softenInterpretiveLanguage()` function**: Post-processes interpretive findings to replace assertive language ("is missing", "fails to", "lacks") with hedged alternatives ("may benefit from", "could improve by", "may lack"). Only affects findings with `confidence_level: 'interpretive'`.
+- **Files**: `src/lib/audit-engine/pipeline/confidence-rules.ts`, `src/lib/inngest/functions/process-audit.ts`
+
+### Stale-result checks for gap-fill findings
+- **New `identifyStaleFindings()` function**: Checks gap-fill findings (carried forward from previous audits) against current crawl content. If quoted evidence in the description no longer appears in the latest crawl, the finding is removed as stale.
+- **Files**: `src/lib/audit-engine/pipeline/confidence-rules.ts`, `src/lib/inngest/functions/process-audit.ts`
+
+### Pipeline orchestrator update
+- **New exports**: Added `identifyTemplateGroups`, `CONFIDENCE_RANK`, `softenInterpretiveLanguage`, `identifyStaleFindings`, `CONFIDENCE_WEIGHT` to pipeline orchestrator.
+- **Files**: `src/lib/audit-engine/pipeline/index.ts`
+
+---
+
 ## Evidence UI in Fix Console (Fix 2 Phase 2)
 
 ### Evidence section in expanded findings

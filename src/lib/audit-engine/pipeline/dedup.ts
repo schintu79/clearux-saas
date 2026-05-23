@@ -32,6 +32,27 @@ export interface FindingForDedup {
   severity: string
   page_url: string | null
   sort_order: number
+  confidence_level?: 'deterministic' | 'heuristic' | 'interpretive'
+  detection_source?: string
+}
+
+// ── Confidence ranking (lower = more confident) ─────────────
+export const CONFIDENCE_RANK: Record<string, number> = {
+  deterministic: 0,
+  heuristic: 1,
+  interpretive: 2,
+}
+
+// ── Template grouping result ────────────────────────────────
+export interface TemplateGroup {
+  /** The primary finding ID to keep */
+  primaryId: string
+  /** IDs of findings absorbed into the group (to delete) */
+  absorbedIds: string[]
+  /** All page URLs across the group */
+  pageUrls: string[]
+  /** Count of distinct pages affected */
+  pageCount: number
 }
 
 // ── Severity ranking (lower = more severe) ───────────────────
@@ -241,8 +262,11 @@ export function identifyDuplicates(findings: FindingForDedup[]): string[] {
     }
 
     if (group.length > 1) {
-      // Sort: highest severity first, then earliest sort_order
+      // Sort: highest confidence first, then highest severity, then earliest sort_order
       group.sort((a, b) => {
+        const confA = CONFIDENCE_RANK[findings[a].confidence_level ?? 'heuristic'] ?? 1
+        const confB = CONFIDENCE_RANK[findings[b].confidence_level ?? 'heuristic'] ?? 1
+        if (confA !== confB) return confA - confB
         const sevA = SEVERITY_RANK[findings[a].severity] ?? 2
         const sevB = SEVERITY_RANK[findings[b].severity] ?? 2
         if (sevA !== sevB) return sevA - sevB
@@ -256,4 +280,75 @@ export function identifyDuplicates(findings: FindingForDedup[]): string[] {
   }
 
   return duplicateIds
+}
+
+// ── Template Grouping ───────────────────────────────────────
+//
+// Groups findings that describe the same issue across multiple pages
+// (e.g. "Missing meta description" on /about, /pricing, /contact).
+// Instead of showing 5 near-identical findings, keeps one and annotates
+// it with "X pages affected" metadata.
+//
+// Only groups findings with very high title similarity (>= 0.85)
+// across DIFFERENT page_urls. Same-page findings are handled by
+// the standard dedup above.
+
+/**
+ * Identify groups of findings that represent the same template-level
+ * issue repeated across multiple pages. Returns groups with a primary
+ * finding and absorbed findings to remove.
+ */
+export function identifyTemplateGroups(findings: FindingForDedup[]): TemplateGroup[] {
+  if (findings.length < 2) return []
+
+  const groups: TemplateGroup[] = []
+  const consumed = new Set<number>()
+
+  for (let i = 0; i < findings.length; i++) {
+    if (consumed.has(i)) continue
+
+    const cluster: number[] = [i]
+
+    for (let j = i + 1; j < findings.length; j++) {
+      if (consumed.has(j)) continue
+      // Only group cross-page findings (same page handled by dedup)
+      if (findings[i].page_url && findings[j].page_url && findings[i].page_url === findings[j].page_url) continue
+      // Require very high title similarity — these must be the same issue
+      const titleSim = textSimilarity(findings[i].title, findings[j].title)
+      if (titleSim >= 0.85) {
+        cluster.push(j)
+        consumed.add(j)
+      }
+    }
+
+    if (cluster.length >= 3) {
+      // Sort: highest confidence, then severity, then sort_order
+      cluster.sort((a, b) => {
+        const confA = CONFIDENCE_RANK[findings[a].confidence_level ?? 'heuristic'] ?? 1
+        const confB = CONFIDENCE_RANK[findings[b].confidence_level ?? 'heuristic'] ?? 1
+        if (confA !== confB) return confA - confB
+        const sevA = SEVERITY_RANK[findings[a].severity] ?? 2
+        const sevB = SEVERITY_RANK[findings[b].severity] ?? 2
+        if (sevA !== sevB) return sevA - sevB
+        return (findings[a].sort_order ?? 0) - (findings[b].sort_order ?? 0)
+      })
+
+      const primaryIdx = cluster[0]
+      const pageUrls = cluster
+        .map(idx => findings[idx].page_url)
+        .filter((url): url is string => !!url)
+      const uniquePages = [...new Set(pageUrls)]
+
+      groups.push({
+        primaryId: findings[primaryIdx].id,
+        absorbedIds: cluster.slice(1).map(idx => findings[idx].id),
+        pageUrls: uniquePages,
+        pageCount: uniquePages.length,
+      })
+
+      consumed.add(primaryIdx)
+    }
+  }
+
+  return groups
 }

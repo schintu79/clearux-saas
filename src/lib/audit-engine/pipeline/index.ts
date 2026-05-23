@@ -62,8 +62,8 @@
 // ============================================================
 
 // ── Step 1: Deduplication ───────────────────────────────────
-export { identifyDuplicates, SYNONYM_GROUPS, TOPIC_PATTERNS, THRESHOLDS } from './dedup'
-export type { FindingForDedup } from './dedup'
+export { identifyDuplicates, identifyTemplateGroups, SYNONYM_GROUPS, TOPIC_PATTERNS, THRESHOLDS, CONFIDENCE_RANK } from './dedup'
+export type { FindingForDedup, TemplateGroup } from './dedup'
 
 // ── Step 2: Speculative Filter ──────────────────────────────
 export { identifySpeculativeFindings, SPECULATIVE_LANGUAGE, UNVERIFIABLE_TOPICS } from './speculative-filter'
@@ -131,6 +131,14 @@ export {
   getModuleForCategory,
 } from './minimum-findings'
 export type { CategoryFindingCount } from './minimum-findings'
+
+// ── Step 7b: Confidence Rules ───────────────────────────────
+export {
+  softenInterpretiveLanguage,
+  identifyStaleFindings,
+  CONFIDENCE_WEIGHT,
+} from './confidence-rules'
+export type { FindingForConfidenceCheck, LanguageFix, StaleResult } from './confidence-rules'
 
 // ── Step 7: Global Quality Stats ────────────────────────────
 export {

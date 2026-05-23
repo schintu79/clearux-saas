@@ -22,6 +22,7 @@ import { sendAuditComplete, sendFreeAuditReady } from '@/lib/audit-engine/email'
 import { captureAuditScreenshots } from '@/lib/audit-engine/screenshots'
 import {
   identifyDuplicates,
+  identifyTemplateGroups,
   identifySpeculativeFindings,
   scoreFindings,
   recordFindingShown,
@@ -31,6 +32,9 @@ import {
   validateFixableRecommendation,
   isSimpleSite,
   filterSimpleSiteFindings,
+  softenInterpretiveLanguage,
+  identifyStaleFindings,
+  CONFIDENCE_WEIGHT,
 } from '@/lib/audit-engine/pipeline'
 import { identifyStarvedCategories, generateFindingsForStarvedCategories } from '@/lib/audit-engine/pipeline/minimum-findings'
 import { AUDIT_MODULES, COMPLETE_AUDIT_SLUGS } from '@/lib/audit-modules'
@@ -1731,24 +1735,26 @@ RULES FOR RE-AUDIT:
       await setProgress(auditId, 65)
       const db = getDb()
 
-      // ── 1. Deduplicate findings ───
+      // ── 1. Deduplicate findings (confidence-aware) ───
       const { data: dedupFindings } = await db
         .from('audit_findings')
-        .select('id, title, description, severity, page_url, sort_order')
+        .select('id, title, description, severity, page_url, sort_order, confidence_level, detection_source')
         .eq('audit_id', auditId)
         .order('sort_order', { ascending: true })
 
       if (dedupFindings && dedupFindings.length >= 2) {
-        const duplicateIds = identifyDuplicates(
-          dedupFindings.map((f: any) => ({
-            id: f.id,
-            title: f.title || '',
-            description: f.description || '',
-            severity: f.severity || 'medium',
-            page_url: f.page_url || null,
-            sort_order: f.sort_order ?? 0,
-          }))
-        )
+        const mappedFindings = dedupFindings.map((f: any) => ({
+          id: f.id,
+          title: f.title || '',
+          description: f.description || '',
+          severity: f.severity || 'medium',
+          page_url: f.page_url || null,
+          sort_order: f.sort_order ?? 0,
+          confidence_level: f.confidence_level || 'heuristic',
+          detection_source: f.detection_source || 'analyzer',
+        }))
+
+        const duplicateIds = identifyDuplicates(mappedFindings)
         if (duplicateIds.length > 0) {
           for (const id of duplicateIds) {
             await db.from('audit_findings').delete().eq('id', id)
@@ -1756,6 +1762,58 @@ RULES FOR RE-AUDIT:
           await auditLog(auditId, 'findings_deduped', 'info',
             `Removed ${duplicateIds.length} duplicate finding${duplicateIds.length > 1 ? 's' : ''}`)
           console.log(`[inngest] Dedup: removed ${duplicateIds.length} duplicates from ${dedupFindings.length} findings`)
+        }
+
+        // ── 1b. Group template-based issues across pages ───
+        // Re-fetch after dedup to get clean list
+        const { data: postDedupFindings } = await db
+          .from('audit_findings')
+          .select('id, title, description, severity, page_url, sort_order, confidence_level, detection_source')
+          .eq('audit_id', auditId)
+          .order('sort_order', { ascending: true })
+
+        if (postDedupFindings && postDedupFindings.length >= 3) {
+          const templateGroups = identifyTemplateGroups(
+            postDedupFindings.map((f: any) => ({
+              id: f.id,
+              title: f.title || '',
+              description: f.description || '',
+              severity: f.severity || 'medium',
+              page_url: f.page_url || null,
+              sort_order: f.sort_order ?? 0,
+              confidence_level: f.confidence_level || 'heuristic',
+              detection_source: f.detection_source || 'analyzer',
+            }))
+          )
+
+          if (templateGroups.length > 0) {
+            let totalAbsorbed = 0
+            for (const group of templateGroups) {
+              // Update primary finding description to mention grouped pages
+              const pageList = group.pageUrls.slice(0, 5).join(', ')
+              const suffix = group.pageCount > 5 ? ` and ${group.pageCount - 5} more` : ''
+              const groupNote = `\n\nThis issue affects ${group.pageCount} pages: ${pageList}${suffix}.`
+
+              const primary = postDedupFindings.find((f: any) => f.id === group.primaryId)
+              if (primary) {
+                await db.from('audit_findings').update({
+                  description: ((primary as any).description || '') + groupNote,
+                } as any).eq('id', group.primaryId)
+              }
+
+              // Remove absorbed findings
+              for (const id of group.absorbedIds) {
+                await db.from('audit_findings').delete().eq('id', id)
+              }
+              totalAbsorbed += group.absorbedIds.length
+            }
+
+            if (totalAbsorbed > 0) {
+              await auditLog(auditId, 'template_grouped', 'info',
+                `Grouped ${totalAbsorbed} repeated finding${totalAbsorbed > 1 ? 's' : ''} into ${templateGroups.length} template group${templateGroups.length > 1 ? 's' : ''}`)
+              console.log(`[inngest] Template grouping: absorbed ${totalAbsorbed} findings into ${templateGroups.length} groups`)
+            }
+          }
         }
       }
 
@@ -1793,6 +1851,65 @@ RULES FOR RE-AUDIT:
           }
         }
       }
+
+      // ── 3. Soften interpretive language ───
+      // Prevent interpretive findings from sounding deterministic
+      const { data: confFindings } = await db
+        .from('audit_findings')
+        .select('id, title, description, recommendation, confidence_level, detection_source, page_url')
+        .eq('audit_id', auditId)
+
+      if (confFindings && confFindings.length > 0) {
+        const languageFixes = softenInterpretiveLanguage(
+          confFindings.map((f: any) => ({
+            id: f.id,
+            title: f.title || '',
+            description: f.description || '',
+            recommendation: f.recommendation || '',
+            confidence_level: f.confidence_level || 'heuristic',
+            detection_source: f.detection_source || 'analyzer',
+            page_url: f.page_url || null,
+          }))
+        )
+
+        if (languageFixes.length > 0) {
+          // Group fixes by finding ID to batch updates
+          const fixesByFinding = new Map<string, Record<string, string>>()
+          for (const fix of languageFixes) {
+            if (!fixesByFinding.has(fix.id)) fixesByFinding.set(fix.id, {})
+            fixesByFinding.get(fix.id)![fix.field] = fix.fixed
+          }
+
+          for (const [findingId, updates] of fixesByFinding) {
+            await db.from('audit_findings').update(updates as any).eq('id', findingId)
+          }
+
+          console.log(`[inngest] Language softener: updated ${fixesByFinding.size} interpretive finding${fixesByFinding.size > 1 ? 's' : ''}`)
+        }
+
+        // ── 4. Stale-result check for gap_fill findings ───
+        const staleResults = identifyStaleFindings(
+          confFindings.map((f: any) => ({
+            id: f.id,
+            title: f.title || '',
+            description: f.description || '',
+            recommendation: f.recommendation || '',
+            confidence_level: f.confidence_level || 'heuristic',
+            detection_source: f.detection_source || 'analyzer',
+            page_url: f.page_url || null,
+          })),
+          crawlResult.pageContent,
+        )
+
+        if (staleResults.length > 0) {
+          for (const stale of staleResults) {
+            await db.from('audit_findings').delete().eq('id', stale.id)
+          }
+          await auditLog(auditId, 'stale_findings_removed', 'info',
+            `Removed ${staleResults.length} stale finding${staleResults.length > 1 ? 's' : ''} that reference content no longer present`)
+          console.log(`[inngest] Stale check: removed ${staleResults.length} stale gap_fill findings`)
+        }
+      }
     })
 
     // ──────────────────────────────────────────────────────────
@@ -1804,7 +1921,7 @@ RULES FOR RE-AUDIT:
         const db = getDb()
         const { data: allFindings } = await db
           .from('audit_findings')
-          .select('id, title, description, severity')
+          .select('id, title, description, severity, confidence_level')
           .eq('audit_id', auditId)
 
         if (!allFindings || allFindings.length === 0) return
@@ -1815,6 +1932,7 @@ RULES FOR RE-AUDIT:
             title: f.title || '',
             description: f.description || '',
             severity: f.severity || 'medium',
+            confidence_level: f.confidence_level || 'heuristic',
           })),
           db,
         )
