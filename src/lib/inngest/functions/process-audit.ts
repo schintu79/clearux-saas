@@ -34,7 +34,6 @@ import {
   filterSimpleSiteFindings,
   softenInterpretiveLanguage,
   identifyStaleFindings,
-  CONFIDENCE_WEIGHT,
 } from '@/lib/audit-engine/pipeline'
 import { identifyStarvedCategories, generateFindingsForStarvedCategories } from '@/lib/audit-engine/pipeline/minimum-findings'
 import { AUDIT_MODULES, COMPLETE_AUDIT_SLUGS } from '@/lib/audit-modules'

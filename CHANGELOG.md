@@ -6,6 +6,21 @@ Last updated: 2026-05-23
 
 ---
 
+## QA and Calibration (Fix 2 Phase 4)
+
+### Template grouping consumed-set bug fix
+- **Bug**: In `identifyTemplateGroups()`, the seed index `i` could escape the `consumed` set when it was not selected as the primary after sorting by confidence/severity. This allowed `i` to form additional groups, producing overlapping clusters. Fixed by consuming ALL cluster indices instead of only the sorted primary.
+- **Files**: `src/lib/audit-engine/pipeline/dedup.ts`
+
+### Dead import removal
+- **Cleanup**: Removed unused `CONFIDENCE_WEIGHT` import from `process-audit.ts`. The constant is only needed by downstream consumers (UI/export), not the pipeline orchestration.
+- **Files**: `src/lib/inngest/functions/process-audit.ts`
+
+### Threshold and logic review
+- **Verified**: Template grouping threshold (0.85 title similarity, >= 3 pages) is conservative enough to avoid false merges. Relevance scorer boosts (+10% deterministic, -5% interpretive) are correctly bounded. Language softener regex patterns reviewed for false-positive safety. Stale-result check only targets gap_fill findings with quoted evidence >= 8 chars. All thresholds deemed well-calibrated.
+
+---
+
 ## Logic and Deduplication Refinement (Fix 2 Phase 3)
 
 ### Confidence-aware deduplication

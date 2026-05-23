@@ -346,7 +346,9 @@ export function identifyTemplateGroups(findings: FindingForDedup[]): TemplateGro
         pageCount: uniquePages.length,
       })
 
-      consumed.add(primaryIdx)
+      // Consume ALL indices in the cluster — not just the inner-loop j's
+      // (the seed i may not be the primary after sorting, so it must also be consumed)
+      for (const idx of cluster) consumed.add(idx)
     }
   }
 
