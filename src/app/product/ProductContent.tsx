@@ -341,8 +341,8 @@ export function ProductContent() {
                 <em className="italic text-signal">See what moved.</em>
               </h2>
               <p className="text-[18px] leading-[1.6] text-ink-2 font-sans mb-8">
-                Re-audit after making changes and see exactly what improved. Your Website Health Score
-                gives your team a single metric to optimise around.
+                Re-audit after making changes to confirm fixes landed. Compare scores side by side
+                and prove progress to your team with one clear metric.
               </p>
               <div className="space-y-6">
                 <div>

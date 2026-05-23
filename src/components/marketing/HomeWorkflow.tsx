@@ -72,9 +72,9 @@ export function HomeWorkflow() {
             <StepNumber n="3" />
             <h3 className="font-sans text-[20px] font-semibold text-ink mt-5 mb-3">Track</h3>
             <p className="font-sans text-[15px] text-ink-2 leading-[1.65] mb-6">
-              Re-audit after making changes and see exactly what improved. Compare audits
-              side by side, track resolved findings by module, and watch your Website Health
-              Score climb over time.
+              Re-audit after making changes to confirm fixes landed. Compare scores
+              side by side, see which fixes had the biggest impact, and prove progress
+              to your team over time.
             </p>
             <div className="space-y-3">
               {['Score history and trends', 'Before/after comparison', 'Competitor benchmarking', 'Finding status tracking', 'AI visibility over time', 'Shareable progress reports'].map((item) => (

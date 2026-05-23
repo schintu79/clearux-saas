@@ -131,10 +131,10 @@ export default function TrackPage() {
     return (
       <div>
         <OverviewBreadcrumb current="Track" />
-        <PageHeader icon={<TrendingUp size={18} strokeWidth={1.75} style={{ color: 'var(--ink)' }} />} title="Track" subtitle={selection ? 'No audit for this brand yet.' : 'Run your first audit to start tracking.'} />
+        <PageHeader icon={<TrendingUp size={18} strokeWidth={1.75} style={{ color: 'var(--ink)' }} />} title="Track" subtitle={selection ? 'No audit for this brand yet.' : 'Run your first audit to start tracking progress.'} />
         <EmptyAudit
           title="No audits to track yet"
-          body="Run your first audit to establish a baseline. Fixpath will compare every future audit against it."
+          body="Run your first audit to set a baseline. Re-audit after fixing issues to see what improved and confirm fixes landed."
         />
       </div>
     );

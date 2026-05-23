@@ -29,7 +29,7 @@ export function Footer() {
           <div>
             <Logo height={64} className="mb-[18px]" />
             <p className="text-[14px] text-m-muted max-w-[320px] leading-[1.6] font-sans">
-              Find what's hurting your website. Fix it directly or send clear recommendations to your team. Track improvement over time.
+              Find what is hurting your website. Fix the right issues first. Track whether things are improving.
             </p>
           </div>
 

@@ -66,8 +66,8 @@ export default function PriorityRecommendations({ recs, findings, auditId }: Pro
             </h2>
             <p className="text-[11px] leading-tight mt-1" style={{ color: 'var(--m-muted)' }}>
               {recs.length > 0
-                ? `Top ${recs.length} action${recs.length === 1 ? '' : 's'} from the latest audit`
-                : 'Nothing flagged from the latest audit'}
+                ? `Top ${recs.length} action${recs.length === 1 ? '' : 's'} to fix next`
+                : 'No priority actions right now'}
             </p>
           </div>
         </div>
@@ -85,7 +85,7 @@ export default function PriorityRecommendations({ recs, findings, auditId }: Pro
       {recs.length === 0 ? (
         <div className="px-5 pb-5 flex flex-col items-center justify-center py-3 text-center">
           <p className="text-[11px]" style={{ color: 'var(--m-muted)' }}>
-            Run a fresh audit to surface the most impactful next moves.
+            Run a fresh audit to find what should be fixed next.
           </p>
         </div>
       ) : (

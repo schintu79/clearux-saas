@@ -6,6 +6,37 @@ Last updated: 2026-05-23
 
 ---
 
+## Stronger Product Positioning in UI and Marketing (Fix 6)
+
+### Canonical messaging alignment
+- **Footer copy updated**: Now uses the exact canonical message hierarchy: "Find what is hurting your website. Fix the right issues first. Track whether things are improving."
+- **Track messaging strengthened** across HomeWorkflow, HomeAdvantage, and Product page: replaced passive "see exactly what improved" with action-oriented "confirm fixes landed" and "prove progress to your team."
+
+### In-product copy sharpened
+- **Dashboard subtitle**: Changed from passive "Everything across your brands and sites" to action-oriented "See which brands need attention and where to focus next."
+- **Find page subtitle**: Changed from inventory-style "All findings from your latest audit, grouped by module" to action-driven "What is hurting your site right now, ranked by impact."
+- **Reports page subtitle**: Changed from noun-list "Audit reports, exports, and shareable links" to active "Download, share, or export your audit results."
+- **Empty states updated**: All empty states now answer "what should I do next" with direct, action-oriented language tied to the Find/Fix/Track framework.
+- **Severity mislabel fixed**: AuditDashboard medium severity label changed from misleading "Low impact improvements" to accurate "Worth addressing soon." Overview low severity changed from "Low impact improvements" to "Minor improvements."
+- **PriorityRecommendations copy**: Helper text changed from passive "Top N actions from the latest audit" to direct "Top N actions to fix next."
+
+### Files changed
+- `src/components/dashboard/AuditDashboard.tsx` — severity label fix
+- `src/app/dashboard/overview/page.tsx` — low severity label fix
+- `src/app/dashboard/page.tsx` — dashboard subtitle and empty state copy
+- `src/app/dashboard/find/page.tsx` — page subtitle and empty state copy
+- `src/app/dashboard/fix/page.tsx` — empty state copy
+- `src/app/dashboard/track/page.tsx` — empty state copy
+- `src/app/dashboard/reports/page.tsx` — page subtitle and empty state copy
+- `src/components/dashboard/v2/EmptyAudit.tsx` — default empty state body copy
+- `src/components/dashboard/v2/PriorityRecommendations.tsx` — helper text
+- `src/components/marketing/HomeAdvantage.tsx` — Track advantage description
+- `src/components/marketing/HomeWorkflow.tsx` — Track step description
+- `src/components/marketing/Footer.tsx` — footer description
+- `src/app/product/ProductContent.tsx` — Track section description
+
+---
+
 ## FixConsole Panel Cleanup and Brand Selector Bug Fix
 
 ### Resolve issue panel cleanup

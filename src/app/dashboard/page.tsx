@@ -203,7 +203,7 @@ function DashboardInner() {
         <PageHeader
           icon={<Activity size={18} />}
           title="Dashboard"
-          subtitle="Everything across your brands and sites. Pick one to open its workspace."
+          subtitle="See which brands need attention and where to focus next."
         >
           <ActionLink href="/dashboard/new-audit" icon={PlusCircle}>New audit</ActionLink>
         </PageHeader>
@@ -213,7 +213,7 @@ function DashboardInner() {
             No audits yet
           </h2>
           <p className="text-[13px] mb-5" style={{ color: 'var(--m-muted)' }}>
-            Run your first audit to see your Website Health Score and a roadmap of fixes.
+            Run your first audit to find what is hurting your site and get a clear path to fix it.
           </p>
           <ActionLink href="/dashboard/new-audit" icon={PlusCircle}>New audit</ActionLink>
         </DashCard>
@@ -226,7 +226,7 @@ function DashboardInner() {
       <PageHeader
         icon={<Activity size={18} />}
         title="Dashboard"
-        subtitle="Everything across your brands and sites. Pick one to open its workspace."
+        subtitle="See which brands need attention and where to focus next."
       >
         <ActionLink href="/dashboard/new-audit" icon={PlusCircle}>New audit</ActionLink>
       </PageHeader>

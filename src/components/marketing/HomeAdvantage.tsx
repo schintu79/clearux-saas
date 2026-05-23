@@ -15,7 +15,7 @@ const ADVANTAGES = [
   },
   {
     title: 'Track improvement over time',
-    desc: 'Re-audit after making changes and compare side by side. See resolved findings, score changes by module, and which fixes had the biggest impact. One metric your team can optimise around.',
+    desc: 'Re-audit after making changes to confirm fixes landed. Compare scores side by side, see which fixes had the biggest impact, and prove progress to your team with one clear metric.',
   },
 ]
 

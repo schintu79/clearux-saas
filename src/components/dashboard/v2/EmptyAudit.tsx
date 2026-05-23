@@ -17,7 +17,7 @@ interface EmptyAuditProps {
 
 const EmptyAudit: React.FC<EmptyAuditProps> = ({
   title = 'No audit yet',
-  body = 'Run your first Fixpath audit to see what is hurting your score and what to fix first.',
+  body = 'Run your first audit to find what is hurting your site and get a prioritised fix path.',
 }) => {
   const [url, setUrl] = useState('');
   const href = url.trim()

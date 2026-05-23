@@ -259,11 +259,11 @@ function FindPageInner() {
         <PageHeader
           icon={<SearchIcon size={18} style={{ color: 'var(--ink)' }} />}
           title="Find"
-          subtitle={selection ? 'No audit for this brand yet.' : 'Run an audit to surface issues.'}
+          subtitle={selection ? 'No audit for this brand yet.' : 'Run an audit to see what needs fixing.'}
         />
         <EmptyAudit
           title="No findings yet"
-          body="Run your first audit and Fixpath will rank every issue by severity and module."
+          body="Run your first audit to find what is hurting your site. Every issue comes with a severity rank and a clear fix path."
         />
       </div>
     );
@@ -277,7 +277,7 @@ function FindPageInner() {
       <PageHeader
         icon={<SearchIcon size={18} style={{ color: 'var(--ink)' }} />}
         title="Find"
-        subtitle="All findings from your latest audit, grouped by module."
+        subtitle="What is hurting your site right now, ranked by impact."
       />
 
       {/* Tab navigation */}

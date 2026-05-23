@@ -133,7 +133,7 @@ export function DashboardStatCards({ severityCounts, totalCheckpoints, totalFind
   const cards = [
     { key: 'critical', label: 'Critical Issues', count: severityCounts.critical, description: 'Needs immediate attention', colorVar: '--severe', dotColor: 'bg-red-500' },
     { key: 'high', label: 'High Issues', count: severityCounts.high, description: 'High impact issues to fix', colorVar: '--warn', dotColor: 'bg-orange-500' },
-    { key: 'medium', label: 'Medium Issues', count: severityCounts.medium + severityCounts.low, description: 'Low impact improvements', colorVar: '--warn', dotColor: 'bg-amber-500' },
+    { key: 'medium', label: 'Medium Issues', count: severityCounts.medium + severityCounts.low, description: 'Worth addressing soon', colorVar: '--warn', dotColor: 'bg-amber-500' },
     { key: 'passed', label: 'Passed Checks', count: passedChecks, description: 'Good practices followed', colorVar: '--ok', dotColor: '[background:var(--ok)]' },
   ];
 

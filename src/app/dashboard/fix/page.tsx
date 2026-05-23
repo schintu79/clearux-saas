@@ -770,11 +770,11 @@ function FixPageInner() {
         <PageHeader
           icon={<Wrench size={18} strokeWidth={1.75} style={{ color: 'var(--ink)' }} />}
           title="Fix"
-          subtitle={selection ? 'No audit for this brand yet.' : 'Run an audit to populate your fix queue.'}
+          subtitle={selection ? 'No audit for this brand yet.' : 'Run an audit to get your fix queue.'}
         />
         <EmptyAudit
           title="No fixes ready"
-          body="Run your first audit and Fixpath will surface fixes and snippets you can apply."
+          body="Run your first audit. Fixpath will turn every finding into a concrete fix you can deploy, export, or hand off."
         />
       </div>
     );

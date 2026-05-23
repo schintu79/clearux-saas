@@ -81,13 +81,13 @@ export default function ReportsPage() {
       <PageHeader
         icon={<FileText size={18} strokeWidth={1.75} style={{ color: 'var(--ink)' }} />}
         title="Reports"
-        subtitle="Audit reports, exports, and shareable links."
+        subtitle="Download, share, or export your audit results."
       />
       {rows.length === 0 ? (
         <DashCard padding="none" className="p-8">
           <p className="text-[14px] font-semibold" style={{ color: 'var(--ink)' }}>No reports yet</p>
           <p className="text-[12px] mt-1.5" style={{ color: 'var(--m-muted)' }}>
-            Reports appear here once an audit completes. Each one comes with a downloadable PDF and an optional shareable link.
+            Reports appear here once an audit completes. Download as PDF, share with your team, or export findings for your workflow.
           </p>
           <div className="mt-4">
             <ActionLink href="/dashboard/new-audit" icon={ArrowRight}>

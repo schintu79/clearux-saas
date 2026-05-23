@@ -1309,7 +1309,7 @@ function IssuesByImportance({
     { key: 'critical', label: 'Critical', count: severityCounts.critical, helper: 'Needs immediate attention', colorVar: '--severe', clickable: severityCounts.critical > 0 },
     { key: 'high',     label: 'High',     count: severityCounts.high,     helper: 'High impact issues to fix',  colorVar: '--warn',   clickable: severityCounts.high > 0 },
     { key: 'medium',   label: 'Medium',   count: severityCounts.medium,   helper: 'Should improve soon',        colorVar: '--signal', clickable: severityCounts.medium > 0 },
-    { key: 'low',      label: 'Low',      count: severityCounts.low,      helper: 'Low impact improvements',    colorVar: '--ok',     clickable: severityCounts.low > 0 },
+    { key: 'low',      label: 'Low',      count: severityCounts.low,      helper: 'Minor improvements',         colorVar: '--ok',     clickable: severityCounts.low > 0 },
   ];
 
   return (
