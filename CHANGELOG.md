@@ -6,6 +6,17 @@ Last updated: 2026-05-23
 
 ---
 
+## Evidence UI in Fix Console (Fix 2 Phase 2)
+
+### Evidence section in expanded findings
+- **EvidenceSection component**: New panel renders below "What will change" in both self-fix and team handoff paths. Shows confidence badge (High confidence / Likely issue / Needs review), detection source (e.g. WCAG 2.1 AA checker, LLM analysis), affected URL, current value snippet, and issue rationale.
+- **Confidence badge colors**: Deterministic findings show green "High confidence", heuristic shows amber "Likely issue", interpretive shows muted "Needs review".
+- **Detection source labels**: Human-readable labels for all 9 detection sources (analyzer, deep_analyzer, wcag_checker, responsive_checker, structured_data, head_tag, crawler, gap_fill, brand_analyzer).
+- **Graceful degradation**: Panel only renders when evidence metadata is present — existing findings without the new fields show no Evidence panel.
+- **Files**: `src/components/dashboard/v2/FixConsole.tsx`
+
+---
+
 ## Evidence Contract for Findings Precision (Fix 2 Phase 1)
 
 ### Standardized evidence metadata on every finding

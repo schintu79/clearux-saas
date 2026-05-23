@@ -51,6 +51,9 @@ import {
   Layers,
   Languages,
   Eye,
+  Shield,
+  Cpu,
+  Search,
 } from 'lucide-react';
 // FixPreviewPanel removed — search/social/assistant previews were causing confusion
 import type { AuditFinding, FixType as DbFixType } from '@/types/database';
@@ -405,6 +408,133 @@ function downloadFile(filename: string, content: string, mime: string) {
 function isDeployable(finding: AuditFinding, uiFixType: UiFixType, affectedPages: string[] = []): boolean {
   const classification = classifyFinding(finding, uiFixType, affectedPages);
   return classification === 'fixable_surgical' || classification === 'fixable_bulk';
+}
+
+/* ── Evidence contract helpers ──────────────────────────── */
+
+const CONFIDENCE_META: Record<string, { label: string; color: string; bg: string }> = {
+  deterministic: { label: 'High confidence', color: 'var(--ok)', bg: 'color-mix(in srgb, var(--ok) 8%, transparent)' },
+  heuristic:     { label: 'Likely issue',    color: 'var(--warn)', bg: 'color-mix(in srgb, var(--warn) 8%, transparent)' },
+  interpretive:  { label: 'Needs review',    color: 'var(--m-muted)', bg: 'color-mix(in srgb, var(--m-muted) 8%, transparent)' },
+};
+
+const SOURCE_LABELS: Record<string, string> = {
+  analyzer:           'LLM analysis',
+  deep_analyzer:      'Deep analysis',
+  wcag_checker:       'WCAG 2.1 AA checker',
+  responsive_checker: 'Responsive layout checker',
+  structured_data:    'Structured data validator',
+  head_tag:           'HTML head inspection',
+  crawler:            'Crawler observation',
+  gap_fill:           'Baseline carry-forward',
+  brand_analyzer:     'Brand identity analysis',
+};
+
+/* ── Evidence Section ──────────────────────────────────── */
+
+function EvidenceSection({ finding }: { finding: AuditFinding }) {
+  const confidence = (finding as AuditFinding & { confidence_level?: string }).confidence_level;
+  const source = (finding as AuditFinding & { detection_source?: string }).detection_source;
+
+  // Only render if we have evidence metadata
+  if (!confidence && !source) return null;
+
+  const meta = confidence ? CONFIDENCE_META[confidence] || CONFIDENCE_META.heuristic : CONFIDENCE_META.heuristic;
+  const sourceLabel = source ? SOURCE_LABELS[source] || source : null;
+  const evidenceSnippet = finding.target_element || finding.evidence || null;
+
+  return (
+    <div
+      className="rounded-lg overflow-hidden mb-4"
+      style={{ border: '1px solid var(--rule)' }}
+    >
+      <div
+        className="px-4 py-2.5 flex items-center gap-2"
+        style={{ background: 'var(--paper)', borderBottom: '1px solid var(--rule)' }}
+      >
+        <Shield size={12} style={{ color: 'var(--ink)' }} />
+        <span className="text-[11px] font-semibold uppercase tracking-[0.06em]" style={{ color: 'var(--ink)' }}>
+          Evidence
+        </span>
+      </div>
+
+      <div className="px-4 py-3 space-y-3 text-[12px]" style={{ background: '#ffffff' }}>
+        <div className="grid grid-cols-3 gap-x-4 gap-y-3">
+          {/* Confidence badge */}
+          <div>
+            <span className="text-[10px] font-semibold uppercase tracking-[0.06em] block mb-1" style={{ color: 'var(--m-muted)' }}>
+              Confidence
+            </span>
+            <span
+              className="inline-flex items-center gap-1 text-[11px] font-medium px-1.5 py-0.5 rounded"
+              style={{ background: meta.bg, color: meta.color }}
+            >
+              <Shield size={9} />
+              {meta.label}
+            </span>
+          </div>
+
+          {/* Detection source */}
+          {sourceLabel && (
+            <div>
+              <span className="text-[10px] font-semibold uppercase tracking-[0.06em] block mb-1" style={{ color: 'var(--m-muted)' }}>
+                Detected by
+              </span>
+              <span
+                className="inline-flex items-center gap-1 text-[11px]"
+                style={{ color: 'var(--ink-2)' }}
+              >
+                {source === 'wcag_checker' || source === 'responsive_checker' || source === 'structured_data'
+                  ? <Cpu size={10} />
+                  : <Search size={10} />
+                }
+                {sourceLabel}
+              </span>
+            </div>
+          )}
+
+          {/* Affected URL */}
+          {finding.page_url && (
+            <div>
+              <span className="text-[10px] font-semibold uppercase tracking-[0.06em] block mb-1" style={{ color: 'var(--m-muted)' }}>
+                Affected URL
+              </span>
+              <span className="text-[11px] font-mono truncate block" style={{ color: 'var(--ink-2)' }}>
+                {(() => { try { return new URL(finding.page_url).pathname || '/'; } catch { return finding.page_url; } })()}
+              </span>
+            </div>
+          )}
+        </div>
+
+        {/* Evidence snippet / current value */}
+        {evidenceSnippet && (
+          <div>
+            <span className="text-[10px] font-semibold uppercase tracking-[0.06em] block mb-1" style={{ color: 'var(--m-muted)' }}>
+              Current value
+            </span>
+            <div
+              className="px-2.5 py-1.5 rounded text-[11px] font-mono leading-relaxed whitespace-pre-wrap max-h-[80px] overflow-y-auto"
+              style={{ background: 'color-mix(in srgb, var(--severe) 5%, transparent)', border: '1px solid color-mix(in srgb, var(--severe) 15%, transparent)', color: 'var(--ink-2)' }}
+            >
+              {evidenceSnippet.length > 200 ? evidenceSnippet.slice(0, 200) + '...' : evidenceSnippet}
+            </div>
+          </div>
+        )}
+
+        {/* Issue rationale — show the description as a brief summary */}
+        {finding.description && (
+          <div>
+            <span className="text-[10px] font-semibold uppercase tracking-[0.06em] block mb-1" style={{ color: 'var(--m-muted)' }}>
+              Issue rationale
+            </span>
+            <p className="text-[11.5px] leading-[1.5]" style={{ color: 'var(--ink-2)' }}>
+              {finding.description.length > 300 ? finding.description.slice(0, 300) + '...' : finding.description}
+            </p>
+          </div>
+        )}
+      </div>
+    </div>
+  );
 }
 
 /* ── "What will change" Panel (mandatory) ────────────────── */
@@ -947,6 +1077,9 @@ function HandoffPanel({
 
   return (
     <div className="space-y-4 pt-4">
+      {/* Evidence context for handoff */}
+      <EvidenceSection finding={finding} />
+
       <p className="text-[12px] leading-[1.6]" style={{ color: 'var(--m-muted)' }}>
         Share the recommended fix below with your developer or content team. Update the status manually once the fix is live.
       </p>
@@ -1617,6 +1750,9 @@ function SelfServeConsole({
         pageTargets={pageTargets}
         langGroups={langGroups}
       />
+
+      {/* ── Evidence ────────────────────────────────────────── */}
+      <EvidenceSection finding={finding} />
 
       {/* ── Section 1: Review the fix ─────────────────────── */}
       <div>
