@@ -13,6 +13,7 @@ import { checkResponsiveDesign } from './responsive-checker'
 import { runTechnicalChecks, formatTechnicalAuditForPrompt, type TechnicalCheckResult } from '@/lib/pipeline/technical-checks'
 import { runCodeQualityChecks, type CodeQualityResult } from '@/lib/pipeline/code-quality-checker'
 import { extractPerformanceData, aggregatePerformanceSummary, formatPerformanceForPrompt, generatePerformanceFindings } from '@/lib/pipeline/performance-checker'
+import { enrichFindingsWithRoles, generateRoleSummaries } from '@/lib/pipeline/role-mapper'
 import type { AuditFinding, PagePerformanceData } from '@/types/database'
 
 type Supabase = ReturnType<typeof createServiceSupabase>
@@ -437,6 +438,33 @@ async function _processAuditInner(auditId: string): Promise<void> {
     }
 
     await log(db, auditId, 'full_analysis_completed', 'success', `Built-in analysis: ${allFindings.length} findings`)
+
+    // 3b. ROLE-BASED ENRICHMENT — assign owner roles, handoff payloads, and summaries
+    try {
+      const roleEnrichments = enrichFindingsWithRoles(allFindings as any)
+      for (const enrichment of roleEnrichments) {
+        await db
+          .from('audit_findings')
+          .update({
+            owner_roles: enrichment.owner_roles,
+            primary_owner_role: enrichment.primary_owner_role,
+            handoff_ready: enrichment.handoff_ready,
+            handoff_payload: enrichment.handoff_payload,
+          } as any)
+          .eq('id', enrichment.id)
+      }
+      // Generate and store role summaries on the audit
+      const roleSummaries = generateRoleSummaries(allFindings as any, roleEnrichments)
+      await db
+        .from('audits')
+        .update({ role_summaries: roleSummaries } as any)
+        .eq('id', auditId)
+      await log(db, auditId, 'role_enrichment_completed', 'success', `Role enrichment: ${roleEnrichments.length} findings enriched`)
+    } catch (roleErr) {
+      console.error('[audit-engine] Role enrichment error (non-fatal):', roleErr)
+      await log(db, auditId, 'role_enrichment_error', 'warning', 'Role enrichment failed — findings still available without role metadata')
+    }
+
     await setProgress(db, auditId, 80)
     stage('screenshots')
 

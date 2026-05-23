@@ -113,6 +113,8 @@ export interface Audit {
   crawl_completed_at: string | null
   // Performance summary (Fix 3)
   performance_summary: PerformanceSummary | null
+  // Role-based summaries (Fix 5)
+  role_summaries: RoleSummaries | null
 }
 
 /** Structured crawl summary stored as jsonb on audits table */
@@ -201,6 +203,44 @@ export interface PerformanceSummary {
 }
 
 export type OwnerTeam = 'engineering' | 'marketing' | 'product' | 'design'
+
+/** Stakeholder roles for role-based views and handoff */
+export type StakeholderRole = 'executive' | 'marketing' | 'product_ux' | 'engineering'
+
+/** Handoff payload attached to a finding for team export */
+export interface HandoffPayload {
+  /** One-line summary for the stakeholder */
+  summary:        string
+  /** Why this matters to the business */
+  business_impact: string
+  /** Concrete next steps */
+  next_steps:     string[]
+  /** Effort estimate */
+  effort:         'quick_win' | 'moderate' | 'significant'
+  /** Priority rank within this role's view (lower = higher priority) */
+  priority_rank:  number
+}
+
+/** Per-role summary stored on the audit */
+export interface RoleSummary {
+  role:            StakeholderRole
+  /** Total findings relevant to this role */
+  finding_count:   number
+  /** High-severity findings for this role */
+  critical_count:  number
+  /** Top 3 issues as plain-language bullets */
+  top_issues:      string[]
+  /** Business impact summary */
+  impact_summary:  string
+  /** Recommended next steps */
+  next_steps:      string[]
+}
+
+/** All role summaries for an audit */
+export interface RoleSummaries {
+  generated_at:  string
+  summaries:     RoleSummary[]
+}
 
 export interface ScheduledAudit {
   id:          string
@@ -400,6 +440,14 @@ export interface AuditFinding {
   performance_metric_type: string | null
   /** Performance: which team should own this fix */
   owner_team:          OwnerTeam | null
+  /** Role-based: stakeholder roles this finding is relevant to */
+  owner_roles:         StakeholderRole[]
+  /** Role-based: primary stakeholder for this finding */
+  primary_owner_role:  StakeholderRole | null
+  /** Role-based: whether handoff package is ready */
+  handoff_ready:       boolean
+  /** Role-based: structured handoff payload for team export */
+  handoff_payload:     HandoffPayload | null
   created_at:        string
 }
 

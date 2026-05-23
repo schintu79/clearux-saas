@@ -6,6 +6,33 @@ Last updated: 2026-05-23
 
 ---
 
+## Role-based Output and Handoff Workflows (Fix 5)
+
+### Data model and role mapping engine (Phase 1)
+- **Migration 043**: Added `owner_roles text[]`, `primary_owner_role text`, `handoff_ready boolean`, `handoff_payload jsonb` to `audit_findings`. Added `role_summaries jsonb` to `audits`. GIN index on `owner_roles`, btree index on `primary_owner_role`.
+- **StakeholderRole type**: `'executive' | 'marketing' | 'product_ux' | 'engineering'` — four stakeholder views.
+- **HandoffPayload interface**: `summary`, `business_impact`, `next_steps[]`, `effort` (quick_win/moderate/significant), `priority_rank`.
+- **RoleSummary/RoleSummaries**: Per-role aggregate with finding_count, critical_count, top_issues, impact_summary, next_steps. Site-level container with generated_at timestamp.
+- **Role mapping engine** (`role-mapper.ts`): `CATEGORY_ROLE_MAP` maps 24 category indices to stakeholder roles. `assignOwnerRoles()` determines which roles see a finding (category-based + detection source overrides + high/critical escalation to executive). `assignPrimaryOwner()` picks single best role using severity weight + detection source bonus. `generateHandoffPayload()` creates structured handoff data. `enrichFindingsWithRoles()` batch processes all findings. `generateRoleSummaries()` produces per-role summaries.
+- **Pipeline wiring**: Role enrichment runs as step 3b after analysis, non-fatal. Updates each finding's `owner_roles`, `primary_owner_role`, `handoff_ready`, `handoff_payload` in DB and stores `role_summaries` on the audit.
+- **Files**: `supabase/migrations/043_role_based_handoff.sql`, `src/types/database.ts`, `src/lib/pipeline/role-mapper.ts`, `src/lib/audit-engine/index.ts`
+
+### UI and filtering (Phase 2)
+- **Team overview panel**: 2x2 grid of role cards on the Overview tab showing finding_count, critical_count, top_issues, impact_summary per role. Each card is clickable to filter the Findings tab by that role.
+- **Role filter chips**: Row of team filter pills on the Findings tab (after severity grid) — Executive, Marketing, Product & UX, Engineering — with finding counts, toggle on/off, integrated with active filter banner.
+- **Owner labels on finding cards**: Primary owner role shown as a pill with Users icon in the finding card metadata row.
+- **Filter state**: `filterRole` state filters `filteredFindings` by `owner_roles` array containment. Active filter banner shows role badge and "Clear all" resets role filter.
+- **Files**: `src/app/dashboard/audits/[id]/page.tsx`
+
+### Handoff and export (Phase 3)
+- **Handoff formatter** (`handoff-formatter.ts`): Four export formats — `summary` (executive-friendly overview with severity breakdown and priority findings), `implementation` (detailed findings grouped by severity with effort estimates), `copy_fixes` (copy/meta fixes ready for immediate implementation), `task_list` (checkbox-style task list with quick wins separated). Role-recommended format mapping.
+- **Handoff API route** (`/api/reports/[id]/handoff`): Authenticated GET endpoint with `role` and `format` query params. Fetches role-filtered findings, generates markdown export, returns as downloadable `.md` file. Validates role and format params.
+- **Team handoff panel**: Collapsible panel on the Overview tab action bar. Two-column selector for team (with finding counts) and format (with recommended indicator). Download and copy-to-clipboard actions.
+- **QA bug fixes**: Fixed `critical` severity handling in `generateRoleSummaries()` — was only counting `high`, now counts both `critical` and `high`. Fixed `generateHandoffPayload()` severity label — was missing `critical` case. Fixed business_impact derivation for `critical` severity.
+- **Files**: `src/lib/pipeline/handoff-formatter.ts`, `src/app/api/reports/[id]/handoff/route.ts`, `src/app/dashboard/audits/[id]/page.tsx`, `src/lib/pipeline/role-mapper.ts`
+
+---
+
 ## Performance and Speed Intelligence (Fix 3)
 
 ### Data model — performance schema (Phase 1)

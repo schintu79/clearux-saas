@@ -54,6 +54,9 @@ import {
   Scan,
   Ban,
   Layers,
+  Send,
+  FileText,
+  Clipboard,
 } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { createBrowserSupabase } from '@/lib/supabase-ssr';
@@ -68,7 +71,11 @@ import type {
   Report,
   CrawlSummary,
   PerformanceSummary,
+  RoleSummaries,
+  StakeholderRole,
 } from '@/types/database';
+import { ROLE_LABELS, ROLE_DESCRIPTIONS } from '@/lib/pipeline/role-mapper';
+import { HANDOFF_FORMAT_LABELS, ROLE_RECOMMENDED_FORMATS, type HandoffFormat } from '@/lib/pipeline/handoff-formatter';
 import { getUILabels, getReportLabels, getCategoryNames, getPillarNames, getScoreLabel, getSeverityLabel, getLocale, type UILabels } from '@/lib/languages';
 import { CHECKPOINT_LABELS } from '@/lib/audit-checkpoints';
 import BrandAuditDetail from '@/components/dashboard/BrandAuditDetail';
@@ -767,6 +774,11 @@ function FindingCard({ finding, pillarColor, categoryName, pillarName, pillarInd
                 <AlertTriangle size={9} /> Poorly fixed
               </span>
             )}
+            {finding.primary_owner_role && ROLE_LABELS[finding.primary_owner_role] && (
+              <span className="inline-flex items-center gap-1 text-[10px] font-medium text-m-muted px-1.5 py-0.5 rounded-full bg-paper-2 tracking-[0.03em]">
+                <Users size={9} /> {ROLE_LABELS[finding.primary_owner_role]}
+              </span>
+            )}
           </div>
           {finding.page_url && (
             <span className="inline-flex items-center gap-1 text-[11px] text-m-muted mt-1 max-w-full truncate">
@@ -1228,10 +1240,16 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
   // Findings tab. Always toggle (click again = clear). Filters persist across
   // tab switches so the user can drill from cockpit → findings naturally.
   const [filterSeverity, setFilterSeverity] = useState<CockpitSeverity | null>(null);
+  const [filterRole, setFilterRole] = useState<StakeholderRole | null>(null);
   const [filterModuleIndex, setFilterModuleIndex] = useState<number | null>(null);
   const [shareUrl, setShareUrl] = useState<string | null>(null);
   const [shareLoading, setShareLoading] = useState(false);
   const [shareCopied, setShareCopied] = useState(false);
+  const [handoffOpen, setHandoffOpen] = useState(false);
+  const [handoffRole, setHandoffRole] = useState<StakeholderRole>('executive');
+  const [handoffFormat, setHandoffFormat] = useState<HandoffFormat>('summary');
+  const [handoffCopied, setHandoffCopied] = useState(false);
+  const [handoffLoading, setHandoffLoading] = useState(false);
   const [xrayCopied, setXrayCopied] = useState(false);
   const [copiedSection, setCopiedSection] = useState<string | null>(null);
   const copySection = (key: string, text: string) => {
@@ -1667,6 +1685,35 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
     setShareLoading(false);
   };
 
+  // When handoff role changes, auto-select recommended format
+  const handleHandoffRoleChange = (role: StakeholderRole) => {
+    setHandoffRole(role);
+    const recommended = ROLE_RECOMMENDED_FORMATS[role];
+    if (recommended && recommended.length > 0) {
+      setHandoffFormat(recommended[0]);
+    }
+  };
+
+  const handleHandoffDownload = () => {
+    if (!auditId) return;
+    window.open(`/api/reports/${auditId}/handoff?role=${handoffRole}&format=${handoffFormat}`, '_blank');
+  };
+
+  const handleHandoffCopy = async () => {
+    if (!auditId) return;
+    setHandoffLoading(true);
+    try {
+      const res = await fetch(`/api/reports/${auditId}/handoff?role=${handoffRole}&format=${handoffFormat}`);
+      if (res.ok) {
+        const text = await res.text();
+        await navigator.clipboard.writeText(text);
+        setHandoffCopied(true);
+        setTimeout(() => setHandoffCopied(false), 3000);
+      }
+    } catch {}
+    setHandoffLoading(false);
+  };
+
   const handleRestart = async () => {
     if (!audit || !auditId) return;
     if (!confirm('Restart this audit from scratch? This will re-crawl and re-analyse the website.')) return;
@@ -1853,6 +1900,7 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
   const filteredFindings = findings.filter((f) => {
     if (filterSeverity && f.severity !== filterSeverity) return false;
     if (filterModuleIndex != null && findingModuleIndex(f) !== filterModuleIndex) return false;
+    if (filterRole && !(f.owner_roles || []).includes(filterRole)) return false;
     return true;
   });
 
@@ -2898,6 +2946,65 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
                 );
               })()}
 
+              {/* Team overview — role-based summaries */}
+              {(() => {
+                const rs = (audit as any)?.role_summaries as RoleSummaries | null | undefined;
+                if (!rs || !rs.summaries || rs.summaries.length === 0) return null;
+                const roleIcons: Record<string, typeof Users> = {
+                  executive: TrendingUp, marketing: Target, product_ux: Heart, engineering: Zap,
+                };
+                const roleColors: Record<string, string> = {
+                  executive: 'var(--signal)', marketing: 'var(--ok)', product_ux: 'var(--warn)', engineering: 'var(--info, #3b82f6)',
+                };
+                return (
+                  <div className="mb-6 rounded-xl border border-rule bg-card overflow-hidden">
+                    <div className="px-4 py-3 border-b border-rule/40 flex items-center gap-2">
+                      <Users size={14} className="text-signal" />
+                      <h3 className="text-sm font-medium text-ink">Team overview</h3>
+                      <span className="text-[10px] font-medium text-m-muted uppercase tracking-[0.04em]">By stakeholder</span>
+                    </div>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 divide-y sm:divide-y-0 sm:divide-x divide-rule/30">
+                      {rs.summaries.map((s) => {
+                        const Icon = roleIcons[s.role] || Users;
+                        const color = roleColors[s.role] || 'var(--ink)';
+                        return (
+                          <button
+                            key={s.role}
+                            onClick={() => {
+                              setFilterRole(filterRole === s.role ? null : s.role as StakeholderRole);
+                              setActiveTab('findings');
+                            }}
+                            className="px-4 py-3 text-left hover:bg-paper-2 transition-colors"
+                          >
+                            <div className="flex items-center gap-2 mb-1.5">
+                              <Icon size={13} style={{ color }} />
+                              <span className="text-xs font-semibold text-ink">{ROLE_LABELS[s.role as StakeholderRole] || s.role}</span>
+                              {s.critical_count > 0 && (
+                                <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-red-500/10 text-red-600">
+                                  {s.critical_count} critical
+                                </span>
+                              )}
+                            </div>
+                            <p className="text-[20px] font-bold text-ink leading-none mb-1">{s.finding_count}</p>
+                            <p className="text-[11px] text-m-muted leading-snug">{s.impact_summary}</p>
+                            {s.top_issues.length > 0 && (
+                              <div className="mt-2 space-y-0.5">
+                                {s.top_issues.slice(0, 2).map((issue, i) => (
+                                  <p key={i} className="text-[11px] text-m-muted/80 leading-snug truncate flex items-start gap-1">
+                                    <ArrowRight size={10} className="mt-0.5 shrink-0 text-m-muted/50" />
+                                    {issue}
+                                  </p>
+                                ))}
+                              </div>
+                            )}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                );
+              })()}
+
               {/* AI transparency note */}
               <div className="mb-6 px-4 py-3 rounded-xl bg-paper-2/40 border border-rule/15">
                 <p className="text-[11px] text-m-muted/70 leading-relaxed">
@@ -3023,8 +3130,44 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
                 </div>
               )}
 
+              {/* Role filter chips */}
+              {findings.length > 0 && findings.some(f => (f.owner_roles || []).length > 0) && (
+                <div className="mb-3 flex items-center gap-2 flex-wrap">
+                  <span className="text-[10px] font-semibold uppercase tracking-[0.04em] text-m-muted mr-1">By team:</span>
+                  {(['executive', 'marketing', 'product_ux', 'engineering'] as StakeholderRole[]).map((role) => {
+                    const count = findings.filter(f => (f.owner_roles || []).includes(role) && !f.dismissed).length;
+                    if (count === 0) return null;
+                    const active = filterRole === role;
+                    return (
+                      <button
+                        key={role}
+                        onClick={() => setFilterRole(active ? null : role)}
+                        className={clsx(
+                          'inline-flex items-center gap-1.5 text-[11px] font-medium px-2.5 py-1 rounded-full border transition-colors',
+                          active
+                            ? 'bg-signal/10 border-signal/30 text-signal'
+                            : 'bg-card border-rule/40 text-m-muted hover:border-rule hover:text-ink',
+                        )}
+                        aria-pressed={active}
+                      >
+                        {ROLE_LABELS[role]}
+                        <span className="text-[10px] opacity-60">{count}</span>
+                      </button>
+                    );
+                  })}
+                  {filterRole && (
+                    <button
+                      onClick={() => setFilterRole(null)}
+                      className="text-[10px] text-m-muted hover:text-ink ml-1"
+                    >
+                      Clear
+                    </button>
+                  )}
+                </div>
+              )}
+
               {/* Active filter banner — driven by cockpit clicks */}
-              {(filterSeverity || filterModuleIndex != null) && (
+              {(filterSeverity || filterModuleIndex != null || filterRole) && (
                 <div
                   className="mb-3 px-4 py-2.5 rounded-lg flex items-center gap-2 flex-wrap"
                   style={{ background: 'color-mix(in srgb, var(--signal) 6%, transparent)', border: '1px solid color-mix(in srgb, var(--signal) 18%, transparent)' }}
@@ -3045,11 +3188,17 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
                       {cockpitModules[filterModuleIndex].name}
                     </span>
                   )}
+                  {filterRole && (
+                    <span className="inline-flex items-center gap-1.5 text-[11px] font-medium px-2 py-0.5 rounded-full bg-card border border-rule/40">
+                      <Users size={10} />
+                      {ROLE_LABELS[filterRole]}
+                    </span>
+                  )}
                   <span className="text-[11px] text-m-muted">
                     {filteredFindings.length} of {findings.length} findings
                   </span>
                   <button
-                    onClick={() => { setFilterSeverity(null); setFilterModuleIndex(null); }}
+                    onClick={() => { setFilterSeverity(null); setFilterModuleIndex(null); setFilterRole(null); }}
                     className="ml-auto text-[11px] font-medium text-signal hover:underline"
                   >
                     Clear all
@@ -5021,6 +5170,88 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
                   </p>
                 )}
               </div>
+            </div>
+
+            {/* ── Team handoff panel ── */}
+            <div className="mt-3 rounded-xl border border-rule bg-card overflow-hidden">
+              <button
+                onClick={() => setHandoffOpen(!handoffOpen)}
+                className="w-full px-5 py-4 flex items-center gap-2 hover:bg-paper-2/30 transition-colors"
+              >
+                <Send size={14} className="text-signal" />
+                <h3 className="text-sm font-heading font-semibold text-ink flex-1 text-left">Team handoff</h3>
+                <ChevronDown size={14} className={`text-m-muted transition-transform ${handoffOpen ? 'rotate-180' : ''}`} />
+              </button>
+              {handoffOpen && (
+                <div className="px-5 pb-4 border-t border-rule/30">
+                  <p className="text-[12px] text-m-muted mt-3 mb-4">Generate a role-specific export to share with your team. Each format is tailored to what that stakeholder needs.</p>
+
+                  <div className="grid grid-cols-2 gap-3 mb-4">
+                    <div>
+                      <label className="text-[11px] font-semibold text-m-muted uppercase tracking-wider mb-1.5 block">Team</label>
+                      <div className="flex flex-col gap-1">
+                        {(['executive', 'marketing', 'product_ux', 'engineering'] as StakeholderRole[]).map((role) => {
+                          const count = findings.filter(f => (f.owner_roles || []).includes(role) && !f.dismissed).length;
+                          return (
+                            <button
+                              key={role}
+                              onClick={() => handleHandoffRoleChange(role)}
+                              className={`flex items-center justify-between text-[12px] px-3 py-1.5 rounded-lg transition-colors text-left ${
+                                handoffRole === role
+                                  ? 'bg-signal/10 text-signal font-semibold border border-signal/20'
+                                  : 'text-ink hover:bg-paper-2 border border-transparent'
+                              }`}
+                            >
+                              <span>{ROLE_LABELS[role]}</span>
+                              <span className="text-[10px] text-m-muted">{count}</span>
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="text-[11px] font-semibold text-m-muted uppercase tracking-wider mb-1.5 block">Format</label>
+                      <div className="flex flex-col gap-1">
+                        {(['summary', 'implementation', 'copy_fixes', 'task_list'] as HandoffFormat[]).map((fmt) => {
+                          const isRecommended = ROLE_RECOMMENDED_FORMATS[handoffRole]?.[0] === fmt;
+                          return (
+                            <button
+                              key={fmt}
+                              onClick={() => setHandoffFormat(fmt)}
+                              className={`flex items-center gap-1.5 text-[12px] px-3 py-1.5 rounded-lg transition-colors text-left ${
+                                handoffFormat === fmt
+                                  ? 'bg-signal/10 text-signal font-semibold border border-signal/20'
+                                  : 'text-ink hover:bg-paper-2 border border-transparent'
+                              }`}
+                            >
+                              <FileText size={11} />
+                              <span>{HANDOFF_FORMAT_LABELS[fmt]}</span>
+                              {isRecommended && <span className="text-[9px] text-signal/70 ml-auto">Rec.</span>}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="flex gap-2">
+                    <button
+                      onClick={handleHandoffDownload}
+                      className="flex items-center gap-2 text-[12px] font-semibold text-ink bg-paper border border-rule rounded-lg px-4 py-2 hover:bg-paper-2 transition-colors"
+                    >
+                      <Download size={13} /> Download
+                    </button>
+                    <button
+                      onClick={handleHandoffCopy}
+                      disabled={handoffLoading}
+                      className="flex items-center gap-2 text-[12px] font-semibold text-ink bg-paper border border-rule rounded-lg px-4 py-2 hover:bg-paper-2 transition-colors disabled:opacity-50"
+                    >
+                      {handoffCopied ? <><Check size={13} className="text-ok" /> Copied</> : <><Clipboard size={13} /> Copy to clipboard</>}
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
           </div>}
         </>
