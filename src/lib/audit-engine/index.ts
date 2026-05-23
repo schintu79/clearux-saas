@@ -12,7 +12,8 @@ import { extractAllBrandFiles } from './brand-file-extractor'
 import { checkResponsiveDesign } from './responsive-checker'
 import { runTechnicalChecks, formatTechnicalAuditForPrompt, type TechnicalCheckResult } from '@/lib/pipeline/technical-checks'
 import { runCodeQualityChecks, type CodeQualityResult } from '@/lib/pipeline/code-quality-checker'
-import type { AuditFinding } from '@/types/database'
+import { extractPerformanceData, aggregatePerformanceSummary, formatPerformanceForPrompt, generatePerformanceFindings } from '@/lib/pipeline/performance-checker'
+import type { AuditFinding, PagePerformanceData } from '@/types/database'
 
 type Supabase = ReturnType<typeof createServiceSupabase>
 
@@ -155,6 +156,7 @@ async function _processAuditInner(auditId: string): Promise<void> {
     // health" tab. Failures are non-fatal per page.
     const technicalAuditByUrl = new Map<string, TechnicalCheckResult>()
     const codeQualityByUrl = new Map<string, CodeQualityResult>()
+    const performanceByUrl = new Map<string, PagePerformanceData>()
     for (const page of crawledPages) {
       try {
         const result = runTechnicalChecks({
@@ -173,12 +175,35 @@ async function _processAuditInner(auditId: string): Promise<void> {
       } catch (cqErr) {
         console.error(`[audit-engine] Code quality checks failed for ${page.url}:`, cqErr)
       }
+      try {
+        const perfResult = extractPerformanceData({
+          url: page.url,
+          html: page.rawHtml ?? null,
+          loadTimeMs: page.loadTimeMs,
+        })
+        performanceByUrl.set(page.url, perfResult)
+      } catch (perfErr) {
+        console.error(`[audit-engine] Performance checks failed for ${page.url}:`, perfErr)
+      }
+    }
+
+    // Aggregate site-level performance summary
+    const allPerfData = [...performanceByUrl.values()]
+    const performanceSummary = allPerfData.length > 0 ? aggregatePerformanceSummary(allPerfData) : null
+
+    // Store performance summary on audit
+    if (performanceSummary) {
+      await db
+        .from('audits')
+        .update({ performance_summary: performanceSummary } as any)
+        .eq('id', auditId)
     }
 
     // Store pages
     for (const page of crawledPages) {
       const technicalAudit = technicalAuditByUrl.get(page.url) ?? null
       const codeQuality = codeQualityByUrl.get(page.url) ?? null
+      const performanceData = performanceByUrl.get(page.url) ?? null
       await db.from('audit_pages').insert({
         audit_id: auditId,
         url: page.url,
@@ -196,6 +221,7 @@ async function _processAuditInner(auditId: string): Promise<void> {
         viewport_meta: null,
         technical_audit: technicalAudit,
         code_quality: codeQuality,
+        performance_data: performanceData,
         crawled_at: page.crawledAt,
       } as any)
     }
@@ -254,6 +280,47 @@ async function _processAuditInner(auditId: string): Promise<void> {
       await log(db, auditId, 'responsive_check_error', 'warning', 'Responsive check failed — continuing without mobile data')
     }
 
+    // 2c. PERFORMANCE FINDINGS — convert metrics into actionable findings
+    if (performanceSummary && allPerfData.length > 0) {
+      try {
+        const perfPageData = crawledPages
+          .filter(p => performanceByUrl.has(p.url))
+          .map(p => ({ url: p.url, perf: performanceByUrl.get(p.url)! }))
+
+        const perfFindings = generatePerformanceFindings(performanceSummary, perfPageData)
+        let sortOrderPerf = 0
+        for (const pf of perfFindings) {
+          await db.from('audit_findings').insert({
+            audit_id: auditId,
+            category_index: 12, // Performance category
+            finding_type: 'strategic',
+            fix_type: null,
+            severity: pf.severity,
+            title: pf.title,
+            description: pf.description,
+            evidence: pf.why_it_matters,
+            page_url: pf.affected_pages[0] || crawledPages[0]?.url || null,
+            recommendation: pf.recommendation,
+            estimated_impact: pf.estimated_impact,
+            target_element: null,
+            screenshot_url: null,
+            sort_order: sortOrderPerf++,
+            detection_source: 'performance_checker',
+            confidence_level: 'heuristic',
+            default_owner: pf.owner_team === 'engineering' ? 'engineering' : pf.owner_team === 'marketing' ? 'marketing' : pf.owner_team === 'design' ? 'design' : 'product',
+            performance_metric_type: pf.performance_metric_type,
+            owner_team: pf.owner_team,
+          } as any)
+        }
+        if (perfFindings.length > 0) {
+          await log(db, auditId, 'performance_findings_generated', 'success',
+            `Generated ${perfFindings.length} performance finding(s)`)
+        }
+      } catch (perfErr) {
+        console.error('[audit-engine] Performance findings error (non-fatal):', perfErr)
+      }
+    }
+
     // 3. ANALYSING
     await setStatus(db, auditId, 'analysing')
     await setProgress(db, auditId, 35)
@@ -274,6 +341,10 @@ async function _processAuditInner(auditId: string): Promise<void> {
         const tech = technicalAuditByUrl.get(p.url)
         if (tech) {
           block += `Technical audit:\n${formatTechnicalAuditForPrompt(tech)}\n`
+        }
+        const perf = performanceByUrl.get(p.url)
+        if (perf) {
+          block += `${formatPerformanceForPrompt(perf)}\n`
         }
         return block
       })

@@ -111,6 +111,8 @@ export interface Audit {
   crawl_summary:      CrawlSummary | null
   crawl_started_at:   string | null
   crawl_completed_at: string | null
+  // Performance summary (Fix 3)
+  performance_summary: PerformanceSummary | null
 }
 
 /** Structured crawl summary stored as jsonb on audits table */
@@ -131,6 +133,74 @@ export interface CrawlSummary {
   excluded_urls:        Array<{ url: string; reason: string }>
   coverage_notes:       string[]
 }
+
+/** Per-page performance data — stored as jsonb on audit_pages.performance_data */
+export interface PagePerformanceData {
+  /** Estimated Largest Contentful Paint in ms (heuristic from page weight + blocking resources) */
+  lcp_estimate_ms:        number | null
+  /** Estimated Interaction to Next Paint in ms (heuristic from script count + weight) */
+  inp_estimate_ms:        number | null
+  /** Estimated Cumulative Layout Shift score (heuristic from images without dimensions) */
+  cls_estimate:           number | null
+  /** Total page weight in KB (HTML + inline resources) */
+  page_weight_kb:         number
+  /** Total number of <script> tags */
+  script_count:           number
+  /** Estimated total JS weight in KB (inline scripts) */
+  script_weight_kb:       number
+  /** Number of render-blocking scripts (no async/defer) */
+  render_blocking_scripts: number
+  /** Total number of images */
+  image_count:            number
+  /** Estimated image weight in KB (from src attributes) */
+  image_weight_kb:        number
+  /** Images missing width/height attributes (cause layout shift) */
+  images_missing_dimensions: number
+  /** Images not using lazy loading */
+  images_not_lazy:        number
+  /** Number of third-party script domains */
+  third_party_count:      number
+  /** List of third-party domains detected */
+  third_party_domains:    string[]
+  /** Number of CSS <link> tags (render-blocking by default) */
+  css_count:              number
+  /** Number of web fonts detected */
+  font_count:             number
+  /** Overall performance rating */
+  rating:                 'good' | 'needs_improvement' | 'poor'
+}
+
+/** Site-level performance summary — stored as jsonb on audits.performance_summary */
+export interface PerformanceSummary {
+  /** Number of pages with performance data */
+  pages_analyzed:         number
+  /** Average estimated LCP across pages */
+  avg_lcp_ms:             number | null
+  /** Average estimated INP across pages */
+  avg_inp_ms:             number | null
+  /** Average estimated CLS across pages */
+  avg_cls:                number | null
+  /** Average page weight in KB */
+  avg_page_weight_kb:     number
+  /** Total third-party domains found across all pages */
+  unique_third_party_domains: string[]
+  /** Pages with render-blocking scripts */
+  pages_with_blocking_scripts: number
+  /** Pages with images missing dimensions */
+  pages_with_layout_shift_risk: number
+  /** Pages rated 'poor' */
+  pages_poor:             number
+  /** Pages rated 'needs_improvement' */
+  pages_needs_improvement: number
+  /** Pages rated 'good' */
+  pages_good:             number
+  /** Overall site performance rating */
+  overall_rating:         'good' | 'needs_improvement' | 'poor'
+  /** Plain-language summary of top performance concerns */
+  top_concerns:           string[]
+}
+
+export type OwnerTeam = 'engineering' | 'marketing' | 'product' | 'design'
 
 export interface ScheduledAudit {
   id:          string
@@ -211,6 +281,8 @@ export interface AuditPage {
   is_duplicate:        boolean             // true if canonicalized to another URL
   page_type:           string | null       // 'content' | 'auth_gate' | 'redirect' | 'error'
   fetch_strategy:      string | null       // 'direct' | 'jina' | 'google_cache'
+  // Performance data (Fix 3)
+  performance_data:    PagePerformanceData | null
 }
 
 /** Per-page AI readability breakdown — stored as jsonb on audit_pages */
@@ -323,7 +395,11 @@ export interface AuditFinding {
   /** Evidence contract: how certain the detection is */
   confidence_level:    'deterministic' | 'heuristic' | 'interpretive'
   /** Evidence contract: which pipeline stage produced this finding */
-  detection_source:    'analyzer' | 'deep_analyzer' | 'wcag_checker' | 'responsive_checker' | 'structured_data' | 'head_tag' | 'crawler' | 'gap_fill' | 'brand_analyzer'
+  detection_source:    'analyzer' | 'deep_analyzer' | 'wcag_checker' | 'responsive_checker' | 'structured_data' | 'head_tag' | 'crawler' | 'gap_fill' | 'brand_analyzer' | 'performance_checker'
+  /** Performance: which metric this finding relates to (lcp, inp, cls, page_weight, etc.) */
+  performance_metric_type: string | null
+  /** Performance: which team should own this fix */
+  owner_team:          OwnerTeam | null
   created_at:        string
 }
 

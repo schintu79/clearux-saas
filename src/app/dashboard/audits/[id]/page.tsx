@@ -67,6 +67,7 @@ import type {
   FindingSeverity,
   Report,
   CrawlSummary,
+  PerformanceSummary,
 } from '@/types/database';
 import { getUILabels, getReportLabels, getCategoryNames, getPillarNames, getScoreLabel, getSeverityLabel, getLocale, type UILabels } from '@/lib/languages';
 import { CHECKPOINT_LABELS } from '@/lib/audit-checkpoints';
@@ -2768,6 +2769,135 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
                 );
               })()}
 
+              {/* Performance Summary — site-level speed intelligence */}
+              {(() => {
+                const ps = (audit as any)?.performance_summary as PerformanceSummary | null | undefined;
+                if (!ps || ps.pages_analyzed === 0) return null;
+
+                const ratingColor = ps.overall_rating === 'good' ? 'text-ok' : ps.overall_rating === 'poor' ? 'text-err' : 'text-warn';
+                const ratingBg = ps.overall_rating === 'good' ? 'bg-ok/8' : ps.overall_rating === 'poor' ? 'bg-err/8' : 'bg-warn/8';
+                const ratingLabel = ps.overall_rating === 'good' ? 'Good' : ps.overall_rating === 'poor' ? 'Poor' : 'Needs work';
+
+                return (
+                  <div className="mb-6 rounded-xl border border-rule bg-card overflow-hidden">
+                    {/* Header */}
+                    <div className="flex items-center gap-3 px-5 py-4 border-b border-rule/40 bg-paper-2/30">
+                      <div className="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0 bg-ink/5">
+                        <Gauge size={13} className="text-ink" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium text-ink">Performance</p>
+                        <p className="text-[11px] text-m-muted">Speed and loading analysis across {ps.pages_analyzed} page{ps.pages_analyzed !== 1 ? 's' : ''}</p>
+                      </div>
+                      <span className={clsx('text-[11px] font-semibold px-2.5 py-1 rounded-full', ratingColor, ratingBg)}>
+                        {ratingLabel}
+                      </span>
+                    </div>
+
+                    {/* Core Web Vitals estimates */}
+                    <div className="grid grid-cols-3 divide-x divide-rule/30 border-b border-rule/30">
+                      {[
+                        {
+                          label: 'LCP',
+                          desc: 'Largest Contentful Paint',
+                          value: ps.avg_lcp_ms != null ? `${(ps.avg_lcp_ms / 1000).toFixed(1)}s` : '--',
+                          color: ps.avg_lcp_ms != null ? (ps.avg_lcp_ms <= 2500 ? 'text-ok' : ps.avg_lcp_ms <= 4000 ? 'text-warn' : 'text-err') : 'text-m-muted',
+                        },
+                        {
+                          label: 'INP',
+                          desc: 'Interaction to Next Paint',
+                          value: ps.avg_inp_ms != null ? `${ps.avg_inp_ms}ms` : '--',
+                          color: ps.avg_inp_ms != null ? (ps.avg_inp_ms <= 200 ? 'text-ok' : ps.avg_inp_ms <= 500 ? 'text-warn' : 'text-err') : 'text-m-muted',
+                        },
+                        {
+                          label: 'CLS',
+                          desc: 'Cumulative Layout Shift',
+                          value: ps.avg_cls != null ? ps.avg_cls.toFixed(2) : '--',
+                          color: ps.avg_cls != null ? (ps.avg_cls <= 0.1 ? 'text-ok' : ps.avg_cls <= 0.25 ? 'text-warn' : 'text-err') : 'text-m-muted',
+                        },
+                      ].map((cwv, i) => (
+                        <div key={i} className="px-4 py-3 text-center">
+                          <p className={clsx('text-[18px] font-bold', cwv.color)}>{cwv.value}</p>
+                          <p className="text-[11px] font-medium text-ink/70">{cwv.label}</p>
+                          <p className="text-[10px] text-m-muted">{cwv.desc}</p>
+                        </div>
+                      ))}
+                    </div>
+
+                    {/* Stats row */}
+                    <div className="grid grid-cols-2 sm:grid-cols-4 divide-x divide-rule/30 border-b border-rule/30">
+                      <div className="px-4 py-3 text-center">
+                        <p className="text-[16px] font-bold text-ink">{ps.avg_page_weight_kb < 1000 ? `${ps.avg_page_weight_kb}KB` : `${(ps.avg_page_weight_kb / 1024).toFixed(1)}MB`}</p>
+                        <p className="text-[10px] text-m-muted">Avg page weight</p>
+                      </div>
+                      <div className="px-4 py-3 text-center">
+                        <p className={clsx('text-[16px] font-bold', ps.pages_with_blocking_scripts > 0 ? 'text-warn' : 'text-ok')}>{ps.pages_with_blocking_scripts}</p>
+                        <p className="text-[10px] text-m-muted">Blocking scripts</p>
+                      </div>
+                      <div className="px-4 py-3 text-center">
+                        <p className={clsx('text-[16px] font-bold', (ps.unique_third_party_domains?.length ?? 0) > 5 ? 'text-warn' : 'text-ink')}>{ps.unique_third_party_domains?.length ?? 0}</p>
+                        <p className="text-[10px] text-m-muted">Third-party scripts</p>
+                      </div>
+                      <div className="px-4 py-3 text-center">
+                        <p className={clsx('text-[16px] font-bold', ps.pages_with_layout_shift_risk > 0 ? 'text-warn' : 'text-ok')}>{ps.pages_with_layout_shift_risk}</p>
+                        <p className="text-[10px] text-m-muted">Layout shift risk</p>
+                      </div>
+                    </div>
+
+                    {/* Page rating distribution */}
+                    <div className="px-5 py-3 border-b border-rule/30">
+                      <div className="flex items-center gap-3">
+                        <div className="flex-1 h-2 bg-rule/15 rounded-full overflow-hidden flex">
+                          {ps.pages_good > 0 && (
+                            <div className="h-full bg-ok" style={{ width: `${(ps.pages_good / ps.pages_analyzed) * 100}%` }} />
+                          )}
+                          {ps.pages_needs_improvement > 0 && (
+                            <div className="h-full bg-warn" style={{ width: `${(ps.pages_needs_improvement / ps.pages_analyzed) * 100}%` }} />
+                          )}
+                          {ps.pages_poor > 0 && (
+                            <div className="h-full bg-err" style={{ width: `${(ps.pages_poor / ps.pages_analyzed) * 100}%` }} />
+                          )}
+                        </div>
+                        <div className="flex items-center gap-3 text-[10px] text-m-muted flex-shrink-0">
+                          <span className="flex items-center gap-1"><span className="w-1.5 h-1.5 rounded-full bg-ok" />{ps.pages_good} good</span>
+                          <span className="flex items-center gap-1"><span className="w-1.5 h-1.5 rounded-full bg-warn" />{ps.pages_needs_improvement} slow</span>
+                          <span className="flex items-center gap-1"><span className="w-1.5 h-1.5 rounded-full bg-err" />{ps.pages_poor} poor</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Top concerns */}
+                    {ps.top_concerns && ps.top_concerns.length > 0 && (
+                      <div className="px-5 py-3 space-y-1.5">
+                        {ps.top_concerns.map((concern, i) => (
+                          <div key={i} className="flex items-start gap-2 text-[11px] text-m-muted">
+                            <AlertTriangle size={11} className="text-warn flex-shrink-0 mt-0.5" />
+                            <span>{concern}</span>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+
+                    {/* Third-party domains drill-down */}
+                    {ps.unique_third_party_domains && ps.unique_third_party_domains.length > 0 && (
+                      <details className="group">
+                        <summary className="px-5 py-2.5 border-t border-rule/30 cursor-pointer flex items-center gap-2 text-[11px] font-medium text-m-muted hover:text-ink transition-colors">
+                          <ChevronRight size={12} className="transition-transform group-open:rotate-90" />
+                          {ps.unique_third_party_domains.length} third-party service{ps.unique_third_party_domains.length !== 1 ? 's' : ''} detected
+                        </summary>
+                        <div className="px-5 pb-3 flex flex-wrap gap-1.5">
+                          {ps.unique_third_party_domains.map((domain, i) => (
+                            <span key={i} className="text-[10px] font-mono text-m-muted bg-paper-2 px-2 py-0.5 rounded border border-rule/30">
+                              {domain}
+                            </span>
+                          ))}
+                        </div>
+                      </details>
+                    )}
+                  </div>
+                );
+              })()}
+
               {/* AI transparency note */}
               <div className="mb-6 px-4 py-3 rounded-xl bg-paper-2/40 border border-rule/15">
                 <p className="text-[11px] text-m-muted/70 leading-relaxed">
@@ -3174,6 +3304,21 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
                           {(pg as any).fetch_strategy === 'jina' ? 'JS rendered' : (pg as any).fetch_strategy}
                         </span>
                       )}
+                      {/* Performance rating badge */}
+                      {(() => {
+                        const perf = (pg as any).performance_data;
+                        if (!perf) return null;
+                        const color = perf.rating === 'good' ? 'text-ok bg-ok/8' : perf.rating === 'poor' ? 'text-err bg-err/8' : 'text-warn bg-warn/8';
+                        const label = perf.rating === 'good' ? 'Fast' : perf.rating === 'poor' ? 'Slow' : 'Moderate';
+                        return (
+                          <span className={clsx('text-[10px] font-medium px-1.5 py-0.5 rounded flex items-center gap-1', color)}>
+                            <Zap size={9} /> {label}
+                            {perf.lcp_estimate_ms != null && (
+                              <span className="opacity-70">({(perf.lcp_estimate_ms / 1000).toFixed(1)}s)</span>
+                            )}
+                          </span>
+                        );
+                      })()}
                     </div>
                     {/* AI readability detail — what AI can/cannot extract */}
                     {readability && (

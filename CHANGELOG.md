@@ -6,6 +6,35 @@ Last updated: 2026-05-23
 
 ---
 
+## Performance and Speed Intelligence (Fix 3)
+
+### Data model — performance schema (Phase 1)
+- **Migration 042**: Added `performance_data` (jsonb) to `audit_pages` for per-page CWV estimates and asset analysis. Added `performance_summary` (jsonb) to `audits` for site-level aggregation. Added `owner_team` (text) and `performance_metric_type` (text) to `audit_findings` for performance finding routing. Index on `performance_metric_type`.
+- **PagePerformanceData type**: Per-page metrics — LCP/INP/CLS estimates, page weight, script count/weight, render-blocking scripts, image count/weight/lazy/dimensions, third-party count/domains, CSS/font counts, overall rating (good/needs_improvement/poor).
+- **PerformanceSummary type**: Site-level aggregation — averages across all CWV metrics, page rating distribution (good/needs_improvement/poor counts), unique third-party domains, pages with blocking scripts and layout shift risk, plain-language `top_concerns` array, overall rating.
+- **OwnerTeam type**: `'engineering' | 'marketing' | 'product' | 'design'` — tags performance findings with the team responsible for fixing each issue.
+- **Files**: `supabase/migrations/042_performance_data.sql`, `src/types/database.ts`
+
+### Performance extraction engine (Phase 2)
+- **Third-party detection**: 60+ regex patterns covering analytics (Google Analytics, Hotjar, Mixpanel), ads (Google Ads, Facebook Pixel), CDNs, widgets, chat tools, A/B testing, tag managers, social embeds, and more. Classifies external script/resource domains as third-party.
+- **CWV heuristic estimators**: `estimateLcp()` from load time + page weight + blocking resources. `estimateInp()` from script count + weight + third parties. `estimateCls()` from images missing dimensions + font count. `computeRating()` from composite of CWV thresholds + page weight + blocking script count.
+- **Page-level extraction**: `extractPerformanceData()` parses raw HTML to count scripts, images, stylesheets, fonts, detect render-blocking resources, identify third-party domains, measure asset weights, and flag lazy-loading and dimension issues.
+- **Site-level aggregation**: `aggregatePerformanceSummary()` computes averages, distributions, and generates plain-language top concerns (e.g., "Average LCP of 3.2s — above the 2.5s threshold").
+- **Files**: `src/lib/pipeline/performance-checker.ts`
+
+### Performance findings and pipeline wiring (Phase 3)
+- **7 finding types**: Slow LCP, render-blocking scripts, third-party overload, layout shift risk, images not lazy loaded, heavy pages, sluggish INP. Each includes title, description, recommendation, severity (high/medium/low), owner_team, estimated_impact, why_it_matters, who_should_fix.
+- **Pipeline integration**: Performance extraction runs per page alongside technical and code-quality checks. Results stored as `performance_data` on `audit_pages` and `performance_summary` on `audits`. Performance context injected into AI analyzer prompt. Findings inserted as `audit_findings` with `detection_source: 'performance_checker'`, `category_index: 12`, `finding_type: 'strategic'`.
+- **Prompt enrichment**: `formatPerformanceForPrompt()` produces compact text block appended to each page's analyzer context, giving the AI visibility into performance metrics for its analysis.
+- **Files**: `src/lib/pipeline/performance-checker.ts`, `src/lib/audit-engine/index.ts`
+
+### Performance UI (Phase 2b)
+- **Overview tab**: Performance summary panel between crawl coverage and AI transparency. Shows overall rating badge, CWV estimates grid (LCP/INP/CLS with color-coded values and thresholds), stats row (page weight, blocking scripts, third-party count, layout shift risk pages), page rating distribution bar, top concerns list with AlertTriangle icons, expandable third-party domains drill-down.
+- **Pages tab**: Per-page performance badge showing Fast/Moderate/Slow with Zap icon and LCP time, color-coded by rating.
+- **Files**: `src/app/dashboard/audits/[id]/page.tsx`
+
+---
+
 ## Crawl Quality and Audit Transparency (Fix 4)
 
 ### Data model — crawl visibility contract (Phase 1)
