@@ -6,6 +6,28 @@ Last updated: 2026-05-24
 
 ---
 
+## Uncommitted work audit — resolved
+
+### Problem
+Work had been done locally (branding asset updates, .gitignore changes) that was never committed, creating a mismatch between the working tree and the repository.
+
+### What was found and resolved
+1. **Modified branding assets (uncommitted)**: 15 favicon/logo/icon files were updated to Fixpath branding but never staged or committed. Now committed.
+2. **Deleted legacy file**: `public/clearUXLogo.svg` was deleted locally but not recorded in git. Now properly removed.
+3. **New file**: `public/fixpath-logo-cropped.svg` was untracked. Now committed.
+4. **`.gitignore` update**: Added `.DS_Store` entry. Also added working brief docs (`IMPLEMENTATION-BRIEF.md`, `fixpath-claude-implementation-brief.md`) to prevent accidental commits of planning documents.
+5. **No unmerged branches**: Only `main` is active locally. Remote feature branches are all old (from prior development phases) and already merged or abandoned.
+6. **3 commits ahead of origin**: The pipeline speed, navigation audit, and branding commits need to be pushed.
+
+### Result
+Working tree is now clean. All pending work is committed. Push needed to sync with origin.
+
+### Files touched
+- `.gitignore` — added working brief exclusions
+- `public/*` — 15 updated assets, 1 deleted, 1 new
+
+---
+
 ## Cross-page navigation audit — verified clean
 
 ### Problem
