@@ -37,7 +37,7 @@ export async function GET(req: NextRequest) {
   }
 
   // Fetch all intelligence data in parallel
-  const [modelProbes, recommendations, report] = await Promise.all([
+  const [modelProbes, recommendations, report, redditMentions, webMentions, reviewData, promptResults, contentGaps, trendSnapshots] = await Promise.all([
     db.from('multi_model_probes')
       .select('*')
       .eq('audit_id', auditId)
@@ -50,6 +50,34 @@ export async function GET(req: NextRequest) {
       .select('ai_visibility_breakdown, model_benchmarks, overall_score, raw_json, brand_intelligence')
       .eq('audit_id', auditId)
       .single(),
+    db.from('reddit_mentions')
+      .select('*')
+      .eq('audit_id', auditId)
+      .order('score', { ascending: false })
+      .limit(20),
+    db.from('web_mentions')
+      .select('*')
+      .eq('audit_id', auditId)
+      .order('domain_authority', { ascending: false })
+      .limit(20),
+    db.from('brand_reviews')
+      .select('*')
+      .eq('audit_id', auditId),
+    db.from('prompt_results')
+      .select('*')
+      .eq('audit_id', auditId)
+      .order('executed_at', { ascending: false }),
+    db.from('content_gaps')
+      .select('*')
+      .eq('audit_id', auditId)
+      .eq('status', 'open')
+      .order('created_at', { ascending: false })
+      .limit(20),
+    db.from('intelligence_snapshots')
+      .select('*')
+      .eq('user_id', user.id)
+      .order('snapshot_at', { ascending: true })
+      .limit(52),
   ])
 
   // Get industry benchmark position — prefer frozen snapshot from report
@@ -98,6 +126,13 @@ export async function GET(req: NextRequest) {
     }
   }
 
+  // Get human perception summary from audit record
+  const { data: auditFull } = await db
+    .from('audits')
+    .select('human_perception_data, sentiment_data')
+    .eq('id', auditId)
+    .single()
+
   return NextResponse.json({
     modelProbes: modelProbes.data || [],
     recommendations: recommendations.data || [],
@@ -105,5 +140,13 @@ export async function GET(req: NextRequest) {
     modelBenchmarks: (report.data as any)?.model_benchmarks || null,
     industry: (audit as any).detected_industry || 'General',
     brandIntelligence: (report.data as any)?.brand_intelligence || null,
+    // Tier 2: Human Perception data
+    humanPerception: (auditFull as any)?.human_perception_data || null,
+    redditMentions: redditMentions.data || [],
+    webMentions: webMentions.data || [],
+    reviewData: reviewData.data || [],
+    promptResults: promptResults.data || [],
+    contentGaps: contentGaps.data || [],
+    trendSnapshots: trendSnapshots.data || [],
   })
 }

@@ -30,6 +30,7 @@ export interface ModelSentiment {
   themes: SentimentTheme[]
   visibility: boolean // did the model mention the brand?
   placement: number | null // average position in response (null if not mentioned)
+  shareOfVoice: number // % of response content about this brand (0-100)
 }
 
 export interface BrandIntelligenceSummary {
@@ -271,6 +272,7 @@ export async function runBrandIntelligenceAnalysis(
     themes: m.themes,
     visibility: m.visibility,
     placement: m.placement,
+    shareOfVoice: m.shareOfVoice,
   }))
 
   return {

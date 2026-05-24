@@ -48,6 +48,7 @@ import { useAuth } from '@/context/AuthContext';
 import { useAuditBundle } from '@/context/AuditBundleContext';
 import { useBrandSelection } from '@/lib/dashboard/useBrandSelection';
 import EmptyAudit from '@/components/dashboard/v2/EmptyAudit';
+import HumanPerceptionSection from '@/components/dashboard/v2/HumanPerceptionSection';
 import PageHeader from '@/components/dashboard/v2/PageHeader';
 import OverviewBreadcrumb from '@/components/dashboard/OverviewBreadcrumb';
 import type { BrandIntelligenceSummary, ModelSentiment } from '@/lib/audit-engine/brand-intelligence';
@@ -167,6 +168,15 @@ export default function IntelligencePage() {
   const [error, setError] = useState<string | null>(null);
   const [info, setInfo] = useState<string | null>(null);
 
+  // Human Perception data (Tier 2)
+  const [humanPerception, setHumanPerception] = useState<any>(null);
+  const [redditMentions, setRedditMentions] = useState<any[]>([]);
+  const [webMentions, setWebMentions] = useState<any[]>([]);
+  const [reviewData, setReviewData] = useState<any[]>([]);
+  const [promptResults, setPromptResults] = useState<any[]>([]);
+  const [contentGaps, setContentGaps] = useState<any[]>([]);
+  const [trendSnapshots, setTrendSnapshots] = useState<any[]>([]);
+
   // UI state
   const [expandedModel, setExpandedModel] = useState<string | null>(null);
 
@@ -180,6 +190,13 @@ export default function IntelligencePage() {
       setBiSummary(null);
       setModelProbes([]);
       setRecommendations([]);
+      setHumanPerception(null);
+      setRedditMentions([]);
+      setWebMentions([]);
+      setReviewData([]);
+      setPromptResults([]);
+      setContentGaps([]);
+      setTrendSnapshots([]);
       return;
     }
 
@@ -198,6 +215,14 @@ export default function IntelligencePage() {
         if (d?.industry) setIndustry(d.industry);
         if (d?.modelProbes) setModelProbes(d.modelProbes);
         if (d?.recommendations) setRecommendations(d.recommendations);
+        // Tier 2: Human Perception
+        setHumanPerception(d?.humanPerception || null);
+        setRedditMentions(d?.redditMentions || []);
+        setWebMentions(d?.webMentions || []);
+        setReviewData(d?.reviewData || []);
+        setPromptResults(d?.promptResults || []);
+        setContentGaps(d?.contentGaps || []);
+        setTrendSnapshots(d?.trendSnapshots || []);
       })
       .catch(() => {});
 
@@ -566,6 +591,20 @@ export default function IntelligencePage() {
           </div>
         </section>
       )}
+
+      {/* ═══════════════════════════════════════════════════════════
+          Human Perception Intelligence (Tier 2)
+         ═══════════════════════════════════════════════════════════ */}
+      <HumanPerceptionSection
+        humanPerception={humanPerception}
+        redditMentions={redditMentions}
+        webMentions={webMentions}
+        reviewData={reviewData}
+        promptResults={promptResults}
+        contentGaps={contentGaps}
+        trendSnapshots={trendSnapshots}
+        brandIntelligence={biSummary}
+      />
 
       {/* ═══════════════════════════════════════════════════════════
           Competitive Benchmark Console (existing functionality)

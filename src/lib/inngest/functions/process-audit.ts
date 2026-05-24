@@ -2534,13 +2534,14 @@ RULES FOR RE-AUDIT:
           null, // competitorVisibility — Tier 2
         )
 
-        // Store per-model sentiment + placement back on probes
+        // Store per-model sentiment + placement + share of voice back on probes
         for (const model of biSummary.perModel) {
           await db.from('multi_model_probes')
             .update({
               sentiment_score: model.sentimentScore,
               sentiment_themes: model.themes,
               placement_score: model.placement,
+              share_of_voice: (model as any).shareOfVoice ?? null,
             } as any)
             .eq('audit_id', auditId)
             .eq('model_id', model.modelId)
@@ -2551,12 +2552,67 @@ RULES FOR RE-AUDIT:
           .update({ brand_intelligence: biSummary } as any)
           .eq('audit_id', auditId)
 
+        // Store sentiment_data directly on audit record for quick access
+        await db.from('audits')
+          .update({ sentiment_data: biSummary } as any)
+          .eq('id', auditId)
+
         await auditLog(auditId, 'brand_intelligence_computed', 'info',
           `Brand Intelligence Score: ${biSummary.score}/100. AI Visibility: ${biSummary.aiVisibility}%. Sentiment: ${biSummary.overallSentiment}/100.`)
       } catch (err) {
         console.error('[inngest] Brand intelligence analysis failed (non-fatal):', err)
         await auditLog(auditId, 'brand_intelligence_failed', 'warning',
           `Brand intelligence failed: ${err instanceof Error ? err.message : 'unknown'}`)
+      }
+    })
+
+    // ──────────────────────────────────────────────────────────
+    // STEP 9a-2: Human Perception Intelligence (Tier 2)
+    // Fetches reviews, Reddit mentions, web mentions, runs prompt library,
+    // builds causal links, and generates content gap briefs.
+    // Non-fatal — gracefully handles missing API keys.
+    // ──────────────────────────────────────────────────────────
+    await step.run('human-perception-analysis', async () => {
+      try {
+        const { runHumanPerceptionPipeline } = await import('@/lib/human-perception')
+        const db = getDb()
+
+        // Get audit details
+        const { data: audit } = await db
+          .from('audits')
+          .select('user_id, product_url, brand_name, detected_industry, sentiment_data')
+          .eq('id', auditId)
+          .single()
+
+        if (!audit) return
+
+        const brandDomain = (audit as any).product_url
+          ? new URL((audit as any).product_url).hostname.replace(/^www\./, '')
+          : null
+        if (!brandDomain) return
+
+        const brandName = (audit as any).brand_name || brandDomain.replace(/\.(com|io|co|org|net)$/, '')
+
+        const summary = await runHumanPerceptionPipeline({
+          auditId,
+          userId: (audit as any).user_id,
+          brandDomain,
+          brandName,
+          detectedIndustry: (audit as any).detected_industry,
+          biSummary: (audit as any).sentiment_data,
+        })
+
+        // Store human perception data on audit record
+        await db.from('audits')
+          .update({ human_perception_data: summary } as any)
+          .eq('id', auditId)
+
+        await auditLog(auditId, 'human_perception_computed', 'info',
+          `Human Perception: ${summary.reviewCount} reviews, ${summary.webMentionCount} web mentions, ${summary.redditMentionCount} Reddit mentions. Sentiment: ${summary.socialSentiment}/100.`)
+      } catch (err) {
+        console.error('[inngest] Human perception analysis failed (non-fatal):', err)
+        await auditLog(auditId, 'human_perception_failed', 'warning',
+          `Human perception failed: ${err instanceof Error ? err.message : 'unknown'}`)
       }
     })
 
