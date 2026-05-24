@@ -76,6 +76,8 @@ import { useBrandSelection } from '@/lib/dashboard/useBrandSelection';
 import { writeSelection } from '@/lib/dashboard/brand-selection';
 import EmptyAudit from '@/components/dashboard/v2/EmptyAudit';
 import WebsiteSpeedCard from '@/components/dashboard/v2/WebsiteSpeedCard';
+import BrandIntelligenceCard from '@/components/dashboard/v2/BrandIntelligenceCard';
+import type { BrandIntelligenceSummary } from '@/lib/audit-engine/brand-intelligence';
 import type { Audit, Report, AuditFinding, SpeedDataSummary } from '@/types/database';
 import SiteFavicon from '@/components/ui/SiteFavicon';
 
@@ -155,12 +157,12 @@ function OverviewInner() {
 
   const [scoreTrend, setScoreTrend] = useState<Array<{ auditId: string; date: string; overallScore: number }>>([]);
   const [competitors, setCompetitors] = useState<Array<{ domain: string; score: number; pillarScores?: Array<{ name: string; score: number }> }>>([]);
-  const [detectingCompetitors, setDetectingCompetitors] = useState(false);
   const [categoryScores, setCategoryScores] = useState<Array<{ name: string; score: number; summary: string }>>([]);
   const [findings, setFindings] = useState<AuditFinding[]>([]);
   const [auditPages, setAuditPages] = useState<AuditPage[]>([]);
   const [brandName, setBrandName] = useState<string | null>(null);
   const [modelProbes, setModelProbes] = useState<Array<{ model_id: string; model_label: string; accuracy_score: number; status?: 'measured' | 'skipped' | 'error' | null; error_message?: string | null }>>([]);
+  const [brandIntelligence, setBrandIntelligence] = useState<BrandIntelligenceSummary | null>(null);
 
   const [shareUrl, setShareUrl] = useState<string | null>(null);
   const [shareLoading, setShareLoading] = useState(false);
@@ -351,6 +353,10 @@ function OverviewInner() {
       setCategoryScores(rawJson.categoryScores);
     }
 
+    // Load brand intelligence from report
+    const biData = (bundle?.report as any)?.brand_intelligence;
+    setBrandIntelligence(biData ? (biData as BrandIntelligenceSummary) : null);
+
     const productUrl = latestCompleted.product_url;
     if (productUrl) {
       fetch(`/api/audits/score-trend?url=${encodeURIComponent(productUrl)}`)
@@ -384,19 +390,6 @@ function OverviewInner() {
     if (latestCompleted?.id) void refreshModelProbes(latestCompleted.id);
   }, [latestCompleted, refreshModelProbes]);
 
-  const handleBenchmark = useCallback((mode: 'auto' | 'manual', domains?: string[]) => {
-    if (!latestCompleted?.product_url) return;
-    setDetectingCompetitors(true);
-    fetch('/api/audits/detect-competitors', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ url: latestCompleted.product_url, mode, competitors: domains }),
-    })
-      .then(r => r.json())
-      .then(d => { if (d.competitors && d.competitors.length > 0) setCompetitors(d.competitors); })
-      .catch(() => {})
-      .finally(() => setDetectingCompetitors(false));
-  }, [latestCompleted]);
 
   const handleStatCardClick = useCallback((filter: string) => {
     if (!latestCompleted || filter === 'passed') return;
@@ -620,7 +613,6 @@ function OverviewInner() {
     }
   }
 
-  const hideBenchmarks = (audit as any).audit_type === 'brand_identity';
 
   const execSummary = (report.executive_summary || '').trim();
 
@@ -930,12 +922,12 @@ function OverviewInner() {
             if (bundle?.audit) (bundle.audit as any).speed_data = newData;
           }}
         />
-        <BenchmarksSummaryCard
-          overallScore={overallScore}
-          competitors={competitors}
-          detecting={detectingCompetitors}
-          onBenchmark={handleBenchmark}
-          hidden={hideBenchmarks}
+        <BrandIntelligenceCard
+          data={brandIntelligence}
+          legacyScore={overallScore}
+          legacyCompetitorCount={competitors.length}
+          hasProbeData={modelProbes.length > 0}
+          auditId={latestCompleted?.id ?? null}
         />
         <AIReadabilityCard
           avgAi={avgAi}
@@ -1926,175 +1918,6 @@ function CheckpointHealthCard({
   );
 }
 
-/* ── Row 3 — Benchmarks summary card (layered: clean summary → deep-dive on click) ── */
-function BenchmarksSummaryCard({
-  overallScore,
-  competitors,
-  detecting,
-  onBenchmark,
-  hidden,
-}: {
-  overallScore: number;
-  competitors: Array<{ domain: string; score: number; pillarScores?: Array<{ name: string; score: number }> }>;
-  detecting: boolean;
-  onBenchmark: (mode: 'auto' | 'manual', domains?: string[]) => void;
-  hidden: boolean;
-}) {
-  if (hidden) {
-    return (
-      <DashboardCard
-        title="Benchmark"
-        subtitle="Not available for brand audits"
-        icon={BarChart3}
-        titleSize="lg"
-      >
-        <div className="flex flex-col items-center justify-center py-6 text-center">
-          <BarChart3 size={20} style={{ color: 'var(--m-muted)', opacity: 0.5 }} className="mb-2" />
-          <p className="text-[11px]" style={{ color: 'var(--m-muted)' }}>
-            Benchmark compares a live site against competitors. Run a site audit to enable.
-          </p>
-        </div>
-      </DashboardCard>
-    );
-  }
-
-  const top = competitors.slice(0, 5);
-  const hasCompetitors = top.length > 0;
-  const compScores = top.map(c => c.score);
-  const avgCompetitor = compScores.length > 0
-    ? Math.round(compScores.reduce((s, n) => s + n, 0) / compScores.length)
-    : null;
-  const delta = avgCompetitor != null ? overallScore - avgCompetitor : null;
-  const status: { label: string; colorVar: string } = !hasCompetitors
-    ? { label: 'Awaiting data', colorVar: '--m-muted' }
-    : delta == null
-      ? { label: 'Tracking', colorVar: '--m-muted' }
-      : delta >= 5
-        ? { label: 'Ahead of peers', colorVar: '--ok' }
-        : delta <= -5
-          ? { label: 'Behind peers', colorVar: '--severe' }
-          : { label: 'On par', colorVar: '--warn' };
-
-  return (
-    <Link
-      href="/dashboard/intelligence"
-      className="rounded-xl p-4 sm:p-5 flex flex-col h-full transition-all hover:shadow-md hover:-translate-y-0.5 group"
-      style={{ background: 'var(--card)', border: '1px solid var(--rule)' }}
-      aria-label="Open competitive benchmarks"
-    >
-      {/* Header */}
-      <div className="flex items-start justify-between gap-2 mb-3">
-        <div className="min-w-0 flex items-start gap-2">
-          <span
-            className="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0"
-            style={{ background: 'color-mix(in srgb, var(--ink) 6%, transparent)', color: 'var(--ink)' }}
-          >
-            <BarChart3 size={14} />
-          </span>
-          <div className="min-w-0">
-            <h3 className="text-[15px] font-semibold leading-tight tracking-[-0.005em]" style={{ color: 'var(--ink)' }}>Benchmark</h3>
-            <p className="text-[11px] leading-tight mt-1" style={{ color: 'var(--m-muted)' }}>
-              {hasCompetitors
-                ? `vs. ${top.length} competitor${top.length === 1 ? '' : 's'}`
-                : 'Compare against competitors'}
-            </p>
-          </div>
-        </div>
-        <ChevronRight
-          size={14}
-          className="flex-shrink-0 mt-1 transition-transform group-hover:translate-x-0.5"
-          style={{ color: 'var(--m-muted)' }}
-        />
-      </div>
-
-      {/* Body */}
-      <div className="flex-1 min-h-0 flex flex-col">
-        {detecting ? (
-          <div className="flex flex-col items-center justify-center text-center py-4 flex-1">
-            <Sparkles size={20} style={{ color: 'var(--m-muted)', opacity: 0.5 }} className="mb-2 animate-pulse" />
-            <p className="text-[11px]" style={{ color: 'var(--m-muted)' }}>Analysing competitors…</p>
-          </div>
-        ) : hasCompetitors ? (
-          <>
-            <div className="flex items-end gap-3">
-              <div className="flex items-baseline gap-1">
-                <span className={`text-[42px] font-bold leading-none tabular-nums ${scoreColor(overallScore)}`}>
-                  {overallScore}
-                </span>
-                <span className="text-[13px] font-medium" style={{ color: 'var(--m-muted)' }}>/100</span>
-              </div>
-              <span
-                className="text-[10px] font-semibold uppercase tracking-[0.06em] px-2 py-0.5 rounded-full mb-0.5"
-                style={{
-                  color: `var(${status.colorVar})`,
-                  background: `color-mix(in srgb, var(${status.colorVar}) 10%, transparent)`,
-                }}
-              >
-                {status.label}
-                {delta != null && delta !== 0 && (
-                  <> · {delta > 0 ? '+' : ''}{delta}</>
-                )}
-              </span>
-            </div>
-            <p className="text-[10px] uppercase font-semibold tracking-[0.06em] mt-1.5" style={{ color: 'var(--m-muted)' }}>
-              Your score
-            </p>
-
-            {/* Compact competitor rows */}
-            <ul className="mt-4 space-y-1.5">
-              {top.map((c) => {
-                const cDelta = overallScore - c.score;
-                return (
-                  <li key={c.domain} className="flex items-center gap-2 text-[11px]">
-                    <span
-                      className="w-1.5 h-1.5 rounded-full flex-shrink-0"
-                      style={{ background: 'var(--m-muted)', opacity: 0.5 }}
-                    />
-                    <span className="flex-1 min-w-0 truncate" style={{ color: 'var(--ink)' }} title={c.domain}>
-                      {c.domain}
-                    </span>
-                    <span className={`tabular-nums font-semibold ${scoreColor(c.score)}`}>{c.score}</span>
-                    <span
-                      className="tabular-nums text-[10px] w-9 text-right"
-                      style={{
-                        color: cDelta > 0 ? 'var(--ok)' : cDelta < 0 ? 'var(--severe)' : 'var(--m-muted)',
-                      }}
-                    >
-                      {cDelta > 0 ? `+${cDelta}` : cDelta}
-                    </span>
-                  </li>
-                );
-              })}
-            </ul>
-
-            <span
-              className="text-[11px] font-semibold mt-auto pt-3 inline-flex items-center gap-1 group-hover:underline"
-              style={{ color: 'var(--ink)' }}
-            >
-              Open benchmark <ChevronRight size={11} />
-            </span>
-          </>
-        ) : (
-          <div className="flex flex-col items-start gap-2 py-2">
-            <p className="text-[12px]" style={{ color: 'var(--ink)' }}>
-              No competitors configured yet.
-            </p>
-            <p className="text-[11px]" style={{ color: 'var(--m-muted)' }}>
-              Add up to 5 competitor domains, or auto-detect suggestions. You stay in control.
-            </p>
-            <span
-              className="text-[11px] font-semibold mt-1 inline-flex items-center gap-1 group-hover:underline"
-              style={{ color: 'var(--ink)' }}
-            >
-              Configure benchmark <ChevronRight size={11} />
-            </span>
-          </div>
-        )}
-      </div>
-    </Link>
-  );
-}
-
 /* ── Top alert / executive summary slot ──────────────── */
 function AlertOrSummary({
   critical,
@@ -2353,7 +2176,7 @@ function InProgressOverview({
       {/* Skeleton row 3 — mirrors Issues / Benchmarks / AI Readability */}
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 mb-4 auto-rows-fr">
         <SkeletonCard title="Issues by importance" subtitle="Findings will appear here" icon={AlertTriangle} />
-        <SkeletonCard title="Benchmark" subtitle="Competitor comparison" icon={BarChart3} />
+        <SkeletonCard title="Brand Intelligence" subtitle="AI + human perception" icon={BarChart3} />
         <SkeletonCard title="AI Readability" subtitle="How AI reads your site" icon={Brain} />
       </div>
     </div>

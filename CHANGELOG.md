@@ -6,6 +6,24 @@ Last updated: 2026-05-24
 
 ---
 
+## Brand Intelligence Platform — Tier 1
+
+### What was added
+Unified Brand Intelligence system that merges the old Benchmark + AI Readiness cards into a single intelligence layer. Provides a composite Brand Intelligence Score (0-100) weighted from AI visibility (30%), sentiment (25%), accuracy (25%), and placement (20%). Adds per-model sentiment extraction via Claude Haiku post-probe, evidence panel showing actual AI responses, and actionable fix recommendations.
+
+### New files
+- `src/lib/audit-engine/brand-intelligence.ts` — Core engine: `extractModelSentiment` (LLM sentiment classification), `computeBrandIntelligenceScore` (weighted composite), `runBrandIntelligenceAnalysis` (orchestrator). Types: `BrandIntelligenceSummary`, `ModelSentiment`, `SentimentTheme`.
+- `src/components/dashboard/v2/BrandIntelligenceCard.tsx` — Overview dashboard card replacing BenchmarksSummaryCard. Shows score, AI Visibility %, sentiment pill, share of voice, models tested, issue count.
+- `supabase/migrations/045_brand_intelligence.sql` — Adds `sentiment_score` (numeric) and `sentiment_themes` (jsonb) to `multi_model_probes`; adds `brand_intelligence` (jsonb) to `reports`.
+
+### Modified files
+- `src/app/dashboard/intelligence/page.tsx` — Complete rewrite from Benchmark Console to Brand Intelligence hub. Section 1: Overview with 5 metric blocks. Section 2: AI Model Performance with expandable evidence rows. Sentiment Themes section. Section 7: Fix & Improve recommendations. Competitive benchmark preserved as subsection.
+- `src/app/dashboard/overview/page.tsx` — Replaced `BenchmarksSummaryCard` with `BrandIntelligenceCard`; removed dead code (old card function, `handleBenchmark`, `detectingCompetitors`, `hideBenchmarks`).
+- `src/lib/inngest/functions/process-audit.ts` — Added `brand-intelligence-analysis` step after multi-model probes. Extracts sentiment per model, computes aggregate BI summary, stores on reports and probes.
+- `src/app/api/audits/intelligence/route.ts` — Updated report select to include `brand_intelligence` field.
+
+---
+
 ## Website Speed Card — PageSpeed Insights integration
 
 ### What was added

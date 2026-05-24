@@ -47,7 +47,7 @@ export async function GET(req: NextRequest) {
       .eq('audit_id', auditId)
       .order('predicted_impact', { ascending: false }),
     db.from('reports')
-      .select('ai_visibility_breakdown, model_benchmarks, overall_score, raw_json')
+      .select('ai_visibility_breakdown, model_benchmarks, overall_score, raw_json, brand_intelligence')
       .eq('audit_id', auditId)
       .single(),
   ])

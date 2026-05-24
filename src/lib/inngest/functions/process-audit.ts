@@ -48,6 +48,7 @@ import { generateFixPlaybooks } from '@/lib/audit-engine/fix-playbooks'
 import { runMultiModelBenchmark } from '@/lib/audit-engine/pipeline/multi-model-probe'
 import { detectIndustry, getUserBenchmarkPosition } from '@/lib/audit-engine/industry-benchmark'
 import { generatePredictiveRecommendations } from '@/lib/audit-engine/predictive-recommendations'
+import { runBrandIntelligenceAnalysis } from '@/lib/audit-engine/brand-intelligence'
 import { checkWcagAutomated, buildWcagResults, parseHeuristicResponse, formatWcagForPrompt, type WcagCheckResult, type WcagAuditResult } from '@/lib/audit-engine/pipeline/wcag-checker'
 import type { AuditFinding } from '@/types/database'
 import { resolveCapability, inferDeployableType } from '@/lib/fix-action-model'
@@ -2363,6 +2364,77 @@ RULES FOR RE-AUDIT:
         console.error('[inngest] Benchmark snapshot failed (non-fatal):', err)
         await auditLog(auditId, 'benchmark_snapshot_failed', 'warning',
           `Benchmark snapshot failed: ${err instanceof Error ? err.message : 'unknown'}`)
+      }
+    })
+
+    // ──────────────────────────────────────────────────────────
+    // STEP 9a2: Brand Intelligence — sentiment analysis + composite score
+    // Runs after multi-model probes complete. Extracts sentiment per model,
+    // computes composite Brand Intelligence Score, stores on report.
+    // ──────────────────────────────────────────────────────────
+    await step.run('brand-intelligence-analysis', async () => {
+      try {
+        const db = getDb()
+
+        // Fetch multi-model probes for this audit
+        const { data: probes } = await db
+          .from('multi_model_probes')
+          .select('model_id, model_label, accuracy_score, results_json, status')
+          .eq('audit_id', auditId)
+
+        if (!probes || probes.length === 0) return
+
+        // Only process successfully measured probes
+        const measured = probes.filter((p: any) => p.status === 'measured' && p.results_json)
+        if (measured.length === 0) return
+
+        // Extract brand name from audit details
+        const { data: audit } = await db
+          .from('audits')
+          .select('product_url, brand_name')
+          .eq('id', auditId)
+          .single()
+
+        const brandName = (audit as any)?.brand_name ||
+          ((audit as any)?.product_url ? new URL((audit as any).product_url).hostname.replace(/^www\./, '') : 'Unknown')
+
+        // Run brand intelligence analysis
+        const biSummary = await runBrandIntelligenceAnalysis(
+          brandName,
+          measured.map((p: any) => ({
+            modelId: p.model_id,
+            modelLabel: p.model_label,
+            accuracyScore: p.accuracy_score || 0,
+            responses: (p.results_json || []).map((r: any) => ({
+              question: r.question || '',
+              answer: r.answer || '',
+            })),
+          })),
+          null, // competitorVisibility — Tier 2
+        )
+
+        // Store per-model sentiment back on probes
+        for (const model of biSummary.perModel) {
+          await db.from('multi_model_probes')
+            .update({
+              sentiment_score: model.sentimentScore,
+              sentiment_themes: model.themes,
+            } as any)
+            .eq('audit_id', auditId)
+            .eq('model_id', model.modelId)
+        }
+
+        // Store aggregate BI summary on report
+        await db.from('reports')
+          .update({ brand_intelligence: biSummary } as any)
+          .eq('audit_id', auditId)
+
+        await auditLog(auditId, 'brand_intelligence_computed', 'info',
+          `Brand Intelligence Score: ${biSummary.score}/100. AI Visibility: ${biSummary.aiVisibility}%. Sentiment: ${biSummary.overallSentiment}/100.`)
+      } catch (err) {
+        console.error('[inngest] Brand intelligence analysis failed (non-fatal):', err)
+        await auditLog(auditId, 'brand_intelligence_failed', 'warning',
+          `Brand intelligence failed: ${err instanceof Error ? err.message : 'unknown'}`)
       }
     })
 
