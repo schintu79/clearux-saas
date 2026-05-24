@@ -6,6 +6,27 @@ Last updated: 2026-05-24
 
 ---
 
+## Brand Intelligence — Tier 2: Placement Parsing and Share of Voice
+
+### Problem
+Brand Intelligence Tier 1 computed visibility, sentiment, and accuracy — but placement (where in an AI response the brand appears) and share of voice (how much response content is dedicated to the brand) were hardcoded to `null`. This left two key metrics on the intelligence dashboard permanently blank.
+
+### What changed
+1. **Placement parsing**: The sentiment extraction prompt now also asks Claude Haiku to evaluate *where* in each model's response the brand first appears (scale 1–5, where 1 = top recommendation and 5 = buried at end). The extracted placement feeds into the composite Brand Intelligence Score's 20% placement weight.
+2. **Share of Voice**: Each model's response is analyzed for what percentage of content is dedicated to the audited brand vs competitors mentioned. The per-model share is averaged into a portfolio-level Share of Voice metric.
+3. **Composite score**: The `computeBrandIntelligenceScore` function now uses real placement data instead of the 50% default fallback, producing more accurate scores.
+4. **Pipeline storage**: Per-model `placement_score` is now stored on the `multi_model_probes` table alongside sentiment data.
+5. **UI**: The Intelligence page shows a placement pill ("Top pick", "Early", "Middle", "Buried") on each model probe row. The BrandIntelligenceCard on the overview now displays the average placement score.
+
+### Modified files
+- `src/lib/audit-engine/brand-intelligence.ts` — Rewrote `extractModelSentiment` to return placement + shareOfVoice; updated `runBrandIntelligenceAnalysis` to aggregate real placement and share of voice data
+- `src/lib/inngest/functions/process-audit.ts` — Store `placement_score` on multi_model_probes
+- `src/app/api/audits/intelligence/route.ts` — Return `brandIntelligence` in API response
+- `src/app/dashboard/intelligence/page.tsx` — Added `placement_score` to ModelProbe type; added placement pill to model probe rows
+- `src/components/dashboard/v2/BrandIntelligenceCard.tsx` — Show average placement score metric
+
+---
+
 ## Audit Navigation & Brand Management Refactor
 
 ### Problem

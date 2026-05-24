@@ -89,6 +89,7 @@ type ModelProbe = {
   results_json?: Array<{ question: string; answer: string; accuracy: string | null }>;
   sentiment_score?: number | null;
   sentiment_themes?: Array<{ theme: string; polarity: string; count: number }>;
+  placement_score?: number | null;
   status?: 'measured' | 'skipped' | 'error' | null;
 };
 
@@ -837,6 +838,13 @@ function ModelProbeRow({
   const sentiment = probe.sentiment_score ?? null;
   const sentimentInfo = sentiment != null ? sentimentLabel(sentiment) : null;
   const hasEvidence = probe.results_json && probe.results_json.length > 0;
+  const placement = probe.placement_score ?? null;
+  const placementLabel = placement != null
+    ? placement <= 1.5 ? 'Top pick' : placement <= 2.5 ? 'Early' : placement <= 3.5 ? 'Middle' : 'Buried'
+    : null;
+  const placementColor = placement != null
+    ? placement <= 1.5 ? 'var(--ok)' : placement <= 2.5 ? 'var(--ok)' : placement <= 3.5 ? 'var(--warn)' : 'var(--severe)'
+    : 'var(--m-muted)';
 
   return (
     <div
@@ -863,6 +871,13 @@ function ModelProbeRow({
         {sentimentInfo && (
           <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full" style={{ color: sentimentInfo.color, background: `color-mix(in srgb, ${sentimentInfo.color} 10%, transparent)` }}>
             {sentimentInfo.label}
+          </span>
+        )}
+
+        {/* Placement pill */}
+        {placementLabel && (
+          <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full" style={{ color: placementColor, background: `color-mix(in srgb, ${placementColor} 10%, transparent)` }}>
+            {placementLabel}
           </span>
         )}
 

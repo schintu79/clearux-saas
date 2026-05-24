@@ -2465,12 +2465,13 @@ RULES FOR RE-AUDIT:
           null, // competitorVisibility — Tier 2
         )
 
-        // Store per-model sentiment back on probes
+        // Store per-model sentiment + placement back on probes
         for (const model of biSummary.perModel) {
           await db.from('multi_model_probes')
             .update({
               sentiment_score: model.sentimentScore,
               sentiment_themes: model.themes,
+              placement_score: model.placement,
             } as any)
             .eq('audit_id', auditId)
             .eq('model_id', model.modelId)

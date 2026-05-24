@@ -104,5 +104,6 @@ export async function GET(req: NextRequest) {
     benchmarkPosition,
     modelBenchmarks: (report.data as any)?.model_benchmarks || null,
     industry: (audit as any).detected_industry || 'General',
+    brandIntelligence: (report.data as any)?.brand_intelligence || null,
   })
 }

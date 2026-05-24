@@ -1,10 +1,16 @@
 /**
- * Brand Intelligence — Tier 1
+ * Brand Intelligence — Tier 2
  *
- * Post-probe sentiment extraction and composite scoring.
+ * Post-probe sentiment extraction, placement parsing, and composite scoring.
  * Runs after LLM probes complete. Classifies each model's responses
- * by sentiment polarity and extracts brand perception themes.
- * Computes a composite Brand Intelligence Score.
+ * by sentiment polarity, extracts brand perception themes, and computes
+ * placement position (where in the response the brand is mentioned).
+ *
+ * Tier 2 additions:
+ *  - Placement parsing: detects where in AI responses the brand appears
+ *    (1 = first mention / top recommendation, 5 = buried at end)
+ *  - Share of Voice: measures brand's share of response content vs competitors
+ *  - Enhanced composite score using real placement data
  */
 
 import Anthropic from '@anthropic-ai/sdk'
@@ -47,30 +53,48 @@ export interface ProbeResponseForSentiment {
   accuracy: string | null
 }
 
-/* ── Sentiment extraction ────────────────────────────── */
+/* ── Sentiment + Placement extraction ───────────────── */
 
-const SENTIMENT_PROMPT = `You are a brand perception analyst. Given a set of AI model responses about a brand, extract:
+const SENTIMENT_PLACEMENT_PROMPT = `You are a brand perception analyst. Given a set of AI model responses about a brand, extract:
 
 1. An overall sentiment score (0-100, where 0 = very negative, 50 = neutral, 100 = very positive)
 2. 2-5 perception themes — recurring topics or attributes mentioned about the brand
 3. For each theme, classify polarity as "positive", "negative", or "neutral"
 4. Whether the brand was actually mentioned/discussed (visibility: true/false)
+5. Placement position — WHERE in the response does the brand first appear?
+   - 1 = first item mentioned / top recommendation / opening sentence
+   - 2 = mentioned second or in the first paragraph but not first
+   - 3 = mentioned in the middle of the response
+   - 4 = mentioned towards the end
+   - 5 = barely mentioned, footnote, or only in passing
+   - null = brand not mentioned at all
+6. Share of voice — what percentage of the total response content is about THIS brand vs others mentioned? (0-100)
 
 Respond ONLY with valid JSON, no markdown:
 {
   "sentimentScore": <number 0-100>,
   "visibility": <boolean>,
+  "placement": <number 1-5 or null>,
+  "shareOfVoice": <number 0-100>,
   "themes": [{"theme": "<short phrase>", "polarity": "<positive|negative|neutral>", "count": <number>}]
 }
 
-If the AI clearly has no knowledge of the brand (says "I don't have information" or similar), return sentimentScore: 50 and visibility: false with empty themes.`
+If the AI clearly has no knowledge of the brand (says "I don't have information" or similar), return sentimentScore: 50, visibility: false, placement: null, shareOfVoice: 0 with empty themes.`
+
+export interface ModelSentimentResult {
+  sentimentScore: number
+  visibility: boolean
+  themes: SentimentTheme[]
+  placement: number | null
+  shareOfVoice: number
+}
 
 export async function extractModelSentiment(
   brandName: string,
   responses: Array<{ question: string; answer: string }>,
-): Promise<{ sentimentScore: number; visibility: boolean; themes: SentimentTheme[] }> {
+): Promise<ModelSentimentResult> {
   if (responses.length === 0) {
-    return { sentimentScore: 50, visibility: false, themes: [] }
+    return { sentimentScore: 50, visibility: false, themes: [], placement: null, shareOfVoice: 0 }
   }
 
   const responsesText = responses
@@ -81,11 +105,11 @@ export async function extractModelSentiment(
     const client = new Anthropic()
     const msg = await client.messages.create({
       model: 'claude-haiku-4-5-20251001',
-      max_tokens: 500,
+      max_tokens: 600,
       messages: [
         {
           role: 'user',
-          content: `Brand: "${brandName}"\n\nAI responses about this brand:\n\n${responsesText}\n\n${SENTIMENT_PROMPT}`,
+          content: `Brand: "${brandName}"\n\nAI responses about this brand:\n\n${responsesText}\n\n${SENTIMENT_PLACEMENT_PROMPT}`,
         },
       ],
     })
@@ -93,9 +117,15 @@ export async function extractModelSentiment(
     const text = msg.content[0]?.type === 'text' ? msg.content[0].text : ''
     const parsed = JSON.parse(text)
 
+    const placement = parsed.placement != null
+      ? Math.max(1, Math.min(5, Math.round(Number(parsed.placement))))
+      : null
+
     return {
       sentimentScore: Math.max(0, Math.min(100, Math.round(parsed.sentimentScore ?? 50))),
       visibility: parsed.visibility ?? false,
+      placement: parsed.visibility === false ? null : placement,
+      shareOfVoice: Math.max(0, Math.min(100, Math.round(Number(parsed.shareOfVoice) || 0))),
       themes: (parsed.themes ?? []).map((t: any) => ({
         theme: String(t.theme || ''),
         polarity: ['positive', 'negative', 'neutral'].includes(t.polarity) ? t.polarity : 'neutral',
@@ -104,7 +134,7 @@ export async function extractModelSentiment(
     }
   } catch {
     // Fallback if LLM call fails
-    return { sentimentScore: 50, visibility: true, themes: [] }
+    return { sentimentScore: 50, visibility: true, themes: [], placement: null, shareOfVoice: 0 }
   }
 }
 
@@ -145,17 +175,18 @@ export async function runBrandIntelligenceAnalysis(
   }>,
   competitorVisibility?: number | null,
 ): Promise<BrandIntelligenceSummary> {
-  // Run sentiment extraction per model in parallel
+  // Run sentiment + placement extraction per model in parallel
   const modelResults = await Promise.all(
     probesByModel.map(async (model) => {
-      const sentiment = await extractModelSentiment(brandName, model.responses)
+      const result = await extractModelSentiment(brandName, model.responses)
       return {
         modelId: model.modelId,
         modelLabel: model.modelLabel,
-        sentimentScore: sentiment.sentimentScore,
-        themes: sentiment.themes,
-        visibility: sentiment.visibility,
-        placement: null as number | null, // Tier 2: parse placement from responses
+        sentimentScore: result.sentimentScore,
+        themes: result.themes,
+        visibility: result.visibility,
+        placement: result.placement,
+        shareOfVoice: result.shareOfVoice,
         accuracyScore: model.accuracyScore,
       }
     })
@@ -176,8 +207,13 @@ export async function runBrandIntelligenceAnalysis(
     ? Math.round(accuracyScores.reduce((a, b) => a + b, 0) / accuracyScores.length)
     : 0
 
-  // Placement: Tier 2 feature (requires response parsing)
-  const placementScore: number | null = null
+  // Placement: average position across models (1 = top, 5 = buried)
+  const placements = modelResults
+    .filter(m => m.placement != null)
+    .map(m => m.placement as number)
+  const placementScore: number | null = placements.length > 0
+    ? Math.round((placements.reduce((a, b) => a + b, 0) / placements.length) * 10) / 10
+    : null
 
   // Aggregate themes across all models
   const themeMap = new Map<string, { polarity: 'positive' | 'negative' | 'neutral'; count: number }>()
@@ -205,10 +241,17 @@ export async function runBrandIntelligenceAnalysis(
     .slice(0, 5)
     .map(([k]) => k)
 
-  // Share of voice (vs competitors — simplified for Tier 1)
-  const shareOfVoice = competitorVisibility != null
-    ? Math.round((aiVisibility / Math.max(1, aiVisibility + competitorVisibility)) * 100)
-    : null
+  // Share of voice — use per-model content share analysis (Tier 2)
+  // Each model's shareOfVoice represents what % of its response content
+  // was dedicated to this brand vs competitors mentioned.
+  const modelShareScores = modelResults
+    .filter(m => m.visibility && m.shareOfVoice > 0)
+    .map(m => m.shareOfVoice)
+  const shareOfVoice = modelShareScores.length > 0
+    ? Math.round(modelShareScores.reduce((a, b) => a + b, 0) / modelShareScores.length)
+    : (competitorVisibility != null
+      ? Math.round((aiVisibility / Math.max(1, aiVisibility + competitorVisibility)) * 100)
+      : null)
 
   // Composite score
   const score = computeBrandIntelligenceScore({

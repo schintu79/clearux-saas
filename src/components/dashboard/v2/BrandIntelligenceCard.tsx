@@ -132,6 +132,16 @@ export default function BrandIntelligenceCard({
                   </span>
                 </div>
 
+                {/* Placement */}
+                {data.placementScore != null && (
+                  <div className="flex items-center justify-between">
+                    <span className="text-[11px]" style={{ color: 'var(--m-muted)' }}>Avg placement</span>
+                    <span className="text-[11px] font-semibold tabular-nums" style={{ color: data.placementScore <= 2 ? 'var(--ok)' : data.placementScore <= 3.5 ? 'var(--warn)' : 'var(--severe)' }}>
+                      {data.placementScore}/5
+                    </span>
+                  </div>
+                )}
+
                 {/* Share of Voice */}
                 {data.shareOfVoice != null && (
                   <div className="flex items-center justify-between">
