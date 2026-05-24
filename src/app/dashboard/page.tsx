@@ -205,17 +205,17 @@ function DashboardInner() {
           title="Dashboard"
           subtitle="See which brands need attention and where to focus next."
         >
-          <ActionLink href="/dashboard/new-audit" icon={PlusCircle}>New audit</ActionLink>
+          <ActionLink href="/dashboard/new-audit" icon={PlusCircle}>Add new site or brand</ActionLink>
         </PageHeader>
         <DashCard dashed className="p-10 text-center">
           <FileSearch size={28} className="mx-auto mb-3" style={{ color: 'var(--m-muted)' }} />
           <h2 className="text-base font-semibold mb-1" style={{ color: 'var(--ink)' }}>
-            No audits yet
+            Audit your first site or brand
           </h2>
           <p className="text-[13px] mb-5" style={{ color: 'var(--m-muted)' }}>
             Run your first audit to find what is hurting your site and get a clear path to fix it.
           </p>
-          <ActionLink href="/dashboard/new-audit" icon={PlusCircle}>New audit</ActionLink>
+          <ActionLink href="/dashboard/new-audit" icon={PlusCircle}>Get started</ActionLink>
         </DashCard>
       </div>
     );
@@ -228,7 +228,7 @@ function DashboardInner() {
         title="Dashboard"
         subtitle="See which brands need attention and where to focus next."
       >
-        <ActionLink href="/dashboard/new-audit" icon={PlusCircle}>New audit</ActionLink>
+        <ActionLink href="/dashboard/new-audit" icon={PlusCircle}>Add new site or brand</ActionLink>
       </PageHeader>
 
       {/* Headline stats — at-a-glance portfolio numbers */}

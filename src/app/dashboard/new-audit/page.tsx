@@ -47,12 +47,18 @@ const NewAuditInner: React.FC = () => {
   const typeParam = searchParams.get('type') as AuditType | null;
   const [auditType, setAuditType] = useState<AuditType>(typeParam === 'brand_identity' ? 'brand_identity' : 'website');
 
+  // Mode: 'new-brand' (default) shows URL input; 're-audit' and 'dig-deeper' hide it
+  const modeParam = searchParams.get('mode') as 'new-brand' | 're-audit' | 'dig-deeper' | null;
+  const auditMode = modeParam === 're-audit' || modeParam === 'dig-deeper' ? modeParam : 'new-brand';
+  const isReAuditMode = auditMode === 're-audit';
+  const isDigDeeperMode = auditMode === 'dig-deeper';
+
   // Website audit state
   const [url, setUrl] = useState(searchParams.get('url') || '');
   const depthParam = searchParams.get('depth');
-  const [hasExistingAudit, setHasExistingAudit] = useState(depthParam === 'deep');
+  const [hasExistingAudit, setHasExistingAudit] = useState(depthParam === 'deep' || isReAuditMode || isDigDeeperMode);
   const isReAudit = hasExistingAudit;
-  const [depthMode, setDepthMode] = useState<'standard' | 'deep'>(depthParam === 'deep' ? 'deep' : 'standard');
+  const [depthMode, setDepthMode] = useState<'standard' | 'deep'>(depthParam === 'deep' || isDigDeeperMode ? 'deep' : 'standard');
   const [language, setLanguage] = useState(DEFAULT_LANGUAGE);
   const [urlError, setUrlError] = useState('');
   const [loading, setLoading] = useState(false);
@@ -81,10 +87,10 @@ const NewAuditInner: React.FC = () => {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    if (!userLoading && user && urlInputRef.current && auditType === 'website') {
+    if (!userLoading && user && urlInputRef.current && auditType === 'website' && auditMode === 'new-brand') {
       urlInputRef.current.focus();
     }
-  }, [userLoading, user, auditType]);
+  }, [userLoading, user, auditType, auditMode]);
 
   // Fetch credits + brand identities
   useEffect(() => {
@@ -111,11 +117,28 @@ const NewAuditInner: React.FC = () => {
       .catch(() => {});
   }, [user]);
 
+  // In re-audit / dig-deeper mode, resolve the brand's website URL if not already set
+  useEffect(() => {
+    if (auditMode === 'new-brand' || !user) return;
+    const brandParam = searchParams.get('brand');
+    if (url) return; // URL already provided via param
+    if (!brandParam) return;
+    // Fetch brand details to get website_url
+    fetch(`/api/brand-identities/${brandParam}`)
+      .then((r) => r.ok ? r.json() : null)
+      .then((d) => {
+        if (d?.identity?.website_url) {
+          setUrl(d.identity.website_url);
+        }
+      })
+      .catch(() => {});
+  }, [user, auditMode, searchParams, url]);
+
   // Check if the domain has been audited before — show depth switcher if so
   useEffect(() => {
     if (!user || auditType !== 'website') return;
-    // Already detected via URL param
-    if (depthParam === 'deep') return;
+    // Already detected via URL param or re-audit/dig-deeper mode
+    if (depthParam === 'deep' || isReAuditMode || isDigDeeperMode) return;
 
     let cancelled = false;
     const checkDomain = async () => {
@@ -561,10 +584,14 @@ const NewAuditInner: React.FC = () => {
       {/* Hero */}
       <div className="text-center mb-10">
         <h1 className="text-xl font-medium font-sans mb-2" style={{ color: 'var(--ink)' }}>
-          New audit
+          {isReAuditMode ? 'Re-audit' : isDigDeeperMode ? 'Dig deeper' : 'Add new site or brand'}
         </h1>
         <p className="text-[14px]" style={{ color: 'var(--m-muted)' }}>
-          {auditType === 'brand_identity'
+          {isReAuditMode
+            ? 'Run a fresh audit on this brand to check for improvements and new issues.'
+            : isDigDeeperMode
+            ? 'Run a deeper analysis with extended modules and additional checks.'
+            : auditType === 'brand_identity'
             ? 'Upload your brand materials and get AI-powered analysis of consistency, messaging, and quality.'
             : 'Paste your URL and our AI does a deep analysis across all 96 checkpoints.'}
         </p>
@@ -624,7 +651,19 @@ const NewAuditInner: React.FC = () => {
           ══════════════════════════════════════════════════════════ */}
       {auditType === 'website' && (
         <>
-          {/* URL Input */}
+          {/* Re-audit / Dig deeper mode: show brand context banner instead of URL input */}
+          {(isReAuditMode || isDigDeeperMode) && url && (
+            <div className="mb-6 px-4 py-3 rounded-xl" style={{ background: 'var(--paper-2)', border: '1px solid var(--rule)' }}>
+              <p className="text-sm font-medium" style={{ color: 'var(--ink)' }}>
+                <RefreshCw size={13} className="inline mr-1.5 -mt-0.5" />
+                {isReAuditMode ? 'Re-auditing' : 'Running deeper audit on'}:{' '}
+                <span className="font-semibold">{url}</span>
+              </p>
+            </div>
+          )}
+
+          {/* URL Input — only shown in new-brand mode */}
+          {auditMode === 'new-brand' && (
           <div className="mb-6">
             <label htmlFor="audit-url" className="block text-sm font-medium text-text mb-2">
               <Globe size={14} className="inline mr-1.5 -mt-0.5" />
@@ -667,6 +706,7 @@ const NewAuditInner: React.FC = () => {
               <p id="url-error" className="text-sm mt-2" style={{ color: 'var(--severe)' }} role="alert">{urlError}</p>
             )}
           </div>
+          )}
 
           {/* Deep mode switcher — only shown for re-audits */}
           {isReAudit && (

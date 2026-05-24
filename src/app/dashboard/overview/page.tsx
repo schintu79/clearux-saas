@@ -684,13 +684,13 @@ function OverviewInner() {
             )}
           </button>
           <Link
-            href={productUrl ? `/dashboard/new-audit?url=${encodeURIComponent(productUrl)}&depth=deep` : '/dashboard/new-audit?depth=deep'}
+            href={productUrl ? `/dashboard/new-audit?mode=dig-deeper&url=${encodeURIComponent(productUrl)}&depth=deep` : '/dashboard/new-audit?mode=dig-deeper&depth=deep'}
             className="inline-flex items-center gap-1.5 bg-card border border-border text-text text-xs font-medium px-3 py-2 rounded-lg hover:bg-surface-alt transition-colors"
           >
             <Search size={12} /> Dig deeper
           </Link>
           <Link
-            href={productUrl ? `/dashboard/new-audit?url=${encodeURIComponent(productUrl)}` : '/dashboard/new-audit'}
+            href={productUrl ? `/dashboard/new-audit?mode=re-audit&url=${encodeURIComponent(productUrl)}` : '/dashboard/new-audit?mode=re-audit'}
             className="inline-flex items-center gap-1.5 bg-brand text-surface text-xs font-medium px-3.5 py-2 rounded-lg transition-all hover:brightness-110"
           >
             <RefreshCw size={13} />

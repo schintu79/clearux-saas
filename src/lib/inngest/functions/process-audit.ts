@@ -49,6 +49,7 @@ import { runMultiModelBenchmark } from '@/lib/audit-engine/pipeline/multi-model-
 import { detectIndustry, getUserBenchmarkPosition } from '@/lib/audit-engine/industry-benchmark'
 import { generatePredictiveRecommendations } from '@/lib/audit-engine/predictive-recommendations'
 import { runBrandIntelligenceAnalysis } from '@/lib/audit-engine/brand-intelligence'
+import { runFullSpeedTest, generateSpeedFindings } from '@/lib/pagespeed'
 import { checkWcagAutomated, buildWcagResults, parseHeuristicResponse, formatWcagForPrompt, type WcagCheckResult, type WcagAuditResult } from '@/lib/audit-engine/pipeline/wcag-checker'
 import type { AuditFinding } from '@/types/database'
 import { resolveCapability, inferDeployableType } from '@/lib/fix-action-model'
@@ -524,6 +525,57 @@ export const processAuditFn = inngest.createFunction(
           tab: 'responsive',
         })
         return { summary: '', findingsCount: 0 }
+      }
+    })
+
+    // ──────────────────────────────────────────────────────────
+    // STEP 2c: PageSpeed Insights — real Core Web Vitals
+    // Runs Google PSI for mobile + desktop, stores speed_data
+    // on the audit record, and generates speed-related findings.
+    // ──────────────────────────────────────────────────────────
+    await step.run('pagespeed-test', async () => {
+      // Only run for website audits (not brand audits)
+      if (auditDetails.auditType === 'brand_identity') return
+
+      try {
+        await auditLog(auditId, 'pagespeed_started', 'info', `Running PageSpeed test for ${auditDetails.productUrl}`)
+        const speedData = await runFullSpeedTest(auditDetails.productUrl)
+
+        // Store speed data on audit record
+        const speedSummary = {
+          mobile: speedData.mobile ? { score: speedData.mobile.score, metrics: speedData.mobile.metrics } : null,
+          desktop: speedData.desktop ? { score: speedData.desktop.score, metrics: speedData.desktop.metrics } : null,
+        }
+
+        const db = getDb()
+        await db
+          .from('audits')
+          .update({ speed_data: speedSummary, speed_tested_at: speedData.testedAt } as any)
+          .eq('id', auditId)
+
+        // Generate speed findings and store them
+        const speedFindings = generateSpeedFindings(speedData)
+        if (speedFindings.length > 0) {
+          const findingRows = speedFindings.map((f, i) => ({
+            audit_id: auditId,
+            category: 'Performance & Page Speed',
+            category_index: 23,
+            title: f.title,
+            description: f.description,
+            recommendation: f.recommendation,
+            severity: f.severity,
+            detection_source: 'pagespeed_api',
+            status: 'open' as const,
+            position: 900 + i,
+          }))
+          await db.from('audit_findings').insert(findingRows)
+        }
+
+        await auditLog(auditId, 'pagespeed_completed', 'success',
+          `PageSpeed: score ${speedSummary.mobile?.score ?? '?'}(m) / ${speedSummary.desktop?.score ?? '?'}(d), ${speedFindings.length} finding(s)`)
+      } catch (err) {
+        console.error('[process-audit] PageSpeed test error (non-fatal):', err)
+        await auditLog(auditId, 'pagespeed_error', 'warning', 'PageSpeed API call failed — continuing without real CWV data')
       }
     })
 

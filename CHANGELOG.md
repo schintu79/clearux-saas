@@ -6,6 +6,45 @@ Last updated: 2026-05-24
 
 ---
 
+## Audit Navigation & Brand Management Refactor
+
+### Problem
+The "New Audit" button in the sidebar did not distinguish between re-auditing an existing brand (no URL input needed) and adding a completely new site/brand (URL input required). This caused UX confusion and incorrect routing behaviour.
+
+### What changed
+1. **Sidebar**: Removed the ambiguous "New Audit" button. When a brand is selected, the sidebar now shows two scoped actions: "Re-audit" and "Dig deeper" — both use the stored brand URL without showing a URL input. When no brand is active or in collapsed mode, it shows "Add new site or brand."
+2. **Dashboard page**: CTAs updated from "New audit" to "Add new site or brand"; empty state headline changed to "Audit your first site or brand."
+3. **New audit page**: Now accepts a `mode` query parameter (`new-brand`, `re-audit`, `dig-deeper`). In re-audit/dig-deeper mode, the URL input is hidden and replaced with a context banner showing the brand being re-audited. The page heading updates dynamically based on mode.
+4. **Overview page**: Re-audit and Dig deeper links now pass `mode=re-audit` / `mode=dig-deeper` params so the new-audit page renders correctly.
+
+### Routing logic
+| User Action | URL Input? | Outcome |
+|---|---|---|
+| Re-audit (sidebar or overview) | No | Refreshes existing brand with new results |
+| Dig deeper (sidebar or overview) | No | Runs deeper analysis on existing brand |
+| Add new site or brand (sidebar/dashboard) | Yes | Creates new brand + audit |
+
+### Modified files
+- `src/components/layout/DashboardShell.tsx` — Replaced "New audit" with context-aware Re-audit/Dig deeper buttons; added RefreshCw import
+- `src/app/dashboard/new-audit/page.tsx` — Added `mode` param handling, URL input conditional rendering, brand URL auto-resolution, dynamic heading
+- `src/app/dashboard/overview/page.tsx` — Updated Re-audit/Dig deeper links to pass mode params
+- `src/app/dashboard/page.tsx` — Updated CTA labels and empty state copy
+
+---
+
+## PageSpeed Insights — Pipeline Integration
+
+### Problem
+PageSpeed tests were only callable from the dead monolithic audit engine (`src/lib/audit-engine/index.ts`). The real Inngest pipeline never ran speed tests, so `speed_data` was always null.
+
+### What changed
+Added a `'pagespeed-test'` step to `src/lib/inngest/functions/process-audit.ts` that runs `runFullSpeedTest()` during every website audit, stores results on the audit record, and generates speed findings.
+
+### Modified files
+- `src/lib/inngest/functions/process-audit.ts` — Added pagespeed-test step with import of `runFullSpeedTest` and `generateSpeedFindings`
+
+---
+
 ## Brand Intelligence Platform — Tier 1
 
 ### What was added

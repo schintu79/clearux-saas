@@ -26,6 +26,7 @@ import {
   Wrench,
   LineChart,
   Server,
+  RefreshCw,
 } from 'lucide-react';
 import clsx from 'clsx';
 import { AuditBundleProvider } from '@/context/AuditBundleContext';
@@ -479,21 +480,54 @@ const DashboardShell: React.FC<DashboardShellProps> = ({ children }) => {
       >
         {SidebarLogo}
 
-        {/* New audit CTA */}
+        {/* Context-aware audit actions */}
         <div className={clsx('pt-3 pb-2', collapsed ? 'px-2' : 'px-3')}>
-          <Link
-            href="/dashboard/new-audit"
-            onClick={() => setSidebarOpen(false)}
-            className={clsx(
-              'flex items-center justify-center w-full rounded-md transition-all hover:opacity-90',
-              collapsed ? 'px-0 py-2' : 'gap-1.5 px-3 py-[7px] text-[13px] font-medium',
-            )}
-            style={{ background: 'var(--ink)', color: 'var(--paper)' }}
-            title={collapsed ? 'New audit' : undefined}
-          >
-            <PlusCircle size={collapsed ? 16 : 14} strokeWidth={1.75} />
-            {!collapsed && 'New audit'}
-          </Link>
+          {selectedSite && !collapsed ? (
+            <div className="flex items-center gap-1.5">
+              <button
+                onClick={() => {
+                  setSidebarOpen(false);
+                  const brandParam = selectedSite.id.startsWith('brand:') ? selectedSite.id.slice(6) : '';
+                  const host = selectedSite.kind === 'site' ? selectedSite.label : '';
+                  router.push(`/dashboard/new-audit?mode=re-audit${brandParam ? `&brand=${brandParam}` : ''}${host ? `&url=${encodeURIComponent(host)}` : ''}`);
+                }}
+                className="flex-1 flex items-center justify-center gap-1.5 px-2 py-[7px] text-[12px] font-medium rounded-md transition-all hover:opacity-90"
+                style={{ background: 'var(--ink)', color: 'var(--paper)' }}
+                title="Re-audit this brand"
+              >
+                <RefreshCw size={12} strokeWidth={1.75} />
+                Re-audit
+              </button>
+              <button
+                onClick={() => {
+                  setSidebarOpen(false);
+                  const brandParam = selectedSite.id.startsWith('brand:') ? selectedSite.id.slice(6) : '';
+                  const host = selectedSite.kind === 'site' ? selectedSite.label : '';
+                  router.push(`/dashboard/new-audit?mode=dig-deeper${brandParam ? `&brand=${brandParam}` : ''}${host ? `&url=${encodeURIComponent(host)}` : ''}&depth=deep`);
+                }}
+                className="flex-1 flex items-center justify-center gap-1.5 px-2 py-[7px] text-[12px] font-medium rounded-md transition-all hover:opacity-90"
+                style={{ background: 'var(--paper-2)', color: 'var(--ink)', border: '1px solid var(--rule)' }}
+                title="Run a deeper audit"
+              >
+                <Search size={12} strokeWidth={1.75} />
+                Dig deeper
+              </button>
+            </div>
+          ) : (
+            <Link
+              href="/dashboard/new-audit"
+              onClick={() => setSidebarOpen(false)}
+              className={clsx(
+                'flex items-center justify-center w-full rounded-md transition-all hover:opacity-90',
+                collapsed ? 'px-0 py-2' : 'gap-1.5 px-3 py-[7px] text-[13px] font-medium',
+              )}
+              style={{ background: 'var(--ink)', color: 'var(--paper)' }}
+              title={collapsed ? 'Add new site or brand' : undefined}
+            >
+              <PlusCircle size={collapsed ? 16 : 14} strokeWidth={1.75} />
+              {!collapsed && 'Add new site or brand'}
+            </Link>
+          )}
         </div>
 
         {/* Dashboard link */}
