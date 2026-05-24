@@ -42,13 +42,17 @@ export default function WebsiteSpeedCard({
   const [strategy, setStrategy] = useState<'mobile' | 'desktop'>('mobile')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [localSpeedData, setLocalSpeedData] = useState<SpeedDataSummary | null>(null)
+
+  // Use local state if available (after on-demand test), otherwise prop
+  const activeSpeedData = localSpeedData ?? speedData
 
   // Determine if we actually have usable speed data
   // (speedData may be truthy but both strategies null if API failed)
-  const hasUsableData = speedData != null && (speedData.mobile != null || speedData.desktop != null)
+  const hasUsableData = activeSpeedData != null && (activeSpeedData.mobile != null || activeSpeedData.desktop != null)
 
   const result: SpeedStrategyResult | null = hasUsableData
-    ? (strategy === 'mobile' ? speedData!.mobile : speedData!.desktop)
+    ? (strategy === 'mobile' ? activeSpeedData!.mobile : activeSpeedData!.desktop)
     : null
 
   const handleRunTest = async () => {
@@ -63,6 +67,7 @@ export default function WebsiteSpeedCard({
       })
       if (res.ok) {
         const data = await res.json()
+        setLocalSpeedData(data.speed_data)
         onTestComplete?.(data.speed_data)
       } else {
         const data = await res.json().catch(() => ({}))
@@ -96,9 +101,9 @@ export default function WebsiteSpeedCard({
             <h3 className="text-[15px] font-semibold leading-tight tracking-[-0.005em]" style={{ color: 'var(--ink)' }}>
               Website speed
             </h3>
-            {(speedData?.testedAt || (result as any)?.testedAt) && (
+            {(activeSpeedData?.testedAt || (result as any)?.testedAt) && (
               <p className="text-[10px] mt-0.5" style={{ color: 'var(--m-muted)' }}>
-                Last tested {new Date(speedData?.testedAt || (result as any)?.testedAt).toLocaleDateString()}
+                Last tested {new Date(activeSpeedData?.testedAt || (result as any)?.testedAt).toLocaleDateString()}
               </p>
             )}
           </div>
@@ -138,7 +143,7 @@ export default function WebsiteSpeedCard({
             </button>
           )}
         </div>
-      ) : speedData && (
+      ) : activeSpeedData && (
         <>
           {/* Score + strategy toggle */}
           <div className="flex items-center gap-3 mb-3">

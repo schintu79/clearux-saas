@@ -64,6 +64,9 @@ const PSI_ENDPOINT = 'https://www.googleapis.com/pagespeedonline/v5/runPagespeed
 
 function getApiKey(): string {
   const key = process.env.GOOGLE_PAGESPEED_API_KEY || process.env.GOOGLE_API_KEY || ''
+  if (!key) {
+    console.warn('[pagespeed] No API key found — GOOGLE_PAGESPEED_API_KEY and GOOGLE_API_KEY are both empty. Requests may be rate-limited or rejected.')
+  }
   return key
 }
 

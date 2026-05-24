@@ -49,6 +49,14 @@ export async function POST(req: NextRequest) {
   try {
     const speedData = await runFullSpeedTest(productUrl)
 
+    // If both strategies failed, return an error instead of empty data
+    if (!speedData.mobile && !speedData.desktop) {
+      return NextResponse.json(
+        { error: 'Could not reach Google PageSpeed API. The API key may be missing or the site may be unreachable. Please try again later.' },
+        { status: 502 },
+      )
+    }
+
     // Convert to DB summary
     const speedSummary: SpeedDataSummary = {
       mobile: speedData.mobile ? {
