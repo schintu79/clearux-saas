@@ -51,6 +51,7 @@ import {
   MessageSquare,
   Scale,
   BarChart3,
+  WifiOff,
 } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { useAuditBundle } from '@/context/AuditBundleContext';
@@ -2332,6 +2333,46 @@ function FailedAuditOverview({
               >
                 Contact support
               </a>
+            </div>
+          </>
+        ) : audit.crawl_error?.startsWith('UNREACHABLE:') ? (
+          /* ── Domain unreachable ── */
+          <>
+            <div className="flex items-start gap-3">
+              <span
+                className="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0"
+                style={{ background: 'color-mix(in srgb, var(--severe) 12%, transparent)', color: 'var(--severe)' }}
+              >
+                <WifiOff size={18} />
+              </span>
+              <div>
+                <h2 className="text-[18px] font-sans font-semibold" style={{ color: 'var(--ink)' }}>
+                  We couldn&apos;t reach {domain ? <span>{domain}</span> : 'this site'}
+                </h2>
+                <p className="text-[13px] mt-1.5 max-w-[560px] leading-relaxed" style={{ color: 'var(--m-muted)' }}>
+                  The URL may be incorrect, the site may be offline, or the domain may not exist.
+                  Please check the URL and try again.
+                </p>
+                <div
+                  className="mt-3 px-3 py-2.5 rounded-lg text-[12px] leading-relaxed"
+                  style={{ background: 'color-mix(in srgb, var(--ink) 4%, transparent)', border: '1px solid var(--rule)' }}
+                >
+                  <p className="font-semibold mb-1" style={{ color: 'var(--ink)' }}>Your credit has been refunded</p>
+                  <p style={{ color: 'var(--m-muted)' }}>
+                    No charge was applied for this audit attempt.
+                  </p>
+                </div>
+              </div>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              <Link
+                href={retryHref}
+                className="inline-flex items-center gap-1.5 text-[13px] font-semibold px-3.5 py-2 rounded-lg"
+                style={{ background: 'var(--ink)', color: 'var(--paper)' }}
+              >
+                <RefreshCw size={13} />
+                Check URL and try again
+              </Link>
             </div>
           </>
         ) : (

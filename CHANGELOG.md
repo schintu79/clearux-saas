@@ -6,6 +6,37 @@ Last updated: 2026-05-24
 
 ---
 
+## Crawl-blocked domain handling — pre-flight check
+
+### Problem
+When users submitted a URL for auditing and that URL was crawl-blocked (Cloudflare, robots.txt, bot protection), the system attempted to run the full audit anyway. This resulted in a very long wait with no feedback before eventual failure.
+
+### Root cause
+The crawl block detection only happened inside the full crawler after attempting all fetch strategies (direct, Jina, cache). This process took too long before reporting the block.
+
+### What was fixed
+1. **Created `src/lib/audit-engine/crawl-preflight.ts`** — a lightweight pre-flight check that completes in under 5 seconds:
+   - Checks `robots.txt` for universal disallow rules
+   - Makes a quick HTTP request with 5-second timeout
+   - Scans response body for bot-detection markers (Cloudflare, Sucuri, Imperva, DataDome, etc.)
+   - Returns a standardized `CrawlStatus`: `accessible`, `crawl-blocked`, `http-error`, `unreachable`, or `partial`
+2. **Added `crawl-preflight` step to `process-audit.ts`** — runs between fetch-audit and crawl-pages. If the site is blocked or unreachable, throws immediately with a clear error message. The existing error handler refunds the credit and stores the message.
+3. **Added `UNREACHABLE:` UI branch in overview page** — users now see a distinct, friendly message when a domain cannot be reached (DNS failure, timeout, offline), separate from the `BLOCKED:` state which already had custom UI.
+4. **Error message prefixes** (`BLOCKED:`, `UNREACHABLE:`, `HTTP_ERROR:`) enable the frontend to show different UI for each failure type.
+
+### Result
+- Blocked domains are detected within 3-5 seconds instead of minutes
+- Users see a clear, actionable message immediately
+- Credits are auto-refunded
+- The full audit pipeline never runs on inaccessible domains
+
+### Files touched
+- `src/lib/audit-engine/crawl-preflight.ts` — new file (CrawlStatus enum, preflight check logic)
+- `src/lib/inngest/functions/process-audit.ts` — added import and crawl-preflight step
+- `src/app/dashboard/overview/page.tsx` — added WifiOff import and UNREACHABLE UI branch
+
+---
+
 ## Website speed check — fixed silent failure
 
 ### Problem

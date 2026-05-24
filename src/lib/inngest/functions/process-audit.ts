@@ -14,6 +14,7 @@
 import { inngest } from '../client'
 import { createServiceSupabase } from '@/lib/supabase-server'
 import { crawlPages, formatHeadTagsForAnalysis, type HeadTagData } from '@/lib/audit-engine/crawler'
+import { runCrawlPreflight } from '@/lib/audit-engine/crawl-preflight'
 import { probeAIDiscovery, formatAIDiscoveryForAnalysis } from '@/lib/audit-engine/ai-discovery-probe'
 import { validateStructuredData, formatValidationForAnalysis } from '@/lib/audit-engine/structured-data-validator'
 import { analyzeCategory, generateReport, verifyFindings, UX_CATEGORIES } from '@/lib/audit-engine/analyzer'
@@ -248,6 +249,48 @@ export const processAuditFn = inngest.createFunction(
     })
 
     // ──────────────────────────────────────────────────────────
+    // STEP 1.5: Pre-flight crawl check (fast — under 5 seconds)
+    // Detects blocked/unreachable domains BEFORE the full crawl starts.
+    // ──────────────────────────────────────────────────────────
+    await step.run('crawl-preflight', async () => {
+      await setStatus(auditId, 'crawling', 2)
+      await auditLog(auditId, 'preflight_started', 'info', `Pre-flight check on ${auditDetails.productUrl}`)
+
+      const preflight = await runCrawlPreflight(auditDetails.productUrl)
+
+      await auditLog(auditId, 'preflight_complete', 'info',
+        `Preflight: ${preflight.status} (${preflight.durationMs}ms)`,
+        { status: preflight.status, reason: preflight.reason, httpStatus: preflight.httpStatus })
+
+      if (preflight.status === 'crawl-blocked') {
+        throw new Error(
+          `BLOCKED: ${auditDetails.productUrl} has crawl restrictions enabled. ` +
+          `${preflight.reason || 'The site is blocking automated requests.'}. ` +
+          `This is common on sites using Cloudflare protection, aggressive bot detection, or robots.txt restrictions. ` +
+          `Your credit has been refunded automatically. ` +
+          `To audit this site, contact the site owner to whitelist the Fixpath crawler, or try a different URL.`
+        )
+      }
+
+      if (preflight.status === 'unreachable') {
+        throw new Error(
+          `UNREACHABLE: We couldn't reach ${auditDetails.productUrl}. ` +
+          `${preflight.reason || 'The site may be offline or the URL may be incorrect.'}. ` +
+          `Please check the URL and try again. Your credit has been refunded automatically.`
+        )
+      }
+
+      if (preflight.status === 'http-error') {
+        throw new Error(
+          `HTTP_ERROR: ${auditDetails.productUrl} returned an error response. ` +
+          `${preflight.reason || `HTTP ${preflight.httpStatus}`}. ` +
+          `The site may be down or the URL may be incorrect. Your credit has been refunded automatically.`
+        )
+      }
+
+      // status === 'accessible' or 'partial' — proceed with full crawl
+    })
+
     // STEP 2: Crawl pages
     // ──────────────────────────────────────────────────────────
     const crawlResult = await step.run('crawl-pages', async () => {
