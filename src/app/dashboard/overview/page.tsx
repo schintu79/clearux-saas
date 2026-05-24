@@ -80,6 +80,7 @@ import BrandIntelligenceCard from '@/components/dashboard/v2/BrandIntelligenceCa
 import type { BrandIntelligenceSummary } from '@/lib/audit-engine/brand-intelligence';
 import type { Audit, Report, AuditFinding, SpeedDataSummary } from '@/types/database';
 import SiteFavicon from '@/components/ui/SiteFavicon';
+import OverviewTabs from '@/components/dashboard/OverviewTabs';
 
 /* ── Pillar / module config (mirrors audit detail page) ─── */
 const PILLAR_NAMES = ['Foundation', 'Human Experience', 'Inclusive Design', 'Future Readiness', 'SEO Structure & Rules', 'Brand Consistency'];
@@ -473,6 +474,7 @@ function OverviewInner() {
   if (authLoading || bundleLoading || !ready) {
     return (
       <div className="w-full">
+        <OverviewTabs />
         <div className="h-8 w-64 rounded-lg animate-pulse mb-2" style={{ background: 'var(--paper-2)' }} />
         <div className="h-4 w-40 rounded-md animate-pulse mb-6" style={{ background: 'var(--paper-2)' }} />
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 mb-4">
@@ -530,6 +532,7 @@ function OverviewInner() {
   if (!bundle?.audit || !bundle.report) {
     return (
       <div className="w-full max-w-3xl mx-auto">
+        <OverviewTabs />
         {creditsBanner && <CreditsBanner onClose={() => setCreditsBanner(false)} />}
         <div className="mb-6">
           <h1 className="text-[22px] font-sans font-semibold tracking-[-0.01em]" style={{ color: 'var(--ink)' }}>
@@ -629,6 +632,7 @@ function OverviewInner() {
 
   return (
     <div className="w-full">
+      <OverviewTabs />
       {creditsBanner && <CreditsBanner onClose={() => setCreditsBanner(false)} />}
 
       {/* ── Identity header ─────────────────────────────── */}
@@ -2071,6 +2075,7 @@ function InProgressOverview({
 
   return (
     <div className="w-full">
+      <OverviewTabs />
       {/* Identity header — mirrors populated overview header but
           without the action buttons that depend on a completed
           audit (Report, Share, Re-audit, More). */}
@@ -2258,6 +2263,7 @@ function FailedAuditOverview({
 
   return (
     <div className="w-full max-w-3xl mx-auto">
+      <OverviewTabs />
       <div className="flex items-start justify-between gap-4 mb-6">
         <div className="min-w-0">
           <div className="flex items-center gap-3 mb-1.5">

@@ -6,6 +6,21 @@ Last updated: 2026-05-24
 
 ---
 
+## Website / Brand DNA tab navigation and brand audit CTA
+
+### Problem
+The overview and brand DNA pages lacked a shared tab bar to switch between them. The "Run brand audit" CTA was buried at the bottom of the brand DNA page, making it easy to miss.
+
+### What changed
+1. **OverviewTabs component**: Wired the shared `OverviewTabs` tab bar into all states (loading, in-progress, failed, empty, populated) on both the overview page and brand DNA page.
+2. **Top-of-page brand audit CTA**: Added a prominent "Run a brand DNA audit" banner at the top of the brand DNA page (below header, above DNA card). Shows an enabled button when brand files exist, disabled with guidance when no files uploaded. This is in addition to the existing CTA in the audit section below.
+
+### Files touched
+- `src/app/dashboard/overview/page.tsx` — Added `<OverviewTabs />` to loading skeleton, in-progress, failed, empty, and populated states
+- `src/app/dashboard/brand-dna/page.tsx` — Added `OverviewTabs` import and placement in skeleton, empty, and full states; added top-of-page "Run brand audit" CTA banner
+
+---
+
 ## Sidebar menu restructuring — Dashboard first, Website/Brand DNA split
 
 ### Problem

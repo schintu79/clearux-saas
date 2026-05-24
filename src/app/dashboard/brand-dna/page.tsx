@@ -53,6 +53,7 @@ import { useBrandSelection } from '@/lib/dashboard/useBrandSelection';
 import { BRAND_AUDIT_CATEGORIES } from '@/lib/brand-audit-modules';
 import ScoreRing from '@/components/ui/ScoreRing';
 import OverviewBreadcrumb from '@/components/dashboard/OverviewBreadcrumb';
+import OverviewTabs from '@/components/dashboard/OverviewTabs';
 import clsx from 'clsx';
 
 /* ── Types ──────────────────────────────────────────────── */
@@ -507,6 +508,7 @@ export default function BrandDnaPage() {
   if (authLoading || loading || !ready) {
     return (
       <div>
+        <OverviewTabs />
         <OverviewBreadcrumb current="Brand DNA" />
         <div className="h-7 w-32 rounded-lg animate-pulse mb-2" style={{ background: 'var(--paper-2)' }} />
         <div className="h-4 w-72 rounded-md animate-pulse mb-6" style={{ background: 'var(--paper-2)' }} />
@@ -521,6 +523,7 @@ export default function BrandDnaPage() {
   if (!selection) {
     return (
       <div>
+        <OverviewTabs />
         <Header label={null} />
         <EmptyState
           title="Pick a brand to see its DNA"
@@ -535,6 +538,7 @@ export default function BrandDnaPage() {
   if (!identity) {
     return (
       <div>
+        <OverviewTabs />
         <Header label={selectedLabel} />
         <EmptyState
           title={selection.kind === 'brand' ? 'No Brand DNA on file yet' : `No Brand DNA for ${siteLabel || 'this site'}`}
@@ -558,7 +562,52 @@ export default function BrandDnaPage() {
 
   return (
     <div>
+      <OverviewTabs />
       <Header label={selectedLabel} />
+
+      {/* ── Run brand DNA audit CTA ──────────────────────── */}
+      {!audit && !auditLoading && hasFiles && (
+        <div
+          className="rounded-xl p-4 mb-4 flex items-center justify-between gap-4"
+          style={{ background: 'color-mix(in srgb, var(--signal) 6%, transparent)', border: '1px solid color-mix(in srgb, var(--signal) 14%, transparent)' }}
+        >
+          <div className="min-w-0">
+            <p className="text-[13px] font-semibold" style={{ color: 'var(--ink)' }}>Run a brand DNA audit</p>
+            <p className="text-[12px] mt-0.5" style={{ color: 'var(--m-muted)' }}>
+              Analyze your brand files across 6 categories and score consistency, voice, and professionalism.
+            </p>
+          </div>
+          <button
+            onClick={triggerAudit}
+            disabled={triggeringAudit}
+            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg text-[13px] font-semibold transition-all hover:opacity-90 flex-shrink-0"
+            style={{ background: 'var(--ink)', color: 'var(--paper)', opacity: triggeringAudit ? 0.6 : 1 }}
+          >
+            {triggeringAudit ? <><Loader2 size={13} className="animate-spin" /> Starting...</> : <><Play size={13} /> Run brand audit</>}
+          </button>
+        </div>
+      )}
+
+      {!audit && !auditLoading && !hasFiles && (
+        <div
+          className="rounded-xl p-4 mb-4 flex items-center justify-between gap-4"
+          style={{ background: 'color-mix(in srgb, var(--signal) 6%, transparent)', border: '1px solid color-mix(in srgb, var(--signal) 14%, transparent)' }}
+        >
+          <div className="min-w-0">
+            <p className="text-[13px] font-semibold" style={{ color: 'var(--ink)' }}>Run a brand DNA audit</p>
+            <p className="text-[12px] mt-0.5" style={{ color: 'var(--m-muted)' }}>
+              Upload brand guidelines or assets first, then run an audit to score your brand identity.
+            </p>
+          </div>
+          <button
+            disabled
+            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg text-[13px] font-semibold flex-shrink-0"
+            style={{ background: 'var(--paper-2)', color: 'var(--m-muted)', cursor: 'not-allowed' }}
+          >
+            <Play size={13} /> Run brand audit
+          </button>
+        </div>
+      )}
 
       {error && (
         <div className="rounded-xl p-3 mb-4 flex items-center gap-2" style={{ background: 'color-mix(in srgb, var(--severe) 6%, transparent)', border: '1px solid color-mix(in srgb, var(--severe) 14%, transparent)' }}>
