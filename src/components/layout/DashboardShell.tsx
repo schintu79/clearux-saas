@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useMemo, useRef } from 'react';
+import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import {
@@ -155,60 +155,81 @@ const DashboardShell: React.FC<DashboardShellProps> = ({ children }) => {
   // Load sites/brands. We only need a small, stable list for the selector;
   // selecting a site does not refetch global data, it just rewires the
   // feature-nav deep links to the latest audit for that domain.
-  useEffect(() => {
+  const fetchIdRef = useRef(0);
+  const loadSites = useCallback(async () => {
     if (!user) return;
-    let cancelled = false;
-    (async () => {
-      const supabase = createBrowserSupabase();
-      const [{ data: audits }, brandsRes] = await Promise.all([
-        supabase
-          .from('audits')
-          .select('id, product_url, completed_at, created_at, status, brand_identity_id')
-          .eq('user_id', user.id)
-          .order('completed_at', { ascending: false, nullsFirst: false } as any)
-          .limit(50),
-        fetch('/api/brand-identities').then(r => r.ok ? r.json() : { identities: [] }).catch(() => ({ identities: [] })),
-      ]);
-      if (cancelled) return;
+    const id = ++fetchIdRef.current;
+    const supabase = createBrowserSupabase();
+    const [{ data: audits }, brandsRes] = await Promise.all([
+      supabase
+        .from('audits')
+        .select('id, product_url, completed_at, created_at, status, brand_identity_id')
+        .eq('user_id', user.id)
+        .order('completed_at', { ascending: false, nullsFirst: false } as any)
+        .limit(50),
+      fetch('/api/brand-identities').then(r => r.ok ? r.json() : { identities: [] }).catch(() => ({ identities: [] })),
+    ]);
+    if (id !== fetchIdRef.current) return;
 
-      // Track which brand_identity_ids have audits
-      const brandIdsWithAudits = new Set<string>();
-      for (const a of (audits || []) as any[]) {
-        if (a.brand_identity_id) brandIdsWithAudits.add(a.brand_identity_id);
+    // Track which brand_identity_ids have audits
+    const brandIdsWithAudits = new Set<string>();
+    for (const a of (audits || []) as any[]) {
+      if (a.brand_identity_id) brandIdsWithAudits.add(a.brand_identity_id);
+    }
+
+    const byDomain = new Map<string, SiteEntry>();
+    for (const a of (audits || []) as any[]) {
+      if (!a.product_url) continue;
+      let host = a.product_url as string;
+      try { host = new URL(a.product_url).hostname.replace(/^www\./, ''); } catch {}
+      if (!byDomain.has(host)) {
+        byDomain.set(host, {
+          kind: 'site',
+          id: `site:${host}`,
+          label: host,
+          sub: 'Website',
+          auditId: a.id || null,
+        });
       }
+    }
+    const siteEntries = Array.from(byDomain.values());
 
-      const byDomain = new Map<string, SiteEntry>();
-      for (const a of (audits || []) as any[]) {
-        if (!a.product_url) continue;
-        let host = a.product_url as string;
-        try { host = new URL(a.product_url).hostname.replace(/^www\./, ''); } catch {}
-        if (!byDomain.has(host)) {
-          byDomain.set(host, {
-            kind: 'site',
-            id: `site:${host}`,
-            label: host,
-            sub: 'Website',
-            auditId: a.id || null,
-          });
-        }
-      }
-      const siteEntries = Array.from(byDomain.values());
+    const brandEntries: SiteEntry[] = ((brandsRes?.identities || []) as any[]).map((b: any) => ({
+      kind: 'brand',
+      id: `brand:${b.id}`,
+      label: b.name || 'Untitled brand',
+      sub: 'Brand identity',
+      hasBrandAudits: brandIdsWithAudits.has(b.id),
+    }));
 
-      const brandEntries: SiteEntry[] = ((brandsRes?.identities || []) as any[]).map((b: any) => ({
-        kind: 'brand',
-        id: `brand:${b.id}`,
-        label: b.name || 'Untitled brand',
-        sub: 'Brand identity',
-        hasBrandAudits: brandIdsWithAudits.has(b.id),
-      }));
-
-      const all = [...siteEntries, ...brandEntries];
-      setSites(all);
-      // Default selection: prefer current route context, else most-recent site.
-      setSelectedSiteId((prev) => prev || all[0]?.id || null);
-    })();
-    return () => { cancelled = true; };
+    const all = [...siteEntries, ...brandEntries];
+    setSites(all);
+    // Default selection: prefer current route context, else most-recent site.
+    setSelectedSiteId((prev) => prev || all[0]?.id || null);
   }, [user]);
+
+  useEffect(() => { loadSites(); }, [loadSites]);
+
+  // When the selected brand/site changes and isn't in the sites list yet
+  // (e.g. new audit for a domain that hasn't completed), add a temporary
+  // entry so the selector shows the new domain immediately, then refresh
+  // the full list in the background.
+  useEffect(() => {
+    if (!selectedSiteId || !sites.length) return;
+    const exists = sites.some(s => s.id === selectedSiteId);
+    if (!exists) {
+      // Parse the id to create a temporary entry
+      if (selectedSiteId.startsWith('site:')) {
+        const host = selectedSiteId.slice(5);
+        setSites(prev => [...prev, { kind: 'site', id: selectedSiteId, label: host, sub: 'Website', auditId: null }]);
+      } else if (selectedSiteId.startsWith('brand:')) {
+        const brandId = selectedSiteId.slice(6);
+        setSites(prev => [...prev, { kind: 'brand', id: selectedSiteId, label: brandId, sub: 'Brand identity' }]);
+      }
+      // Refresh the full list so the entry gets proper metadata
+      loadSites();
+    }
+  }, [selectedSiteId, sites, loadSites]);
 
   // Sync the selected site/brand with the current route so the selector
   // reflects what the user is looking at. Specifically: when the user is on
@@ -516,9 +537,6 @@ const DashboardShell: React.FC<DashboardShellProps> = ({ children }) => {
                           onClick={() => {
                             selectSiteInternal(s.id);
                             setBrandMenuOpen(false);
-                            if (pathname !== '/dashboard/overview') {
-                              router.push('/dashboard/overview');
-                            }
                           }}
                           className="w-full flex items-center gap-2 px-3 py-2 text-left transition-colors hover:bg-black/[0.04]"
                         >

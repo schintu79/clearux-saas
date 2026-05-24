@@ -6,6 +6,19 @@ Last updated: 2026-05-24
 
 ---
 
+## Fix brand/website selector working only from overview page
+
+### Brand selector navigation fix
+- **Removed forced redirect**: The sidebar brand/website selector was forcing `router.push('/dashboard/overview')` on every selection change, even when the user was on Find, Fix, Track, or other pages. Removed this redirect so the selector updates the selection in place and the current page re-renders with the new brand's data via AuditBundleContext.
+
+### New domain appearing in selector after audit creation
+- **Dynamic sites list refresh**: Refactored the sites loader in DashboardShell into a reusable `loadSites` callback. When a selection points to a domain not yet in the sites list (e.g. a brand-new audit for a new domain), a temporary entry is added immediately so the selector shows it, and the full list is refreshed in the background.
+
+### Files changed
+- `src/components/layout/DashboardShell.tsx` — removed forced navigation, refactored sites loader, added dynamic refresh on new domain selection
+
+---
+
 ## Fix 2 Completion — Proposed Value, Affected Selector, and Evidence Enrichment
 
 ### Data model
