@@ -6,6 +6,23 @@ Last updated: 2026-05-24
 
 ---
 
+## Auto-create brand when auditing a new website
+
+### Problem
+When a user entered a new domain (e.g. clearux.ai) via "Add site or brand" and ran a website audit, no `brand_identity` record was created. The domain appeared as a transient "site" entry in the sidebar (derived from the audit's `product_url` hostname). The user had no persistent brand tab and switching away lost context.
+
+### Fix — new-audit page (`src/app/dashboard/new-audit/page.tsx`)
+- Added `ensureBrandForWebsite(productUrl)` — looks up existing brand_identities by hostname match; if none exists, creates one via `POST /api/brand-identities` with the hostname as the brand name.
+- Website audit submit path now calls `ensureBrandForWebsite` and sets `brand_identity_id` on the audit insert, so the audit is linked to the brand from the start.
+- Post-audit redirect uses brand-based URL param (`?brand=<id>`) so the user lands in the brand context.
+- Added `resolvedBrandIdRef` and updated `persistAuditSelection` to prefer brand-based selection over site-based.
+
+### Fix — sidebar deduplication (`src/components/layout/DashboardShell.tsx`)
+- `loadSites` now builds a set of brand hostnames from brand_identity `website_url` fields. Site entries whose hostname matches a brand are suppressed, preventing duplicate entries.
+- Stale `site:host` selections in localStorage are auto-migrated to the matching `brand:id` entry, so existing users see the brand tab immediately after the migration.
+
+---
+
 ## Fix Console bug fixes -- action gating, affected URL, and already-fixed handling
 
 ### Non-fixable findings showing "Fix it yourself" button

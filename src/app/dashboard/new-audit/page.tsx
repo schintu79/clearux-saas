@@ -296,15 +296,62 @@ const NewAuditInner: React.FC = () => {
 
   // Persist the brand/site the user just audited so Overview opens
   // scoped to it after redirect (post-credit or post-Stripe).
+  // Tracks the resolved brandId so website audits also persist as brands.
+  const resolvedBrandIdRef = useRef<string | null>(null);
   const persistAuditSelection = () => {
-    if (auditType === 'brand_identity' && selectedBrandId) {
-      writeSelection({ kind: 'brand', brandId: selectedBrandId });
-    } else if (auditType === 'website') {
+    // Always prefer brand-based selection so the sidebar shows a proper brand tab
+    const brandId = resolvedBrandIdRef.current || selectedBrandId;
+    if (brandId) {
+      writeSelection({ kind: 'brand', brandId });
+      return;
+    }
+    // Fallback for website audits without a brand (shouldn't happen after auto-create)
+    if (auditType === 'website') {
       try {
         const productUrl = url.startsWith('http') ? url : `https://${url}`;
         const host = new URL(productUrl).hostname.replace(/^www\./, '');
         if (host) writeSelection({ kind: 'site', host });
       } catch {}
+    }
+  };
+
+  /**
+   * Find or create a brand_identity for a website domain.
+   * Every website audit needs a brand so the sidebar has a proper brand tab.
+   */
+  const ensureBrandForWebsite = async (productUrl: string): Promise<string | null> => {
+    try {
+      const host = new URL(productUrl).hostname.replace(/^www\./, '');
+      // Check if a brand already exists for this domain (by website_url match)
+      const existingBrands = brandIdentities;
+      // Also fetch fresh list in case it wasn't loaded yet
+      const brandsRes = await fetch('/api/brand-identities').then(r => r.ok ? r.json() : { identities: [] }).catch(() => ({ identities: [] }));
+      const allBrands = (brandsRes?.identities || []) as any[];
+      // Match by website_url containing the same hostname
+      const existing = allBrands.find((b: any) => {
+        if (!b.website_url) return false;
+        try {
+          const bHost = new URL(b.website_url).hostname.replace(/^www\./, '');
+          return bHost === host;
+        } catch { return false; }
+      });
+      if (existing) return existing.id;
+
+      // No existing brand — create one automatically
+      const createRes = await fetch('/api/brand-identities', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: host, website_url: productUrl }),
+      });
+      if (!createRes.ok) {
+        console.warn('[new-audit] Failed to auto-create brand for', host);
+        return null;
+      }
+      const createData = await createRes.json();
+      return createData?.identity?.id || null;
+    } catch (err) {
+      console.warn('[new-audit] Error ensuring brand for website:', err);
+      return null;
     }
   };
 
@@ -409,7 +456,13 @@ const NewAuditInner: React.FC = () => {
         insertPayload.product_url = productUrl;
         insertPayload.depth_mode = depthMode;
         insertPayload.selected_modules = selectedModules;
-        if (selectedBrandId) insertPayload.brand_identity_id = selectedBrandId;
+        // Auto-create (or reuse) a brand for this domain so the sidebar
+        // always has a proper brand tab for the user to navigate to.
+        const autoBrandId = selectedBrandId || await ensureBrandForWebsite(productUrl);
+        if (autoBrandId) {
+          insertPayload.brand_identity_id = autoBrandId;
+          resolvedBrandIdRef.current = autoBrandId;
+        }
       } else if (auditType === 'brand_identity') {
         insertPayload.brand_identity_id = selectedBrandId;
         insertPayload.depth_mode = 'deep'; // Brand audits always run full analysis
@@ -455,9 +508,10 @@ const NewAuditInner: React.FC = () => {
         }
         persistAuditSelection();
         // Redirect with explicit selection param so overview resolves the
-        // correct brand/site even if localStorage hasn't propagated yet.
-        if (auditType === 'brand_identity' && selectedBrandId) {
-          router.push(`/dashboard/overview?brand=${encodeURIComponent(selectedBrandId)}`);
+        // correct brand even if localStorage hasn't propagated yet.
+        const redirectBrandId = resolvedBrandIdRef.current || selectedBrandId;
+        if (redirectBrandId) {
+          router.push(`/dashboard/overview?brand=${encodeURIComponent(redirectBrandId)}`);
         } else if (auditType === 'website') {
           try {
             const productUrl = url.startsWith('http') ? url : `https://${url}`;

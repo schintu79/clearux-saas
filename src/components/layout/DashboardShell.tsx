@@ -177,11 +177,25 @@ const DashboardShell: React.FC<DashboardShellProps> = ({ children }) => {
       if (a.brand_identity_id) brandIdsWithAudits.add(a.brand_identity_id);
     }
 
+    // Build a set of hostnames that already have a matching brand_identity
+    // so we can suppress standalone site entries for those domains.
+    const brandHostnames = new Set<string>();
+    for (const b of (brandsRes?.identities || []) as any[]) {
+      if (b.website_url) {
+        try {
+          const bHost = new URL(b.website_url).hostname.replace(/^www\./, '');
+          if (bHost) brandHostnames.add(bHost);
+        } catch {}
+      }
+    }
+
     const byDomain = new Map<string, SiteEntry>();
     for (const a of (audits || []) as any[]) {
       if (!a.product_url) continue;
       let host = a.product_url as string;
       try { host = new URL(a.product_url).hostname.replace(/^www\./, ''); } catch {}
+      // Skip site entry if a brand already covers this hostname
+      if (brandHostnames.has(host)) continue;
       if (!byDomain.has(host)) {
         byDomain.set(host, {
           kind: 'site',
@@ -202,10 +216,34 @@ const DashboardShell: React.FC<DashboardShellProps> = ({ children }) => {
       hasBrandAudits: brandIdsWithAudits.has(b.id),
     }));
 
+    // Build a lookup from hostname → brand entry id so we can auto-migrate
+    // stale site:host selections to their brand equivalent.
+    const hostToBrandEntryId = new Map<string, string>();
+    for (const b of (brandsRes?.identities || []) as any[]) {
+      if (b.website_url) {
+        try {
+          const bHost = new URL(b.website_url).hostname.replace(/^www\./, '');
+          if (bHost) hostToBrandEntryId.set(bHost, `brand:${b.id}`);
+        } catch {}
+      }
+    }
+
     const all = [...siteEntries, ...brandEntries];
     setSites(all);
     // Default selection: prefer current route context, else most-recent site.
-    setSelectedSiteId((prev) => prev || all[0]?.id || null);
+    // Also auto-migrate stale site:host → brand:id when a brand now covers that host.
+    setSelectedSiteId((prev) => {
+      if (prev?.startsWith('site:')) {
+        const host = prev.slice(5);
+        const brandEntryId = hostToBrandEntryId.get(host);
+        if (brandEntryId) {
+          // Persist the migration so localStorage is updated too
+          internalChangeRef.current = true;
+          return brandEntryId;
+        }
+      }
+      return prev || all[0]?.id || null;
+    });
   }, [user]);
 
   useEffect(() => { loadSites(); }, [loadSites]);
