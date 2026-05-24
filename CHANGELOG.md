@@ -6,6 +6,29 @@ Last updated: 2026-05-24
 
 ---
 
+## Cross-page navigation audit — verified clean
+
+### Problem
+The brief required auditing all internal navigation links across the dashboard for broken routes, missing brand context, or incorrect `target="_blank"` handling.
+
+### What was checked
+1. All sidebar nav links resolve to existing page routes
+2. All `target="_blank"` links have `rel="noopener noreferrer"`
+3. Dynamic routes (`[id]`, `[domain]`, `[name]`) handle missing params gracefully (error state, not crash)
+4. Deprecated `/dashboard/deploy` properly redirects to `/dashboard/fix`
+5. Brand context persistence (via `brand-selection` store) stays consistent during navigation
+6. OverviewTabs component uses proper Next.js Link to `/dashboard/overview` and `/dashboard/brand-dna`
+7. Dashboard portfolio rows set brand selection before navigating
+8. Global `not-found.tsx` catches unknown routes
+
+### Result
+Zero broken or incorrect routes found. All navigation is clean.
+
+### Files touched
+- None (verification only)
+
+---
+
 ## Audit pipeline speed optimization — batch DB writes and parallel AI calls
 
 ### Problem
