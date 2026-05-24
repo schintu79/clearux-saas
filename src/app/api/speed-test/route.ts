@@ -47,12 +47,23 @@ export async function POST(req: NextRequest) {
   }
 
   try {
-    const speedData = await runFullSpeedTest(productUrl)
+    // Ensure the URL has a protocol
+    const testUrl = productUrl.startsWith('http') ? productUrl : `https://${productUrl}`
+    console.log(`[speed-test] Running for: ${testUrl}`)
+
+    const speedData = await runFullSpeedTest(testUrl)
 
     // If both strategies failed, return an error instead of empty data
     if (!speedData.mobile && !speedData.desktop) {
+      const hasKey = !!(process.env.GOOGLE_PAGESPEED_API_KEY || process.env.GOOGLE_API_KEY)
       return NextResponse.json(
-        { error: 'Could not reach Google PageSpeed API. The API key may be missing or the site may be unreachable. Please try again later.' },
+        {
+          error: hasKey
+            ? `Google PageSpeed could not analyze "${testUrl}". The site may be unreachable from Google's servers, or the URL may be invalid. Make sure it's a publicly accessible URL.`
+            : `Google PageSpeed API key is not configured. Add GOOGLE_PAGESPEED_API_KEY to your .env.local file. Without a key, requests are heavily rate-limited and may fail.`,
+          url_tested: testUrl,
+          has_api_key: hasKey,
+        },
         { status: 502 },
       )
     }

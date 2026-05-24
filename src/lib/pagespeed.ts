@@ -206,17 +206,24 @@ export async function runPageSpeedTest(
   if (apiKey) params.set('key', apiKey)
 
   try {
-    const res = await fetch(`${PSI_ENDPOINT}?${params.toString()}`, {
-      signal: AbortSignal.timeout(30000), // 30s timeout
+    const fullUrl = `${PSI_ENDPOINT}?${params.toString()}`
+    console.log(`[pagespeed] Fetching ${strategy} for ${url}...`)
+    const res = await fetch(fullUrl, {
+      signal: AbortSignal.timeout(60000), // 60s timeout — PSI can be slow
     })
     if (!res.ok) {
-      console.warn(`[pagespeed] API returned ${res.status} for ${url} (${strategy})`)
+      const body = await res.text().catch(() => '')
+      console.warn(`[pagespeed] API returned ${res.status} for ${url} (${strategy}): ${body.slice(0, 300)}`)
       return null
     }
     const data = await res.json()
+    if (!data?.lighthouseResult) {
+      console.warn(`[pagespeed] No lighthouseResult in response for ${url} (${strategy}). Keys:`, Object.keys(data || {}))
+      return null
+    }
     return parseResponse(data, strategy)
-  } catch (err) {
-    console.warn(`[pagespeed] Error fetching ${strategy} for ${url}:`, err)
+  } catch (err: any) {
+    console.warn(`[pagespeed] Error fetching ${strategy} for ${url}:`, err?.message || err)
     return null
   }
 }
@@ -226,9 +233,11 @@ export async function runPageSpeedTest(
  * Returns a SpeedData object suitable for storing on the audit record.
  */
 export async function runFullSpeedTest(url: string): Promise<SpeedData> {
+  // Ensure URL has protocol — PageSpeed API requires a full URL
+  const normalizedUrl = url.startsWith('http') ? url : `https://${url}`
   const [mobile, desktop] = await Promise.all([
-    runPageSpeedTest(url, 'mobile'),
-    runPageSpeedTest(url, 'desktop'),
+    runPageSpeedTest(normalizedUrl, 'mobile'),
+    runPageSpeedTest(normalizedUrl, 'desktop'),
   ])
 
   return {
