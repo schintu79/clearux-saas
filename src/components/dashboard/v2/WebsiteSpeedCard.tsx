@@ -41,6 +41,7 @@ export default function WebsiteSpeedCard({
 }: WebsiteSpeedCardProps) {
   const [strategy, setStrategy] = useState<'mobile' | 'desktop'>('mobile')
   const [loading, setLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
 
   const result: SpeedStrategyResult | null = speedData
     ? (strategy === 'mobile' ? speedData.mobile : speedData.desktop)
@@ -49,6 +50,7 @@ export default function WebsiteSpeedCard({
   const handleRunTest = async () => {
     if (!auditId || loading) return
     setLoading(true)
+    setError(null)
     try {
       const res = await fetch('/api/speed-test', {
         method: 'POST',
@@ -58,9 +60,12 @@ export default function WebsiteSpeedCard({
       if (res.ok) {
         const data = await res.json()
         onTestComplete?.(data.speed_data)
+      } else {
+        const data = await res.json().catch(() => ({}))
+        setError(data.error || 'Speed test failed. Please try again.')
       }
     } catch {
-      // Silently fail — user can retry
+      setError('Network error. Please check your connection and try again.')
     } finally {
       setLoading(false)
     }
@@ -108,6 +113,11 @@ export default function WebsiteSpeedCard({
           <p className="text-[11px] text-center" style={{ color: 'var(--m-muted)' }}>
             No speed data yet
           </p>
+          {error && (
+            <p className="text-[11px] text-center px-2" style={{ color: 'var(--severe)' }}>
+              {error}
+            </p>
+          )}
           {auditId && (
             <button
               onClick={handleRunTest}

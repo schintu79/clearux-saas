@@ -6,6 +6,27 @@ Last updated: 2026-05-24
 
 ---
 
+## Website speed check — fixed silent failure
+
+### Problem
+The website speed check feature appeared non-functional because errors were being silently swallowed. When the PageSpeed API returned an error or the network request failed, the UI showed nothing — no error message, no feedback. Users had no way to know why the speed test wasn't working.
+
+### Root cause
+In `WebsiteSpeedCard.tsx`, the `handleRunTest` function had two issues:
+1. The `catch {}` block swallowed all network errors without any user feedback
+2. Non-OK HTTP responses (`!res.ok`) were not handled at all — the code only processed the success path
+
+### What was fixed
+1. Added `error` state to the component
+2. Non-OK API responses now parse the error message and display it to the user
+3. Network errors (fetch failures) now show a connection error message
+4. Error messages render in red (`var(--severe)`) below the "No speed data yet" text in the empty state
+
+### Files touched
+- `src/components/dashboard/v2/WebsiteSpeedCard.tsx` — added error handling and display
+
+---
+
 ## Uncommitted work audit — resolved
 
 ### Problem
