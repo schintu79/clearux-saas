@@ -43,8 +43,12 @@ export default function WebsiteSpeedCard({
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  const result: SpeedStrategyResult | null = speedData
-    ? (strategy === 'mobile' ? speedData.mobile : speedData.desktop)
+  // Determine if we actually have usable speed data
+  // (speedData may be truthy but both strategies null if API failed)
+  const hasUsableData = speedData != null && (speedData.mobile != null || speedData.desktop != null)
+
+  const result: SpeedStrategyResult | null = hasUsableData
+    ? (strategy === 'mobile' ? speedData!.mobile : speedData!.desktop)
     : null
 
   const handleRunTest = async () => {
@@ -92,9 +96,9 @@ export default function WebsiteSpeedCard({
             <h3 className="text-[15px] font-semibold leading-tight tracking-[-0.005em]" style={{ color: 'var(--ink)' }}>
               Website speed
             </h3>
-            {speedData?.testedAt && (
+            {(speedData?.testedAt || (result as any)?.testedAt) && (
               <p className="text-[10px] mt-0.5" style={{ color: 'var(--m-muted)' }}>
-                Last tested {new Date(speedData.testedAt).toLocaleDateString()}
+                Last tested {new Date(speedData?.testedAt || (result as any)?.testedAt).toLocaleDateString()}
               </p>
             )}
           </div>
@@ -102,7 +106,7 @@ export default function WebsiteSpeedCard({
       </div>
 
       {/* No data state */}
-      {!speedData ? (
+      {!hasUsableData ? (
         <div className="flex-1 flex flex-col items-center justify-center py-4 gap-3">
           <span
             className="w-10 h-10 rounded-xl flex items-center justify-center"
@@ -134,7 +138,7 @@ export default function WebsiteSpeedCard({
             </button>
           )}
         </div>
-      ) : (
+      ) : speedData && (
         <>
           {/* Score + strategy toggle */}
           <div className="flex items-center gap-3 mb-3">

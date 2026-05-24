@@ -6,6 +6,31 @@ Last updated: 2026-05-24
 
 ---
 
+## WebsiteSpeedCard showing empty data on dashboard
+
+### Problem
+The Website Speed card on the dashboard overview showed the mobile/desktop toggle and "View speed issues" link but no score or metrics — the card appeared empty despite speed data existing in the database.
+
+### Root cause
+Two issues:
+1. **Pipeline stored incomplete shape** — `process-audit.ts` only stored `{ score, metrics }` for each strategy, missing `strategy`, `issueCount`, `finalUrl`, and `testedAt` fields that the `SpeedDataSummary` type expects. The on-demand `/api/speed-test` route stored the full shape correctly, but audits processed through the pipeline had a truncated structure.
+2. **Component didn't handle partial data** — When `speed_data` was stored as `{ mobile: null, desktop: null }` (API failed during pipeline but record was written), the component entered the "has data" branch (since the object is truthy) but rendered nothing because `result` was null. It should have fallen back to the "no data" state with the "Run speed test" button.
+
+### What was fixed
+1. **`src/lib/inngest/functions/process-audit.ts`** — Updated the `speedSummary` object to store the full `SpeedStrategyResult` shape including `strategy`, `issueCount`, `finalUrl`, and `testedAt` per strategy, plus `testedAt` at root level. Now matches the on-demand API route.
+2. **`src/components/dashboard/v2/WebsiteSpeedCard.tsx`** — Added `hasUsableData` guard that checks whether at least one strategy (mobile or desktop) has actual data. If `speedData` is truthy but both strategies are null, the card now shows the "no data" state with the "Run speed test" button instead of an empty shell. Also added fallback for `testedAt` display.
+
+### Result
+- Speed card correctly shows the "Run speed test" CTA when no real data exists
+- Future audits store complete speed data that renders score + metrics immediately
+- Existing audits with partial data gracefully fall back to the run-test prompt
+
+### Files changed
+- `src/lib/inngest/functions/process-audit.ts`
+- `src/components/dashboard/v2/WebsiteSpeedCard.tsx`
+
+---
+
 ## Crawl-blocked domain handling — pre-flight check
 
 ### Problem
