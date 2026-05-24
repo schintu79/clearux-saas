@@ -115,6 +115,9 @@ export interface Audit {
   performance_summary: PerformanceSummary | null
   // Role-based summaries (Fix 5)
   role_summaries: RoleSummaries | null
+  // Website Speed (PageSpeed Insights)
+  speed_data:       SpeedDataSummary | null
+  speed_tested_at:  string | null
 }
 
 /** Structured crawl summary stored as jsonb on audits table */
@@ -200,6 +203,37 @@ export interface PerformanceSummary {
   overall_rating:         'good' | 'needs_improvement' | 'poor'
   /** Plain-language summary of top performance concerns */
   top_concerns:           string[]
+}
+
+/** PageSpeed Insights data stored as jsonb on audits.speed_data */
+export interface SpeedDataSummary {
+  mobile: SpeedStrategyResult | null
+  desktop: SpeedStrategyResult | null
+  testedAt: string
+}
+
+export interface SpeedStrategyResult {
+  /** Overall performance score 0-100 */
+  score: number
+  strategy: 'mobile' | 'desktop'
+  metrics: {
+    lcp: SpeedMetric
+    cls: SpeedMetric
+    inp: SpeedMetric
+    ttfb: SpeedMetric
+    speedIndex: SpeedMetric
+    tbt: SpeedMetric
+  }
+  /** Count of failing diagnostics */
+  issueCount: number
+  finalUrl: string
+  testedAt: string
+}
+
+export interface SpeedMetric {
+  value: number
+  displayValue: string
+  status: 'good' | 'needs_improvement' | 'poor'
 }
 
 export type OwnerTeam = 'engineering' | 'marketing' | 'product' | 'design'

@@ -75,7 +75,8 @@ import {
 import { useBrandSelection } from '@/lib/dashboard/useBrandSelection';
 import { writeSelection } from '@/lib/dashboard/brand-selection';
 import EmptyAudit from '@/components/dashboard/v2/EmptyAudit';
-import type { Audit, Report, AuditFinding } from '@/types/database';
+import WebsiteSpeedCard from '@/components/dashboard/v2/WebsiteSpeedCard';
+import type { Audit, Report, AuditFinding, SpeedDataSummary } from '@/types/database';
 import SiteFavicon from '@/components/ui/SiteFavicon';
 
 /* ── Pillar / module config (mirrors audit detail page) ─── */
@@ -912,11 +913,22 @@ function OverviewInner() {
         </div>
       )}
 
-      {/* ── Row 3: Issues · Benchmarks · AI Readability ─ */}
-      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 mb-4 auto-rows-fr">
+      {/* ── Row 3: Issues · Speed · Benchmarks · AI Readability ─ */}
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4 mb-4 auto-rows-fr">
         <IssuesByImportance
           severityCounts={severityCounts}
           onCardClick={handleStatCardClick}
+        />
+        <WebsiteSpeedCard
+          speedData={(latestCompleted as any)?.speed_data ?? null}
+          auditId={latestCompleted?.id ?? null}
+          onViewIssues={() => {
+            if (latestCompleted?.id) router.push(`/dashboard/audits/${latestCompleted.id}#technical_health`);
+          }}
+          onTestComplete={(newData) => {
+            // Force a re-render by refreshing the bundle
+            if (bundle?.audit) (bundle.audit as any).speed_data = newData;
+          }}
         />
         <BenchmarksSummaryCard
           overallScore={overallScore}

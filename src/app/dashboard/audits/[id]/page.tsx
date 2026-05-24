@@ -74,6 +74,7 @@ import type {
   RoleSummaries,
   StakeholderRole,
 } from '@/types/database';
+import SpeedDetailPanel from '@/components/dashboard/v2/SpeedDetailPanel';
 import { ROLE_LABELS, ROLE_DESCRIPTIONS } from '@/lib/pipeline/role-mapper';
 import { HANDOFF_FORMAT_LABELS, ROLE_RECOMMENDED_FORMATS, type HandoffFormat } from '@/lib/pipeline/handoff-formatter';
 import { getUILabels, getReportLabels, getCategoryNames, getPillarNames, getScoreLabel, getSeverityLabel, getLocale, type UILabels } from '@/lib/languages';
@@ -3767,6 +3768,14 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
 
             return (
               <div className="space-y-5">
+                {/* PageSpeed Insights section */}
+                <SpeedDetailPanel
+                  speedData={(audit as any)?.speed_data ?? null}
+                  auditId={audit.id}
+                  productUrl={(audit as any)?.product_url}
+                  findings={findings as any}
+                />
+
                 {/* Summary header */}
                 <div className="rounded-xl border border-rule bg-card p-5">
                   <div className="flex items-start gap-3 mb-3">

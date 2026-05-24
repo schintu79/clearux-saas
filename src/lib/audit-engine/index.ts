@@ -14,7 +14,8 @@ import { runTechnicalChecks, formatTechnicalAuditForPrompt, type TechnicalCheckR
 import { runCodeQualityChecks, type CodeQualityResult } from '@/lib/pipeline/code-quality-checker'
 import { extractPerformanceData, aggregatePerformanceSummary, formatPerformanceForPrompt, generatePerformanceFindings } from '@/lib/pipeline/performance-checker'
 import { enrichFindingsWithRoles, generateRoleSummaries } from '@/lib/pipeline/role-mapper'
-import type { AuditFinding, PagePerformanceData } from '@/types/database'
+import { runFullSpeedTest, generateSpeedFindings } from '@/lib/pagespeed'
+import type { AuditFinding, PagePerformanceData, SpeedDataSummary } from '@/types/database'
 
 type Supabase = ReturnType<typeof createServiceSupabase>
 
@@ -319,6 +320,71 @@ async function _processAuditInner(auditId: string): Promise<void> {
         }
       } catch (perfErr) {
         console.error('[audit-engine] Performance findings error (non-fatal):', perfErr)
+      }
+    }
+
+    // 2d. PAGESPEED TEST — real Core Web Vitals via Google PageSpeed Insights
+    if (productUrl) {
+      try {
+        const speedData = await runFullSpeedTest(productUrl)
+        // Convert to DB-storable summary (strip raw diagnostics to reduce JSON size)
+        const speedSummary: SpeedDataSummary = {
+          mobile: speedData.mobile ? {
+            score: speedData.mobile.score,
+            strategy: 'mobile',
+            metrics: speedData.mobile.metrics,
+            issueCount: speedData.mobile.diagnostics.length,
+            finalUrl: speedData.mobile.finalUrl,
+            testedAt: speedData.mobile.testedAt,
+          } : null,
+          desktop: speedData.desktop ? {
+            score: speedData.desktop.score,
+            strategy: 'desktop',
+            metrics: speedData.desktop.metrics,
+            issueCount: speedData.desktop.diagnostics.length,
+            finalUrl: speedData.desktop.finalUrl,
+            testedAt: speedData.desktop.testedAt,
+          } : null,
+          testedAt: speedData.testedAt,
+        }
+        await db
+          .from('audits')
+          .update({ speed_data: speedSummary, speed_tested_at: speedData.testedAt } as any)
+          .eq('id', auditId)
+
+        // Generate speed-specific findings
+        const speedFindings = generateSpeedFindings(speedData)
+        let sortOrderSpeed = 100
+        for (const sf of speedFindings) {
+          await db.from('audit_findings').insert({
+            audit_id: auditId,
+            category_index: 12,
+            finding_type: sf.fixableFromConsole ? 'specific' : 'strategic',
+            fix_type: null,
+            severity: sf.severity,
+            title: sf.title,
+            description: sf.description,
+            evidence: null,
+            page_url: productUrl,
+            recommendation: sf.recommendation,
+            estimated_impact: null,
+            target_element: null,
+            screenshot_url: null,
+            sort_order: sortOrderSpeed++,
+            detection_source: 'pagespeed_api',
+            confidence_level: 'deterministic',
+            default_owner: sf.ownerTeam,
+            performance_metric_type: sf.metricType,
+            owner_team: sf.ownerTeam,
+          } as any)
+        }
+        if (speedFindings.length > 0) {
+          await log(db, auditId, 'speed_findings_generated', 'success',
+            `PageSpeed: score ${speedSummary.mobile?.score ?? '?'}(m) / ${speedSummary.desktop?.score ?? '?'}(d), ${speedFindings.length} finding(s)`)
+        }
+      } catch (speedErr) {
+        console.error('[audit-engine] PageSpeed test error (non-fatal):', speedErr)
+        await log(db, auditId, 'pagespeed_error', 'warning', 'PageSpeed API call failed — continuing without real CWV data')
       }
     }
 

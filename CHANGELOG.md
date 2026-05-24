@@ -6,6 +6,26 @@ Last updated: 2026-05-24
 
 ---
 
+## Website Speed Card — PageSpeed Insights integration
+
+### What was added
+Full PageSpeed Insights integration: the audit pipeline now runs Google PSI tests (mobile + desktop) during every audit, stores Core Web Vitals on the audit record, and generates actionable speed findings. Users can also trigger on-demand speed tests from the dashboard.
+
+### New files
+- `src/lib/pagespeed.ts` — PageSpeed API client (`runPageSpeedTest`, `runFullSpeedTest`, `generateSpeedFindings`). Classifies LCP/CLS/INP/TTFB/Speed Index/TBT against CWV thresholds, extracts Lighthouse diagnostics, maps to fixable vs advisory findings.
+- `src/app/api/speed-test/route.ts` — POST endpoint for on-demand PageSpeed tests. Validates auth/ownership, runs test, stores results on audit, generates findings.
+- `src/components/dashboard/v2/WebsiteSpeedCard.tsx` — Overview dashboard card showing score, mobile/desktop toggle, LCP/CLS/INP metrics, issue count, "Run speed test" empty state.
+- `src/components/dashboard/v2/SpeedDetailPanel.tsx` — Detailed speed view on Technical Health tab with side-by-side mobile/desktop scores, full 6-metric CWV table, threshold legend, categorized findings (fixable vs advisory), re-run button, and link to PageSpeed web tool.
+- `supabase/migrations/044_speed_data.sql` — Adds `speed_data` jsonb and `speed_tested_at` columns to audits table.
+
+### Modified files
+- `src/types/database.ts` — Added `SpeedDataSummary`, `SpeedStrategyResult`, `SpeedMetric` interfaces; extended Audit type.
+- `src/lib/audit-engine/index.ts` — Added PageSpeed test step (2d) after performance findings, stores summary and generates speed findings.
+- `src/app/dashboard/overview/page.tsx` — Added WebsiteSpeedCard to overview grid (row 3 expanded to 4 columns).
+- `src/app/dashboard/audits/[id]/page.tsx` — Imported SpeedDetailPanel, rendered at top of Technical Health tab.
+
+---
+
 ## Auto-create brand when auditing a new website
 
 ### Problem
