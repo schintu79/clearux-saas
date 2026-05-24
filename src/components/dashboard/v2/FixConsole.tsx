@@ -568,16 +568,18 @@ function EvidenceSection({
           )}
 
           {/* Affected URL */}
-          {finding.page_url && (
-            <div>
-              <span className="text-[10px] font-semibold uppercase tracking-[0.06em] block mb-1" style={{ color: 'var(--m-muted)' }}>
-                Affected URL
-              </span>
-              <span className="text-[11px] font-mono truncate block" style={{ color: 'var(--ink-2)' }}>
-                {(() => { try { return new URL(finding.page_url).pathname || '/'; } catch { return finding.page_url; } })()}
-              </span>
-            </div>
-          )}
+          <div>
+            <span className="text-[10px] font-semibold uppercase tracking-[0.06em] block mb-1" style={{ color: 'var(--m-muted)' }}>
+              Affected URL
+            </span>
+            <span className="text-[11px] font-mono truncate block" style={{ color: 'var(--ink-2)' }}>
+              {(() => {
+                const url = finding.page_url;
+                if (!url) return 'All pages';
+                try { return new URL(url).pathname || '/'; } catch { return url; }
+              })()}
+            </span>
+          </div>
         </div>
 
         {/* Evidence snippet / current value */}
@@ -1383,6 +1385,25 @@ function SelfServeConsole({
         return;
       }
       const result = data as SurgicalFixResult;
+
+      // If the file is already correct (warning + no changes), treat as
+      // a successful outcome — mark fixed and show success UI instead of
+      // an empty diff preview that looks like an error.
+      if (result.warning && result.changes.length === 0) {
+        const msg = result.warning || 'Already correct.';
+        setDeployResult({ ok: true, msg });
+        // Auto-mark the finding as fixed
+        try {
+          await fetch(`/api/findings/${finding.id}`, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ action_mode: 'fixed', fix_status: 'fixed' }),
+          });
+        } catch { /* non-blocking */ }
+        onStatusChange?.('fixed');
+        return;
+      }
+
       setSurgicalResult(result);
       // Replace the generic finding recommendation with the specific
       // surgical fix explanation so the user sees exactly what changed
@@ -2171,7 +2192,9 @@ function SelfServeConsole({
                 >
                   <Check size={12} style={{ color: 'var(--ok)' }} className="flex-shrink-0" />
                   <span style={{ color: 'var(--ink)' }}>
-                    Fix deployed successfully.
+                    {deployResult?.msg?.includes('already') || deployResult?.msg?.includes('No change needed')
+                      ? deployResult.msg
+                      : 'Fix deployed successfully.'}
                   </span>
                 </div>
                 <div className="flex items-center gap-2 flex-wrap">

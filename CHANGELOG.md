@@ -6,6 +6,29 @@ Last updated: 2026-05-24
 
 ---
 
+## Fix Console bug fixes -- action gating, affected URL, and already-fixed handling
+
+### Non-fixable findings showing "Fix it yourself" button
+- **Root cause**: `inferDeployableType` used broad text-pattern matching (e.g. any mention of "structured data" or "meta description") to classify findings as deployable. Advisory/strategic findings whose text happened to mention these keywords were incorrectly marked `selfFixable: true`.
+- **Fix**: Added a secondary concrete-fix-data gate in `resolveCapability`. After `inferDeployableType` matches, the recommendation must contain actual code (HTML tags, JSON-LD patterns, attribute assignments) or be flagged with `fix_type` by the pipeline. Findings with long advisory paragraphs but no code fall through to `FIXABLE_NON_DEPLOYABLE` (selfFixable: false), hiding the "Fix it yourself" button.
+
+### Affected URL often empty in evidence panel
+- **Root cause (UI)**: The "Affected URL" row in EvidenceSection was conditionally rendered only when `finding.page_url` was truthy. Findings with null page_url showed no row at all.
+- **Root cause (pipeline)**: Baseline re-audit finding copies used `pf.page_url` directly without fallback. Older findings with null page_url were perpetuated across re-audits.
+- **Fix (UI)**: Always render the Affected URL row. When page_url is null, display "All pages" as fallback.
+- **Fix (pipeline)**: Added `|| crawlResult.firstPageUrl` fallback on baseline re-audit finding copies.
+
+### Surgical fix returning "already exists" / "already correct" errors
+- **Root cause**: In single-page mode, `handleSurgicalFix` stored the API result as `surgicalResult` regardless of whether it contained actual changes. When the API returned a warning with 0 changes (file already correct), the DiffPreview showed an empty diff with a warning message, looking like an error.
+- **Fix**: Added early detection in `handleSurgicalFix` for results with `warning + changes.length === 0`. These are now treated as successful outcomes: the finding is auto-marked as fixed, the success banner shows the actual warning message (e.g. "This page already has the correct value"), and the empty diff preview is never shown.
+
+### Files changed
+- `src/lib/fix-action-model.ts` -- added concrete-fix-data gate in `resolveCapability` after `inferDeployableType` match
+- `src/components/dashboard/v2/FixConsole.tsx` -- always show Affected URL, handle already-fixed surgical results, show contextual success message
+- `src/lib/inngest/functions/process-audit.ts` -- added page_url fallback on baseline re-audit copies
+
+---
+
 ## Fix brand/website selector working only from overview page
 
 ### Brand selector navigation fix

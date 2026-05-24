@@ -304,7 +304,27 @@ export function resolveCapability(
   const deployableType = inferDeployableType(finding);
 
   if (deployableType && DEPLOYABLE_CAPABILITIES[deployableType]) {
-    return DEPLOYABLE_CAPABILITIES[deployableType];
+    // Secondary gate: the recommendation must contain concrete fix data
+    // (HTML tags, JSON, code snippets, etc.) — not just advisory text.
+    // Without this, broad text-pattern matches on words like "structured data"
+    // or "meta description" incorrectly mark advisory findings as self-fixable.
+    const rec = (finding.recommendation || '').trim();
+    const hasConcreteFixData =
+      // Has explicit fix_type set by pipeline (high-confidence signal)
+      !!finding.fix_type ||
+      // Contains HTML/XML tags
+      /<[a-z][^>]*>/i.test(rec) ||
+      // Contains JSON-LD or JSON object patterns
+      /\{[\s\S]*"@type"/i.test(rec) ||
+      // Contains code-like assignment or attribute patterns
+      /(?:content|property|name|rel|href|src|lang)\s*=\s*["']/i.test(rec) ||
+      // Recommendation is short and code-like (not a paragraph of advice)
+      (rec.length > 0 && rec.length <= 500 && !/\.\s+[A-Z]/.test(rec));
+
+    if (hasConcreteFixData) {
+      return DEPLOYABLE_CAPABILITIES[deployableType];
+    }
+    // Falls through to FIXABLE_NON_DEPLOYABLE below
   }
 
   // Check if it's a design-required finding

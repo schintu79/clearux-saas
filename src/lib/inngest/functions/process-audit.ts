@@ -1296,7 +1296,7 @@ RULES FOR RE-AUDIT:
             title: pf.title,
             description: pf.description,
             evidence: null,
-            page_url: pf.page_url,
+            page_url: pf.page_url || crawlResult.firstPageUrl,
             recommendation: pf.recommendation,
             estimated_impact: pf.estimated_impact || null,
             target_element: pf.target_element || null,
