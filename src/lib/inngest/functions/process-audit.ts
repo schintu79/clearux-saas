@@ -450,9 +450,9 @@ export const processAuditFn = inngest.createFunction(
 
           let sortOrder = ((existingFindings?.[0] as any)?.sort_order ?? -1) + 1
 
-          for (const finding of result.findings) {
+          const responsiveInserts = result.findings.map((finding) => {
             const cls = classifyFinding({ title: finding.title, description: finding.description, recommendation: finding.recommendation, severity: finding.severity, categoryIndex: finding.categoryIndex ?? null })
-            await db.from('audit_findings').insert({
+            return {
               audit_id: auditId,
               checklist_item_id: null,
               category_index: finding.categoryIndex ?? null,
@@ -471,16 +471,17 @@ export const processAuditFn = inngest.createFunction(
               confidence_level: 'deterministic',
               detection_source: 'responsive_checker',
               ...computeActionModelFields({ title: finding.title, description: finding.description, recommendation: finding.recommendation, fix_type: cls.fixType, finding_type: cls.findingType }),
-            } as any)
-          }
+            }
+          })
+          await db.from('audit_findings').insert(responsiveInserts as any)
         }
 
-        // Update audit_pages with mobile-friendly data
+        // Update audit_pages with mobile-friendly data (parallel)
         if (result.results.length > 0) {
           const db = getDb()
-          for (const r of result.results) {
+          await Promise.all(result.results.map((r) => {
             const issueCount = r.viewportIssues.filter(i => i.viewport === 'Mobile').length
-            await db
+            return db
               .from('audit_pages')
               .update({
                 is_mobile_friendly: issueCount === 0,
@@ -488,7 +489,7 @@ export const processAuditFn = inngest.createFunction(
               } as any)
               .eq('audit_id', auditId)
               .eq('url', r.url)
-          }
+          }))
         }
 
         await auditLog(auditId, 'responsive_check_completed', 'success',
@@ -592,12 +593,12 @@ export const processAuditFn = inngest.createFunction(
         const maxUrls = auditDetails.plan === 'free_preview' ? 1 : 3
         const { automatedResults, heuristicPrompts } = await checkWcagAutomated(crawlResult.crawledUrls, maxUrls)
 
-        // Run AI heuristic analysis for criteria Puppeteer can't check
+        // Run AI heuristic analysis for criteria Puppeteer can't check (parallel)
         const heuristicResults = new Map<string, WcagCheckResult[]>()
-        for (const [url, prompt] of heuristicPrompts) {
+        const Anthropic = (await import('@anthropic-ai/sdk')).default
+        const anthropic = new Anthropic()
+        await Promise.all(Array.from(heuristicPrompts.entries()).map(async ([url, prompt]) => {
           try {
-            const Anthropic = (await import('@anthropic-ai/sdk')).default
-            const anthropic = new Anthropic()
             const msg = await anthropic.messages.create({
               model: 'claude-sonnet-4-20250514',
               max_tokens: 2000,
@@ -608,7 +609,7 @@ export const processAuditFn = inngest.createFunction(
           } catch {
             // Heuristic analysis failed — automated results still valid
           }
-        }
+        }))
 
         const wcagResult = buildWcagResults(automatedResults, heuristicResults)
 
@@ -624,6 +625,7 @@ export const processAuditFn = inngest.createFunction(
 
           let sortOrder = ((existingFindings?.[0] as any)?.sort_order ?? -1) + 1
 
+          const wcagInserts: any[] = []
           for (const page of wcagResult.pages) {
             for (const finding of page.findings) {
               const cls = classifyFinding({
@@ -634,7 +636,7 @@ export const processAuditFn = inngest.createFunction(
                 categoryIndex: 8, // Accessibility & WCAG Compliance
               })
               const wcagDesc = `[WCAG ${finding.wcagCriterion}] ${finding.description}`
-              await db.from('audit_findings').insert({
+              wcagInserts.push({
                 audit_id: auditId,
                 checklist_item_id: null,
                 category_index: 8, // Accessibility & WCAG Compliance
@@ -653,16 +655,19 @@ export const processAuditFn = inngest.createFunction(
                 confidence_level: 'deterministic',
                 detection_source: 'wcag_checker',
                 ...computeActionModelFields({ title: finding.title, description: wcagDesc, recommendation: finding.recommendation, fix_type: cls.fixType, finding_type: cls.findingType }),
-              } as any)
+              })
             }
+          }
+          if (wcagInserts.length > 0) {
+            await db.from('audit_findings').insert(wcagInserts)
           }
         }
 
-        // Store WCAG checklist data in audit_pages for the UI panel
+        // Store WCAG checklist data in audit_pages for the UI panel (parallel)
         if (wcagResult.pages.length > 0) {
           const db = getDb()
-          for (const page of wcagResult.pages) {
-            await db
+          await Promise.all(wcagResult.pages.map((page) =>
+            db
               .from('audit_pages')
               .update({
                 wcag_checklist: JSON.stringify(page.checklist),
@@ -670,7 +675,7 @@ export const processAuditFn = inngest.createFunction(
               } as any)
               .eq('audit_id', auditId)
               .eq('url', page.url)
-          }
+          ))
         }
 
         await auditLog(auditId, 'wcag_check_completed', 'success',
@@ -1752,6 +1757,9 @@ RULES FOR RE-AUDIT:
             }),
           )
 
+          // Batch all findings for this analysis batch into a single insert
+          const batchInserts: any[] = []
+
           for (let catIdx = 0; catIdx < batchResults.length; catIdx++) {
             const findings = batchResults[catIdx]
             const categoryName = batch[catIdx]
@@ -1786,7 +1794,7 @@ RULES FOR RE-AUDIT:
                 findingType: rawClassification.findingType,
                 fixType: rawClassification.fixType,
               })
-              await db.from('audit_findings').insert({
+              batchInserts.push({
                 audit_id: auditId,
                 checklist_item_id: null,
                 category_index: finding.categoryIndex ?? null,
@@ -1807,13 +1815,18 @@ RULES FOR RE-AUDIT:
                 confidence_level: 'heuristic',
                 detection_source: 'analyzer',
                 ...computeActionModelFields({ title: finding.title, description: finding.description, recommendation: finding.recommendation, fix_type: classification.fixType, finding_type: classification.findingType }),
-              } as any)
+              })
             }
 
             findingsInBatch += findings.length
             await auditLog(auditId, 'category_analysed', 'success', `Analyzed: ${categoryName}`, {
               findings_count: findings.length,
             })
+          }
+
+          // Single batch insert for all findings in this analysis batch
+          if (batchInserts.length > 0) {
+            await db.from('audit_findings').insert(batchInserts as any)
           }
 
           return { findingsInBatch, newSortOrder: sortOrder }
@@ -1856,9 +1869,7 @@ RULES FOR RE-AUDIT:
 
         const duplicateIds = identifyDuplicates(mappedFindings)
         if (duplicateIds.length > 0) {
-          for (const id of duplicateIds) {
-            await db.from('audit_findings').delete().eq('id', id)
-          }
+          await db.from('audit_findings').delete().in('id', duplicateIds)
           await auditLog(auditId, 'findings_deduped', 'info',
             `Removed ${duplicateIds.length} duplicate finding${duplicateIds.length > 1 ? 's' : ''}`)
           console.log(`[inngest] Dedup: removed ${duplicateIds.length} duplicates from ${dedupFindings.length} findings`)

@@ -6,6 +6,26 @@ Last updated: 2026-05-24
 
 ---
 
+## Audit pipeline speed optimization — batch DB writes and parallel AI calls
+
+### Problem
+The audit pipeline was noticeably slow. Serial database inserts (one finding at a time), sequential AI model calls, and individual delete operations were adding significant latency to every audit run.
+
+### What changed
+1. **Batch finding inserts**: Analysis findings, responsive findings, and WCAG findings are now collected into arrays and inserted in a single `db.insert()` call instead of one-by-one in a loop.
+2. **Parallel page updates**: Responsive and WCAG page update queries now run concurrently via `Promise.all()` instead of sequentially.
+3. **Parallel WCAG heuristic AI calls**: All Anthropic API calls for WCAG heuristic analysis now fire concurrently with `Promise.all()` instead of awaiting each in series.
+4. **Batch dedup deletes**: Duplicate finding removal now uses a single `.delete().in('id', duplicateIds)` call instead of looping individual deletes.
+
+### Estimated impact
+- 15–40% reduction in total audit duration depending on finding count and page count
+- Eliminates N+1 patterns on the heaviest write paths
+
+### Files touched
+- `src/lib/inngest/functions/process-audit.ts` — 7 specific optimizations across responsive, WCAG, analysis, and dedup steps
+
+---
+
 ## Website / Brand DNA tab navigation and brand audit CTA
 
 ### Problem
