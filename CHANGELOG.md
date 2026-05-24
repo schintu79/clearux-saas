@@ -6,6 +6,21 @@ Last updated: 2026-05-24
 
 ---
 
+## Sidebar menu restructuring — Dashboard first, Website/Brand DNA split
+
+### Problem
+The sidebar navigation had the Dashboard link buried below action buttons, lacked visual hierarchy between website audit nav items and brand DNA, and the Re-audit/Dig deeper buttons disappeared during the initial restructuring pass.
+
+### What changed
+1. **Dashboard link first**: Moved to the top of the sidebar with larger icon, semibold weight, and border highlight when active, followed by a 40px spacer before the workspace section.
+2. **Action buttons restored**: Re-audit and Dig deeper buttons (context-aware based on selected brand/site) placed after the brand/site selector, before the nav groups.
+3. **Navigation split**: Single "Audit workspace" group split into two labeled groups — "Website" (Overview, Find, Fix, Track, Connect site) and "Brand DNA" (Brand DNA). Each group shows a small uppercase label.
+
+### Files touched
+- `src/components/layout/DashboardShell.tsx` — Dashboard link position, action buttons, navGroups split, group label rendering
+
+---
+
 ## Brand Intelligence — Tier 2: Placement Parsing and Share of Voice
 
 ### Problem

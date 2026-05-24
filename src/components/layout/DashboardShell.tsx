@@ -407,14 +407,19 @@ const DashboardShell: React.FC<DashboardShellProps> = ({ children }) => {
   // created competing nav and made the audit area feel like a feature gallery.
   const navGroups: NavGroup[] = [
     {
-      label: 'Audit workspace',
+      label: 'Website',
       items: [
         { label: 'Overview', href: '/dashboard/overview', icon: BarChart3 },
         { label: 'Find', href: '/dashboard/find', icon: Search, matchPaths: ['/dashboard/audits'] },
         { label: 'Fix', href: '/dashboard/fix', icon: Wrench },
         { label: 'Track', href: '/dashboard/track', icon: LineChart },
-        { label: 'Brand DNA', href: '/dashboard/brand-dna', icon: Fingerprint, matchPaths: ['/dashboard/brand-identity'] },
         { label: 'Connect site', href: '/dashboard/connect', icon: Server },
+      ],
+    },
+    {
+      label: 'Brand DNA',
+      items: [
+        { label: 'Brand DNA', href: '/dashboard/brand-dna', icon: Fingerprint, matchPaths: ['/dashboard/brand-identity'] },
       ],
     },
   ];
@@ -480,81 +485,35 @@ const DashboardShell: React.FC<DashboardShellProps> = ({ children }) => {
       >
         {SidebarLogo}
 
-        {/* Context-aware audit actions */}
-        <div className={clsx('pt-3 pb-2', collapsed ? 'px-2' : 'px-3')}>
-          {selectedSite && !collapsed ? (
-            <div className="flex items-center gap-1.5">
-              <button
-                onClick={() => {
-                  setSidebarOpen(false);
-                  const brandParam = selectedSite.id.startsWith('brand:') ? selectedSite.id.slice(6) : '';
-                  const host = selectedSite.kind === 'site' ? selectedSite.label : '';
-                  router.push(`/dashboard/new-audit?mode=re-audit${brandParam ? `&brand=${brandParam}` : ''}${host ? `&url=${encodeURIComponent(host)}` : ''}`);
-                }}
-                className="flex-1 flex items-center justify-center gap-1.5 px-2 py-[7px] text-[12px] font-medium rounded-md transition-all hover:opacity-90"
-                style={{ background: 'var(--ink)', color: 'var(--paper)' }}
-                title="Re-audit this brand"
-              >
-                <RefreshCw size={12} strokeWidth={1.75} />
-                Re-audit
-              </button>
-              <button
-                onClick={() => {
-                  setSidebarOpen(false);
-                  const brandParam = selectedSite.id.startsWith('brand:') ? selectedSite.id.slice(6) : '';
-                  const host = selectedSite.kind === 'site' ? selectedSite.label : '';
-                  router.push(`/dashboard/new-audit?mode=dig-deeper${brandParam ? `&brand=${brandParam}` : ''}${host ? `&url=${encodeURIComponent(host)}` : ''}&depth=deep`);
-                }}
-                className="flex-1 flex items-center justify-center gap-1.5 px-2 py-[7px] text-[12px] font-medium rounded-md transition-all hover:opacity-90"
-                style={{ background: 'var(--paper-2)', color: 'var(--ink)', border: '1px solid var(--rule)' }}
-                title="Run a deeper audit"
-              >
-                <Search size={12} strokeWidth={1.75} />
-                Dig deeper
-              </button>
-            </div>
-          ) : (
-            <Link
-              href="/dashboard/new-audit"
-              onClick={() => setSidebarOpen(false)}
-              className={clsx(
-                'flex items-center justify-center w-full rounded-md transition-all hover:opacity-90',
-                collapsed ? 'px-0 py-2' : 'gap-1.5 px-3 py-[7px] text-[13px] font-medium',
-              )}
-              style={{ background: 'var(--ink)', color: 'var(--paper)' }}
-              title={collapsed ? 'Add new site or brand' : undefined}
-            >
-              <PlusCircle size={collapsed ? 16 : 14} strokeWidth={1.75} />
-              {!collapsed && 'Add new site or brand'}
-            </Link>
-          )}
-        </div>
-
-        {/* Dashboard link */}
-        <div className={clsx('pb-1.5', collapsed ? 'px-1.5' : 'px-2')}>
+        {/* Dashboard link — always first, prominent */}
+        <div className={clsx('pt-3', collapsed ? 'px-1.5' : 'px-2')}>
           <Link
             href="/dashboard"
             onClick={() => setSidebarOpen(false)}
             title={collapsed ? 'Dashboard' : undefined}
             aria-current={pathname === '/dashboard' ? 'page' : undefined}
             className={clsx(
-              'flex items-center rounded-md transition-colors text-[13px] outline-none',
-              collapsed ? 'justify-center px-0 py-[6px]' : 'gap-2.5 px-2.5 py-[6px]',
-              pathname === '/dashboard' ? 'font-medium' : 'hover:bg-black/[0.04]',
+              'flex items-center rounded-lg transition-colors text-[13px] font-semibold outline-none',
+              collapsed ? 'justify-center px-0 py-2' : 'gap-2.5 px-3 py-2',
+              pathname === '/dashboard' ? '' : 'hover:bg-black/[0.04]',
             )}
             style={{
-              color: pathname === '/dashboard' ? 'var(--ink)' : 'var(--ink-2)',
+              color: 'var(--ink)',
               background: pathname === '/dashboard' ? 'var(--paper-2)' : undefined,
+              border: pathname === '/dashboard' ? '1px solid var(--rule)' : '1px solid transparent',
             }}
           >
             <LayoutDashboard
-              size={collapsed ? 16 : 15}
-              strokeWidth={1.75}
-              style={{ color: pathname === '/dashboard' ? 'var(--ink)' : 'var(--m-muted)' }}
+              size={collapsed ? 17 : 16}
+              strokeWidth={2}
+              style={{ color: 'var(--ink)' }}
             />
             {!collapsed && <span className="truncate">Dashboard</span>}
           </Link>
         </div>
+
+        {/* 40px spacer before workspace section */}
+        <div style={{ minHeight: 40 }} />
 
         {/* Brand/site selector */}
         {!collapsed && (
@@ -664,7 +623,57 @@ const DashboardShell: React.FC<DashboardShellProps> = ({ children }) => {
           </div>
         )}
 
-        {/* Navigation — Brand workspace nav (brand-only IA) */}
+        {/* Context-aware audit actions */}
+        <div className={clsx('pb-2', collapsed ? 'px-2' : 'px-3')}>
+          {selectedSite && !collapsed ? (
+            <div className="flex items-center gap-1.5">
+              <button
+                onClick={() => {
+                  setSidebarOpen(false);
+                  const brandParam = selectedSite.id.startsWith('brand:') ? selectedSite.id.slice(6) : '';
+                  const host = selectedSite.kind === 'site' ? selectedSite.label : '';
+                  router.push(`/dashboard/new-audit?mode=re-audit${brandParam ? `&brand=${brandParam}` : ''}${host ? `&url=${encodeURIComponent(host)}` : ''}`);
+                }}
+                className="flex-1 flex items-center justify-center gap-1.5 px-2 py-[7px] text-[12px] font-medium rounded-md transition-all hover:opacity-90"
+                style={{ background: 'var(--ink)', color: 'var(--paper)' }}
+                title="Re-audit this brand"
+              >
+                <RefreshCw size={12} strokeWidth={1.75} />
+                Re-audit
+              </button>
+              <button
+                onClick={() => {
+                  setSidebarOpen(false);
+                  const brandParam = selectedSite.id.startsWith('brand:') ? selectedSite.id.slice(6) : '';
+                  const host = selectedSite.kind === 'site' ? selectedSite.label : '';
+                  router.push(`/dashboard/new-audit?mode=dig-deeper${brandParam ? `&brand=${brandParam}` : ''}${host ? `&url=${encodeURIComponent(host)}` : ''}&depth=deep`);
+                }}
+                className="flex-1 flex items-center justify-center gap-1.5 px-2 py-[7px] text-[12px] font-medium rounded-md transition-all hover:opacity-90"
+                style={{ background: 'var(--paper-2)', color: 'var(--ink)', border: '1px solid var(--rule)' }}
+                title="Run a deeper audit"
+              >
+                <Search size={12} strokeWidth={1.75} />
+                Dig deeper
+              </button>
+            </div>
+          ) : (
+            <Link
+              href="/dashboard/new-audit"
+              onClick={() => setSidebarOpen(false)}
+              className={clsx(
+                'flex items-center justify-center w-full rounded-md transition-all hover:opacity-90',
+                collapsed ? 'px-0 py-2' : 'gap-1.5 px-3 py-[7px] text-[13px] font-medium',
+              )}
+              style={{ background: 'var(--ink)', color: 'var(--paper)' }}
+              title={collapsed ? 'Add new site or brand' : undefined}
+            >
+              <PlusCircle size={collapsed ? 16 : 14} strokeWidth={1.75} />
+              {!collapsed && 'Add new site or brand'}
+            </Link>
+          )}
+        </div>
+
+        {/* Navigation — Brand workspace nav */}
         <nav aria-label="Dashboard navigation" className={clsx('flex-1 overflow-y-auto pb-2', collapsed ? 'px-1.5' : 'px-2')}>
           {navGroups.map((group, gi) => (
             <div key={`g-${gi}`} className={clsx(gi > 0 && 'mt-3')}>
@@ -673,6 +682,11 @@ const DashboardShell: React.FC<DashboardShellProps> = ({ children }) => {
               )}
               {group.label && collapsed && gi > 0 && (
                 <div className="mx-2 my-2" style={{ borderTop: '1px solid var(--rule)' }} />
+              )}
+              {group.label && !collapsed && (
+                <p className="px-2 pt-1 pb-1 text-[10px] font-semibold uppercase tracking-[0.06em]" style={{ color: 'var(--m-muted)' }}>
+                  {group.label}
+                </p>
               )}
               <ul className="space-y-1">
                 {group.items.map((item) => {
