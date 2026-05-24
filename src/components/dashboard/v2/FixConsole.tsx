@@ -595,6 +595,38 @@ function EvidenceSection({
           </div>
         )}
 
+        {/* Proposed value */}
+        {(finding as any).proposed_value && (
+          <div>
+            <span className="text-[10px] font-semibold uppercase tracking-[0.06em] block mb-1" style={{ color: 'var(--m-muted)' }}>
+              Proposed value
+            </span>
+            <div
+              className="px-2.5 py-1.5 rounded text-[11px] font-mono leading-relaxed whitespace-pre-wrap max-h-[80px] overflow-y-auto"
+              style={{ background: 'color-mix(in srgb, var(--ok) 5%, transparent)', border: '1px solid color-mix(in srgb, var(--ok) 15%, transparent)', color: 'var(--ink)' }}
+            >
+              {((finding as any).proposed_value as string).length > 300
+                ? ((finding as any).proposed_value as string).slice(0, 300) + '...'
+                : (finding as any).proposed_value}
+            </div>
+          </div>
+        )}
+
+        {/* Affected selector */}
+        {(finding as any).affected_selector && (
+          <div>
+            <span className="text-[10px] font-semibold uppercase tracking-[0.06em] block mb-1" style={{ color: 'var(--m-muted)' }}>
+              Affected selector
+            </span>
+            <code
+              className="text-[11px] font-mono px-1.5 py-0.5 rounded"
+              style={{ background: 'var(--paper)', color: 'var(--ink-2)' }}
+            >
+              {(finding as any).affected_selector}
+            </code>
+          </div>
+        )}
+
         {/* Design work gate notice */}
         {classification === 'requires_design_work' && (
           <div

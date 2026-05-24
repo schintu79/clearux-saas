@@ -436,6 +436,10 @@ export interface AuditFinding {
   confidence_level:    'deterministic' | 'heuristic' | 'interpretive'
   /** Evidence contract: which pipeline stage produced this finding */
   detection_source:    'analyzer' | 'deep_analyzer' | 'wcag_checker' | 'responsive_checker' | 'structured_data' | 'head_tag' | 'crawler' | 'gap_fill' | 'brand_analyzer' | 'performance_checker'
+  /** Evidence contract: proposed replacement value for the current issue */
+  proposed_value:      string | null
+  /** Evidence contract: CSS selector or XPath targeting the affected element */
+  affected_selector:   string | null
   /** Performance: which metric this finding relates to (lcp, inp, cls, page_weight, etc.) */
   performance_metric_type: string | null
   /** Performance: which team should own this fix */

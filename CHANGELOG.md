@@ -2,7 +2,30 @@
 
 Structured record of every bug fix, feature, and architectural change. Organized by system area, each entry includes the root cause, what was changed, and which files were touched.
 
-Last updated: 2026-05-23
+Last updated: 2026-05-24
+
+---
+
+## Fix 2 Completion — Proposed Value, Affected Selector, and Evidence Enrichment
+
+### Data model
+- **`proposed_value` field added** to AuditFinding type: stores the proposed replacement value for fixable findings, derived from the recommendation when it contains a concrete fix (code, markup, or short actionable text).
+- **`affected_selector` field added** to AuditFinding type: stores the CSS selector or XPath targeting the affected DOM element, derived from `target_element` when it matches selector patterns.
+
+### Pipeline enrichment
+- **Evidence enrichment step** added to the quality-gates pipeline in `process-audit.ts`: after dedup, speculative filtering, language softening, and stale-result removal, a new pass populates `proposed_value` and `affected_selector` on all fixable findings using pattern-based heuristics.
+
+### Evidence UI
+- **"Proposed value" card** added to the EvidenceSection in FixConsole: shows the proposed replacement in a green-tinted box below the "Current value" red-tinted box, giving users a clear before/after view inside the evidence panel.
+- **"Affected selector" display** added: when a CSS/XPath selector is available, it renders as a monospace code badge below the proposed value.
+
+### Stale-result pipeline verification
+- Confirmed `identifyStaleFindings()` and `softenInterpretiveLanguage()` are fully wired into the quality-gates step, with results applied to DB and logged.
+
+### Files changed
+- `src/types/database.ts` — added `proposed_value` and `affected_selector` fields
+- `src/lib/inngest/functions/process-audit.ts` — added evidence enrichment step
+- `src/components/dashboard/v2/FixConsole.tsx` — added proposed value and affected selector to EvidenceSection
 
 ---
 

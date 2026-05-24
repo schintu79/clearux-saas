@@ -1957,6 +1957,54 @@ RULES FOR RE-AUDIT:
           console.log(`[inngest] Stale check: removed ${staleResults.length} stale gap_fill findings`)
         }
       }
+
+      // ── 5. Enrich proposed_value and affected_selector ───
+      // Derive proposed_value from recommendation for fixable findings,
+      // and affected_selector from target_element when it looks like a selector.
+      const { data: enrichFindings } = await db
+        .from('audit_findings')
+        .select('id, finding_type, recommendation, target_element, fix_type, fix_payload')
+        .eq('audit_id', auditId)
+
+      if (enrichFindings && enrichFindings.length > 0) {
+        let enriched = 0
+        for (const f of enrichFindings as any[]) {
+          const updates: Record<string, any> = {}
+
+          // Derive proposed_value: for fixable findings, use recommendation as
+          // the proposed value when it contains a concrete fix (code, markup, or
+          // a short actionable replacement). Skip long prose recommendations.
+          if (f.finding_type === 'fixable' && f.recommendation) {
+            const rec = (f.recommendation as string).trim()
+            // Use recommendation as proposed_value if it's concrete:
+            // - contains HTML/code markers, or
+            // - is under 500 chars (likely a specific fix, not a long explanation)
+            const looksLikeCode = /<[a-z]|{"|@type|"@context|<meta|<title|<link|<script/i.test(rec)
+            if (looksLikeCode || rec.length <= 500) {
+              updates.proposed_value = rec
+            }
+          }
+
+          // Derive affected_selector from target_element when it looks like
+          // a CSS selector or HTML element reference
+          if (f.target_element) {
+            const te = (f.target_element as string).trim()
+            const looksLikeSelector = /^[.#\[]|^[a-z]+(\.|#|\[|>|\s+[a-z])|^<[a-z]/i.test(te)
+            if (looksLikeSelector && te.length <= 200) {
+              updates.affected_selector = te
+            }
+          }
+
+          if (Object.keys(updates).length > 0) {
+            await db.from('audit_findings').update(updates as any).eq('id', f.id)
+            enriched++
+          }
+        }
+
+        if (enriched > 0) {
+          console.log(`[inngest] Evidence enrichment: populated proposed_value/affected_selector on ${enriched} finding${enriched > 1 ? 's' : ''}`)
+        }
+      }
     })
 
     // ──────────────────────────────────────────────────────────
