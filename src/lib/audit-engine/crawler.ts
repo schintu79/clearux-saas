@@ -425,7 +425,7 @@ const USER_AGENTS = [
   'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.5 Safari/605.1.15',
 ]
 
-async function directFetch(url: string, timeoutMs: number = 12000): Promise<CrawledPage | null> {
+async function directFetch(url: string, timeoutMs: number = 8000): Promise<CrawledPage | null> {
   const controller = new AbortController()
   const timeout = setTimeout(() => controller.abort(), timeoutMs)
 
@@ -515,7 +515,7 @@ async function directFetch(url: string, timeoutMs: number = 12000): Promise<Craw
 
 /* ── Strategy 2: Jina Reader API (handles JS rendering + bot bypass) ── */
 
-async function jinaFetch(url: string, timeoutMs: number = 15000): Promise<CrawledPage | null> {
+async function jinaFetch(url: string, timeoutMs: number = 10000): Promise<CrawledPage | null> {
   const controller = new AbortController()
   const timeout = setTimeout(() => controller.abort(), timeoutMs)
   const fetchStart = Date.now()
@@ -631,90 +631,37 @@ async function jinaFetch(url: string, timeoutMs: number = 15000): Promise<Crawle
   }
 }
 
-/* ── Strategy 3: Google Cache as last resort ───────────────── */
-
-async function googleCacheFetch(url: string): Promise<CrawledPage | null> {
-  const controller = new AbortController()
-  const timeout = setTimeout(() => controller.abort(), 8000)
-  const fetchStart = Date.now()
-
-  try {
-    const cacheUrl = `https://webcache.googleusercontent.com/search?q=cache:${encodeURIComponent(url)}`
-    console.log(`[crawler] Trying Google Cache for ${url}`)
-
-    const response = await fetch(cacheUrl, {
-      headers: {
-        'User-Agent': USER_AGENTS[0],
-        Accept: 'text/html',
-      },
-      signal: controller.signal,
-      redirect: 'follow',
-    })
-
-    if (!response.ok) return null
-
-    const html = await response.text()
-    const contentText = extractTextContent(html)
-
-    if (!contentText || contentText.length < 100) return null
-
-    return {
-      url,
-      title: extractTitle(html),
-      h1: extractH1(html),
-      metaDescription: extractMetaDescription(html),
-      contentText,
-      rawHtml: html,
-      headTags: extractHeadTags(html),
-      linksFound: 0,
-      statusCode: 200,
-      loadTimeMs: Date.now() - fetchStart,
-      crawledAt: new Date().toISOString(),
-    }
-  } catch {
-    return null
-  } finally {
-    clearTimeout(timeout)
-  }
-}
-
-/* ── Multi-strategy fetch ──────────────────────────────────── */
+/* ── Multi-strategy fetch (parallel direct + Jina) ────────── */
 
 async function fetchPageRobust(url: string): Promise<CrawledPage | null> {
-  // Track whether any strategy detected bot blocking
-  let lastBlockedPage: CrawledPage | null = null
+  // Run direct fetch and Jina in PARALLEL — use whichever succeeds first.
+  // Google Cache was removed (Google discontinued it in 2024).
+  const directPromise = directFetch(url).catch(() => null)
+  const jinaPromise = jinaFetch(url).catch(() => null)
 
-  // Strategy 1: Direct fetch
-  let page = await directFetch(url)
-  if (page && page.contentText && page.contentText.length >= 100) {
-    console.log(`[crawler] Direct fetch succeeded for ${url} (${page.contentText.length} chars)`)
-    page.fetchStrategy = 'direct'
-    return page
-  }
-  if (page?.blockedByBot) lastBlockedPage = page
+  // Wait for both in parallel
+  const [directResult, jinaResult] = await Promise.all([directPromise, jinaPromise])
 
-  // Strategy 2: Jina Reader (handles JS rendering + bot protection)
-  page = await jinaFetch(url)
-  if (page && page.contentText && page.contentText.length >= 50) {
-    console.log(`[crawler] Jina Reader succeeded for ${url} (${page.contentText.length} chars)`)
-    page.fetchStrategy = 'jina'
-    return page
+  // Prefer direct fetch (gives us rawHtml for link extraction)
+  if (directResult && directResult.contentText && directResult.contentText.length >= 100) {
+    console.log(`[crawler] Direct fetch succeeded for ${url} (${directResult.contentText.length} chars)`)
+    directResult.fetchStrategy = 'direct'
+    return directResult
   }
 
-  // Strategy 3: Google Cache (last resort)
-  page = await googleCacheFetch(url)
-  if (page && page.contentText && page.contentText.length >= 100) {
-    console.log(`[crawler] Google Cache succeeded for ${url} (${page.contentText.length} chars)`)
-    page.fetchStrategy = 'google_cache'
-    return page
+  // Fall back to Jina
+  if (jinaResult && jinaResult.contentText && jinaResult.contentText.length >= 50) {
+    console.log(`[crawler] Jina Reader succeeded for ${url} (${jinaResult.contentText.length} chars)`)
+    jinaResult.fetchStrategy = 'jina'
+    return jinaResult
   }
 
   console.error(`[crawler] All strategies failed for ${url}`)
 
   // If we detected bot blocking during direct fetch, propagate that info
-  if (lastBlockedPage) {
-    console.warn(`[crawler] Site appears blocked by anti-bot protection: ${lastBlockedPage.blockReason}`)
-    return lastBlockedPage
+  if (directResult?.blockedByBot) {
+    console.warn(`[crawler] Site appears blocked by anti-bot protection: ${directResult.blockReason}`)
+    return directResult
   }
 
   return {
@@ -961,7 +908,7 @@ async function fetchLinksOnly(url: string): Promise<URL[]> {
   // Try direct HTML fetch first (works for static sites)
   try {
     const controller = new AbortController()
-    const timeout = setTimeout(() => controller.abort(), 15000)
+    const timeout = setTimeout(() => controller.abort(), 8000)
     const ua = USER_AGENTS[Math.floor(Math.random() * USER_AGENTS.length)]
 
     const response = await fetch(url, {
@@ -994,7 +941,7 @@ async function fetchLinksOnly(url: string): Promise<URL[]> {
   // Jina fallback for JS-rendered sites — extract links from markdown
   try {
     const controller = new AbortController()
-    const timeout = setTimeout(() => controller.abort(), 20000)
+    const timeout = setTimeout(() => controller.abort(), 10000)
     const jinaUrl = `https://r.jina.ai/${url}`
 
     const headers: Record<string, string> = {
@@ -1133,7 +1080,7 @@ export async function crawlPages(
 
       // ── Run all 3 discovery strategies in parallel with a global 20s cap ──
       const discoveryTimeout = new Promise<[URL[], URL[], URL[]]>((resolve) =>
-        setTimeout(() => resolve([[], [], []]), 20000)
+        setTimeout(() => resolve([[], [], []]), 15000)
       )
       const [sitemapUrls, commonPathUrls, htmlLinks] = await Promise.race([discoveryTimeout, Promise.all([
         // Strategy A: Sitemap discovery (try both original and resolved origins)
@@ -1256,12 +1203,12 @@ export async function crawlPages(
 
       console.log(`[crawler] Level 1: ${level1ToVisit.length} pages to crawl (merged from all strategies)`)
 
-      // Crawl level 1 in parallel (3 at a time for speed)
+      // Crawl level 1 in parallel (5 at a time for speed)
       const level1Pages: CrawledPage[] = []
-      for (let i = 0; i < level1ToVisit.length; i += 3) {
+      for (let i = 0; i < level1ToVisit.length; i += 5) {
         if (pages.length >= maxPages) break
 
-        const batch = level1ToVisit.slice(i, Math.min(i + 3, level1ToVisit.length))
+        const batch = level1ToVisit.slice(i, Math.min(i + 5, level1ToVisit.length))
         const results = await Promise.all(
           batch.map((link) => fetchPageRobust(link.toString())),
         )
@@ -1300,8 +1247,8 @@ export async function crawlPages(
         await onProgress?.(crawlPct, 'crawling')
 
         // Brief rate limit between batches
-        if (i + 3 < level1ToVisit.length && pages.length < maxPages) {
-          await new Promise((resolve) => setTimeout(resolve, 200))
+        if (i + 5 < level1ToVisit.length && pages.length < maxPages) {
+          await new Promise((resolve) => setTimeout(resolve, 150))
         }
       }
 
@@ -1338,10 +1285,10 @@ export async function crawlPages(
 
         console.log(`[crawler] Level 2: ${level2ToVisit.length} pages to crawl`)
 
-        for (let i = 0; i < level2ToVisit.length; i += 3) {
+        for (let i = 0; i < level2ToVisit.length; i += 5) {
           if (pages.length >= maxPages) break
 
-          const batch = level2ToVisit.slice(i, Math.min(i + 3, level2ToVisit.length))
+          const batch = level2ToVisit.slice(i, Math.min(i + 5, level2ToVisit.length))
           const results = await Promise.all(
             batch.map((link) => fetchPageRobust(link.toString())),
           )
@@ -1366,8 +1313,8 @@ export async function crawlPages(
             }
           }
 
-          if (i + 3 < level2ToVisit.length && pages.length < maxPages) {
-            await new Promise((resolve) => setTimeout(resolve, 200))
+          if (i + 5 < level2ToVisit.length && pages.length < maxPages) {
+            await new Promise((resolve) => setTimeout(resolve, 150))
           }
         }
       }

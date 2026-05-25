@@ -119,20 +119,6 @@ async function setProgress(auditId: string, progressPercent: number, stage?: str
   if (error) console.error(`[inngest] progress update error:`, error.message)
 }
 
-/**
- * Update the audit_stage field for progressive frontend loading.
- * Stages: preflight → crawling → checking → probing → analysing → reporting → enriching → complete
- * NOTE: Prefer using setProgress(id, pct, stage) for atomic stage+progress writes.
- */
-async function setStage(auditId: string, stage: string) {
-  const db = getDb()
-  const { error } = await db
-    .from('audits')
-    .update({ audit_stage: stage, updated_at: new Date().toISOString() } as any)
-    .eq('id', auditId)
-  if (error) console.error(`[inngest] stage update error:`, error.message)
-}
-
 async function auditLog(
   auditId: string,
   event: string,
@@ -322,8 +308,7 @@ export const processAuditFn = inngest.createFunction(
 
       const maxPages = auditDetails.plan === 'free_preview' ? 5 : auditDetails.plan === 'starter' ? 8 : 25
       const crawlOutput = await crawlPages(auditDetails.productUrl, maxPages, async (pct, stage) => {
-        await setProgress(auditId, pct)
-        await setStage(auditId, stage)
+        await setProgress(auditId, pct, stage)
       })
       const crawledPages = crawlOutput.pages
       const crawlStats = crawlOutput.stats
