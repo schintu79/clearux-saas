@@ -69,6 +69,7 @@ import {
   type LatestAuditBundle,
 } from '@/lib/dashboard/latest-audit';
 import { useBrandSelection } from '@/lib/dashboard/useBrandSelection';
+import { useAuditProgress } from '@/hooks/useAuditProgress';
 import { writeSelection } from '@/lib/dashboard/brand-selection';
 import EmptyAudit from '@/components/dashboard/v2/EmptyAudit';
 import WebsiteSpeedCard from '@/components/dashboard/v2/WebsiteSpeedCard';
@@ -1793,16 +1794,22 @@ function RunningAuditBanner({ audit }: { audit: Audit }) {
 
 /* ── In-progress overview ─────────────────────────────────
  *
- * Shown when the selected brand/site has an audit currently
- * crawling / analysing / generating but no completed audit yet.
- * This replaces the no-audit run-audit form for that state — the
- * user just kicked the audit off, so we need calm "we're on it"
- * status with skeleton cards in the populated-dashboard shape, not
- * another form. The parent component polls the audit row every ~7s
- * and re-fetches the bundle as soon as the audit terminates, so
- * this view auto-flips to the populated dashboard (or the failed
- * state) without a manual reload.
+ * Progressive loading: as each pipeline stage completes, the
+ * corresponding card transitions from skeleton → populated with
+ * a fade/slide reveal animation. Uses useAuditProgress for stage
+ * detection and fetches partial data to populate cards live.
  */
+
+interface PartialAuditData {
+  speedData: any | null
+  overallScore: number | null
+  moduleScores: Record<string, number> | null
+  totalIssues: number
+  findingsCount: number
+  severityBreakdown: { critical: number; major: number; moderate: number; minor: number }
+  pagesCrawled: number
+}
+
 function InProgressOverview({
   audit,
   brandName,
@@ -1821,12 +1828,47 @@ function InProgressOverview({
   const meta = statusMeta[audit.status] || statusMeta.payment_received;
   const StatusIcon = meta.icon;
 
+  // Progressive loading state
+  const { data: progress } = useAuditProgress(audit.id)
+  const [partial, setPartial] = useState<PartialAuditData | null>(null)
+  const lastFetchRef = useRef<string>('')
+
+  // Fetch partial data whenever progress changes meaningfully
+  useEffect(() => {
+    if (!progress) return
+    // Build a fingerprint to avoid redundant fetches
+    const fp = `${progress.data.hasSpeedData}-${progress.data.findingsCount}-${progress.data.overallScore}-${progress.data.pagesCrawled}`
+    if (fp === lastFetchRef.current) return
+    lastFetchRef.current = fp
+
+    const fetchPartial = async () => {
+      try {
+        const res = await fetch(`/api/audits/${audit.id}/partial`)
+        if (res.ok) {
+          const data = await res.json()
+          setPartial(data)
+        }
+      } catch { /* silent */ }
+    }
+    fetchPartial()
+  }, [audit.id, progress])
+
+  // Compute completed stages count
+  const stagesCompleted = progress?.stages
+    ? Object.values(progress.stages).filter(Boolean).length
+    : 0
+  const totalStages = 8
+
+  // Determine which cards are populated
+  const hasScore = partial?.overallScore != null
+  const hasSpeed = partial?.speedData != null
+  const hasFindings = (partial?.findingsCount ?? 0) > 0
+  const hasModuleScores = partial?.moduleScores != null && Object.keys(partial.moduleScores).length > 0
+
   return (
     <div className="w-full">
       <OverviewTabs />
-      {/* Identity header — mirrors populated overview header but
-          without the action buttons that depend on a completed
-          audit (Report, Share, Re-audit, More). */}
+      {/* Identity header */}
       <div className="flex items-start justify-between gap-4 mb-6">
         <div className="min-w-0">
           <div className="flex items-center gap-3 mb-1.5">
@@ -1841,7 +1883,7 @@ function InProgressOverview({
         </div>
       </div>
 
-      {/* Status banner */}
+      {/* Status banner with progress */}
       <div
         role="status"
         aria-live="polite"
@@ -1862,8 +1904,22 @@ function InProgressOverview({
             {meta.label}
           </p>
           <p className="text-[11px] mt-1" style={{ color: 'var(--m-muted)' }}>
-            We are working on your audit. This page will update automatically when it is ready — usually a few minutes.
+            {progress
+              ? `${stagesCompleted} of ${totalStages} stages complete — results appear as they're ready`
+              : 'We are working on your audit. Results will appear as they are ready.'}
           </p>
+          {/* Progress bar */}
+          {progress && (
+            <div className="mt-2 h-1 w-full rounded-full overflow-hidden" style={{ background: 'color-mix(in srgb, var(--signal) 15%, transparent)' }}>
+              <div
+                className="h-full rounded-full transition-all duration-700 ease-out"
+                style={{
+                  width: `${progress.progress || Math.round((stagesCompleted / totalStages) * 100)}%`,
+                  background: 'var(--signal)',
+                }}
+              />
+            </div>
+          )}
         </div>
         <Link
           href={`/dashboard/audits/${audit.id}`}
@@ -1873,27 +1929,54 @@ function InProgressOverview({
         </Link>
       </div>
 
-      {/* Skeleton row 1 — mirrors Brand Health, Score Over Time, Heuristic Breakdown */}
+      {/* Row 1 — Health Score, Score Over Time, Heuristic Breakdown */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-4 auto-rows-fr">
-        <SkeletonCard title="Website Health Score" subtitle="Calculating…" icon={Heart} />
+        {/* Health Score — reveals when overallScore arrives */}
+        {hasScore ? (
+          <PopulatedCard>
+            <div className="flex items-start gap-2 mb-3">
+              <span className="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0" style={{ background: 'color-mix(in srgb, var(--ink) 6%, transparent)', color: 'var(--ink)' }}>
+                <Heart size={14} />
+              </span>
+              <div className="min-w-0">
+                <h3 className="text-[15px] font-semibold leading-tight tracking-[-0.005em]" style={{ color: 'var(--ink)' }}>Website Health Score</h3>
+                <p className="text-[11px] leading-tight mt-1" style={{ color: 'var(--m-muted)' }}>Overall performance</p>
+              </div>
+            </div>
+            <div className="flex-1 flex items-center justify-center">
+              <ScoreCircle score={partial!.overallScore!} size="large" />
+            </div>
+          </PopulatedCard>
+        ) : (
+          <SkeletonCard title="Website Health Score" subtitle="Calculating..." icon={Heart} />
+        )}
         <SkeletonCard title="Score Over Time" subtitle="Trend will appear after this audit" icon={TrendingUp} />
         <SkeletonCard title="Heuristic Breakdown" subtitle="Radar populates when the audit completes" icon={Target} />
       </div>
 
-      {/* Skeleton row 2 — mirrors Categories grid */}
+      {/* Row 2 — Categories grid */}
       <div className="mb-2 flex items-center gap-2">
         <ListChecks size={14} style={{ color: 'var(--m-muted)' }} />
         <h2 className="text-[15px] font-semibold tracking-[-0.005em]" style={{ color: 'var(--ink)' }}>Categories</h2>
-        <p className="text-[11px]" style={{ color: 'var(--m-muted)' }}>· populating</p>
+        {hasModuleScores ? (
+          <p className="text-[11px]" style={{ color: 'var(--ok)' }}>· scored</p>
+        ) : (
+          <p className="text-[11px]" style={{ color: 'var(--m-muted)' }}>· populating</p>
+        )}
       </div>
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-3 mb-4">
         {PILLAR_NAMES.map((name, i) => {
           const tint = MODULE_TINTS[i] || MODULE_TINTS[0];
           const PIcon = PILLAR_ICONS[i] || Scale;
+          // Check if we have a score for this module
+          const moduleKey = name.toLowerCase().replace(/[^a-z]/g, '_')
+          const moduleScore = partial?.moduleScores?.[moduleKey] ?? partial?.moduleScores?.[name] ?? null
+          const isPopulated = moduleScore != null
+
           return (
             <div
               key={name}
-              className="rounded-xl overflow-hidden flex flex-col"
+              className={`rounded-xl overflow-hidden flex flex-col transition-all duration-300 ${isPopulated ? 'progressive-card-reveal' : ''}`}
               style={{ background: tint.bg, border: `1px solid ${tint.border}` }}
             >
               <div className="flex items-start gap-2 px-3 pt-3 pb-2">
@@ -1911,29 +1994,121 @@ function InProgressOverview({
                     {name}
                   </h3>
                   <p className="text-[10px] leading-tight mt-0.5" style={{ color: 'var(--m-muted)' }}>
-                    Auditing…
+                    {isPopulated ? `${Math.round(moduleScore)}%` : 'Auditing...'}
                   </p>
                 </div>
               </div>
               <div className="px-3 pb-3 pt-1">
-                <div
-                  className="h-5 w-12 rounded-md animate-pulse"
-                  style={{ background: 'color-mix(in srgb, var(--ink) 6%, transparent)' }}
-                />
+                {isPopulated ? (
+                  <ScoreCircle score={Math.round(moduleScore)} size="small" px={40} strokeWidth={4} />
+                ) : (
+                  <div
+                    className="h-5 w-12 rounded-md animate-pulse"
+                    style={{ background: 'color-mix(in srgb, var(--ink) 6%, transparent)' }}
+                  />
+                )}
               </div>
             </div>
           );
         })}
       </div>
 
-      {/* Skeleton row 3 — mirrors Issues / Speed / Brand Intelligence */}
+      {/* Row 3 — Issues / Speed / Brand Intelligence */}
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4 mb-4 auto-rows-fr">
-        <SkeletonCard title="Issues by importance" subtitle="Findings will appear here" icon={AlertTriangle} />
-        <SkeletonCard title="Website speed" subtitle="Performance metrics" icon={Gauge} />
+        {/* Issues card — reveals when findings arrive */}
+        {hasFindings ? (
+          <PopulatedCard>
+            <div className="flex items-start gap-2 mb-3">
+              <span className="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0" style={{ background: 'color-mix(in srgb, var(--ink) 6%, transparent)', color: 'var(--ink)' }}>
+                <AlertTriangle size={14} />
+              </span>
+              <div className="min-w-0">
+                <h3 className="text-[15px] font-semibold leading-tight tracking-[-0.005em]" style={{ color: 'var(--ink)' }}>Issues found</h3>
+                <p className="text-[11px] leading-tight mt-1" style={{ color: 'var(--m-muted)' }}>{partial!.findingsCount} total</p>
+              </div>
+            </div>
+            <div className="flex-1 flex flex-col gap-1.5 justify-center">
+              {partial!.severityBreakdown.critical > 0 && (
+                <div className="flex items-center gap-2 px-2 py-1.5 rounded-lg" style={{ background: 'color-mix(in srgb, var(--severe) 6%, transparent)' }}>
+                  <span className="w-2 h-2 rounded-full" style={{ background: 'var(--severe)' }} />
+                  <span className="text-[11px] font-medium" style={{ color: 'var(--ink)' }}>Critical</span>
+                  <span className="ml-auto text-[11px] font-semibold tabular-nums" style={{ color: 'var(--severe)' }}>{partial!.severityBreakdown.critical}</span>
+                </div>
+              )}
+              {partial!.severityBreakdown.major > 0 && (
+                <div className="flex items-center gap-2 px-2 py-1.5 rounded-lg" style={{ background: 'color-mix(in srgb, var(--warn) 6%, transparent)' }}>
+                  <span className="w-2 h-2 rounded-full" style={{ background: 'var(--warn)' }} />
+                  <span className="text-[11px] font-medium" style={{ color: 'var(--ink)' }}>Major</span>
+                  <span className="ml-auto text-[11px] font-semibold tabular-nums" style={{ color: 'var(--warn)' }}>{partial!.severityBreakdown.major}</span>
+                </div>
+              )}
+              {partial!.severityBreakdown.moderate > 0 && (
+                <div className="flex items-center gap-2 px-2 py-1.5 rounded-lg" style={{ background: 'color-mix(in srgb, var(--ink) 3%, transparent)' }}>
+                  <span className="w-2 h-2 rounded-full" style={{ background: 'var(--m-muted)' }} />
+                  <span className="text-[11px] font-medium" style={{ color: 'var(--ink)' }}>Moderate</span>
+                  <span className="ml-auto text-[11px] font-semibold tabular-nums" style={{ color: 'var(--m-muted)' }}>{partial!.severityBreakdown.moderate}</span>
+                </div>
+              )}
+              {partial!.severityBreakdown.minor > 0 && (
+                <div className="flex items-center gap-2 px-2 py-1.5 rounded-lg" style={{ background: 'color-mix(in srgb, var(--ink) 3%, transparent)' }}>
+                  <span className="w-2 h-2 rounded-full" style={{ background: 'var(--m-muted)' }} />
+                  <span className="text-[11px] font-medium" style={{ color: 'var(--ink)' }}>Minor</span>
+                  <span className="ml-auto text-[11px] font-semibold tabular-nums" style={{ color: 'var(--m-muted)' }}>{partial!.severityBreakdown.minor}</span>
+                </div>
+              )}
+            </div>
+          </PopulatedCard>
+        ) : (
+          <SkeletonCard title="Issues by importance" subtitle="Findings will appear here" icon={AlertTriangle} />
+        )}
+
+        {/* Speed card — reveals when speed data arrives */}
+        {hasSpeed ? (
+          <PopulatedCard>
+            <div className="flex items-start gap-2 mb-3">
+              <span className="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0" style={{ background: 'color-mix(in srgb, var(--ink) 6%, transparent)', color: 'var(--ink)' }}>
+                <Gauge size={14} />
+              </span>
+              <div className="min-w-0">
+                <h3 className="text-[15px] font-semibold leading-tight tracking-[-0.005em]" style={{ color: 'var(--ink)' }}>Website speed</h3>
+                <p className="text-[11px] leading-tight mt-1" style={{ color: 'var(--m-muted)' }}>PageSpeed Insights</p>
+              </div>
+            </div>
+            <div className="flex-1 flex items-center justify-center gap-4">
+              {partial!.speedData.mobile && (
+                <div className="flex flex-col items-center gap-1">
+                  <ScoreCircle score={partial!.speedData.mobile.score} size="small" />
+                  <span className="text-[10px] font-medium" style={{ color: 'var(--m-muted)' }}>Mobile</span>
+                </div>
+              )}
+              {partial!.speedData.desktop && (
+                <div className="flex flex-col items-center gap-1">
+                  <ScoreCircle score={partial!.speedData.desktop.score} size="small" />
+                  <span className="text-[10px] font-medium" style={{ color: 'var(--m-muted)' }}>Desktop</span>
+                </div>
+              )}
+            </div>
+          </PopulatedCard>
+        ) : (
+          <SkeletonCard title="Website speed" subtitle="Performance metrics" icon={Gauge} />
+        )}
+
         <div className="col-span-1 md:col-span-2">
           <SkeletonCard title="Brand Intelligence" subtitle="AI + human perception unified" icon={Radio} />
         </div>
       </div>
+    </div>
+  );
+}
+
+/* ── Populated card wrapper with reveal animation ───── */
+function PopulatedCard({ children }: { children: React.ReactNode }) {
+  return (
+    <div
+      className="rounded-xl p-4 sm:p-5 flex flex-col h-full progressive-card-reveal"
+      style={{ background: 'var(--card)', border: '1px solid var(--rule)' }}
+    >
+      {children}
     </div>
   );
 }
@@ -1968,16 +2143,16 @@ function SkeletonCard({
       </div>
       <div className="flex-1 min-h-[120px] flex flex-col gap-2 justify-center">
         <div
-          className="h-4 w-3/4 rounded animate-pulse"
+          className="h-4 w-3/4 rounded shimmer-pulse"
           style={{ background: 'color-mix(in srgb, var(--ink) 5%, transparent)' }}
         />
         <div
-          className="h-4 w-1/2 rounded animate-pulse"
-          style={{ background: 'color-mix(in srgb, var(--ink) 5%, transparent)' }}
+          className="h-4 w-1/2 rounded shimmer-pulse"
+          style={{ background: 'color-mix(in srgb, var(--ink) 5%, transparent)', animationDelay: '150ms' }}
         />
         <div
-          className="h-4 w-2/3 rounded animate-pulse"
-          style={{ background: 'color-mix(in srgb, var(--ink) 5%, transparent)' }}
+          className="h-4 w-2/3 rounded shimmer-pulse"
+          style={{ background: 'color-mix(in srgb, var(--ink) 5%, transparent)', animationDelay: '300ms' }}
         />
       </div>
     </div>

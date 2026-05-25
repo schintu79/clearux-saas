@@ -886,6 +886,30 @@ article:not([data-card]), .prose:not([data-card]) {
   50%      { transform: scale(1.02); }
 }
 
+/* Progressive loading — skeleton shimmer + card reveal */
+@keyframes shimmer-pulse {
+  0%, 100% { opacity: 0.4; }
+  50%      { opacity: 0.7; }
+}
+
+@keyframes card-reveal {
+  from { opacity: 0; transform: translateY(4px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.shimmer-pulse {
+  animation: shimmer-pulse 1.8s ease-in-out infinite;
+}
+
+.progressive-card-reveal {
+  animation: card-reveal 300ms ease-out both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .shimmer-pulse { animation: none; opacity: 0.5; }
+  .progressive-card-reveal { animation: none; }
+}
+
 @keyframes gridMove {
   from { transform: translate(0, 0); }
   to   { transform: translate(60px, 60px); }

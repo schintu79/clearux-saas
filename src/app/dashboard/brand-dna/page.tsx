@@ -51,7 +51,8 @@ import { useAuth } from '@/context/AuthContext';
 import { createBrowserSupabase } from '@/lib/supabase-ssr';
 import { useBrandSelection } from '@/lib/dashboard/useBrandSelection';
 import { BRAND_AUDIT_CATEGORIES } from '@/lib/brand-audit-modules';
-import ScoreRing from '@/components/ui/ScoreRing';
+import ScoreCircle from '@/components/ui/ScoreCircle';
+import { useAuditProgress } from '@/hooks/useAuditProgress';
 import OverviewBreadcrumb from '@/components/dashboard/OverviewBreadcrumb';
 import OverviewTabs from '@/components/dashboard/OverviewTabs';
 import clsx from 'clsx';
@@ -799,33 +800,9 @@ export default function BrandDnaPage() {
           </div>
         )}
 
-        {/* In progress */}
+        {/* In progress — progressive skeleton */}
         {isAuditInProgress && audit && (
-          <div
-            className="rounded-xl p-5"
-            style={{ background: 'var(--card)', border: '1px solid var(--rule)' }}
-          >
-            <div className="flex items-center gap-3 mb-4">
-              <Loader2 size={16} className="animate-spin" style={{ color: 'var(--signal)' }} />
-              <div>
-                <p className="text-[14px] font-semibold" style={{ color: 'var(--ink)' }}>
-                  {audit.status === 'payment_received' && 'Queued...'}
-                  {audit.status === 'crawling' && 'Extracting brand files...'}
-                  {audit.status === 'analysing' && 'Analyzing brand identity...'}
-                  {audit.status === 'generating_report' && 'Generating report...'}
-                </p>
-                <p className="text-[12px]" style={{ color: 'var(--m-muted)' }}>This updates automatically.</p>
-              </div>
-            </div>
-            <div className="flex gap-1">
-              {['payment_received', 'crawling', 'analysing', 'generating_report'].map((step, idx) => {
-                const currentIdx = ['payment_received', 'crawling', 'analysing', 'generating_report'].indexOf(audit.status);
-                return (
-                  <div key={step} className="flex-1 h-1.5 rounded-full transition-colors" style={{ background: idx <= currentIdx ? 'var(--signal)' : 'var(--paper-2)' }} />
-                );
-              })}
-            </div>
-          </div>
+          <BrandAuditInProgress audit={audit} />
         )}
 
         {/* Failed */}
@@ -847,36 +824,27 @@ export default function BrandDnaPage() {
           </div>
         )}
 
-        {/* ── Completed: Score card + findings ──────────── */}
+        {/* ── Completed: Full results dashboard ──────── */}
         {isAuditCompleted && report && (
-          <div className="space-y-4">
-            {/* Score card */}
+          <div className="space-y-4 progressive-card-reveal">
+            {/* Hero score + action strip */}
             <div
               className="rounded-xl overflow-hidden"
               style={{ background: 'var(--card)', border: '1px solid var(--rule)' }}
             >
               <div className="p-5 flex items-center gap-5">
-                <ScoreRing score={overallScore || 0} size={80} strokeWidth={5} />
+                <ScoreCircle score={overallScore || 0} size="large" />
                 <div className="flex-1 min-w-0">
                   <h3 className="text-[16px] font-semibold mb-1" style={{ color: 'var(--ink)' }}>Brand Identity Score</h3>
-                  <div className="flex flex-wrap gap-x-4 gap-y-1">
-                    {categoryScores.map(cat => {
-                      const tint = CATEGORY_TINTS[cat.slug] || CATEGORY_TINTS.visual_consistency;
-                      return (
-                        <div key={cat.slug} className="flex items-center gap-1.5">
-                          <span className="w-2 h-2 rounded-full" style={{ background: tint.dot }} />
-                          <span className="text-[11px]" style={{ color: 'var(--m-muted)' }}>{cat.name}</span>
-                          <span className="text-[11px] font-semibold" style={{ color: scoreColor(cat.score) }}>{cat.score}</span>
-                        </div>
-                      );
-                    })}
-                  </div>
                   {report.total_issues > 0 && (
-                    <div className="flex items-center gap-3 mt-2">
+                    <div className="flex items-center gap-3 mt-1">
                       {report.critical_count > 0 && <span className="text-[11px] font-semibold" style={{ color: 'var(--severe)' }}>{report.critical_count} critical</span>}
                       {report.high_count > 0 && <span className="text-[11px] font-semibold" style={{ color: 'var(--warn)' }}>{report.high_count} high</span>}
                       {(report.medium_count + report.low_count) > 0 && <span className="text-[11px]" style={{ color: 'var(--m-muted)' }}>{report.medium_count + report.low_count} more</span>}
                     </div>
+                  )}
+                  {report.executive_summary && (
+                    <p className="text-[12px] leading-relaxed mt-2 line-clamp-2" style={{ color: 'var(--m-muted)' }}>{report.executive_summary}</p>
                   )}
                 </div>
               </div>
@@ -896,29 +864,67 @@ export default function BrandDnaPage() {
                   className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-[11px] font-semibold transition-all"
                   style={{ color: 'var(--ink)', border: '1px solid var(--rule)' }}
                 >
-                  <RefreshCw size={11} /> Re-audit
+                  <RefreshCw size={11} /> Re-audit brand DNA
                 </button>
               </div>
             </div>
 
-            {/* Executive summary */}
-            {report.executive_summary && (
-              <div className="rounded-xl px-5 py-4" style={{ background: 'var(--card)', border: '1px solid var(--rule)' }}>
-                <p className="text-[11px] font-semibold uppercase tracking-[0.06em] mb-2" style={{ color: 'var(--m-muted)' }}>Summary</p>
-                <p className="text-[13px] leading-relaxed" style={{ color: 'var(--ink)' }}>{report.executive_summary}</p>
+            {/* Category score cards — 2×3 grid */}
+            {categoryScores.length > 0 && (
+              <div>
+                <div className="mb-2 flex items-center gap-2">
+                  <Layers size={14} style={{ color: 'var(--m-muted)' }} />
+                  <h4 className="text-[13px] font-semibold" style={{ color: 'var(--ink)' }}>Category scores</h4>
+                </div>
+                <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-6 gap-3">
+                  {categoryScores.map(cat => {
+                    const tint = CATEGORY_TINTS[cat.slug] || CATEGORY_TINTS.visual_consistency;
+                    const CatIcon = CATEGORY_ICONS[cat.slug] || Target;
+                    return (
+                      <div
+                        key={cat.slug}
+                        className="rounded-xl overflow-hidden flex flex-col progressive-card-reveal"
+                        style={{ background: tint.bg, border: `1px solid ${tint.border}` }}
+                      >
+                        <div className="flex items-start gap-2 px-3 pt-3 pb-2">
+                          <div
+                            className="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0"
+                            style={{ background: `${tint.dot}15` }}
+                          >
+                            <CatIcon size={14} style={{ color: tint.dot }} />
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <h3 className="font-sans font-semibold text-[12px] leading-tight truncate" style={{ color: 'var(--ink)' }}>
+                              {cat.name}
+                            </h3>
+                            <p className="text-[10px] leading-tight mt-0.5 line-clamp-1" style={{ color: 'var(--m-muted)' }}>
+                              {cat.summary?.slice(0, 40) || 'Scored'}
+                            </p>
+                          </div>
+                        </div>
+                        <div className="px-3 pb-3 pt-1">
+                          <ScoreCircle score={cat.score} size="small" px={40} strokeWidth={4} />
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
               </div>
             )}
 
             {/* Findings — flat list grouped by category */}
             {findings.length > 0 && (
               <div>
-                <p className="text-[11px] mb-2 px-1" style={{ color: 'var(--m-muted)' }}>{findings.filter(f => !f.dismissed).length} findings</p>
+                <div className="mb-2 flex items-center gap-2">
+                  <AlertTriangle size={14} style={{ color: 'var(--m-muted)' }} />
+                  <h4 className="text-[13px] font-semibold" style={{ color: 'var(--ink)' }}>Findings</h4>
+                  <span className="text-[11px]" style={{ color: 'var(--m-muted)' }}>{findings.filter(f => !f.dismissed).length} total</span>
+                </div>
                 <div className="rounded-xl overflow-hidden" style={{ background: 'var(--card)', border: '1px solid var(--rule)' }}>
                   {findings.filter(f => !f.dismissed).map(f => (
                     <FindingRow key={f.id} finding={f} categoryScores={categoryScores} />
                   ))}
                 </div>
-                {/* Dismissed count */}
                 {findings.filter(f => f.dismissed).length > 0 && (
                   <p className="text-[11px] mt-2 px-1" style={{ color: 'var(--m-muted)' }}>
                     {findings.filter(f => f.dismissed).length} dismissed
@@ -1105,6 +1111,120 @@ function FindingRow({ finding: f, categoryScores }: { finding: FindingRecord; ca
           </div>
         </div>
       )}
+    </div>
+  );
+}
+
+/* ── Brand audit in-progress with progressive skeleton ── */
+
+function BrandAuditInProgress({ audit }: { audit: AuditRecord }) {
+  const { data: progress } = useAuditProgress(audit.id)
+
+  const steps = ['payment_received', 'crawling', 'analysing', 'generating_report'] as const
+  const currentIdx = steps.indexOf(audit.status as any)
+  const stageLabels: Record<string, string> = {
+    payment_received: 'Queued...',
+    crawling: 'Extracting brand files...',
+    analysing: 'Analyzing brand identity...',
+    generating_report: 'Generating report...',
+  }
+
+  const progressPct = progress?.progress || Math.round(((currentIdx + 1) / steps.length) * 100)
+
+  return (
+    <div className="space-y-4">
+      {/* Status banner */}
+      <div
+        className="rounded-xl p-4 flex items-start gap-3"
+        style={{
+          background: 'color-mix(in srgb, var(--signal) 7%, transparent)',
+          border: '1px solid color-mix(in srgb, var(--signal) 22%, transparent)',
+        }}
+      >
+        <span
+          className="w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0"
+          style={{ background: 'color-mix(in srgb, var(--signal) 14%, transparent)', color: 'var(--signal)' }}
+        >
+          <Loader2 size={16} className="animate-spin" />
+        </span>
+        <div className="flex-1 min-w-0">
+          <p className="text-[13px] font-semibold leading-tight" style={{ color: 'var(--ink)' }}>
+            {stageLabels[audit.status] || 'Processing...'}
+          </p>
+          <p className="text-[11px] mt-1" style={{ color: 'var(--m-muted)' }}>
+            Results will appear as they are ready. This page updates automatically.
+          </p>
+          {/* Progress bar */}
+          <div className="mt-2 h-1 w-full rounded-full overflow-hidden" style={{ background: 'color-mix(in srgb, var(--signal) 15%, transparent)' }}>
+            <div
+              className="h-full rounded-full transition-all duration-700 ease-out"
+              style={{ width: `${progressPct}%`, background: 'var(--signal)' }}
+            />
+          </div>
+        </div>
+      </div>
+
+      {/* Skeleton category cards */}
+      <div>
+        <div className="mb-2 flex items-center gap-2">
+          <Layers size={14} style={{ color: 'var(--m-muted)' }} />
+          <h4 className="text-[13px] font-semibold" style={{ color: 'var(--ink)' }}>Category scores</h4>
+          <span className="text-[11px]" style={{ color: 'var(--m-muted)' }}>populating</span>
+        </div>
+        <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-6 gap-3">
+          {Object.entries(CATEGORY_TINTS).map(([slug, tint]) => {
+            const CatIcon = CATEGORY_ICONS[slug] || Target;
+            const catDef = BRAND_AUDIT_CATEGORIES.find(c => c.slug === slug);
+            return (
+              <div
+                key={slug}
+                className="rounded-xl overflow-hidden flex flex-col"
+                style={{ background: tint.bg, border: `1px solid ${tint.border}` }}
+              >
+                <div className="flex items-start gap-2 px-3 pt-3 pb-2">
+                  <div
+                    className="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0"
+                    style={{ background: `${tint.dot}15` }}
+                  >
+                    <CatIcon size={14} style={{ color: tint.dot }} />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <h3 className="font-sans font-semibold text-[12px] leading-tight truncate" style={{ color: 'var(--ink)' }}>
+                      {catDef?.name || slug.replace(/_/g, ' ')}
+                    </h3>
+                    <p className="text-[10px] leading-tight mt-0.5" style={{ color: 'var(--m-muted)' }}>
+                      Auditing...
+                    </p>
+                  </div>
+                </div>
+                <div className="px-3 pb-3 pt-1">
+                  <div
+                    className="h-5 w-12 rounded-md shimmer-pulse"
+                    style={{ background: 'color-mix(in srgb, var(--ink) 6%, transparent)' }}
+                  />
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Skeleton findings placeholder */}
+      <div
+        className="rounded-xl p-4"
+        style={{ background: 'var(--card)', border: '1px solid var(--rule)' }}
+      >
+        <div className="flex items-center gap-2 mb-3">
+          <AlertTriangle size={14} style={{ color: 'var(--m-muted)' }} />
+          <span className="text-[13px] font-semibold" style={{ color: 'var(--ink)' }}>Findings</span>
+          <span className="text-[11px]" style={{ color: 'var(--m-muted)' }}>will appear here</span>
+        </div>
+        <div className="space-y-2">
+          <div className="h-4 w-3/4 rounded shimmer-pulse" style={{ background: 'color-mix(in srgb, var(--ink) 5%, transparent)' }} />
+          <div className="h-4 w-1/2 rounded shimmer-pulse" style={{ background: 'color-mix(in srgb, var(--ink) 5%, transparent)', animationDelay: '150ms' }} />
+          <div className="h-4 w-2/3 rounded shimmer-pulse" style={{ background: 'color-mix(in srgb, var(--ink) 5%, transparent)', animationDelay: '300ms' }} />
+        </div>
+      </div>
     </div>
   );
 }
