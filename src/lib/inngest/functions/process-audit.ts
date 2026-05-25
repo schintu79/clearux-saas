@@ -302,7 +302,10 @@ export const processAuditFn = inngest.createFunction(
         )
       }
 
-      // status === 'accessible' or 'partial' — proceed with full crawl
+      // status === 'accessible' or 'partial' — advance stage immediately
+      // so the UI doesn't stay stuck on "Preflight" during Inngest step overhead
+      await setStage(auditId, 'crawling')
+      await setProgress(auditId, 4)
     })
 
     // STEP 2: Crawl pages
@@ -313,7 +316,10 @@ export const processAuditFn = inngest.createFunction(
       await auditLog(auditId, 'crawl_started', 'info', `Crawling ${auditDetails.productUrl}`)
 
       const maxPages = auditDetails.plan === 'free_preview' ? 5 : auditDetails.plan === 'starter' ? 8 : 25
-      const crawlOutput = await crawlPages(auditDetails.productUrl, maxPages)
+      const crawlOutput = await crawlPages(auditDetails.productUrl, maxPages, async (pct, stage) => {
+        await setProgress(auditId, pct)
+        await setStage(auditId, stage)
+      })
       const crawledPages = crawlOutput.pages
       const crawlStats = crawlOutput.stats
 

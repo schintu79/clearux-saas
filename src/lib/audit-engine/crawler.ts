@@ -425,7 +425,7 @@ const USER_AGENTS = [
   'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.5 Safari/605.1.15',
 ]
 
-async function directFetch(url: string, timeoutMs: number = 20000): Promise<CrawledPage | null> {
+async function directFetch(url: string, timeoutMs: number = 12000): Promise<CrawledPage | null> {
   const controller = new AbortController()
   const timeout = setTimeout(() => controller.abort(), timeoutMs)
 
@@ -515,7 +515,7 @@ async function directFetch(url: string, timeoutMs: number = 20000): Promise<Craw
 
 /* ── Strategy 2: Jina Reader API (handles JS rendering + bot bypass) ── */
 
-async function jinaFetch(url: string, timeoutMs: number = 30000): Promise<CrawledPage | null> {
+async function jinaFetch(url: string, timeoutMs: number = 15000): Promise<CrawledPage | null> {
   const controller = new AbortController()
   const timeout = setTimeout(() => controller.abort(), timeoutMs)
   const fetchStart = Date.now()
@@ -635,7 +635,7 @@ async function jinaFetch(url: string, timeoutMs: number = 30000): Promise<Crawle
 
 async function googleCacheFetch(url: string): Promise<CrawledPage | null> {
   const controller = new AbortController()
-  const timeout = setTimeout(() => controller.abort(), 15000)
+  const timeout = setTimeout(() => controller.abort(), 8000)
   const fetchStart = Date.now()
 
   try {
@@ -734,6 +734,49 @@ async function fetchPageRobust(url: string): Promise<CrawledPage | null> {
 
 async function discoverSitemapUrls(baseUrl: string, hostname: string): Promise<URL[]> {
   const urls: URL[] = []
+  const MAX_SITEMAP_URLS = 200 // We only need enough to pick pages — not the whole index
+  const MAX_BODY_BYTES = 512_000 // 512 KB cap per sitemap file
+  const SITEMAP_TIMEOUT = 6000 // 6s per sitemap fetch (down from 10s)
+
+  /** Stream-read a response body with a byte cap to avoid downloading multi-MB sitemaps */
+  async function readCapped(res: Response): Promise<string> {
+    if (!res.body) return await res.text()
+    const reader = res.body.getReader()
+    const chunks: Uint8Array[] = []
+    let totalBytes = 0
+    while (true) {
+      const { done, value } = await reader.read()
+      if (done) break
+      chunks.push(value)
+      totalBytes += value.byteLength
+      if (totalBytes >= MAX_BODY_BYTES) {
+        reader.cancel()
+        break
+      }
+    }
+    return new TextDecoder().decode(Buffer.concat(chunks))
+  }
+
+  /** Extract URLs from an XML string, capped at MAX_SITEMAP_URLS */
+  function extractUrlsFromXml(xml: string): URL[] {
+    const found: URL[] = []
+    // Try <url><loc>...</loc></url> first, then bare <loc>
+    const locMatches = xml.match(/<loc>([^<]+)<\/loc>/gi)
+    if (!locMatches) return found
+    for (const locTag of locMatches) {
+      if (found.length >= MAX_SITEMAP_URLS) break
+      const m = locTag.match(/<loc>([^<]+)<\/loc>/i)
+      if (m) {
+        try {
+          const u = new URL(m[1].trim())
+          // Skip sitemap index entries (they point to other .xml files)
+          if (u.pathname.endsWith('.xml') || u.pathname.endsWith('.xml.gz')) continue
+          if (isSameHost(u.hostname, hostname)) found.push(u)
+        } catch { /* skip */ }
+      }
+    }
+    return found
+  }
 
   // Try common sitemap locations
   const sitemapCandidates = [
@@ -745,7 +788,7 @@ async function discoverSitemapUrls(baseUrl: string, hostname: string): Promise<U
   // Also check robots.txt for sitemap directives
   try {
     const controller = new AbortController()
-    const timeout = setTimeout(() => controller.abort(), 10000)
+    const timeout = setTimeout(() => controller.abort(), 5000)
     const robotsRes = await fetch(`${baseUrl}/robots.txt`, {
       headers: { 'User-Agent': USER_AGENTS[0] },
       signal: controller.signal,
@@ -756,10 +799,10 @@ async function discoverSitemapUrls(baseUrl: string, hostname: string): Promise<U
       const robotsTxt = await robotsRes.text()
       const sitemapMatches = robotsTxt.match(/^Sitemap:\s*(.+)$/gim)
       if (sitemapMatches) {
-        for (const line of sitemapMatches) {
+        for (const line of sitemapMatches.slice(0, 5)) { // Max 5 sitemaps from robots.txt
           const sitemapUrl = line.replace(/^Sitemap:\s*/i, '').trim()
           if (sitemapUrl && !sitemapCandidates.includes(sitemapUrl)) {
-            sitemapCandidates.unshift(sitemapUrl) // prioritise robots.txt sitemaps
+            sitemapCandidates.unshift(sitemapUrl)
           }
         }
       }
@@ -773,7 +816,7 @@ async function discoverSitemapUrls(baseUrl: string, hostname: string): Promise<U
 
     try {
       const controller = new AbortController()
-      const timeout = setTimeout(() => controller.abort(), 10000)
+      const timeout = setTimeout(() => controller.abort(), SITEMAP_TIMEOUT)
       const res = await fetch(sitemapUrl, {
         headers: { 'User-Agent': USER_AGENTS[0], Accept: 'application/xml, text/xml, */*' },
         signal: controller.signal,
@@ -782,17 +825,17 @@ async function discoverSitemapUrls(baseUrl: string, hostname: string): Promise<U
 
       if (!res.ok) continue
 
-      const xml = await res.text()
+      const xml = await readCapped(res)
 
       // Check if this is a sitemap index (contains other sitemaps)
-      const sitemapIndexMatches = xml.match(/<sitemap>\s*<loc>([^<]+)<\/loc>/gi)
-      if (sitemapIndexMatches && sitemapIndexMatches.length > 0) {
-        // It's a sitemap index — fetch the first child sitemap
-        const firstChildMatch = sitemapIndexMatches[0].match(/<loc>([^<]+)<\/loc>/i)
+      const indexEntries = xml.match(/<sitemap>\s*<loc>([^<]+)<\/loc>/gi)
+      if (indexEntries && indexEntries.length > 0) {
+        // It's a sitemap index — fetch only the FIRST child sitemap (with cap)
+        const firstChildMatch = indexEntries[0].match(/<loc>([^<]+)<\/loc>/i)
         if (firstChildMatch) {
           try {
             const childController = new AbortController()
-            const childTimeout = setTimeout(() => childController.abort(), 10000)
+            const childTimeout = setTimeout(() => childController.abort(), SITEMAP_TIMEOUT)
             const childRes = await fetch(firstChildMatch[1].trim(), {
               headers: { 'User-Agent': USER_AGENTS[0] },
               signal: childController.signal,
@@ -800,52 +843,16 @@ async function discoverSitemapUrls(baseUrl: string, hostname: string): Promise<U
             clearTimeout(childTimeout)
 
             if (childRes.ok) {
-              const childXml = await childRes.text()
-              const childLocMatches = childXml.match(/<loc>([^<]+)<\/loc>/gi)
-              if (childLocMatches) {
-                for (const locTag of childLocMatches) {
-                  const locMatch = locTag.match(/<loc>([^<]+)<\/loc>/i)
-                  if (locMatch) {
-                    try {
-                      const u = new URL(locMatch[1].trim())
-                      if (isSameHost(u.hostname, hostname)) urls.push(u)
-                    } catch { /* skip */ }
-                  }
-                }
-              }
+              const childXml = await readCapped(childRes)
+              urls.push(...extractUrlsFromXml(childXml))
             }
           } catch { /* child sitemap fetch failed */ }
         }
       }
 
-      // Extract <loc> URLs from regular sitemap
-      const locMatches = xml.match(/<url>\s*<loc>([^<]+)<\/loc>/gi)
-      if (locMatches) {
-        for (const urlBlock of locMatches) {
-          const locMatch = urlBlock.match(/<loc>([^<]+)<\/loc>/i)
-          if (locMatch) {
-            try {
-              const u = new URL(locMatch[1].trim())
-              if (isSameHost(u.hostname, hostname)) urls.push(u)
-            } catch { /* skip */ }
-          }
-        }
-      }
-
-      // Some sitemaps just have <loc> without <url> wrapper
+      // Also extract URLs from this sitemap directly (if it's not just an index)
       if (urls.length === 0) {
-        const plainLocMatches = xml.match(/<loc>([^<]+)<\/loc>/gi)
-        if (plainLocMatches) {
-          for (const locTag of plainLocMatches) {
-            const locMatch = locTag.match(/<loc>([^<]+)<\/loc>/i)
-            if (locMatch) {
-              try {
-                const u = new URL(locMatch[1].trim())
-                if (isSameHost(u.hostname, hostname)) urls.push(u)
-              } catch { /* skip */ }
-            }
-          }
-        }
+        urls.push(...extractUrlsFromXml(xml))
       }
     } catch {
       // This sitemap URL failed — try next candidate
@@ -858,74 +865,52 @@ async function discoverSitemapUrls(baseUrl: string, hostname: string): Promise<U
 
 /* ── Strategy B: Common page path probing ────────────────── */
 
+// Trimmed to ~20 high-value paths (down from 80+). Sitemap + HTML links already
+// cover most pages. These are fallback probes for JS-heavy sites with no sitemap.
 const COMMON_PATHS = [
-  // Core pages
-  '/about', '/about-us', '/contact', '/contact-us', '/support',
-  '/pricing', '/plans', '/services', '/features', '/integrations',
-  '/blog', '/news', '/faq', '/faqs', '/help', '/help-center',
-  '/terms', '/terms-of-service', '/terms-and-conditions',
-  '/privacy', '/privacy-policy', '/cookie-policy', '/cookies',
-  '/products', '/solutions', '/team', '/careers', '/jobs',
-  '/case-studies', '/testimonials', '/reviews', '/customers',
-  '/how-it-works', '/why-us', '/demo', '/get-started', '/tour',
-  '/login', '/signup', '/register', '/sign-up', '/sign-in',
-  // E-commerce
-  '/shop', '/store', '/collections', '/categories', '/catalog',
-  '/cart', '/checkout', '/account', '/orders', '/wishlist',
-  // Documentation & resources
-  '/docs', '/documentation', '/resources', '/guides', '/tutorials',
-  '/changelog', '/release-notes', '/roadmap', '/status',
-  '/api', '/developers', '/partners', '/affiliates',
-  // Legal & trust
-  '/security', '/compliance', '/gdpr', '/accessibility',
-  '/sitemap', '/imprint', '/impressum', '/legal',
-  // Marketing
-  '/use-cases', '/industries', '/enterprise', '/startup',
-  '/webinar', '/webinars', '/events', '/podcast',
-  '/press', '/media', '/brand', '/community', '/forum',
+  '/about', '/contact', '/pricing', '/services', '/features',
+  '/blog', '/faq', '/help', '/products', '/solutions',
+  '/terms', '/privacy', '/careers', '/docs', '/resources',
+  '/how-it-works', '/demo', '/support', '/shop', '/store',
 ]
 
 async function probeCommonPaths(baseUrl: string, hostname: string): Promise<URL[]> {
   const found: URL[] = []
+  const PROBE_TIMEOUT = 4000 // 4s per probe (down from 8s)
 
-  // Probe in batches of 10 for speed (HEAD requests are lightweight)
-  for (let i = 0; i < COMMON_PATHS.length; i += 10) {
-    const batch = COMMON_PATHS.slice(i, i + 10)
-    const results = await Promise.all(
-      batch.map(async (path) => {
-        try {
-          const probeUrl = `${baseUrl}${path}`
-          const controller = new AbortController()
-          const timeout = setTimeout(() => controller.abort(), 8000)
+  // All 20 probes run in a single parallel batch (was 8 sequential batches of 10)
+  const results = await Promise.all(
+    COMMON_PATHS.map(async (path) => {
+      try {
+        const probeUrl = `${baseUrl}${path}`
+        const controller = new AbortController()
+        const timeout = setTimeout(() => controller.abort(), PROBE_TIMEOUT)
 
-          const res = await fetch(probeUrl, {
-            method: 'HEAD', // lightweight — just check if page exists
-            headers: { 'User-Agent': USER_AGENTS[0] },
-            signal: controller.signal,
-            redirect: 'follow',
-          })
+        const res = await fetch(probeUrl, {
+          method: 'HEAD',
+          headers: { 'User-Agent': USER_AGENTS[0] },
+          signal: controller.signal,
+          redirect: 'follow',
+        })
 
-          clearTimeout(timeout)
+        clearTimeout(timeout)
 
-          // Accept 200 responses, reject redirects to homepage (common SPA pattern)
-          if (res.ok) {
-            const finalUrl = new URL(res.url)
-            // Make sure it didn't redirect back to homepage or a catch-all
-            const isHomepageRedirect = finalUrl.pathname === '/' || normalizeUrlForDedup(finalUrl.toString()) === normalizeUrlForDedup(baseUrl + '/')
-            if (!isHomepageRedirect && isSameHost(finalUrl.hostname, hostname)) {
-              return new URL(probeUrl)
-            }
+        if (res.ok) {
+          const finalUrl = new URL(res.url)
+          const isHomepageRedirect = finalUrl.pathname === '/' || normalizeUrlForDedup(finalUrl.toString()) === normalizeUrlForDedup(baseUrl + '/')
+          if (!isHomepageRedirect && isSameHost(finalUrl.hostname, hostname)) {
+            return new URL(probeUrl)
           }
-          return null
-        } catch {
-          return null
         }
-      }),
-    )
+        return null
+      } catch {
+        return null
+      }
+    }),
+  )
 
-    for (const url of results) {
-      if (url) found.push(url)
-    }
+  for (const url of results) {
+    if (url) found.push(url)
   }
 
   console.log(`[crawler] Common path probing: found ${found.length} pages`)
@@ -1066,6 +1051,7 @@ async function fetchLinksOnly(url: string): Promise<URL[]> {
 export async function crawlPages(
   url: string,
   maxPages: number = 5,
+  onProgress?: (pct: number, stage: string) => Promise<void>,
 ): Promise<{ pages: CrawledPage[]; stats: CrawlStats }> {
   const pages: CrawledPage[] = []
   const visited = new Set<string>()
@@ -1137,6 +1123,7 @@ export async function crawlPages(
 
     pages.push(firstPage)
     markVisited(baseUrl.toString())
+    await onProgress?.(6, 'crawling') // Homepage fetched
     markVisited(firstPage.url) // also mark the actual resolved URL
 
     // If maxPages > 1, discover pages using ALL strategies in parallel
@@ -1144,8 +1131,11 @@ export async function crawlPages(
       // Use resolved hostname for discovery (so probed URLs match the actual site)
       const resolvedOrigin = `${baseUrl.protocol}//${baseHostname}`
 
-      // ── Run all 3 discovery strategies in parallel ──
-      const [sitemapUrls, commonPathUrls, htmlLinks] = await Promise.all([
+      // ── Run all 3 discovery strategies in parallel with a global 20s cap ──
+      const discoveryTimeout = new Promise<[URL[], URL[], URL[]]>((resolve) =>
+        setTimeout(() => resolve([[], [], []]), 20000)
+      )
+      const [sitemapUrls, commonPathUrls, htmlLinks] = await Promise.race([discoveryTimeout, Promise.all([
         // Strategy A: Sitemap discovery (try both original and resolved origins)
         (async () => {
           const urls = await discoverSitemapUrls(resolvedOrigin, baseHostname).catch(() => [] as URL[])
@@ -1187,7 +1177,7 @@ export async function crawlPages(
           // Deduplicate
           return [...new Map(allLinks.map((l) => [normalizeUrlForDedup(l.toString()), l])).values()]
         })(),
-      ])
+      ])])
 
       // Track discovery source counts for transparency
       discoverySources = {
@@ -1197,6 +1187,7 @@ export async function crawlPages(
       }
 
       console.log(`[crawler] Discovery results — sitemap: ${sitemapUrls.length}, common paths: ${commonPathUrls.length}, HTML links: ${htmlLinks.length}`)
+      await onProgress?.(8, 'crawling') // Discovery complete
       if (sitemapUrls.length > 0) console.log(`[crawler] Sitemap URLs: ${sitemapUrls.slice(0, 5).map(u => u.pathname).join(', ')}${sitemapUrls.length > 5 ? '...' : ''}`)
       if (commonPathUrls.length > 0) console.log(`[crawler] Common paths found: ${commonPathUrls.slice(0, 5).map(u => u.pathname).join(', ')}${commonPathUrls.length > 5 ? '...' : ''}`)
       if (htmlLinks.length > 0) console.log(`[crawler] HTML links found: ${htmlLinks.slice(0, 5).map(u => u.pathname).join(', ')}${htmlLinks.length > 5 ? '...' : ''}`)
@@ -1303,6 +1294,10 @@ export async function crawlPages(
             level1Pages.push(page)
           }
         }
+
+        // Report progress: scale from 8% → 13% over the crawl batches
+        const crawlPct = Math.round(8 + (5 * Math.min(pages.length, maxPages) / maxPages))
+        await onProgress?.(crawlPct, 'crawling')
 
         // Brief rate limit between batches
         if (i + 3 < level1ToVisit.length && pages.length < maxPages) {
