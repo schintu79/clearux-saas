@@ -4,7 +4,7 @@ import Navbar from '@/components/layout/Navbar'
 import Footer from '@/components/layout/Footer'
 import { Sparkles, ArrowRight, Clock, DollarSign, Layers, Target } from 'lucide-react'
 
-const BASE_URL = 'https://fixpath.ai'
+const BASE_URL = 'https://www.fixpath.ai'
 
 export const metadata: Metadata = {
   title: 'Best UX Audit Tools in 2026: Compare Software & Approaches | Fixpath',
@@ -36,13 +36,18 @@ const jsonLd = {
   description:
     'A fair, detailed comparison of UX audit approaches: manual consultancies, single-purpose scanners, and comprehensive AI platforms.',
   url: `${BASE_URL}/best-ux-audit-tools`,
+  author: {
+    '@type': 'Organization',
+    name: 'Fixpath',
+    url: BASE_URL,
+  },
   publisher: {
     '@type': 'Organization',
     name: 'Fixpath',
     url: BASE_URL,
   },
   datePublished: '2025-02-01',
-  dateModified: '2026-04-24',
+  dateModified: '2026-05-25',
 }
 
 export default function BestUxAuditToolsPage() {

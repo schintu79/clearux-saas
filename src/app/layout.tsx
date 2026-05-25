@@ -55,7 +55,7 @@ const geistSans = Geist({
   display: 'swap',
 })
 
-const siteUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'https://fixpath.ai'
+const siteUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'https://www.fixpath.ai'
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),

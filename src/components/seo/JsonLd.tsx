@@ -1,4 +1,4 @@
-const siteUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'https://fixpath.ai'
+const siteUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'https://www.fixpath.ai'
 
 const FAQ_ITEMS = [
   { q: 'How long does an audit take?', a: 'Most audits complete in under 10 minutes. Our AI crawls your website, analyses every page against 96 checkpoints across six modules, and generates a full professional report with prioritised recommendations.' },

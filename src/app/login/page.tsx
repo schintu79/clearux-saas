@@ -222,6 +222,12 @@ function LoginContent() {
               </div>
             )}
 
+            {/* Trust reassurance — above form for security-conscious users */}
+            <p className="mb-8 text-[12px] font-sans text-m-muted leading-relaxed border border-rule/50 px-4 py-3 bg-paper-2">
+              Your data stays yours. Audit results are encrypted and private. We never sell or share your information.{' '}
+              <Link href="/privacy" className="underline hover:text-ink transition-colors">Privacy policy</Link>
+            </p>
+
             {/* Google OAuth */}
             <button
               type="button"
@@ -321,8 +327,9 @@ function LoginContent() {
               </button>
             </form>
 
+            {/* Google OAuth note */}
             <p className="mt-8 text-center text-[12px] font-sans text-m-muted leading-relaxed">
-              Your audit results are private and encrypted. We never share your data.
+              Google sign-in only accesses your email address. No other data is shared.
             </p>
 
             {/* Sign up link */}

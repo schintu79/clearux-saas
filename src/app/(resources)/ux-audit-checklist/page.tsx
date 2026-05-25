@@ -4,7 +4,7 @@ import Navbar from '@/components/layout/Navbar'
 import Footer from '@/components/layout/Footer'
 import { Sparkles, ArrowRight, CheckCircle } from 'lucide-react'
 
-const BASE_URL = 'https://fixpath.ai'
+const BASE_URL = 'https://www.fixpath.ai'
 
 export const metadata: Metadata = {
   title: 'UX Audit Checklist: 16 Categories Across 4 Pillars | Fixpath',
@@ -36,13 +36,18 @@ const jsonLd = {
   description:
     'The complete UX audit checklist used by Fixpath, covering accessibility, usability, conversion, and ethical design.',
   url: `${BASE_URL}/ux-audit-checklist`,
+  author: {
+    '@type': 'Organization',
+    name: 'Fixpath',
+    url: BASE_URL,
+  },
   publisher: {
     '@type': 'Organization',
     name: 'Fixpath',
     url: BASE_URL,
   },
   datePublished: '2025-01-20',
-  dateModified: '2026-04-24',
+  dateModified: '2026-05-25',
 }
 
 type Category = { name: string; description: string }

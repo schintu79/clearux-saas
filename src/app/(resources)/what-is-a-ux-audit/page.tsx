@@ -4,7 +4,7 @@ import Navbar from '@/components/layout/Navbar'
 import Footer from '@/components/layout/Footer'
 import { Sparkles, CheckCircle, ArrowRight } from 'lucide-react'
 
-const BASE_URL = 'https://fixpath.ai'
+const BASE_URL = 'https://www.fixpath.ai'
 
 export const metadata: Metadata = {
   title: 'What Is a UX Audit? Definition, Process & Why It Matters | Fixpath',
@@ -36,13 +36,18 @@ const jsonLd = {
   description:
     'A complete guide to understanding UX audits: what they cover, why they matter, and how to run one efficiently.',
   url: `${BASE_URL}/what-is-a-ux-audit`,
+  author: {
+    '@type': 'Organization',
+    name: 'Fixpath',
+    url: BASE_URL,
+  },
   publisher: {
     '@type': 'Organization',
     name: 'Fixpath',
     url: BASE_URL,
   },
   datePublished: '2025-01-15',
-  dateModified: '2026-04-24',
+  dateModified: '2026-05-25',
 }
 
 export default function WhatIsAUxAuditPage() {
