@@ -199,7 +199,7 @@ function FindPageInner() {
           ...b,
           groups: b.groups.filter((g) => {
             const f = g.primary as any;
-            return f.detection_source === 'pagespeed' || f.performance_metric_type || (f.category_label || '').toLowerCase().includes('speed') || (f.category_label || '').toLowerCase().includes('performance');
+            return f.detection_source === 'pagespeed_api' || f.detection_source === 'performance_checker' || f.performance_metric_type || (f.category || '').toLowerCase().includes('speed') || (f.category || '').toLowerCase().includes('performance');
           }),
         }))
         .filter((b) => b.groups.length > 0);

@@ -607,6 +607,7 @@ export const processAuditFn = inngest.createFunction(
               recommendation: f.recommendation,
               severity: f.severity,
               detection_source: 'pagespeed_api',
+              performance_metric_type: f.metricType || null,
               status: 'open' as const,
               position: 900 + i,
             }))

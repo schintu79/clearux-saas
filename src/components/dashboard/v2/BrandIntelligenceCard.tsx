@@ -2,7 +2,7 @@
 
 import React, { useCallback, useState } from 'react'
 import Link from 'next/link'
-import { Radio, ChevronRight, RefreshCw } from 'lucide-react'
+import { Radio, ChevronRight, RefreshCw, Eye, SmilePlus, BookOpen, Cpu } from 'lucide-react'
 import ScoreCircle from '@/components/ui/ScoreCircle'
 import type { BrandIntelligenceSummary } from '@/lib/audit-engine/brand-intelligence'
 
@@ -24,10 +24,16 @@ interface BrandIntelligenceCardProps {
 
 /* ── Helpers ────────────────────────────────────────── */
 
-function sentimentPill(score: number): { label: string; color: string } {
+function sentimentInfo(score: number): { label: string; color: string } {
   if (score >= 70) return { label: 'Positive', color: 'var(--ok)' }
   if (score >= 40) return { label: 'Neutral', color: 'var(--warn)' }
   return { label: 'Negative', color: 'var(--severe)' }
+}
+
+function valueColor(value: number): string {
+  if (value >= 70) return 'var(--ok)'
+  if (value >= 40) return 'var(--warn)'
+  return 'var(--severe)'
 }
 
 /* ── Component ──────────────────────────────────────── */
@@ -74,6 +80,44 @@ export default function BrandIntelligenceCard({
     } catch { /* ignore */ }
     setRefreshing(false)
   }, [auditId, refreshing, onXRayRefreshed])
+
+  // Build metric rows
+  const metrics: Array<{ label: string; Icon: React.ElementType; value: string; color: string }> = []
+
+  if (data) {
+    metrics.push({
+      label: 'AI Visibility',
+      Icon: Eye,
+      value: `${data.aiVisibility}%`,
+      color: valueColor(data.aiVisibility),
+    })
+
+    const sent = sentimentInfo(data.overallSentiment)
+    metrics.push({
+      label: 'Sentiment',
+      Icon: SmilePlus,
+      value: sent.label,
+      color: sent.color,
+    })
+  }
+
+  if (avgAiReadability != null) {
+    metrics.push({
+      label: 'AI Readability',
+      Icon: BookOpen,
+      value: `${avgAiReadability}/100`,
+      color: valueColor(avgAiReadability),
+    })
+  }
+
+  if (data || probes.length > 0) {
+    metrics.push({
+      label: 'Models tested',
+      Icon: Cpu,
+      value: `${data?.perModel.length ?? probes.length}`,
+      color: 'var(--ink)',
+    })
+  }
 
   return (
     <Link
@@ -129,66 +173,39 @@ export default function BrandIntelligenceCard({
         </div>
       ) : (
         <>
-          {/* Two equal columns: ScoreCircle left | Metrics right */}
-          <div className="grid grid-cols-2 gap-4 flex-1">
-            <div className="flex items-center justify-center">
-              <ScoreCircle score={primaryScore} size="small" px={120} strokeWidth={6} />
+          {/* Score circle left + metrics right */}
+          <div className="flex gap-5 flex-1 items-center">
+            {/* Left: ScoreCircle — pushed left, thicker stroke */}
+            <div className="flex-shrink-0">
+              <ScoreCircle score={primaryScore} size="small" px={100} strokeWidth={10} />
             </div>
 
-            <div className="flex flex-col justify-center space-y-2">
-              {/* AI Visibility */}
-              {data && (
-                <div className="flex items-center justify-between">
-                  <span className="text-[11px]" style={{ color: 'var(--m-muted)' }}>AI Visibility</span>
-                  <span className="text-[11px] font-semibold tabular-nums" style={{ color: 'var(--ink)' }}>
-                    {data.aiVisibility}%
-                  </span>
-                </div>
-              )}
-
-              {/* Sentiment */}
-              {data && (
-                <div className="flex items-center justify-between">
-                  <span className="text-[11px]" style={{ color: 'var(--m-muted)' }}>Sentiment</span>
+            {/* Right: Metric legend with icons */}
+            <div className="flex flex-col gap-2.5 flex-1 min-w-0">
+              {metrics.map(({ label, Icon, value, color }) => (
+                <div key={label} className="flex items-center gap-2">
                   <span
-                    className="text-[10px] font-semibold px-2 py-0.5 rounded-full"
-                    style={{
-                      color: sentimentPill(data.overallSentiment).color,
-                      background: `color-mix(in srgb, ${sentimentPill(data.overallSentiment).color} 10%, transparent)`,
-                    }}
+                    className="w-5 h-5 rounded flex items-center justify-center flex-shrink-0"
+                    style={{ background: `color-mix(in srgb, ${color} 12%, transparent)` }}
                   >
-                    {sentimentPill(data.overallSentiment).label}
+                    <Icon size={11} style={{ color }} />
                   </span>
-                </div>
-              )}
-
-              {/* AI Readability */}
-              {avgAiReadability != null && (
-                <div className="flex items-center justify-between">
-                  <span className="text-[11px]" style={{ color: 'var(--m-muted)' }}>AI Readability</span>
+                  <span className="text-[11px] flex-1 min-w-0 truncate" style={{ color: 'var(--m-muted)' }}>
+                    {label}
+                  </span>
                   <span
-                    className="text-[11px] font-semibold tabular-nums"
-                    style={{ color: avgAiReadability >= 70 ? 'var(--ok)' : avgAiReadability >= 40 ? 'var(--warn)' : 'var(--severe)' }}
+                    className="text-[11px] tabular-nums font-semibold flex-shrink-0"
+                    style={{ color }}
                   >
-                    {avgAiReadability}/100
+                    {value}
                   </span>
                 </div>
-              )}
-
-              {/* Models tested */}
-              {(data || probes.length > 0) && (
-                <div className="flex items-center justify-between">
-                  <span className="text-[11px]" style={{ color: 'var(--m-muted)' }}>Models tested</span>
-                  <span className="text-[11px] font-semibold tabular-nums" style={{ color: 'var(--ink)' }}>
-                    {data?.perModel.length ?? probes.length}
-                  </span>
-                </div>
-              )}
+              ))}
             </div>
           </div>
 
           {/* Footer */}
-          <div className="flex items-center justify-between mt-auto pt-3">
+          <div className="flex items-center justify-between mt-auto pt-3" style={{ borderTop: '1px solid var(--rule)' }}>
             <span
               className="text-[11px] font-semibold inline-flex items-center gap-1 group-hover:underline"
               style={{ color: 'var(--ink)' }}

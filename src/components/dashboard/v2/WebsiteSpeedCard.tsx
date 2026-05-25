@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useState } from 'react'
-import { Gauge, ArrowRight, Loader2, Play } from 'lucide-react'
+import { Gauge, ArrowRight, Loader2, Play, Zap, Move, MousePointerClick } from 'lucide-react'
 import ScoreCircle from '@/components/ui/ScoreCircle'
 import type { SpeedDataSummary, SpeedStrategyResult, SpeedMetric } from '@/types/database'
 
@@ -16,11 +16,17 @@ interface WebsiteSpeedCardProps {
 
 /* ── Helpers ────────────────────────────────────────── */
 
-function statusDot(status: SpeedMetric['status']): string {
+function statusColor(status: SpeedMetric['status']): string {
   if (status === 'good') return 'var(--ok)'
   if (status === 'needs_improvement') return 'var(--warn)'
   return 'var(--severe)'
 }
+
+const METRIC_CONFIG = [
+  { key: 'lcp' as const, label: 'Loading time', Icon: Zap },
+  { key: 'cls' as const, label: 'Visual stability', Icon: Move },
+  { key: 'inp' as const, label: 'Responsiveness', Icon: MousePointerClick },
+]
 
 /* ── Component ──────────────────────────────────────── */
 
@@ -130,51 +136,60 @@ export default function WebsiteSpeedCard({
         </div>
       ) : result && (
         <>
-          {/* Two equal columns: ScoreCircle left | Metrics right */}
-          <div className="grid grid-cols-2 gap-4 flex-1">
-            <div className="flex items-center justify-center">
-              <ScoreCircle score={result.score} size="small" px={120} strokeWidth={6} />
+          {/* Score circle left + metrics right */}
+          <div className="flex gap-5 flex-1 items-center">
+            {/* Left: ScoreCircle — pushed left, thicker stroke */}
+            <div className="flex-shrink-0">
+              <ScoreCircle score={result.score} size="small" px={100} strokeWidth={10} />
             </div>
 
-            <div className="flex flex-col justify-center space-y-2">
-              {([
-                { key: 'lcp', label: 'Loading time', desc: 'How fast main content appears' },
-                { key: 'cls', label: 'Visual stability', desc: 'How much layout shifts' },
-                { key: 'inp', label: 'Responsiveness', desc: 'How fast page reacts to clicks' },
-              ] as const).map(({ key, label, desc }) => {
+            {/* Right: Metric legend */}
+            <div className="flex flex-col gap-2.5 flex-1 min-w-0">
+              {METRIC_CONFIG.map(({ key, label, Icon }) => {
                 const metric = result.metrics[key]
+                const color = statusColor(metric.status)
                 return (
-                  <div key={key} className="flex items-center justify-between">
-                    <div className="flex items-center gap-1.5 min-w-0">
-                      <span className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ background: statusDot(metric.status) }} />
-                      <span className="text-[11px]" style={{ color: 'var(--m-muted)' }}>{label}</span>
-                    </div>
-                    <span className="text-[11px] tabular-nums font-semibold flex-shrink-0 ml-2" style={{ color: statusDot(metric.status) }}>
+                  <div key={key} className="flex items-center gap-2">
+                    <span
+                      className="w-5 h-5 rounded flex items-center justify-center flex-shrink-0"
+                      style={{ background: `color-mix(in srgb, ${color} 12%, transparent)` }}
+                    >
+                      <Icon size={11} style={{ color }} />
+                    </span>
+                    <span className="text-[11px] flex-1 min-w-0 truncate" style={{ color: 'var(--m-muted)' }}>
+                      {label}
+                    </span>
+                    <span
+                      className="text-[11px] tabular-nums font-semibold flex-shrink-0"
+                      style={{ color }}
+                    >
                       {metric.displayValue}
                     </span>
                   </div>
                 )
               })}
-
-              {issueCount > 0 && (
-                <p className="text-[10px] font-medium pt-0.5" style={{ color: 'var(--warn)' }}>
-                  {issueCount} issue{issueCount !== 1 ? 's' : ''} affecting speed
-                </p>
-              )}
             </div>
           </div>
 
-          {/* Footer */}
-          <div className="flex items-center justify-between mt-auto pt-3">
-            {onViewIssues && (
+          {/* Issue count + footer */}
+          <div className="flex items-center justify-between mt-auto pt-3" style={{ borderTop: '1px solid var(--rule)' }}>
+            {onViewIssues && issueCount > 0 ? (
+              <button
+                onClick={onViewIssues}
+                className="flex items-center gap-1 text-[11px] font-semibold transition-colors hover:opacity-80"
+                style={{ color: 'var(--warn)' }}
+              >
+                {issueCount} speed issue{issueCount !== 1 ? 's' : ''} found <ArrowRight size={11} />
+              </button>
+            ) : onViewIssues ? (
               <button
                 onClick={onViewIssues}
                 className="flex items-center gap-1 text-[11px] font-semibold transition-colors hover:opacity-80"
                 style={{ color: 'var(--ink)' }}
               >
-                View speed issues <ArrowRight size={11} />
+                View speed details <ArrowRight size={11} />
               </button>
-            )}
+            ) : <span />}
             {(activeSpeedData?.testedAt || (result as any)?.testedAt) && (
               <span className="text-[10px] ml-auto" style={{ color: 'var(--m-muted)' }}>
                 {new Date(activeSpeedData?.testedAt || (result as any)?.testedAt).toLocaleDateString()}
