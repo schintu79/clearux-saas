@@ -28,12 +28,23 @@ export async function GET(req: NextRequest) {
   // Verify the user owns this audit
   const { data: audit } = await db
     .from('audits')
-    .select('id, user_id, detected_industry')
+    .select('id, user_id, detected_industry, product_url, brand_name')
     .eq('id', auditId)
     .single()
 
   if (!audit || (audit as any).user_id !== user.id) {
     return NextResponse.json({ error: 'Not found' }, { status: 404 })
+  }
+
+  // Derive brand domain for snapshot filtering
+  const auditProductUrl = (audit as any).product_url as string | null
+  const auditBrandName = (audit as any).brand_name as string | null
+  let brandDomain: string | null = null
+  if (auditProductUrl) {
+    try { brandDomain = new URL(auditProductUrl.startsWith('http') ? auditProductUrl : `https://${auditProductUrl}`).hostname.replace(/^www\./, '') } catch {}
+  }
+  if (!brandDomain && auditBrandName) {
+    brandDomain = auditBrandName.toLowerCase().replace(/\s+/g, '-')
   }
 
   // Fetch all intelligence data in parallel
@@ -73,11 +84,18 @@ export async function GET(req: NextRequest) {
       .eq('status', 'open')
       .order('created_at', { ascending: false })
       .limit(20),
-    db.from('intelligence_snapshots')
-      .select('*')
-      .eq('user_id', user.id)
-      .order('snapshot_at', { ascending: true })
-      .limit(52),
+    brandDomain
+      ? db.from('intelligence_snapshots')
+          .select('*')
+          .eq('user_id', user.id)
+          .eq('brand_domain', brandDomain)
+          .order('snapshot_at', { ascending: true })
+          .limit(52)
+      : db.from('intelligence_snapshots')
+          .select('*')
+          .eq('user_id', user.id)
+          .order('snapshot_at', { ascending: true })
+          .limit(52),
   ])
 
   // Get industry benchmark position — prefer frozen snapshot from report

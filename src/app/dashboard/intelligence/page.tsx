@@ -241,6 +241,26 @@ export default function IntelligencePage() {
   const isBrandAudit = bundle?.audit && (bundle.audit as any).audit_type === 'brand_identity';
   const overallScore = bundle?.report?.overall_score ?? 0;
 
+  // Compute user's own module/pillar scores from the report
+  const userPillarScores = useMemo(() => {
+    const report = bundle?.report;
+    if (!report) return [];
+    const modules: Array<{ name: string; scoreKey: string }> = [
+      { name: 'Foundation', scoreKey: 'content_score' },
+      { name: 'Human Experience', scoreKey: 'ux_score' },
+      { name: 'Inclusive Design', scoreKey: 'mobile_score' },
+      { name: 'Future Readiness', scoreKey: 'ai_discoverability_score' },
+      { name: 'Brand Consistency', scoreKey: 'overall_score' },
+      { name: 'SEO Structure', scoreKey: 'conversion_score' },
+    ];
+    return modules
+      .map(m => ({ name: m.name, score: (report as any)[m.scoreKey] as number | null }))
+      .filter(m => m.score != null && m.score > 0);
+  }, [bundle?.report]);
+
+  // Detect whether Tier 2 human perception data actually has real content
+  const hasRealHumanData = (reviewData.length > 0 || redditMentions.length > 0 || webMentions.length > 0);
+
   // Competitor helpers
   const isDirty = useMemo(() => {
     if (drafts.length !== serverSnapshot.length) return true;
@@ -419,7 +439,7 @@ export default function IntelligencePage() {
           value={biSummary?.overallSentiment ?? null}
           suffix="/100"
           descriptor={biSummary?.overallSentiment != null ? sentimentLabel(biSummary.overallSentiment) : null}
-          dataSource={biSummary ? `Based on ${biSummary.perModel.length} AI model${biSummary.perModel.length !== 1 ? 's' : ''} + human signals` : null}
+          dataSource={biSummary ? `Based on ${biSummary.perModel.length} AI model${biSummary.perModel.length !== 1 ? 's' : ''}${hasRealHumanData ? ' + human signals' : ''}` : null}
           trend={trendIcon(latestSnap?.overall_sentiment, prevSnap?.overall_sentiment)}
           scrollTarget="sentiment-deep-dive"
           emptyMessage="Run an audit to measure how AI and humans feel about your brand."
@@ -442,13 +462,13 @@ export default function IntelligencePage() {
         {/* Human Sentiment */}
         <HeroMetricCard
           label="Human Sentiment"
-          value={humanSentimentScore}
+          value={hasRealHumanData ? humanSentimentScore : null}
           suffix="/100"
-          descriptor={humanSentimentScore != null ? sentimentLabel(humanSentimentScore) : null}
-          dataSource={humanSignalCount > 0 ? `Based on ${humanSignalCount} signal${humanSignalCount !== 1 ? 's' : ''}` : null}
+          descriptor={hasRealHumanData && humanSentimentScore != null ? sentimentLabel(humanSentimentScore) : null}
+          dataSource={hasRealHumanData && humanSignalCount > 0 ? `Based on ${humanSignalCount} signal${humanSignalCount !== 1 ? 's' : ''}` : null}
           trend={null}
           scrollTarget="human-signals"
-          emptyMessage="Human sentiment is collected automatically from reviews, Reddit, and web mentions during audits. No data was found for this brand yet."
+          emptyMessage="No external review or social data found for this brand. Human sentiment requires reviews, Reddit mentions, or web mentions to calculate."
         />
       </div>
 
@@ -500,13 +520,13 @@ export default function IntelligencePage() {
               />
               <SentimentSourceCard
                 label="Human Reviews"
-                score={hp?.reviewScore != null ? Math.round(hp.reviewScore * 20) : null}
-                source={hp?.reviewCount ? `From ${hp.reviewCount} review${hp.reviewCount !== 1 ? 's' : ''}` : 'No reviews found for this brand'}
+                score={hasRealHumanData && reviewData.length > 0 && hp?.reviewScore != null ? Math.round(hp.reviewScore * 20) : null}
+                source={reviewData.length > 0 ? `From ${reviewData.length} review${reviewData.length !== 1 ? 's' : ''}` : 'No review data collected yet'}
               />
               <SentimentSourceCard
                 label="Social Mentions"
-                score={hp?.socialSentiment ?? null}
-                source={hp?.redditMentionCount || hp?.webMentionCount ? `From ${(hp?.redditMentionCount ?? 0) + (hp?.webMentionCount ?? 0)} mention${((hp?.redditMentionCount ?? 0) + (hp?.webMentionCount ?? 0)) !== 1 ? 's' : ''}` : 'No mentions found for this brand'}
+                score={hasRealHumanData && (redditMentions.length > 0 || webMentions.length > 0) ? (hp?.socialSentiment ?? null) : null}
+                source={redditMentions.length > 0 || webMentions.length > 0 ? `From ${redditMentions.length + webMentions.length} mention${(redditMentions.length + webMentions.length) !== 1 ? 's' : ''}` : 'No social or web mentions collected yet'}
               />
             </div>
 
@@ -526,10 +546,16 @@ export default function IntelligencePage() {
             )}
 
             {trendSnapshots.length < 2 && biSummary && (
-              <div className="mb-5 px-4 py-3 rounded-lg text-center" style={{ background: 'color-mix(in srgb, var(--ink) 3%, transparent)' }}>
-                <p className="text-[11px]" style={{ color: 'var(--m-muted)' }}>
-                  More data builds over time. Run additional audits to see your sentiment trend.
-                </p>
+              <div className="mb-5 px-4 py-4 rounded-lg" style={{ background: 'color-mix(in srgb, var(--ink) 3%, transparent)' }}>
+                <div className="flex items-start gap-3">
+                  <TrendingUp size={16} style={{ color: 'var(--m-muted)' }} className="mt-0.5 flex-shrink-0" />
+                  <div>
+                    <p className="text-[12px] font-semibold" style={{ color: 'var(--ink)' }}>Sentiment trends build over time</p>
+                    <p className="text-[11px] mt-1" style={{ color: 'var(--m-muted)' }}>
+                      Fixpath tracks your brand intelligence scores after each audit. Run a second audit in a few weeks to start seeing how your scores change over time.
+                    </p>
+                  </div>
+                </div>
               </div>
             )}
 
@@ -548,7 +574,7 @@ export default function IntelligencePage() {
                         <span className="text-[9px] ml-auto" style={{ color: 'var(--m-muted)' }}>AI</span>
                       </li>
                     ))}
-                    {hp?.topPositiveThemes?.slice(0, 3).map((t: any, i: number) => (
+                    {hasRealHumanData && hp?.topPositiveThemes?.slice(0, 3).map((t: any, i: number) => (
                       <li key={`h-${i}`} className="flex items-center gap-2 text-[12px] px-2.5 py-1.5 rounded-lg" style={{ background: 'color-mix(in srgb, var(--ok) 5%, transparent)', color: 'var(--ink)' }}>
                         <ThumbsUp size={11} style={{ color: 'var(--ok)' }} />
                         <span>{t.theme}</span>
@@ -573,7 +599,7 @@ export default function IntelligencePage() {
                         <span className="text-[9px] ml-auto" style={{ color: 'var(--m-muted)' }}>AI</span>
                       </li>
                     ))}
-                    {hp?.topNegativeThemes?.slice(0, 3).map((t: any, i: number) => (
+                    {hasRealHumanData && hp?.topNegativeThemes?.slice(0, 3).map((t: any, i: number) => (
                       <li key={`h-${i}`} className="flex items-center gap-2 text-[12px] px-2.5 py-1.5 rounded-lg" style={{ background: 'color-mix(in srgb, var(--severe) 5%, transparent)', color: 'var(--ink)' }}>
                         <ThumbsDown size={11} style={{ color: 'var(--severe)' }} />
                         <span>{t.theme}</span>
@@ -619,21 +645,14 @@ export default function IntelligencePage() {
                 value={biSummary.shareOfVoice}
                 isUser
               />
-              {scoredDrafts.map(c => {
-                const modelSov = biSummary.perModel.length > 0
-                  ? Math.round(biSummary.perModel.reduce((s, m) => s + m.shareOfVoice, 0) / biSummary.perModel.length)
-                  : null;
-                // Estimate competitor share from remaining share
-                const remainingShare = 100 - (biSummary.shareOfVoice ?? 0);
-                const perCompetitor = scoredDrafts.length > 0 ? Math.round(remainingShare / scoredDrafts.length) : 0;
-                return (
-                  <ShareBar
-                    key={c.id}
-                    label={c.name || c.domain}
-                    value={perCompetitor}
-                  />
-                );
-              })}
+              {scoredDrafts.map(c => (
+                <ShareBar
+                  key={c.id}
+                  label={c.name || c.domain}
+                  value={null}
+                  note="Requires individual audit"
+                />
+              ))}
             </div>
 
             {/* Per-model share of voice if available */}
@@ -668,20 +687,26 @@ export default function IntelligencePage() {
             )}
           </>
         ) : biSummary?.shareOfVoice != null && scoredDrafts.length === 0 ? (
-          <div className="rounded-lg p-5 text-center" style={{ background: 'color-mix(in srgb, var(--ink) 3%, transparent)' }}>
-            <BarChart3 size={20} style={{ color: 'var(--m-muted)' }} className="mx-auto mb-2 opacity-50" />
-            <p className="text-[13px] font-semibold" style={{ color: 'var(--ink)' }}>Add competitors to unlock Share of Voice comparison</p>
-            <p className="text-[12px] mt-1 mb-3" style={{ color: 'var(--m-muted)' }}>
-              Share of Voice requires tracking at least one competitor and collecting mention data over time.
-            </p>
-            <button
-              type="button"
-              onClick={() => { setShowCompetitorEditor(true); document.getElementById('competitive-benchmark')?.scrollIntoView({ behavior: 'smooth' }); }}
-              className="inline-flex items-center gap-1.5 text-[12px] font-semibold px-3 py-1.5 rounded-md"
-              style={{ color: 'var(--card)', background: 'var(--ink)' }}
-            >
-              <Plus size={11} /> Add competitors
-            </button>
+          <div className="rounded-lg p-5" style={{ background: 'color-mix(in srgb, var(--ink) 3%, transparent)' }}>
+            <div className="flex items-start gap-3">
+              <BarChart3 size={18} style={{ color: 'var(--m-muted)' }} className="mt-0.5 flex-shrink-0" />
+              <div>
+                <p className="text-[13px] font-semibold" style={{ color: 'var(--ink)' }}>
+                  Your brand&apos;s share of voice: <span className="tabular-nums">{biSummary.shareOfVoice}%</span>
+                </p>
+                <p className="text-[12px] mt-1" style={{ color: 'var(--m-muted)' }}>
+                  Add competitors in the Competitive Benchmark section below to see a side-by-side comparison. Each competitor needs its own audit to measure their share of voice accurately.
+                </p>
+                <button
+                  type="button"
+                  onClick={() => { document.getElementById('competitive-benchmark')?.scrollIntoView({ behavior: 'smooth' }); }}
+                  className="inline-flex items-center gap-1.5 text-[12px] font-semibold mt-2 hover:underline"
+                  style={{ color: 'var(--ink)' }}
+                >
+                  Go to Competitive Benchmark <ArrowDown size={11} />
+                </button>
+              </div>
+            </div>
           </div>
         ) : (
           <EmptySection
@@ -756,17 +781,20 @@ export default function IntelligencePage() {
                     competitors={scoredDrafts.map(c => c.score)}
                   />
                   {/* Pillar scores if available */}
-                  {pillarNames.map(pillar => (
-                    <BenchmarkRow
-                      key={pillar}
-                      label={pillar}
-                      userValue={null}
-                      competitors={scoredDrafts.map(c => {
-                        const p = c.pillarScores?.find(ps => ps.name === pillar);
-                        return p ? p.score : null;
-                      })}
-                    />
-                  ))}
+                  {pillarNames.map(pillar => {
+                    const userPillar = userPillarScores.find(p => p.name === pillar);
+                    return (
+                      <BenchmarkRow
+                        key={pillar}
+                        label={pillar}
+                        userValue={userPillar?.score ?? null}
+                        competitors={scoredDrafts.map(c => {
+                          const p = c.pillarScores?.find(ps => ps.name === pillar);
+                          return p ? p.score : null;
+                        })}
+                      />
+                    );
+                  })}
                 </tbody>
               </table>
             </div>
@@ -980,69 +1008,93 @@ export default function IntelligencePage() {
             )}
           </>
         ) : (
-          <EmptySection
-            icon={<Users size={20} />}
-            message="No human signals found for this brand yet. Reviews, Reddit mentions, and web mentions are collected automatically during audits when external data is available."
-          />
+          <div className="rounded-lg p-5" style={{ background: 'color-mix(in srgb, var(--ink) 3%, transparent)' }}>
+            <div className="flex items-start gap-3">
+              <Users size={18} style={{ color: 'var(--m-muted)' }} className="mt-0.5 flex-shrink-0" />
+              <div>
+                <p className="text-[13px] font-semibold" style={{ color: 'var(--ink)' }}>No human signals found for this brand</p>
+                <p className="text-[12px] mt-1" style={{ color: 'var(--m-muted)' }}>
+                  Human signals (reviews, Reddit mentions, web mentions) are collected automatically during audits. This section will populate when external review platforms, social media, or web mentions reference your brand.
+                </p>
+                <p className="text-[11px] mt-2" style={{ color: 'var(--m-muted)' }}>
+                  For newer or less-established brands, it is normal for this section to be empty.
+                </p>
+              </div>
+            </div>
+          </div>
         )}
       </section>
 
       {/* ═══════════════════════════════════════════════════════════
           Category Visibility + Content Gaps
          ═══════════════════════════════════════════════════════════ */}
-      {(promptResults.length > 0 || contentGaps.length > 0) && (
-        <section className="rounded-xl p-5 mb-4" style={{ background: 'var(--card)', border: '1px solid var(--rule)' }}>
-          <div className="flex items-center gap-2 mb-1">
-            <Target size={14} style={{ color: 'var(--ink)' }} />
-            <h2 className="text-[14px] font-semibold" style={{ color: 'var(--ink)' }}>Category Visibility</h2>
-          </div>
-          <p className="text-[12px] mb-4" style={{ color: 'var(--m-muted)' }}>
-            How visible your brand is when AI answers non-branded category questions.
-          </p>
+      <section className="rounded-xl p-5 mb-4" style={{ background: 'var(--card)', border: '1px solid var(--rule)' }}>
+        <div className="flex items-center gap-2 mb-1">
+          <Target size={14} style={{ color: 'var(--ink)' }} />
+          <h2 className="text-[14px] font-semibold" style={{ color: 'var(--ink)' }}>Category Visibility</h2>
+        </div>
+        <p className="text-[12px] mb-4" style={{ color: 'var(--m-muted)' }}>
+          How visible your brand is when AI answers non-branded category questions.
+        </p>
 
-          {hp?.promptLibraryVisibility != null && (
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 mb-4">
-              <div className="px-3 py-2.5 rounded-lg" style={{ background: 'color-mix(in srgb, var(--ink) 3%, transparent)' }}>
-                <p className="text-[10px] font-medium uppercase tracking-[0.05em] mb-1" style={{ color: 'var(--m-muted)' }}>Category visibility</p>
-                <p className="text-[18px] font-bold tabular-nums leading-tight" style={{ color: scoreColorVar(hp.promptLibraryVisibility) }}>{hp.promptLibraryVisibility}%</p>
-                <p className="text-[10px] mt-0.5" style={{ color: 'var(--m-muted)' }}>{promptResults.length} prompts tested</p>
+        {promptResults.length > 0 || contentGaps.length > 0 ? (
+          <>
+            {hp?.promptLibraryVisibility != null && (
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 mb-4">
+                <div className="px-3 py-2.5 rounded-lg" style={{ background: 'color-mix(in srgb, var(--ink) 3%, transparent)' }}>
+                  <p className="text-[10px] font-medium uppercase tracking-[0.05em] mb-1" style={{ color: 'var(--m-muted)' }}>Category visibility</p>
+                  <p className="text-[18px] font-bold tabular-nums leading-tight" style={{ color: scoreColorVar(hp.promptLibraryVisibility) }}>{hp.promptLibraryVisibility}%</p>
+                  <p className="text-[10px] mt-0.5" style={{ color: 'var(--m-muted)' }}>{promptResults.length} prompts tested</p>
+                </div>
+                <div className="px-3 py-2.5 rounded-lg" style={{ background: 'color-mix(in srgb, var(--ink) 3%, transparent)' }}>
+                  <p className="text-[10px] font-medium uppercase tracking-[0.05em] mb-1" style={{ color: 'var(--m-muted)' }}>Content gaps</p>
+                  <p className="text-[18px] font-bold tabular-nums leading-tight" style={{ color: 'var(--ink)' }}>{contentGaps.length}</p>
+                  <p className="text-[10px] mt-0.5" style={{ color: 'var(--m-muted)' }}>Opportunities to publish</p>
+                </div>
               </div>
-              <div className="px-3 py-2.5 rounded-lg" style={{ background: 'color-mix(in srgb, var(--ink) 3%, transparent)' }}>
-                <p className="text-[10px] font-medium uppercase tracking-[0.05em] mb-1" style={{ color: 'var(--m-muted)' }}>Content gaps</p>
-                <p className="text-[18px] font-bold tabular-nums leading-tight" style={{ color: 'var(--ink)' }}>{contentGaps.length}</p>
-                <p className="text-[10px] mt-0.5" style={{ color: 'var(--m-muted)' }}>Opportunities to publish</p>
-              </div>
-            </div>
-          )}
+            )}
 
-          {contentGaps.length > 0 && (
-            <div className="mt-3">
-              <h3 className="text-[11px] font-semibold uppercase tracking-[0.06em] mb-2" style={{ color: 'var(--ink)' }}>Content to publish</h3>
-              <div className="space-y-2">
-                {contentGaps.slice(0, 5).map((gap: any, i: number) => (
-                  <div key={i} className="px-3 py-2.5 rounded-lg" style={{ background: 'color-mix(in srgb, var(--ink) 3%, transparent)' }}>
-                    <div className="flex items-start gap-2">
-                      <FileText size={11} className="mt-0.5 flex-shrink-0" style={{ color: 'var(--ink)' }} />
-                      <div className="flex-1 min-w-0">
-                        <p className="text-[11px] font-medium" style={{ color: 'var(--ink)' }}>{gap.recommended_topic}</p>
-                        <div className="flex items-center gap-2 mt-0.5">
-                          <span className="text-[10px] capitalize" style={{ color: 'var(--m-muted)' }}>{(gap.recommended_format || '').replace(/_/g, ' ')}</span>
-                          <span className="text-[10px]" style={{ color: 'var(--m-muted)' }}>{gap.target_word_count} words</span>
-                          <span className="text-[9px] font-semibold uppercase px-1.5 py-0.5 rounded-full" style={{
-                            color: gap.estimated_impact === 'high' ? 'var(--severe)' : gap.estimated_impact === 'medium' ? 'var(--warn)' : 'var(--m-muted)',
-                            background: gap.estimated_impact === 'high' ? 'color-mix(in srgb, var(--severe) 10%, transparent)' : gap.estimated_impact === 'medium' ? 'color-mix(in srgb, var(--warn) 10%, transparent)' : 'color-mix(in srgb, var(--ink) 6%, transparent)',
-                          }}>{gap.estimated_impact}</span>
+            {contentGaps.length > 0 && (
+              <div className="mt-3">
+                <h3 className="text-[11px] font-semibold uppercase tracking-[0.06em] mb-2" style={{ color: 'var(--ink)' }}>Content to publish</h3>
+                <div className="space-y-2">
+                  {contentGaps.slice(0, 5).map((gap: any, i: number) => (
+                    <div key={i} className="px-3 py-2.5 rounded-lg" style={{ background: 'color-mix(in srgb, var(--ink) 3%, transparent)' }}>
+                      <div className="flex items-start gap-2">
+                        <FileText size={11} className="mt-0.5 flex-shrink-0" style={{ color: 'var(--ink)' }} />
+                        <div className="flex-1 min-w-0">
+                          <p className="text-[11px] font-medium" style={{ color: 'var(--ink)' }}>{gap.recommended_topic}</p>
+                          <div className="flex items-center gap-2 mt-0.5">
+                            <span className="text-[10px] capitalize" style={{ color: 'var(--m-muted)' }}>{(gap.recommended_format || '').replace(/_/g, ' ')}</span>
+                            <span className="text-[10px]" style={{ color: 'var(--m-muted)' }}>{gap.target_word_count} words</span>
+                            <span className="text-[9px] font-semibold uppercase px-1.5 py-0.5 rounded-full" style={{
+                              color: gap.estimated_impact === 'high' ? 'var(--severe)' : gap.estimated_impact === 'medium' ? 'var(--warn)' : 'var(--m-muted)',
+                              background: gap.estimated_impact === 'high' ? 'color-mix(in srgb, var(--severe) 10%, transparent)' : gap.estimated_impact === 'medium' ? 'color-mix(in srgb, var(--warn) 10%, transparent)' : 'color-mix(in srgb, var(--ink) 6%, transparent)',
+                            }}>{gap.estimated_impact}</span>
+                          </div>
+                          {gap.recommended_angle && <p className="text-[10px] mt-1" style={{ color: 'var(--m-muted)' }}>{gap.recommended_angle}</p>}
                         </div>
-                        {gap.recommended_angle && <p className="text-[10px] mt-1" style={{ color: 'var(--m-muted)' }}>{gap.recommended_angle}</p>}
                       </div>
                     </div>
-                  </div>
-                ))}
+                  ))}
+                </div>
+              </div>
+            )}
+          </>
+        ) : (
+          <div className="rounded-lg p-4" style={{ background: 'color-mix(in srgb, var(--ink) 3%, transparent)' }}>
+            <div className="flex items-start gap-3">
+              <Target size={16} style={{ color: 'var(--m-muted)' }} className="mt-0.5 flex-shrink-0" />
+              <div>
+                <p className="text-[12px] font-semibold" style={{ color: 'var(--ink)' }}>No category prompts tested yet</p>
+                <p className="text-[11px] mt-1" style={{ color: 'var(--m-muted)' }}>
+                  Category visibility measures how often AI recommends your brand for non-branded queries in your industry. This data is generated during audits when your brand has enough online presence to test against.
+                </p>
               </div>
             </div>
-          )}
-        </section>
-      )}
+          </div>
+        )}
+      </section>
 
       {/* ═══════════════════════════════════════════════════════════
           Section 6 — Fix & Improve Panel
@@ -1062,11 +1114,17 @@ export default function IntelligencePage() {
             ))}
           </div>
         ) : (
-          <EmptySection
-            icon={<Wrench size={20} />}
-            message="Fixes are generated from your intelligence data. Run a full intelligence scan to unlock recommendations."
-            action={{ label: 'Run scan', href: '/dashboard/new-audit' }}
-          />
+          <div className="rounded-lg p-4" style={{ background: 'color-mix(in srgb, var(--ink) 3%, transparent)' }}>
+            <div className="flex items-start gap-3">
+              <Wrench size={16} style={{ color: 'var(--m-muted)' }} className="mt-0.5 flex-shrink-0" />
+              <div>
+                <p className="text-[12px] font-semibold" style={{ color: 'var(--ink)' }}>No recommendations generated yet</p>
+                <p className="text-[11px] mt-1" style={{ color: 'var(--m-muted)' }}>
+                  Recommendations are generated when Fixpath detects patterns in your audit findings that match known improvement strategies. As your intelligence data grows over multiple audits, actionable fixes will appear here.
+                </p>
+              </div>
+            </div>
+          </div>
         )}
       </section>
 
@@ -1182,18 +1240,26 @@ function SentimentSourceCard({ label, score, source }: { label: string; score: n
 }
 
 /** Share of Voice horizontal bar */
-function ShareBar({ label, value, isUser }: { label: string; value: number; isUser?: boolean }) {
+function ShareBar({ label, value, isUser, note }: { label: string; value: number | null; isUser?: boolean; note?: string }) {
   return (
     <div className="flex items-center gap-3">
       <span className={`text-[11px] w-28 truncate ${isUser ? 'font-semibold' : 'font-medium'}`} style={{ color: isUser ? 'var(--ink)' : 'var(--m-muted)' }}>
         {label}
       </span>
-      <div className="flex-1 h-3 rounded-full overflow-hidden" style={{ background: 'color-mix(in srgb, var(--ink) 5%, transparent)' }}>
-        <div className="h-full rounded-full transition-all" style={{ width: `${Math.min(value, 100)}%`, background: isUser ? 'var(--ink)' : 'color-mix(in srgb, var(--ink) 25%, transparent)' }} />
-      </div>
-      <span className="text-[11px] tabular-nums font-semibold w-10 text-right" style={{ color: isUser ? 'var(--ink)' : 'var(--m-muted)' }}>
-        {value}%
-      </span>
+      {value != null ? (
+        <>
+          <div className="flex-1 h-3 rounded-full overflow-hidden" style={{ background: 'color-mix(in srgb, var(--ink) 5%, transparent)' }}>
+            <div className="h-full rounded-full transition-all" style={{ width: `${Math.min(value, 100)}%`, background: isUser ? 'var(--ink)' : 'color-mix(in srgb, var(--ink) 25%, transparent)' }} />
+          </div>
+          <span className="text-[11px] tabular-nums font-semibold w-10 text-right" style={{ color: isUser ? 'var(--ink)' : 'var(--m-muted)' }}>
+            {value}%
+          </span>
+        </>
+      ) : (
+        <span className="flex-1 text-[10px] italic" style={{ color: 'var(--m-muted)' }}>
+          {note || 'No data'}
+        </span>
+      )}
     </div>
   );
 }
