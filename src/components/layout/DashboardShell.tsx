@@ -166,7 +166,7 @@ const DashboardShell: React.FC<DashboardShellProps> = ({ children }) => {
     const [{ data: audits }, brandsRes] = await Promise.all([
       supabase
         .from('audits')
-        .select('id, product_url, completed_at, created_at, status, brand_identity_id')
+        .select('id, product_url, completed_at, created_at, status, brand_identity_id, audit_type')
         .eq('user_id', user.id)
         .is('deleted_at', null)
         .order('completed_at', { ascending: false, nullsFirst: false } as any)
@@ -181,11 +181,18 @@ const DashboardShell: React.FC<DashboardShellProps> = ({ children }) => {
       if (a.brand_identity_id) brandIdsWithAudits.add(a.brand_identity_id);
     }
 
-    // Build a set of hostnames that already have a matching brand_identity
-    // so we can suppress standalone site entries for those domains.
+    // Build a set of hostnames that have a brand_identity AND at least one
+    // brand_identity-type audit. Website audits auto-create brand records but
+    // should still appear as site entries in the sidebar.
+    const brandIdsWithBrandAudits = new Set<string>();
+    for (const a of (audits || []) as any[]) {
+      if (a.brand_identity_id && a.audit_type === 'brand_identity') {
+        brandIdsWithBrandAudits.add(a.brand_identity_id);
+      }
+    }
     const brandHostnames = new Set<string>();
     for (const b of (brandsRes?.identities || []) as any[]) {
-      if (b.website_url) {
+      if (b.website_url && brandIdsWithBrandAudits.has(b.id)) {
         try {
           const bHost = new URL(b.website_url).hostname.replace(/^www\./, '');
           if (bHost) brandHostnames.add(bHost);
@@ -212,29 +219,39 @@ const DashboardShell: React.FC<DashboardShellProps> = ({ children }) => {
     }
     const siteEntries = Array.from(byDomain.values());
 
-    const brandEntries: SiteEntry[] = ((brandsRes?.identities || []) as any[]).map((b: any) => {
-      // If this brand has a website_url, show the hostname so the user
-      // recognises it as their website audit rather than a standalone brand.
-      let brandHost: string | null = null;
-      if (b.website_url) {
-        try { brandHost = new URL(b.website_url).hostname.replace(/^www\./, ''); } catch {}
-      }
-      return {
-        kind: 'brand' as const,
-        id: `brand:${b.id}`,
-        label: b.name || brandHost || 'Untitled brand',
-        sub: brandHost ? `Website` : 'Brand identity',
-        // Store the hostname so the icon renderer can show a favicon
-        hostname: brandHost || undefined,
-        hasBrandAudits: brandIdsWithAudits.has(b.id),
-      };
-    });
+    // Only show brand entries for brands that have actual brand_identity audits
+    // or were explicitly created (not auto-created from website audits).
+    // Auto-created brands without brand_identity audits show as site entries instead.
+    const brandEntries: SiteEntry[] = ((brandsRes?.identities || []) as any[])
+      .filter((b: any) => {
+        // Show if the brand has a brand_identity audit
+        if (brandIdsWithBrandAudits.has(b.id)) return true;
+        // Show if the brand has no website_url (pure brand, not auto-created)
+        if (!b.website_url) return true;
+        // Hide auto-created brands that only have website audits — they show as site entries
+        return false;
+      })
+      .map((b: any) => {
+        let brandHost: string | null = null;
+        if (b.website_url) {
+          try { brandHost = new URL(b.website_url).hostname.replace(/^www\./, ''); } catch {}
+        }
+        return {
+          kind: 'brand' as const,
+          id: `brand:${b.id}`,
+          label: b.name || brandHost || 'Untitled brand',
+          sub: brandHost ? `Website` : 'Brand identity',
+          hostname: brandHost || undefined,
+          hasBrandAudits: brandIdsWithAudits.has(b.id),
+        };
+      });
 
     // Build a lookup from hostname → brand entry id so we can auto-migrate
-    // stale site:host selections to their brand equivalent.
+    // stale site:host selections to their brand equivalent — but only for
+    // brands that have actual brand_identity audits (not auto-created ones).
     const hostToBrandEntryId = new Map<string, string>();
     for (const b of (brandsRes?.identities || []) as any[]) {
-      if (b.website_url) {
+      if (b.website_url && brandIdsWithBrandAudits.has(b.id)) {
         try {
           const bHost = new URL(b.website_url).hostname.replace(/^www\./, '');
           if (bHost) hostToBrandEntryId.set(bHost, `brand:${b.id}`);

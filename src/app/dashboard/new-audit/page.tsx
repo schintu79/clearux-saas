@@ -319,22 +319,21 @@ const NewAuditInner: React.FC = () => {
 
   // Persist the brand/site the user just audited so Overview opens
   // scoped to it after redirect (post-credit or post-Stripe).
-  // Tracks the resolved brandId so website audits also persist as brands.
   const resolvedBrandIdRef = useRef<string | null>(null);
   const persistAuditSelection = () => {
-    // Always prefer brand-based selection so the sidebar shows a proper brand tab
-    const brandId = resolvedBrandIdRef.current || selectedBrandId;
-    if (brandId) {
-      writeSelection({ kind: 'brand', brandId });
-      return;
-    }
-    // Fallback for website audits without a brand (shouldn't happen after auto-create)
+    // Website audits → persist as site entry so sidebar shows them under "Website"
     if (auditType === 'website') {
       try {
         const productUrl = url.startsWith('http') ? url : `https://${url}`;
         const host = new URL(productUrl).hostname.replace(/^www\./, '');
-        if (host) writeSelection({ kind: 'site', host });
+        if (host) { writeSelection({ kind: 'site', host }); return; }
       } catch {}
+    }
+    // Brand identity audits → persist as brand entry
+    const brandId = resolvedBrandIdRef.current || selectedBrandId;
+    if (brandId) {
+      writeSelection({ kind: 'brand', brandId });
+      return;
     }
   };
 
