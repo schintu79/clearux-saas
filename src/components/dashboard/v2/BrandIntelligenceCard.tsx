@@ -129,11 +129,13 @@ export default function BrandIntelligenceCard({
         </div>
       ) : (
         <>
-          {/* Two-column layout: ScoreCircle left | Metrics right */}
-          <div className="flex items-start gap-4 flex-1">
-            <ScoreCircle score={primaryScore} size="small" px={72} strokeWidth={5} />
+          {/* Two equal columns: ScoreCircle left | Metrics right */}
+          <div className="grid grid-cols-2 gap-4 flex-1">
+            <div className="flex items-center justify-center">
+              <ScoreCircle score={primaryScore} size="small" px={120} strokeWidth={6} />
+            </div>
 
-            <div className="flex-1 min-w-0 space-y-1.5">
+            <div className="flex flex-col justify-center space-y-2">
               {/* AI Visibility */}
               {data && (
                 <div className="flex items-center justify-between">

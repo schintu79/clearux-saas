@@ -130,11 +130,13 @@ export default function WebsiteSpeedCard({
         </div>
       ) : result && (
         <>
-          {/* Two-column layout: ScoreCircle left | Metrics right */}
-          <div className="flex items-start gap-4 flex-1">
-            <ScoreCircle score={result.score} size="small" px={72} strokeWidth={5} />
+          {/* Two equal columns: ScoreCircle left | Metrics right */}
+          <div className="grid grid-cols-2 gap-4 flex-1">
+            <div className="flex items-center justify-center">
+              <ScoreCircle score={result.score} size="small" px={120} strokeWidth={6} />
+            </div>
 
-            <div className="flex-1 min-w-0 space-y-1.5">
+            <div className="flex flex-col justify-center space-y-2">
               {([
                 { key: 'lcp', label: 'Loading time', desc: 'How fast main content appears' },
                 { key: 'cls', label: 'Visual stability', desc: 'How much layout shifts' },
