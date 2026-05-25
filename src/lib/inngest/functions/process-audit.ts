@@ -2768,18 +2768,29 @@ RULES FOR RE-AUDIT:
         }
       })()
 
-      // Run all enrichment tasks in parallel with individual timeouts
-      // to prevent a single hanging call from blocking the entire step
-      const ENRICH_TIMEOUT = 90_000 // 90 seconds per task
+      // Run enrichment in two waves so progress updates mid-step.
+      // Wave 1 (fast, data-only): benchmark, minimum findings, pipeline learn, predictive recs
+      // Wave 2 (slower, external calls): brand intel, human perception, screenshots
+      const FAST_TIMEOUT  = 45_000  // 45s for fast tasks
+      const SLOW_TIMEOUT  = 60_000  // 60s for external API tasks
+      const SCREENSHOT_TIMEOUT = 30_000 // 30s — screenshots are nice-to-have
+
+      // Wave 1 — fast enrichments
       await Promise.all([
-        withTimeout(benchmarkPromise, ENRICH_TIMEOUT, 'benchmark'),
-        withTimeout(brandIntelPromise, ENRICH_TIMEOUT, 'brand-intelligence'),
-        withTimeout(humanPerceptionPromise, ENRICH_TIMEOUT, 'human-perception'),
-        withTimeout(minimumFindingsPromise, ENRICH_TIMEOUT, 'minimum-findings'),
-        withTimeout(pipelineLearnPromise, ENRICH_TIMEOUT, 'pipeline-learn'),
-        withTimeout(predictivePromise, ENRICH_TIMEOUT, 'predictive-recs'),
-        withTimeout(screenshotPromise, ENRICH_TIMEOUT, 'screenshots'),
+        withTimeout(benchmarkPromise, FAST_TIMEOUT, 'benchmark'),
+        withTimeout(minimumFindingsPromise, FAST_TIMEOUT, 'minimum-findings'),
+        withTimeout(pipelineLearnPromise, FAST_TIMEOUT, 'pipeline-learn'),
+        withTimeout(predictivePromise, FAST_TIMEOUT, 'predictive-recs'),
       ])
+      await setProgress(auditId, 94)
+
+      // Wave 2 — external API calls (brand intel, human perception, screenshots)
+      await Promise.all([
+        withTimeout(brandIntelPromise, SLOW_TIMEOUT, 'brand-intelligence'),
+        withTimeout(humanPerceptionPromise, SLOW_TIMEOUT, 'human-perception'),
+        withTimeout(screenshotPromise, SCREENSHOT_TIMEOUT, 'screenshots'),
+      ])
+      await setProgress(auditId, 98)
     })
 
     // ──────────────────────────────────────────────────────────

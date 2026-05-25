@@ -262,34 +262,27 @@ const PIPELINE_STAGES: Array<{ key: string; label: string; description: string }
 ];
 
 
-/* ── Coffee cup SVG — minimal thin-line, monochrome ──────────── */
-function CoffeeCup() {
+/* ── Stage icon — shows the icon for the currently active pipeline stage ── */
+const STAGE_ICONS: Record<string, React.ReactNode> = {
+  preflight: <Scan size={24} strokeWidth={1.5} />,
+  crawling: <Globe size={24} strokeWidth={1.5} />,
+  checking: <Gauge size={24} strokeWidth={1.5} />,
+  probing: <Brain size={24} strokeWidth={1.5} />,
+  analysing: <FileSearch size={24} strokeWidth={1.5} />,
+  reporting: <FileText size={24} strokeWidth={1.5} />,
+  enriching: <Sparkles size={24} strokeWidth={1.5} />,
+  complete: <CheckCircle2 size={24} strokeWidth={1.5} />,
+};
+
+function StageIcon({ stage }: { stage: string }) {
+  const icon = STAGE_ICONS[stage] || STAGE_ICONS.preflight;
   return (
-    <svg
-      width="40"
-      height="40"
-      viewBox="0 0 40 40"
-      fill="none"
-      xmlns="http://www.w3.org/2000/svg"
-      aria-hidden
-      className="mx-auto opacity-30"
+    <div
+      className="mx-auto w-10 h-10 flex items-center justify-center rounded-full animate-pulse"
+      style={{ color: 'var(--ink)', opacity: 0.4 }}
     >
-      <style>{`
-        @keyframes steam1 { 0%,100%{opacity:0;transform:translateY(0)} 40%{opacity:.5} 100%{transform:translateY(-6px)} }
-        @keyframes steam2 { 0%,100%{opacity:0;transform:translateY(0)} 45%{opacity:.4} 100%{transform:translateY(-7px)} }
-        .st1{animation:steam1 2.8s ease-in-out infinite}
-        .st2{animation:steam2 3s ease-in-out .6s infinite}
-      `}</style>
-      {/* Steam — two thin wisps */}
-      <path className="st1" d="M15 15c0-2.5 1.5-3.5 0-6" stroke="var(--ink)" strokeWidth="0.75" strokeLinecap="round" fill="none" />
-      <path className="st2" d="M25 15c0-2.5-1.5-3.5 0-6" stroke="var(--ink)" strokeWidth="0.75" strokeLinecap="round" fill="none" />
-      {/* Cup */}
-      <rect x="8" y="17" width="24" height="16" rx="2" stroke="var(--ink)" strokeWidth="0.75" fill="none" />
-      {/* Handle */}
-      <path d="M32 20c3 0 5 1.5 5 4.5s-2 4.5-5 4.5" stroke="var(--ink)" strokeWidth="0.75" fill="none" strokeLinecap="round" />
-      {/* Saucer */}
-      <ellipse cx="20" cy="35" rx="15" ry="2" stroke="var(--ink)" strokeWidth="0.75" fill="none" />
-    </svg>
+      {icon}
+    </div>
   );
 }
 
@@ -349,8 +342,8 @@ function AuditProgressLoader({
       aria-valuenow={Math.round(display)}
       aria-label="Audit progress"
     >
-      {/* Coffee cup animation */}
-      <CoffeeCup />
+      {/* Active stage icon */}
+      <StageIcon stage={currentStage} />
 
       {/* Percentage */}
       <span className="text-4xl font-semibold tabular-nums tracking-tight" style={{ color: 'var(--ink)' }}>
@@ -2215,22 +2208,6 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
             <p className="text-[10.5px]" style={{ color: 'var(--m-muted)' }}>
               This page updates automatically
             </p>
-
-            {/* Restart if stuck — only show after 3 minutes */}
-            {audit.updated_at && (Date.now() - new Date(audit.updated_at).getTime() > 3 * 60 * 1000) && (
-              <button
-                onClick={handleRestart}
-                disabled={restarting}
-                className="mt-3 inline-flex items-center gap-1.5 text-[12px] font-medium px-4 py-2 rounded-md transition-all disabled:opacity-50"
-                style={{ background: 'var(--ink)', color: 'var(--paper)' }}
-              >
-                {restarting ? (
-                  <><Loader2 size={12} className="animate-spin" /> Restarting...</>
-                ) : (
-                  'Restart audit'
-                )}
-              </button>
-            )}
           </div>
         </div>
       )}
