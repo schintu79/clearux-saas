@@ -124,17 +124,9 @@ export async function GET(
 
 /**
  * DELETE /api/audits/[id]
- * Permanently delete an audit owned by the current user. Related rows
- * (report, findings, pages, payments, intelligence) are removed via the
- * `ON DELETE CASCADE` foreign keys defined in the initial schema.
- *
- * Auth model:
- *  - User session is required (via createServerSupabase).
- *  - We verify the audit belongs to the user before deleting.
- *  - The actual delete uses the service-role client because RLS has no
- *    DELETE policy on `audits`. This keeps deletion safe without a schema
- *    migration: ownership is enforced in code, then the privileged client
- *    performs the delete + cascade.
+ * Soft-delete an audit owned by the current user by setting `deleted_at`.
+ * The record remains in the database for a 30-day grace period before
+ * permanent removal. All dashboard queries filter on deleted_at IS NULL.
  */
 export async function DELETE(
   _request: NextRequest,
@@ -170,12 +162,12 @@ export async function DELETE(
     const service = createServiceSupabase()
     const { error: delError } = await service
       .from('audits')
-      .delete()
+      .update({ deleted_at: new Date().toISOString() } as any)
       .eq('id', auditId)
       .eq('user_id', user.id)
 
     if (delError) {
-      console.error('Error deleting audit:', delError)
+      console.error('Error soft-deleting audit:', delError)
       return NextResponse.json(
         { error: 'Failed to delete audit' },
         { status: 500 },

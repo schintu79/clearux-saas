@@ -23,26 +23,27 @@ export async function GET(request: NextRequest) {
       fixedFindingsRes,
       recentScoresRes,
     ] = await Promise.all([
-      // Total audits
-      db.from('audits').select('id', { count: 'exact', head: true }).eq('user_id', user.id),
-      // Completed audits
-      db.from('audits').select('id', { count: 'exact', head: true }).eq('user_id', user.id).eq('status', 'completed'),
+      // Total audits (exclude soft-deleted)
+      db.from('audits').select('id', { count: 'exact', head: true }).eq('user_id', user.id).is('deleted_at', null),
+      // Completed audits (exclude soft-deleted)
+      db.from('audits').select('id', { count: 'exact', head: true }).eq('user_id', user.id).eq('status', 'completed').is('deleted_at', null),
       // Average score from reports
       db.from('reports').select('overall_score').eq('user_id', user.id).not('overall_score', 'is', null),
-      // Total findings
+      // Total findings (exclude soft-deleted audits)
       db.from('audit_findings')
         .select('id, severity, status', { count: 'exact' })
-        .in('audit_id', (await db.from('audits').select('id').eq('user_id', user.id)).data?.map((a: any) => a.id) || []),
-      // Fixed findings
+        .in('audit_id', (await db.from('audits').select('id').eq('user_id', user.id).is('deleted_at', null)).data?.map((a: any) => a.id) || []),
+      // Fixed findings (exclude soft-deleted audits)
       db.from('audit_findings')
         .select('id', { count: 'exact', head: true })
         .eq('status', 'fixed')
-        .in('audit_id', (await db.from('audits').select('id').eq('user_id', user.id)).data?.map((a: any) => a.id) || []),
-      // Recent scores for trend (last 5 completed audits)
+        .in('audit_id', (await db.from('audits').select('id').eq('user_id', user.id).is('deleted_at', null)).data?.map((a: any) => a.id) || []),
+      // Recent scores for trend (last 5 completed audits, exclude soft-deleted)
       db.from('audits')
         .select('id, product_url, completed_at')
         .eq('user_id', user.id)
         .eq('status', 'completed')
+        .is('deleted_at', null)
         .order('completed_at', { ascending: false })
         .limit(5),
     ])

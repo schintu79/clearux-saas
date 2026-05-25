@@ -103,7 +103,11 @@ export async function PUT(
   }
 }
 
-/* ── DELETE — delete brand identity ──────────────────────── */
+/* ── DELETE — soft-delete brand identity ──────────────────── */
+/**
+ * Sets `deleted_at` on the brand and all its associated audits.
+ * Data is retained for 30 days before permanent removal.
+ */
 export async function DELETE(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> },
@@ -127,36 +131,22 @@ export async function DELETE(
     if (!existing || (existing as any).user_id !== user.id)
       return NextResponse.json({ error: 'Not found' }, { status: 404 })
 
-    // Delete associated files from storage
-    const { data: files } = await db
-      .from('brand_identity_files')
-      .select('file_url')
-      .eq('brand_identity_id', id)
+    const now = new Date().toISOString()
 
-    if (files && files.length > 0) {
-      // Extract storage paths from URLs and delete from bucket
-      const paths = (files as any[])
-        .map((f) => {
-          try {
-            const url = new URL(f.file_url)
-            const match = url.pathname.match(/\/storage\/v1\/object\/public\/brand-assets\/(.+)/)
-            return match?.[1] || null
-          } catch { return null }
-        })
-        .filter(Boolean) as string[]
-
-      if (paths.length > 0) {
-        await db.storage.from('brand-assets').remove(paths)
-      }
-    }
-
-    // CASCADE will delete brand_identity_files rows
+    // Soft-delete the brand
     const { error } = await db
       .from('brand_identities')
-      .delete()
+      .update({ deleted_at: now } as any)
       .eq('id', id)
 
     if (error) throw error
+
+    // Also soft-delete all audits linked to this brand
+    await db
+      .from('audits')
+      .update({ deleted_at: now } as any)
+      .eq('brand_identity_id', id)
+      .eq('user_id', user.id)
 
     return NextResponse.json({ success: true })
   } catch (err) {

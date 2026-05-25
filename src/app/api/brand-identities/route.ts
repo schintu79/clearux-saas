@@ -21,6 +21,7 @@ export async function GET(request: NextRequest) {
       .from('brand_identities')
       .select('*, brand_identity_files(id, file_name, file_type, file_size_bytes, created_at)')
       .eq('user_id', user.id)
+      .is('deleted_at', null)
       .order('created_at', { ascending: false })
 
     if (error) throw error
