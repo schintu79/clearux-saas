@@ -903,7 +903,7 @@ export default function BrandDnaPage() {
                           </div>
                         </div>
                         <div className="px-3 pb-3 pt-1">
-                          <ScoreCircle score={cat.score} size="small" px={40} strokeWidth={4} />
+                          <span className={`text-[28px] font-bold tabular-nums leading-none ${scoreColor(cat.score)}`}>{cat.score}</span>
                         </div>
                       </div>
                     );

@@ -1203,7 +1203,7 @@ function CategoryModuleCard({
       </div>
 
       <div className="px-3 pb-2">
-        <ScoreCircle score={score} size="small" />
+        <span className={`text-[28px] font-bold tabular-nums leading-none ${scoreColor(score)}`}>{score}</span>
       </div>
 
       {breakdown.length > 0 && expanded && (
@@ -2000,7 +2000,7 @@ function InProgressOverview({
               </div>
               <div className="px-3 pb-3 pt-1">
                 {isPopulated ? (
-                  <ScoreCircle score={Math.round(moduleScore)} size="small" px={40} strokeWidth={4} />
+                  <span className={`text-[28px] font-bold tabular-nums leading-none ${scoreColor(Math.round(moduleScore))}`}>{Math.round(moduleScore)}</span>
                 ) : (
                   <div
                     className="h-5 w-12 rounded-md animate-pulse"
