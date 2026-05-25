@@ -286,7 +286,26 @@ const DashboardShell: React.FC<DashboardShellProps> = ({ children }) => {
         setSites(prev => [...prev, { kind: 'site', id: selectedSiteId, label: host, sub: 'Website', auditId: null }]);
       } else if (selectedSiteId.startsWith('brand:')) {
         const brandId = selectedSiteId.slice(6);
-        setSites(prev => [...prev, { kind: 'brand', id: selectedSiteId, label: brandId, sub: 'Brand identity' }]);
+        // Fetch brand name so we don't show a raw UUID in the selector.
+        // Add a placeholder immediately, then replace with real data.
+        setSites(prev => [...prev, { kind: 'brand', id: selectedSiteId, label: 'Loading...', sub: 'Brand identity' }]);
+        fetch('/api/brand-identities')
+          .then(r => r.ok ? r.json() : { identities: [] })
+          .then(data => {
+            const brand = ((data?.identities || []) as any[]).find((b: any) => b.id === brandId);
+            if (brand) {
+              let brandHost: string | null = null;
+              if (brand.website_url) {
+                try { brandHost = new URL(brand.website_url).hostname.replace(/^www\./, ''); } catch {}
+              }
+              setSites(prev => prev.map(s =>
+                s.id === `brand:${brandId}`
+                  ? { ...s, label: brand.name || brandHost || brandId, sub: brandHost ? 'Website' : 'Brand identity', hostname: brandHost || undefined }
+                  : s
+              ));
+            }
+          })
+          .catch(() => {});
       }
       // Refresh the full list so the entry gets proper metadata
       loadSites();
