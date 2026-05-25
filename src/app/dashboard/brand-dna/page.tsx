@@ -655,32 +655,36 @@ export default function BrandDnaPage() {
           </div>
         </div>
 
-        {/* Edit form */}
+        {/* Edit form — simple stacked layout */}
         {editing && editState ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-            <Field label="Brand name" required>
-              <input value={editState.name} onChange={e => setEditState({ ...editState, name: e.target.value })} className="w-full px-3 py-2 rounded-lg text-[13px] outline-none" style={{ background: 'var(--paper-2)', border: '1px solid var(--rule)', color: 'var(--ink)' }} maxLength={120} />
-            </Field>
-            <Field label="Website URL">
-              <input value={editState.website_url} onChange={e => setEditState({ ...editState, website_url: e.target.value })} placeholder="https://example.com" className="w-full px-3 py-2 rounded-lg text-[13px] outline-none" style={{ background: 'var(--paper-2)', border: '1px solid var(--rule)', color: 'var(--ink)' }} maxLength={2048} />
-            </Field>
+          <div className="space-y-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <Field label="Brand name" required>
+                <input value={editState.name} onChange={e => setEditState({ ...editState, name: e.target.value })} className="w-full px-3 py-2 rounded-lg text-[13px] outline-none" style={{ background: 'var(--paper-2)', border: '1px solid var(--rule)', color: 'var(--ink)' }} maxLength={120} />
+              </Field>
+              <Field label="Website URL">
+                <input value={editState.website_url} onChange={e => setEditState({ ...editState, website_url: e.target.value })} placeholder="https://example.com" className="w-full px-3 py-2 rounded-lg text-[13px] outline-none" style={{ background: 'var(--paper-2)', border: '1px solid var(--rule)', color: 'var(--ink)' }} maxLength={2048} />
+              </Field>
+            </div>
             <Field label="Brand promise" full>
               <textarea value={editState.description} onChange={e => setEditState({ ...editState, description: e.target.value })} placeholder="Who you serve and the change you create." rows={2} className="w-full px-3 py-2 rounded-lg text-[13px] resize-y outline-none" style={{ background: 'var(--paper-2)', border: '1px solid var(--rule)', color: 'var(--ink)' }} maxLength={600} />
             </Field>
             <Field label="Brand voice" full>
               <textarea value={editState.brand_voice} onChange={e => setEditState({ ...editState, brand_voice: e.target.value })} placeholder="How does your brand sound? Confident but not corporate." rows={2} className="w-full px-3 py-2 rounded-lg text-[13px] resize-y outline-none" style={{ background: 'var(--paper-2)', border: '1px solid var(--rule)', color: 'var(--ink)' }} maxLength={4000} />
             </Field>
-            <Field label="Tone keywords (comma-separated)">
-              <input value={editState.tone_keywords} onChange={e => setEditState({ ...editState, tone_keywords: e.target.value })} placeholder="confident, warm, direct" className="w-full px-3 py-2 rounded-lg text-[13px] outline-none" style={{ background: 'var(--paper-2)', border: '1px solid var(--rule)', color: 'var(--ink)' }} />
-            </Field>
-            <Field label="Brand colours (comma-separated hex)">
-              <input value={editState.primary_colors} onChange={e => setEditState({ ...editState, primary_colors: e.target.value })} placeholder="#0A84FF, #111111" className="w-full px-3 py-2 rounded-lg text-[13px] outline-none" style={{ background: 'var(--paper-2)', border: '1px solid var(--rule)', color: 'var(--ink)' }} />
-            </Field>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <Field label="Tone keywords">
+                <input value={editState.tone_keywords} onChange={e => setEditState({ ...editState, tone_keywords: e.target.value })} placeholder="confident, warm, direct" className="w-full px-3 py-2 rounded-lg text-[13px] outline-none" style={{ background: 'var(--paper-2)', border: '1px solid var(--rule)', color: 'var(--ink)' }} />
+              </Field>
+              <Field label="Brand colours">
+                <input value={editState.primary_colors} onChange={e => setEditState({ ...editState, primary_colors: e.target.value })} placeholder="#0A84FF, #111111" className="w-full px-3 py-2 rounded-lg text-[13px] outline-none" style={{ background: 'var(--paper-2)', border: '1px solid var(--rule)', color: 'var(--ink)' }} />
+              </Field>
+            </div>
             <Field label="Logo URL" full>
               <input value={editState.logo_url} onChange={e => setEditState({ ...editState, logo_url: e.target.value })} placeholder="https://cdn.example.com/logo.svg" className="w-full px-3 py-2 rounded-lg text-[13px] outline-none" style={{ background: 'var(--paper-2)', border: '1px solid var(--rule)', color: 'var(--ink)' }} maxLength={2048} />
             </Field>
             {saveError && (
-              <div className="md:col-span-2 rounded-lg px-3 py-2 text-[12px]" style={{ background: 'color-mix(in srgb, var(--severe) 8%, transparent)', color: 'var(--severe)' }}>{saveError}</div>
+              <div className="rounded-lg px-3 py-2 text-[12px]" style={{ background: 'color-mix(in srgb, var(--severe) 8%, transparent)', color: 'var(--severe)' }}>{saveError}</div>
             )}
           </div>
         ) : (
@@ -701,32 +705,54 @@ export default function BrandDnaPage() {
       {/* ── 2. File Upload ────────────────────────────────── */}
       {!editing && (
         <section
-          className="rounded-xl p-4 mb-4"
+          className="rounded-xl p-5 mb-4"
           style={{ background: 'var(--card)', border: '1px solid var(--rule)' }}
         >
-          <div className="flex items-center justify-between mb-3">
-            <h3 className="text-[13px] font-semibold" style={{ color: 'var(--ink)' }}>Brand files</h3>
-            <span className="text-[11px]" style={{ color: 'var(--m-muted)' }}>
-              {identity.brand_identity_files.length} file{identity.brand_identity_files.length === 1 ? '' : 's'}
-            </span>
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-2.5">
+              <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0" style={{ background: 'color-mix(in srgb, var(--signal) 10%, transparent)' }}>
+                <Upload size={15} strokeWidth={1.6} style={{ color: 'var(--signal)' }} />
+              </div>
+              <div>
+                <h3 className="text-[14px] font-semibold" style={{ color: 'var(--ink)' }}>Brand files</h3>
+                <p className="text-[11px]" style={{ color: 'var(--m-muted)' }}>
+                  {identity.brand_identity_files.length} file{identity.brand_identity_files.length === 1 ? '' : 's'} uploaded
+                </p>
+              </div>
+            </div>
           </div>
 
-          {/* Drop zone */}
+          {/* Drop zone — large and prominent */}
           <div
             onDragOver={e => { e.preventDefault(); setDragOver(true); }}
             onDragLeave={() => setDragOver(false)}
             onDrop={e => { e.preventDefault(); setDragOver(false); if (e.dataTransfer.files) uploadFiles(e.dataTransfer.files); }}
             onClick={() => !uploading && fileInputRef.current?.click()}
-            className="flex items-center justify-center gap-2 px-4 py-4 rounded-lg border-2 border-dashed transition-all cursor-pointer"
+            className="flex flex-col items-center justify-center gap-3 px-6 py-8 rounded-xl border-2 border-dashed transition-all cursor-pointer"
             style={{
-              borderColor: dragOver ? 'var(--signal)' : 'var(--rule)',
-              background: dragOver ? 'color-mix(in srgb, var(--signal) 4%, transparent)' : 'transparent',
+              borderColor: dragOver ? 'var(--signal)' : 'color-mix(in srgb, var(--signal) 30%, var(--rule))',
+              background: dragOver ? 'color-mix(in srgb, var(--signal) 6%, transparent)' : 'color-mix(in srgb, var(--signal) 3%, transparent)',
             }}
           >
             {uploading ? (
-              <><Loader2 size={14} className="animate-spin" style={{ color: 'var(--signal)' }} /><span className="text-[12px]" style={{ color: 'var(--m-muted)' }}>Uploading...</span></>
+              <>
+                <Loader2 size={24} className="animate-spin" style={{ color: 'var(--signal)' }} />
+                <span className="text-[13px] font-medium" style={{ color: 'var(--ink)' }}>Uploading...</span>
+              </>
             ) : (
-              <><Upload size={14} style={{ color: 'var(--m-muted)' }} /><span className="text-[12px]" style={{ color: 'var(--m-muted)' }}>Drop brand guidelines, logos, or assets here</span></>
+              <>
+                <div className="w-11 h-11 rounded-full flex items-center justify-center" style={{ background: 'color-mix(in srgb, var(--signal) 10%, transparent)' }}>
+                  <Upload size={20} style={{ color: 'var(--signal)' }} />
+                </div>
+                <div className="text-center">
+                  <p className="text-[13px] font-semibold" style={{ color: 'var(--ink)' }}>
+                    Drop files here or click to browse
+                  </p>
+                  <p className="text-[11px] mt-1" style={{ color: 'var(--m-muted)' }}>
+                    Brand guidelines, logos, style guides, assets (PDF, DOCX, PNG, JPG, SVG)
+                  </p>
+                </div>
+              </>
             )}
           </div>
           <input ref={fileInputRef} type="file" accept=".pdf,.doc,.docx,.txt,.png,.jpg,.jpeg,.svg,.webp" multiple onChange={e => { if (e.target.files) uploadFiles(e.target.files); }} className="hidden" />
@@ -737,7 +763,7 @@ export default function BrandDnaPage() {
 
           {/* File list */}
           {identity.brand_identity_files.length > 0 && (
-            <div className="mt-3 space-y-1">
+            <div className="mt-4 space-y-1.5">
               {identity.brand_identity_files.map(f => (
                 <div key={f.id} className="flex items-center gap-2.5 px-3 py-2 rounded-lg group transition-all" style={{ background: 'var(--paper-2)', border: '1px solid var(--rule)' }}>
                   <div className="w-6 h-6 rounded flex items-center justify-center flex-shrink-0" style={{ background: 'var(--card)' }}>

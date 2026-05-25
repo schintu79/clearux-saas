@@ -267,6 +267,272 @@ export const processAuditFn = inngest.createFunction(
       }
     })
 
+    // ══════════════════════════════════════════════════════════
+    // BRAND IDENTITY FAST PATH — skip all website steps
+    // Brand audits only need: extract files → analyze 6 categories → report → done
+    // This cuts brand audit time from 15+ min to under 3 min.
+    // ══════════════════════════════════════════════════════════
+    if (auditDetails.auditType === 'brand_identity') {
+      const brandFastResult = await step.run('brand-fast-extract', async () => {
+        await setStatus(auditId, 'analysing', 10)
+        await setProgress(auditId, 10, 'extracting')
+        await auditLog(auditId, 'brand_fast_path', 'info', 'Using brand identity fast path — skipping website crawl')
+
+        if (!auditDetails.brandIdentityId) {
+          throw new Error('Brand identity audit requires a brand_identity_id. No brand was selected.')
+        }
+
+        const db = getDb()
+        const { data: brandFiles } = await db
+          .from('brand_identity_files')
+          .select('file_name, file_url, file_type')
+          .eq('brand_identity_id', auditDetails.brandIdentityId)
+
+        if (!brandFiles || brandFiles.length === 0) {
+          throw new Error('No brand files found. Upload at least one brand file before running a brand audit.')
+        }
+
+        const extracted = await extractAllBrandFiles(
+          brandFiles.map((f: any) => ({
+            file_name: f.file_name as string,
+            file_url: f.file_url as string,
+            file_type: f.file_type as string | null,
+          })),
+        )
+
+        const textParts = extracted
+          .filter(e => e.textContent && e.textContent.length > 0)
+          .map(e => `[Brand file: ${e.fileName}]\n${e.textContent}`)
+        const brandContent = textParts.join('\n\n---\n\n')
+
+        if (!brandContent || brandContent.length < 50) {
+          throw new Error('Could not extract meaningful content from brand files. Ensure files contain readable text or images with text.')
+        }
+
+        await auditLog(auditId, 'brand_files_extracted', 'success',
+          `Extracted content from ${extracted.length} brand file(s) (${Math.round(brandContent.length / 1024)}KB)`)
+
+        return { brandContent, filesCount: extracted.length }
+      })
+
+      // ── Analyze all 6 brand categories in parallel ──
+      const brandAnalysisResult = await step.run('brand-fast-analyze', async () => {
+        await setProgress(auditId, 30, 'analysing')
+
+        const { BRAND_AUDIT_CATEGORIES: brandCats } = await import('@/lib/brand-audit-modules')
+        const db = getDb()
+        let totalFindings = 0
+
+        const analysisResults = await Promise.all(
+          brandCats.map(async (cat) => {
+            const prompt = `You are auditing brand identity materials for the category: "${cat.name}".
+${cat.analysisPrompt}
+
+BRAND MATERIALS:
+${brandFastResult.brandContent}
+
+Respond in the user's requested language: ${auditDetails.language || 'en'}.
+${auditDetails.userFocus ? `The user is specifically concerned about: ${auditDetails.userFocus}` : ''}
+
+Analyze the brand materials and return findings as JSON array. Each finding:
+{ "title": "...", "description": "...", "recommendation": "...", "severity": "critical|high|medium|low", "estimatedImpact": "..." }
+
+Return 2-6 findings. Be specific and evidence-based. Reference specific files/content when possible.`
+
+            const findings = await analyzeCategory(
+              brandFastResult.brandContent,
+              cat.name,
+              [],
+              auditDetails.userFocus,
+              auditDetails.language,
+              'deep',
+            )
+            return { cat, findings }
+          }),
+        )
+
+        // Insert all findings in one batch
+        const batchInserts: any[] = []
+        let sortOrder = 0
+        for (const { cat, findings } of analysisResults) {
+          const catIdx = brandCats.findIndex(c => c.slug === cat.slug)
+          for (const finding of findings) {
+            const classification = classifyFinding({
+              title: finding.title,
+              description: finding.description,
+              recommendation: finding.recommendation,
+              severity: finding.severity,
+              categoryIndex: catIdx,
+            })
+            const validated = validateFixableRecommendation({
+              ...finding,
+              findingType: classification.findingType,
+              fixType: classification.fixType,
+            })
+            batchInserts.push({
+              audit_id: auditId,
+              checklist_item_id: null,
+              category_index: catIdx,
+              finding_type: validated.findingType,
+              fix_type: validated.fixType,
+              severity: finding.severity,
+              title: finding.title,
+              description: finding.description,
+              evidence: null,
+              page_url: null,
+              recommendation: finding.recommendation,
+              estimated_impact: finding.estimatedImpact || null,
+              target_element: null,
+              sort_order: sortOrder++,
+              confidence_level: 'heuristic',
+              detection_source: 'brand_analyzer',
+              ...computeActionModelFields({ title: finding.title, description: finding.description, recommendation: finding.recommendation, fix_type: validated.fixType, finding_type: validated.findingType }),
+            })
+          }
+          totalFindings += findings.length
+        }
+
+        if (batchInserts.length > 0) {
+          await db.from('audit_findings').insert(batchInserts as any)
+        }
+
+        await setProgress(auditId, 60, 'analysing')
+        await auditLog(auditId, 'brand_analysis_complete', 'success',
+          `Brand analysis: ${totalFindings} findings across ${brandCats.length} categories`)
+
+        return { totalFindings, categoriesAnalyzed: brandCats.length }
+      })
+
+      // ── Quality gates (dedup) ──
+      await step.run('brand-fast-quality', async () => {
+        await setProgress(auditId, 70, 'quality')
+        const db = getDb()
+        const { data: dedupFindings } = await db
+          .from('audit_findings')
+          .select('id, title, description, severity, page_url, sort_order, confidence_level, detection_source')
+          .eq('audit_id', auditId)
+          .order('sort_order', { ascending: true })
+
+        if (dedupFindings && dedupFindings.length >= 2) {
+          const mappedFindings = dedupFindings.map((f: any) => ({
+            id: f.id,
+            title: f.title || '',
+            description: f.description || '',
+            severity: f.severity || 'medium',
+            page_url: f.page_url || null,
+            sort_order: f.sort_order ?? 0,
+            confidence_level: f.confidence_level || 'heuristic',
+            detection_source: f.detection_source || 'brand_analyzer',
+          }))
+          const duplicateIds = identifyDuplicates(mappedFindings)
+          if (duplicateIds.length > 0) {
+            await db.from('audit_findings').delete().in('id', duplicateIds)
+            await auditLog(auditId, 'brand_dedup', 'info', `Removed ${duplicateIds.length} duplicate brand findings`)
+          }
+        }
+      })
+
+      // ── Generate brand report ──
+      await step.run('brand-fast-report', async () => {
+        await setStatus(auditId, 'generating_report', 80)
+        await setProgress(auditId, 80, 'reporting')
+        const db = getDb()
+
+        const { data: allFindings } = await db
+          .from('audit_findings')
+          .select('*')
+          .eq('audit_id', auditId)
+          .order('sort_order', { ascending: true })
+
+        const findings = (allFindings || []) as AuditFinding[]
+        const { data: audit } = await db.from('audits').select('*').eq('id', auditId).single()
+
+        const reportData = await generateReport(
+          findings,
+          audit as any,
+          brandFastResult.brandContent,
+          auditDetails.userFocus,
+          auditDetails.language,
+          'deep',
+        )
+
+        const severityCount = {
+          critical: findings.filter((f) => f.severity === 'critical').length,
+          high: findings.filter((f) => f.severity === 'high').length,
+          medium: findings.filter((f) => f.severity === 'medium').length,
+          low: findings.filter((f) => f.severity === 'low').length,
+        }
+
+        let pdfUrl: string | null = null
+        try {
+          pdfUrl = await generatePdfReport(auditId, audit as any, reportData, findings, [])
+        } catch (pdfErr) {
+          console.error('[inngest] Brand PDF generation error (non-fatal):', pdfErr)
+        }
+
+        const reportJsonData = {
+          ...reportData,
+          _baselineCategoryScores: reportData.categoryScores,
+          selectedModules: auditDetails.selectedModules,
+        }
+
+        await db.from('reports').insert({
+          audit_id: auditId,
+          executive_summary: reportData.executiveSummary,
+          key_recommendation: reportData.keyRecommendation,
+          total_issues: findings.length,
+          critical_count: severityCount.critical,
+          high_count: severityCount.high,
+          medium_count: severityCount.medium,
+          low_count: severityCount.low,
+          overall_score: reportData.overallScore,
+          ux_score: reportData.uxScore,
+          conversion_score: reportData.conversionScore,
+          mobile_score: reportData.mobileScore,
+          content_score: reportData.contentScore,
+          raw_json: reportJsonData,
+          pdf_url: pdfUrl,
+          pdf_generated_at: pdfUrl ? new Date().toISOString() : null,
+        } as any)
+
+        await auditLog(auditId, 'brand_report_generated', 'success',
+          `Brand report: score ${reportData.overallScore}/100, ${findings.length} findings`)
+      })
+
+      // ── Complete ──
+      await step.run('brand-fast-complete', async () => {
+        const db = getDb()
+        await setStatus(auditId, 'completed', 100)
+        await setProgress(auditId, 100, 'complete')
+        await db
+          .from('audits')
+          .update({ completed_at: new Date().toISOString(), updated_at: new Date().toISOString() } as any)
+          .eq('id', auditId)
+
+        if (auditDetails.userEmail) {
+          try {
+            const isFreeAudit = auditDetails.plan === 'free_preview'
+            if (isFreeAudit) {
+              await sendFreeAuditReady(auditDetails.userEmail, auditId, auditDetails.productUrl, 'brand_identity')
+            } else {
+              await sendAuditComplete(auditDetails.userEmail, auditId, auditDetails.productUrl, 'brand_identity')
+            }
+          } catch (emailErr) {
+            console.error('[inngest] Brand email error (non-fatal):', emailErr)
+          }
+        }
+
+        await auditLog(auditId, 'brand_audit_completed', 'success', 'Brand identity audit completed (fast path)')
+        console.log(`[inngest] Brand audit ${auditId} completed via fast path`)
+      })
+
+      return { success: true, auditId }
+    }
+
+    // ══════════════════════════════════════════════════════════
+    // WEBSITE AUDIT PATH — full pipeline below
+    // ══════════════════════════════════════════════════════════
+
     // ──────────────────────────────────────────────────────────
     // STEP 1.5: Pre-flight crawl check (fast — under 5 seconds)
     // Detects blocked/unreachable domains BEFORE the full crawl starts.
