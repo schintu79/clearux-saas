@@ -55,6 +55,20 @@ import { checkWcagAutomated, buildWcagResults, parseHeuristicResponse, formatWca
 import type { AuditFinding } from '@/types/database'
 import { resolveCapability, inferDeployableType } from '@/lib/fix-action-model'
 
+/* ── Timeout helper — prevents enrichment promises from hanging forever ── */
+
+function withTimeout<T>(promise: Promise<T>, ms: number, label: string): Promise<T | null> {
+  return Promise.race([
+    promise,
+    new Promise<null>((resolve) =>
+      setTimeout(() => {
+        console.warn(`[inngest] ${label} timed out after ${ms}ms — skipping`)
+        resolve(null)
+      }, ms),
+    ),
+  ])
+}
+
 /* ── DB helpers (duplicated from index.ts to keep self-contained) ── */
 
 function getDb() {
@@ -2768,14 +2782,16 @@ RULES FOR RE-AUDIT:
         }
       })()
 
-      // Run all enrichment tasks in parallel
+      // Run all enrichment tasks in parallel with individual timeouts
+      // to prevent a single hanging call from blocking the entire step
+      const ENRICH_TIMEOUT = 90_000 // 90 seconds per task
       await Promise.all([
-        benchmarkPromise,
-        brandIntelPromise,
-        humanPerceptionPromise,
-        minimumFindingsPromise,
-        pipelineLearnPromise,
-        predictivePromise,
+        withTimeout(benchmarkPromise, ENRICH_TIMEOUT, 'benchmark'),
+        withTimeout(brandIntelPromise, ENRICH_TIMEOUT, 'brand-intelligence'),
+        withTimeout(humanPerceptionPromise, ENRICH_TIMEOUT, 'human-perception'),
+        withTimeout(minimumFindingsPromise, ENRICH_TIMEOUT, 'minimum-findings'),
+        withTimeout(pipelineLearnPromise, ENRICH_TIMEOUT, 'pipeline-learn'),
+        withTimeout(predictivePromise, ENRICH_TIMEOUT, 'predictive-recs'),
       ])
     })
 
