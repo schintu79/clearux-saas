@@ -1758,8 +1758,14 @@ function AlertOrSummary({
  * without reloading.
  */
 function RunningAuditBanner({ audit }: { audit: Audit }) {
-  const meta = statusMeta[audit.status] || statusMeta.payment_received;
+  const { data: progress } = useAuditProgress(audit.id, { interval: 3000 });
+  const liveStatus = progress?.status || audit.status;
+  const meta = statusMeta[liveStatus] || statusMeta.payment_received;
   const StatusIcon = meta.icon;
+  const pct = progress?.progress ?? 0;
+  const stagesCompleted = progress?.stages
+    ? Object.values(progress.stages).filter(Boolean).length
+    : 0;
   return (
     <div
       role="status"
@@ -1776,11 +1782,25 @@ function RunningAuditBanner({ audit }: { audit: Audit }) {
       >
         <StatusIcon size={13} className="animate-pulse" />
       </span>
-      <p className="text-[12px] flex-1 min-w-0" style={{ color: 'var(--ink)' }}>
-        <span className="font-semibold">New audit running</span>
-        <span className="mx-1.5" style={{ color: 'var(--rule)' }}>·</span>
-        <span style={{ color: 'var(--m-muted)' }}>{meta.label}. We will refresh this page when it is ready.</span>
-      </p>
+      <div className="flex-1 min-w-0">
+        <p className="text-[12px]" style={{ color: 'var(--ink)' }}>
+          <span className="font-semibold">New audit running</span>
+          <span className="mx-1.5" style={{ color: 'var(--rule)' }}>·</span>
+          <span style={{ color: 'var(--m-muted)' }}>
+            {progress
+              ? `${stagesCompleted} of 8 stages — ${pct}% complete`
+              : `${meta.label}. We will refresh this page when it is ready.`}
+          </span>
+        </p>
+        {progress && pct > 0 && (
+          <div className="mt-1.5 h-[2px] w-full rounded-full overflow-hidden" style={{ background: 'color-mix(in srgb, var(--signal) 15%, transparent)' }}>
+            <div
+              className="h-full rounded-full transition-all duration-700 ease-out"
+              style={{ width: `${pct}%`, background: 'var(--signal)' }}
+            />
+          </div>
+        )}
+      </div>
       <Link
         href={`/dashboard/audits/${audit.id}`}
         className="flex-shrink-0 inline-flex items-center gap-1 text-[12px] font-medium hover:underline"
@@ -2093,9 +2113,7 @@ function InProgressOverview({
           <SkeletonCard title="Website speed" subtitle="Performance metrics" icon={Gauge} />
         )}
 
-        <div className="col-span-1 md:col-span-2">
-          <SkeletonCard title="Brand Intelligence" subtitle="AI + human perception unified" icon={Radio} />
-        </div>
+        <SkeletonCard title="Brand Intelligence" subtitle="AI + human perception unified" icon={Radio} />
       </div>
     </div>
   );

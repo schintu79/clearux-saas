@@ -105,18 +105,24 @@ function computeActionModelFields(finding: {
   }
 }
 
-async function setProgress(auditId: string, progressPercent: number) {
+async function setProgress(auditId: string, progressPercent: number, stage?: string) {
   const db = getDb()
+  const update: Record<string, unknown> = {
+    progress_percent: progressPercent,
+    updated_at: new Date().toISOString(),
+  }
+  if (stage) update.audit_stage = stage
   const { error } = await db
     .from('audits')
-    .update({ progress_percent: progressPercent, updated_at: new Date().toISOString() } as any)
+    .update(update as any)
     .eq('id', auditId)
   if (error) console.error(`[inngest] progress update error:`, error.message)
 }
 
 /**
  * Update the audit_stage field for progressive frontend loading.
- * Stages: preflight → crawling → checking → analysing → reporting → enriching → complete
+ * Stages: preflight → crawling → checking → probing → analysing → reporting → enriching → complete
+ * NOTE: Prefer using setProgress(id, pct, stage) for atomic stage+progress writes.
  */
 async function setStage(auditId: string, stage: string) {
   const db = getDb()
@@ -267,7 +273,7 @@ export const processAuditFn = inngest.createFunction(
     // ──────────────────────────────────────────────────────────
     await step.run('crawl-preflight', async () => {
       await setStatus(auditId, 'crawling', 2)
-      await setStage(auditId, 'preflight')
+      await setProgress(auditId, 2, 'preflight')
       await auditLog(auditId, 'preflight_started', 'info', `Pre-flight check on ${auditDetails.productUrl}`)
 
       const preflight = await runCrawlPreflight(auditDetails.productUrl)
@@ -304,15 +310,14 @@ export const processAuditFn = inngest.createFunction(
 
       // status === 'accessible' or 'partial' — advance stage immediately
       // so the UI doesn't stay stuck on "Preflight" during Inngest step overhead
-      await setStage(auditId, 'crawling')
-      await setProgress(auditId, 4)
+      await setProgress(auditId, 4, 'crawling')
     })
 
     // STEP 2: Crawl pages
     // ──────────────────────────────────────────────────────────
     const crawlResult = await step.run('crawl-pages', async () => {
       await setStatus(auditId, 'crawling', 5)
-      await setStage(auditId, 'crawling')
+      await setProgress(auditId, 5, 'crawling')
       await auditLog(auditId, 'crawl_started', 'info', `Crawling ${auditDetails.productUrl}`)
 
       const maxPages = auditDetails.plan === 'free_preview' ? 5 : auditDetails.plan === 'starter' ? 8 : 25
@@ -495,8 +500,7 @@ export const processAuditFn = inngest.createFunction(
     // ~25-60s of sequential execution + 2 cold starts.
     // ──────────────────────────────────────────────────────────
     const parallelChecks = await step.run('parallel-site-checks', async () => {
-      await setProgress(auditId, 15)
-      await setStage(auditId, 'checking')
+      await setProgress(auditId, 15, 'checking')
 
       // ── Responsive Design Check ──
       const responsivePromise = (async () => {
@@ -781,8 +785,7 @@ export const processAuditFn = inngest.createFunction(
     // ~40-60s vs sequential execution.
     // ──────────────────────────────────────────────────────────
     const probeResults = await step.run('parallel-probes', async () => {
-      await setProgress(auditId, 18)
-      await setStage(auditId, 'probing')
+      await setProgress(auditId, 18, 'probing')
 
       // ── AI Discovery probe ──
       const aiDiscoveryPromise = (async () => {
@@ -1194,7 +1197,7 @@ export const processAuditFn = inngest.createFunction(
     // ──────────────────────────────────────────────────────────
     const siteContext = await step.run('build-site-context', async () => {
       await setStatus(auditId, 'analysing', 30)
-      await setStage(auditId, 'analysing')
+      await setProgress(auditId, 30, 'analysing')
 
       // Build a structured map of what each page contains
       const lines: string[] = []
@@ -1374,12 +1377,7 @@ RULES FOR RE-AUDIT:
     })
 
     const effectiveDepthMode = siteContext.effectiveDepthMode
-
     console.log(`[inngest] Audit ${auditId}: depth mode = ${effectiveDepthMode} (requested: ${auditDetails.depthMode})`)
-    await step.run('log-depth-mode', async () => {
-      await auditLog(auditId, 'depth_mode', 'info',
-        `Analysis depth: ${effectiveDepthMode}${effectiveDepthMode === 'baseline' ? ' — re-audit: copying previous findings, no AI analysis' : ' — full AI analysis'}`)
-    })
 
     let verificationData: { verified: number; likelyFixed: number; poorlyFixed: number; results: Array<{ findingId: string; status: string; note: string }> } | null = null
 
@@ -1571,10 +1569,7 @@ RULES FOR RE-AUDIT:
       }
 
       if (missingModuleSlugs.length > 0) {
-        await step.run('log-gap-fill', async () => {
-          await auditLog(auditId, 'gap_fill_detected', 'info',
-            `Baseline gap fill: ${missingModuleSlugs.length} new module(s) need fresh analysis: ${missingModuleSlugs.join(', ')}`)
-        })
+        console.log(`[inngest] Baseline gap fill: ${missingModuleSlugs.length} new module(s): ${missingModuleSlugs.join(', ')}`)
 
         // Build the set of category indices to analyze for missing modules
         const gapIndices = new Set<number>()
@@ -1693,10 +1688,7 @@ RULES FOR RE-AUDIT:
           return { findingsInGap, categoriesAnalyzed: gapCategories.length }
         })
 
-        await step.run('log-gap-fill-done', async () => {
-          await auditLog(auditId, 'gap_fill_completed', 'success',
-            `Gap fill: analyzed ${gapBatchResult.categoriesAnalyzed} categories, found ${gapBatchResult.findingsInGap} new findings`)
-        })
+        console.log(`[inngest] Gap fill: analyzed ${gapBatchResult.categoriesAnalyzed} categories, found ${gapBatchResult.findingsInGap} new findings`)
       }
 
     } else {
@@ -1900,14 +1892,14 @@ RULES FOR RE-AUDIT:
             await db.from('audit_findings').insert(batchInserts as any)
           }
 
+          // Granular progress: 30% → 65% spread across batches (inline to avoid extra step cold-starts)
+          const batchProgress = Math.round(30 + ((batchIdx + 1) / batches.length) * 35)
+          await setProgress(auditId, batchProgress)
+
           return { findingsInBatch, newSortOrder: sortOrder }
         })
 
         totalFindingsCount = batchResult.newSortOrder
-
-        // Granular progress: 30% → 65% spread across batches
-        const batchProgress = Math.round(30 + ((batchIdx + 1) / batches.length) * 35)
-        await step.run(`progress-batch-${batchIdx + 1}`, async () => { await setProgress(auditId, batchProgress) })
       }
     }
 
@@ -2303,7 +2295,7 @@ RULES FOR RE-AUDIT:
     // ──────────────────────────────────────────────────────────
     await step.run('generate-report', async () => {
       await setStatus(auditId, 'generating_report', 85)
-      await setStage(auditId, 'reporting')
+      await setProgress(auditId, 85, 'reporting')
 
       const db = getDb()
 
@@ -2462,8 +2454,7 @@ RULES FOR RE-AUDIT:
     // predictive recommendations concurrently in one step.
     // ──────────────────────────────────────────────────────────
     await step.run('post-report-enrichment', async () => {
-      await setStage(auditId, 'enriching')
-      await setProgress(auditId, 90)
+      await setProgress(auditId, 90, 'enriching')
 
       // ── 1. Snapshot industry benchmark ──
       const benchmarkPromise = (async () => {
@@ -2809,7 +2800,7 @@ RULES FOR RE-AUDIT:
       const db = getDb()
 
       await setStatus(auditId, 'completed', 100)
-      await setStage(auditId, 'complete')
+      await setProgress(auditId, 100, 'complete')
       await db
         .from('audits')
         .update({ completed_at: new Date().toISOString(), updated_at: new Date().toISOString() } as any)
