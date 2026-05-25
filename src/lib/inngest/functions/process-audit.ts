@@ -351,6 +351,38 @@ export const processAuditFn = inngest.createFunction(
         )
       }
 
+      // ── Soft-block detection ──────────────────────────────────
+      // Some sites pass preflight (return 200 with real HTML) but serve
+      // challenge pages, JS-only shells, or heavily restricted content to
+      // automated crawlers. If the homepage content is too thin to produce
+      // a meaningful audit, treat it as effectively blocked.
+      const homeContentText = (crawledPages[0]?.contentText || '').replace(/\s+/g, ' ').trim()
+      const SOFT_BLOCK_MARKERS = [
+        /just a moment/i, /checking your browser/i, /enable javascript/i,
+        /please turn javascript on/i, /this site requires javascript/i,
+        /access denied/i, /captcha/i, /verify you are human/i,
+        /cloudflare/i, /ray id/i, /challenge-platform/i,
+        /datadome/i, /perimeterx/i, /incapsula/i,
+      ]
+      const matchedSoftBlock = SOFT_BLOCK_MARKERS.find(p => p.test(homeContentText))
+      if (matchedSoftBlock) {
+        throw new Error(
+          `BLOCKED: ${auditDetails.productUrl} appears to use bot protection that blocks automated crawlers. ` +
+          `The page content contains a challenge or verification prompt instead of the actual website. ` +
+          `Your credit has been refunded automatically. ` +
+          `To audit this site, ensure it allows automated access or contact the site owner to whitelist the Fixpath crawler.`
+        )
+      }
+      if (homeContentText.length < 200) {
+        throw new Error(
+          `BLOCKED: ${auditDetails.productUrl} returned very little content (${homeContentText.length} characters). ` +
+          `This typically happens when a site uses advanced bot protection, requires JavaScript rendering, ` +
+          `or serves a challenge page to automated crawlers. ` +
+          `Your credit has been refunded automatically. ` +
+          `To audit this site, ensure it serves full HTML content to crawlers.`
+        )
+      }
+
       // Store pages in DB
       const db = getDb()
       for (const page of crawledPages) {

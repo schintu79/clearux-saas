@@ -58,6 +58,8 @@ type SiteEntry = {
   auditId?: string | null;
   // Whether brand audits exist for this entry (used for Brand audit nav link)
   hasBrandAudits?: boolean;
+  // For brand entries backed by a website — show favicon instead of fingerprint
+  hostname?: string;
 };
 
 const DashboardShell: React.FC<DashboardShellProps> = ({ children }) => {
@@ -210,13 +212,23 @@ const DashboardShell: React.FC<DashboardShellProps> = ({ children }) => {
     }
     const siteEntries = Array.from(byDomain.values());
 
-    const brandEntries: SiteEntry[] = ((brandsRes?.identities || []) as any[]).map((b: any) => ({
-      kind: 'brand',
-      id: `brand:${b.id}`,
-      label: b.name || 'Untitled brand',
-      sub: 'Brand identity',
-      hasBrandAudits: brandIdsWithAudits.has(b.id),
-    }));
+    const brandEntries: SiteEntry[] = ((brandsRes?.identities || []) as any[]).map((b: any) => {
+      // If this brand has a website_url, show the hostname so the user
+      // recognises it as their website audit rather than a standalone brand.
+      let brandHost: string | null = null;
+      if (b.website_url) {
+        try { brandHost = new URL(b.website_url).hostname.replace(/^www\./, ''); } catch {}
+      }
+      return {
+        kind: 'brand' as const,
+        id: `brand:${b.id}`,
+        label: b.name || brandHost || 'Untitled brand',
+        sub: brandHost ? `Website` : 'Brand identity',
+        // Store the hostname so the icon renderer can show a favicon
+        hostname: brandHost || undefined,
+        hasBrandAudits: brandIdsWithAudits.has(b.id),
+      };
+    });
 
     // Build a lookup from hostname → brand entry id so we can auto-migrate
     // stale site:host selections to their brand equivalent.
@@ -234,9 +246,19 @@ const DashboardShell: React.FC<DashboardShellProps> = ({ children }) => {
     setSites(all);
     // Default selection: prefer current route context, else most-recent site.
     // Also auto-migrate stale site:host → brand:id when a brand now covers that host.
+    //
+    // CRITICAL: We check localStorage directly because React state `prev` may
+    // be stale — e.g. when the new-audit page called writeSelection() and the
+    // subscription event hasn't flushed into React state yet. Without this,
+    // loadSites would read the OLD selection from `prev` and clobber the new one.
     setSelectedSiteId((prev) => {
-      if (prev?.startsWith('site:')) {
-        const host = prev.slice(5);
+      // Read the authoritative selection from localStorage
+      const persisted = readSelection();
+      const persistedId = sidebarIdFromSelection(persisted);
+      const effective = persistedId || prev;
+
+      if (effective?.startsWith('site:')) {
+        const host = effective.slice(5);
         const brandEntryId = hostToBrandEntryId.get(host);
         if (brandEntryId) {
           // Persist the migration so localStorage is updated too
@@ -244,7 +266,7 @@ const DashboardShell: React.FC<DashboardShellProps> = ({ children }) => {
           return brandEntryId;
         }
       }
-      return prev || all[0]?.id || null;
+      return effective || all[0]?.id || null;
     });
   }, [user]);
 
@@ -532,9 +554,9 @@ const DashboardShell: React.FC<DashboardShellProps> = ({ children }) => {
                   className="w-7 h-7 rounded-md flex items-center justify-center flex-shrink-0"
                   style={{ background: 'var(--ink)', color: 'var(--paper)' }}
                 >
-                  {selectedSite?.kind === 'brand'
+                  {selectedSite?.kind === 'brand' && !selectedSite?.hostname
                     ? <Fingerprint size={13} strokeWidth={1.75} />
-                    : <SiteFavicon hostname={selectedSite?.label || ''} size={13} />}
+                    : <SiteFavicon hostname={selectedSite?.hostname || selectedSite?.label || ''} size={13} />}
                 </span>
                 <span className="flex-1 min-w-0 text-left">
                   <span className="block text-[13px] font-medium truncate leading-tight" style={{ color: 'var(--ink)' }}>
@@ -576,9 +598,9 @@ const DashboardShell: React.FC<DashboardShellProps> = ({ children }) => {
                             className="w-6 h-6 rounded-md flex items-center justify-center flex-shrink-0"
                             style={{ background: 'var(--paper-2)', border: '1px solid var(--rule)', color: 'var(--m-muted)' }}
                           >
-                            {s.kind === 'brand'
+                            {s.kind === 'brand' && !s.hostname
                               ? <Fingerprint size={12} strokeWidth={1.75} />
-                              : <SiteFavicon hostname={s.label} size={12} />}
+                              : <SiteFavicon hostname={s.hostname || s.label} size={12} />}
                           </span>
                           <span className="flex-1 min-w-0">
                             <span className="block text-[13px] font-medium truncate leading-tight" style={{ color: 'var(--ink)' }}>
