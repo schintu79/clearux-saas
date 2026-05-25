@@ -118,7 +118,7 @@ function FindPageInner() {
 
   useEffect(() => {
     const m = searchParams.get('module');
-    if (m && (PHASE1_MODULES as readonly string[]).includes(m)) {
+    if (m && ((PHASE1_MODULES as readonly string[]).includes(m) || m === 'speed')) {
       setModuleFilter(m);
     }
     const sev = searchParams.get('severity');
@@ -192,7 +192,20 @@ function FindPageInner() {
 
   const visibleBuckets = useMemo<ModuleBucket[]>(() => {
     let bs = buckets;
-    if (moduleFilter !== 'all') bs = bs.filter((b) => b.name === moduleFilter);
+    if (moduleFilter === 'speed') {
+      // Special: filter to speed/performance findings across all modules
+      bs = bs
+        .map((b) => ({
+          ...b,
+          groups: b.groups.filter((g) => {
+            const f = g.primary as any;
+            return f.detection_source === 'pagespeed' || f.performance_metric_type || (f.category_label || '').toLowerCase().includes('speed') || (f.category_label || '').toLowerCase().includes('performance');
+          }),
+        }))
+        .filter((b) => b.groups.length > 0);
+    } else if (moduleFilter !== 'all') {
+      bs = bs.filter((b) => b.name === moduleFilter);
+    }
     if (sevFilter !== 'all') {
       bs = bs
         .map((b) => ({

@@ -51,6 +51,7 @@ import EmptyAudit from '@/components/dashboard/v2/EmptyAudit';
 import HumanPerceptionSection from '@/components/dashboard/v2/HumanPerceptionSection';
 import PageHeader from '@/components/dashboard/v2/PageHeader';
 import OverviewBreadcrumb from '@/components/dashboard/OverviewBreadcrumb';
+import ScoreCircle from '@/components/ui/ScoreCircle';
 import type { BrandIntelligenceSummary, ModelSentiment } from '@/lib/audit-engine/brand-intelligence';
 
 /* ── Types ─────────────────────────────────────────── */
@@ -624,20 +625,14 @@ export default function IntelligencePage() {
 
             {/* Score hero */}
             <div className="flex flex-wrap items-start gap-6 mb-4 pb-4" style={{ borderBottom: '1px solid var(--rule)' }}>
-              <div className="flex flex-col items-start">
+              <div className="flex flex-col items-center">
                 <span className="text-[10px] font-semibold uppercase tracking-[0.06em] mb-1" style={{ color: 'var(--m-muted)' }}>Your score</span>
-                <div className="flex items-baseline gap-1.5">
-                  <span className="text-[36px] font-bold leading-none tabular-nums" style={{ color: scoreColorVar(overallScore) }}>{overallScore}</span>
-                  <span className="text-[13px] font-medium" style={{ color: 'var(--m-muted)' }}>/100</span>
-                </div>
+                <ScoreCircle score={overallScore} size="small" px={64} strokeWidth={5} />
               </div>
               {avgCompetitor != null && (
-                <div className="flex flex-col items-start">
+                <div className="flex flex-col items-center">
                   <span className="text-[10px] font-semibold uppercase tracking-[0.06em] mb-1" style={{ color: 'var(--m-muted)' }}>Competitor avg</span>
-                  <div className="flex items-baseline gap-1.5">
-                    <span className="text-[36px] font-bold leading-none tabular-nums" style={{ color: scoreColorVar(avgCompetitor) }}>{avgCompetitor}</span>
-                    <span className="text-[13px] font-medium" style={{ color: 'var(--m-muted)' }}>/100</span>
-                  </div>
+                  <ScoreCircle score={avgCompetitor} size="small" px={64} strokeWidth={5} />
                 </div>
               )}
               {benchmarkPosition?.benchmark && (

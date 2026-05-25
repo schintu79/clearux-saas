@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react'
 import { Gauge, Loader2, Play, ArrowRight, Zap, AlertTriangle, Info } from 'lucide-react'
+import ScoreCircle from '@/components/ui/ScoreCircle'
 import type { SpeedDataSummary, SpeedStrategyResult, SpeedMetric } from '@/types/database'
 
 /* ── Props ─────────────────────────────────────────── */
@@ -136,15 +137,10 @@ export default function SpeedDetailPanel({
       {/* Score comparison */}
       <div className="px-5 py-4 grid grid-cols-2 gap-4">
         {[{ label: 'Mobile', result: mobile }, { label: 'Desktop', result: desktop }].map(({ label, result }) => (
-          <div key={label} className="rounded-lg p-4" style={{ background: result ? scoreBg(result.score) : 'color-mix(in srgb, var(--ink) 3%, transparent)' }}>
+          <div key={label} className="rounded-lg p-4 flex flex-col items-center" style={{ background: result ? scoreBg(result.score) : 'color-mix(in srgb, var(--ink) 3%, transparent)' }}>
             <p className="text-[10px] font-semibold tracking-[0.04em] uppercase text-m-muted mb-2">{label}</p>
             {result ? (
-              <div className="flex items-baseline gap-1.5">
-                <span className="text-[36px] font-bold leading-none tabular-nums" style={{ color: scoreColor(result.score) }}>
-                  {result.score}
-                </span>
-                <span className="text-[12px] text-m-muted">/100</span>
-              </div>
+              <ScoreCircle score={result.score} size="small" px={64} strokeWidth={5} />
             ) : (
               <span className="text-[14px] text-m-muted">Not tested</span>
             )}

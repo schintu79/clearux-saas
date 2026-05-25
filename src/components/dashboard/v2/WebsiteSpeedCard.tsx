@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react'
 import { Gauge, ArrowRight, Loader2, Play } from 'lucide-react'
+import ScoreCircle from '@/components/ui/ScoreCircle'
 import type { SpeedDataSummary, SpeedStrategyResult, SpeedMetric } from '@/types/database'
 
 /* ── Props ─────────────────────────────────��────────── */
@@ -148,15 +149,7 @@ export default function WebsiteSpeedCard({
           {/* Score + strategy toggle */}
           <div className="flex items-center gap-3 mb-3">
             {result && (
-              <div className="flex items-baseline gap-1.5">
-                <span
-                  className="text-[32px] font-bold leading-none tabular-nums"
-                  style={{ color: scoreColor(result.score) }}
-                >
-                  {result.score}
-                </span>
-                <span className="text-[11px]" style={{ color: 'var(--m-muted)' }}>/100</span>
-              </div>
+              <ScoreCircle score={result.score} size="small" />
             )}
             <div className="flex ml-auto rounded-lg overflow-hidden" style={{ border: '1px solid var(--rule)' }}>
               {(['mobile', 'desktop'] as const).map((s) => (
