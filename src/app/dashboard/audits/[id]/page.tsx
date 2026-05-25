@@ -57,6 +57,8 @@ import {
   Send,
   FileText,
   Clipboard,
+  ShieldAlert,
+  WifiOff,
 } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { createBrowserSupabase } from '@/lib/supabase-ssr';
@@ -2234,27 +2236,86 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
       )}
 
       {/* ── Failed state ───────────────────────────────────── */}
-      {audit.status === 'failed' && (
-        <div className="mb-6 p-5 rounded-xl bg-red-50 border border-red-200">
-          <div className="flex items-start gap-3">
-            <AlertTriangle size={20} className="text-red-600 flex-shrink-0 mt-0.5" />
-            <div className="flex-1 min-w-0">
-              <p className="font-medium text-red-900">Audit failed</p>
-              <p className="text-sm text-red-700 mt-1">
-                {audit.crawl_error || 'Something went wrong during processing.'}
-              </p>
-              <div className="mt-3 p-3 rounded-lg bg-emerald-500/8 border border-emerald-200">
-                <div className="flex items-center gap-2">
-                  <CheckCircle2 size={14} className="text-emerald-600 flex-shrink-0" />
-                  <p className="text-xs font-medium text-emerald-800">
-                    No credits were used for this audit
-                  </p>
-                </div>
-                <p className="text-xs text-emerald-700 mt-0.5 ml-[22px]">
-                  Your credit has been automatically refunded. You can restart the audit at no extra cost.
+      {audit.status === 'failed' && (() => {
+        const err = audit.crawl_error || '';
+        const isBlocked = err.startsWith('BLOCKED:');
+        const isUnreachable = err.startsWith('UNREACHABLE:');
+        const isAccessIssue = isBlocked || isUnreachable;
+
+        // Clean the raw error prefix for display
+        const cleanMessage = err.replace(/^(BLOCKED|UNREACHABLE):\s*/, '');
+
+        return (
+          <div className="mb-6 rounded-xl border border-rule overflow-hidden" style={{ background: 'var(--card)' }}>
+            {/* Header */}
+            <div className="px-5 pt-5 pb-4 flex items-start gap-3">
+              <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0" style={{ background: 'color-mix(in srgb, var(--ink) 6%, transparent)' }}>
+                {isBlocked ? <ShieldAlert size={16} style={{ color: 'var(--ink)' }} /> :
+                 isUnreachable ? <WifiOff size={16} style={{ color: 'var(--ink)' }} /> :
+                 <AlertTriangle size={16} style={{ color: 'var(--ink)' }} />}
+              </div>
+              <div className="flex-1 min-w-0">
+                <h3 className="text-[14px] font-semibold" style={{ color: 'var(--ink)' }}>
+                  {isBlocked ? 'This site blocked our crawler' :
+                   isUnreachable ? 'We couldn\'t reach this site' :
+                   'Audit could not be completed'}
+                </h3>
+                <p className="text-[12px] mt-1 leading-relaxed" style={{ color: 'var(--m-muted)' }}>
+                  {isBlocked
+                    ? 'The site uses security measures (such as Cloudflare, CAPTCHA, or bot detection) that prevent automated tools from accessing its content. This is common and not a bug — it means the site\'s protection is working.'
+                    : isUnreachable
+                    ? 'The request timed out, which usually means the site is temporarily down, very slow, or the URL may be incorrect.'
+                    : cleanMessage || 'Something went wrong during processing.'}
                 </p>
               </div>
-              <div className="flex items-center gap-2.5 mt-4">
+            </div>
+
+            {/* What to try */}
+            {isAccessIssue && (
+              <div className="mx-5 mb-4 px-4 py-3 rounded-lg" style={{ background: 'color-mix(in srgb, var(--ink) 3%, transparent)' }}>
+                <p className="text-[11px] font-semibold uppercase tracking-[0.04em] mb-2" style={{ color: 'var(--ink)' }}>What you can try</p>
+                <ul className="space-y-1.5">
+                  {isUnreachable && (
+                    <>
+                      <li className="text-[12px] flex items-start gap-2" style={{ color: 'var(--m-muted)' }}>
+                        <span className="w-1 h-1 rounded-full flex-shrink-0 mt-1.5" style={{ background: 'var(--m-muted)' }} />
+                        Check that the URL is correct and the site is online
+                      </li>
+                      <li className="text-[12px] flex items-start gap-2" style={{ color: 'var(--m-muted)' }}>
+                        <span className="w-1 h-1 rounded-full flex-shrink-0 mt-1.5" style={{ background: 'var(--m-muted)' }} />
+                        Try again in a few minutes — the site may be experiencing downtime
+                      </li>
+                    </>
+                  )}
+                  {isBlocked && (
+                    <>
+                      <li className="text-[12px] flex items-start gap-2" style={{ color: 'var(--m-muted)' }}>
+                        <span className="w-1 h-1 rounded-full flex-shrink-0 mt-1.5" style={{ background: 'var(--m-muted)' }} />
+                        If you manage this site, whitelist our crawler in your security settings
+                      </li>
+                      <li className="text-[12px] flex items-start gap-2" style={{ color: 'var(--m-muted)' }}>
+                        <span className="w-1 h-1 rounded-full flex-shrink-0 mt-1.5" style={{ background: 'var(--m-muted)' }} />
+                        Temporarily disable bot protection or add our user agent to your allow list
+                      </li>
+                      <li className="text-[12px] flex items-start gap-2" style={{ color: 'var(--m-muted)' }}>
+                        <span className="w-1 h-1 rounded-full flex-shrink-0 mt-1.5" style={{ background: 'var(--m-muted)' }} />
+                        If you don't manage the site, this site cannot be audited while the protection is active
+                      </li>
+                    </>
+                  )}
+                </ul>
+              </div>
+            )}
+
+            {/* Credit refund notice + actions */}
+            <div className="px-5 pb-5">
+              <div className="flex items-center gap-2 mb-4">
+                <CheckCircle2 size={13} style={{ color: 'var(--ok)' }} className="flex-shrink-0" />
+                <p className="text-[12px] font-medium" style={{ color: 'var(--ok)' }}>
+                  No credits were used — your credit has been automatically refunded
+                </p>
+              </div>
+              <div className="flex items-center gap-2.5">
                 <button
                   onClick={handleRestart}
                   disabled={restarting}
@@ -2263,13 +2324,14 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
                   {restarting ? (
                     <><Loader2 size={14} className="animate-spin" /> Restarting...</>
                   ) : (
-                    <><Zap size={14} /> Restart Audit</>
+                    <><RefreshCw size={14} /> Try again</>
                   )}
                 </button>
                 <button
                   onClick={handleDelete}
                   disabled={deleting}
-                  className="inline-flex items-center gap-1.5 text-xs font-medium text-m-muted hover:text-red-600 px-3 py-2.5 rounded-xl border border-rule hover:border-red-300 transition-colors disabled:opacity-60"
+                  className="inline-flex items-center gap-1.5 text-xs font-medium px-3 py-2.5 rounded-xl border transition-colors disabled:opacity-60"
+                  style={{ color: 'var(--m-muted)', borderColor: 'var(--rule)' }}
                 >
                   <Trash2 size={13} />
                   {deleting ? 'Deleting...' : 'Delete'}
@@ -2277,8 +2339,8 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
               </div>
             </div>
           </div>
-        </div>
-      )}
+        );
+      })()}
 
       {/* ═══════════════════════════════════════════════════════
           COMPLETED: FULL RESULTS
