@@ -5,26 +5,16 @@ import { Gauge, ArrowRight, Loader2, Play } from 'lucide-react'
 import ScoreCircle from '@/components/ui/ScoreCircle'
 import type { SpeedDataSummary, SpeedStrategyResult, SpeedMetric } from '@/types/database'
 
-/* ── Props ─────────────────────────────────��────────── */
+/* ── Props ────────────────────────────────────────── */
 
 interface WebsiteSpeedCardProps {
-  /** Speed data stored on the audit record (null if never tested) */
   speedData: SpeedDataSummary | null
-  /** Audit ID for on-demand speed test trigger */
   auditId: string | null
-  /** Callback when user clicks "View speed issues" */
   onViewIssues?: () => void
-  /** Callback after a speed test completes (to refresh parent data) */
   onTestComplete?: (data: SpeedDataSummary) => void
 }
 
 /* ── Helpers ────────────────────────────────────────── */
-
-function scoreColor(score: number): string {
-  if (score >= 90) return 'var(--ok)'
-  if (score >= 50) return 'var(--warn)'
-  return 'var(--severe)'
-}
 
 function statusDot(status: SpeedMetric['status']): string {
   if (status === 'good') return 'var(--ok)'
@@ -45,11 +35,7 @@ export default function WebsiteSpeedCard({
   const [error, setError] = useState<string | null>(null)
   const [localSpeedData, setLocalSpeedData] = useState<SpeedDataSummary | null>(null)
 
-  // Use local state if available (after on-demand test), otherwise prop
   const activeSpeedData = localSpeedData ?? speedData
-
-  // Determine if we actually have usable speed data
-  // (speedData may be truthy but both strategies null if API failed)
   const hasUsableData = activeSpeedData != null && (activeSpeedData.mobile != null || activeSpeedData.desktop != null)
 
   const result: SpeedStrategyResult | null = hasUsableData
@@ -81,7 +67,6 @@ export default function WebsiteSpeedCard({
     }
   }
 
-  // Issue count for summary line
   const issueCount = result?.issueCount ?? 0
 
   return (
@@ -89,109 +74,78 @@ export default function WebsiteSpeedCard({
       className="rounded-xl p-4 sm:p-5 flex flex-col h-full"
       style={{ background: 'var(--card)', border: '1px solid var(--rule)' }}
     >
-      {/* Header */}
-      <div className="flex items-start justify-between gap-2 mb-3">
-        <div className="min-w-0 flex items-start gap-2">
+      {/* Header row: icon + title + strategy toggle */}
+      <div className="flex items-center justify-between gap-2 mb-4">
+        <div className="flex items-center gap-2 min-w-0">
           <span
             className="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0"
             style={{ background: 'color-mix(in srgb, var(--ink) 6%, transparent)', color: 'var(--ink)' }}
           >
             <Gauge size={14} />
           </span>
-          <div className="min-w-0">
-            <h3 className="text-[15px] font-semibold leading-tight tracking-[-0.005em]" style={{ color: 'var(--ink)' }}>
-              Website speed
-            </h3>
-            {(activeSpeedData?.testedAt || (result as any)?.testedAt) && (
-              <p className="text-[10px] mt-0.5" style={{ color: 'var(--m-muted)' }}>
-                Last tested {new Date(activeSpeedData?.testedAt || (result as any)?.testedAt).toLocaleDateString()}
-              </p>
-            )}
-          </div>
+          <h3 className="text-[15px] font-semibold leading-tight tracking-[-0.005em]" style={{ color: 'var(--ink)' }}>
+            Website speed
+          </h3>
         </div>
+        {hasUsableData && (
+          <div className="flex rounded-lg overflow-hidden flex-shrink-0" style={{ border: '1px solid var(--rule)' }}>
+            {(['mobile', 'desktop'] as const).map((s) => (
+              <button
+                key={s}
+                onClick={() => setStrategy(s)}
+                className="px-2.5 py-1 text-[10px] font-medium capitalize transition-colors"
+                style={{
+                  background: strategy === s ? 'var(--ink)' : 'transparent',
+                  color: strategy === s ? 'var(--card)' : 'var(--m-muted)',
+                }}
+              >
+                {s}
+              </button>
+            ))}
+          </div>
+        )}
       </div>
 
       {/* No data state */}
       {!hasUsableData ? (
         <div className="flex-1 flex flex-col items-center justify-center py-4 gap-3">
-          <span
-            className="w-10 h-10 rounded-xl flex items-center justify-center"
-            style={{ background: 'color-mix(in srgb, var(--ink) 5%, transparent)', color: 'var(--m-muted)' }}
-          >
-            <Gauge size={18} />
-          </span>
+          <Gauge size={20} style={{ color: 'var(--m-muted)', opacity: 0.5 }} />
           <p className="text-[11px] text-center" style={{ color: 'var(--m-muted)' }}>
             No speed data yet
           </p>
           {error && (
-            <p className="text-[11px] text-center px-2" style={{ color: 'var(--severe)' }}>
-              {error}
-            </p>
+            <p className="text-[11px] text-center px-2" style={{ color: 'var(--severe)' }}>{error}</p>
           )}
           {auditId && (
             <button
               onClick={handleRunTest}
               disabled={loading}
               className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-medium transition-all hover:shadow-sm"
-              style={{
-                background: 'var(--ink)',
-                color: 'var(--card)',
-                opacity: loading ? 0.6 : 1,
-              }}
+              style={{ background: 'var(--ink)', color: 'var(--card)', opacity: loading ? 0.6 : 1 }}
             >
               {loading ? <Loader2 size={12} className="animate-spin" /> : <Play size={12} />}
               {loading ? 'Testing...' : 'Run speed test'}
             </button>
           )}
         </div>
-      ) : activeSpeedData && (
+      ) : result && (
         <>
-          {/* Score + strategy toggle */}
-          <div className="flex items-center gap-3 mb-3">
-            {result && (
-              <ScoreCircle score={result.score} size="small" />
-            )}
-            <div className="flex ml-auto rounded-lg overflow-hidden" style={{ border: '1px solid var(--rule)' }}>
-              {(['mobile', 'desktop'] as const).map((s) => (
-                <button
-                  key={s}
-                  onClick={() => setStrategy(s)}
-                  className="px-2.5 py-1 text-[10px] font-medium capitalize transition-colors"
-                  style={{
-                    background: strategy === s ? 'var(--ink)' : 'transparent',
-                    color: strategy === s ? 'var(--card)' : 'var(--m-muted)',
-                  }}
-                >
-                  {s}
-                </button>
-              ))}
-            </div>
-          </div>
+          {/* Two-column layout: ScoreCircle left | Metrics right */}
+          <div className="flex items-start gap-4 flex-1">
+            <ScoreCircle score={result.score} size="small" px={72} strokeWidth={5} />
 
-          {/* Core metrics */}
-          {result && (
-            <div className="flex flex-col gap-1.5 mb-3">
+            <div className="flex-1 min-w-0 space-y-1.5">
               {([
-                { key: 'lcp', label: 'Loading time', abbr: 'LCP', desc: 'How fast main content appears' },
-                { key: 'cls', label: 'Visual stability', abbr: 'CLS', desc: 'How much the layout shifts while loading' },
-                { key: 'inp', label: 'Responsiveness', abbr: 'INP', desc: 'How fast the page reacts to clicks' },
-              ] as const).map(({ key, label, abbr, desc }) => {
+                { key: 'lcp', label: 'Loading time', desc: 'How fast main content appears' },
+                { key: 'cls', label: 'Visual stability', desc: 'How much layout shifts' },
+                { key: 'inp', label: 'Responsiveness', desc: 'How fast page reacts to clicks' },
+              ] as const).map(({ key, label, desc }) => {
                 const metric = result.metrics[key]
                 return (
-                  <div key={key} className="flex items-center justify-between px-2.5 py-2 rounded-lg" style={{ background: 'color-mix(in srgb, var(--ink) 3%, transparent)' }}>
-                    <div className="flex items-center gap-2 min-w-0">
-                      <span
-                        className="w-1.5 h-1.5 rounded-full flex-shrink-0"
-                        style={{ background: statusDot(metric.status) }}
-                      />
-                      <div className="min-w-0">
-                        <span className="text-[11px] font-medium block leading-tight" style={{ color: 'var(--ink)' }}>
-                          {label}
-                        </span>
-                        <span className="text-[9px] leading-tight block" style={{ color: 'var(--m-muted)' }}>
-                          {desc}
-                        </span>
-                      </div>
+                  <div key={key} className="flex items-center justify-between">
+                    <div className="flex items-center gap-1.5 min-w-0">
+                      <span className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ background: statusDot(metric.status) }} />
+                      <span className="text-[11px]" style={{ color: 'var(--m-muted)' }}>{label}</span>
                     </div>
                     <span className="text-[11px] tabular-nums font-semibold flex-shrink-0 ml-2" style={{ color: statusDot(metric.status) }}>
                       {metric.displayValue}
@@ -199,27 +153,32 @@ export default function WebsiteSpeedCard({
                   </div>
                 )
               })}
+
+              {issueCount > 0 && (
+                <p className="text-[10px] font-medium pt-0.5" style={{ color: 'var(--warn)' }}>
+                  {issueCount} issue{issueCount !== 1 ? 's' : ''} affecting speed
+                </p>
+              )}
             </div>
-          )}
+          </div>
 
-          {/* Issue summary */}
-          {issueCount > 0 && (
-            <p className="text-[11px] font-medium mb-2" style={{ color: 'var(--warn)' }}>
-              {issueCount} issue{issueCount !== 1 ? 's' : ''} affecting load speed
-            </p>
-          )}
-
-          {/* Footer CTA */}
-          {onViewIssues && (
-            <button
-              onClick={onViewIssues}
-              className="mt-auto flex items-center gap-1 text-[11px] font-medium transition-colors hover:opacity-80"
-              style={{ color: 'var(--ink)' }}
-            >
-              View speed issues
-              <ArrowRight size={12} />
-            </button>
-          )}
+          {/* Footer */}
+          <div className="flex items-center justify-between mt-auto pt-3">
+            {onViewIssues && (
+              <button
+                onClick={onViewIssues}
+                className="flex items-center gap-1 text-[11px] font-semibold transition-colors hover:opacity-80"
+                style={{ color: 'var(--ink)' }}
+              >
+                View speed issues <ArrowRight size={11} />
+              </button>
+            )}
+            {(activeSpeedData?.testedAt || (result as any)?.testedAt) && (
+              <span className="text-[10px] ml-auto" style={{ color: 'var(--m-muted)' }}>
+                {new Date(activeSpeedData?.testedAt || (result as any)?.testedAt).toLocaleDateString()}
+              </span>
+            )}
+          </div>
         </>
       )}
     </div>
