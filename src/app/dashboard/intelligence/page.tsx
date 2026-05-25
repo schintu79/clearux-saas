@@ -624,7 +624,7 @@ export default function IntelligencePage() {
                   ? Math.round(biSummary.perModel.reduce((s, m) => s + m.shareOfVoice, 0) / biSummary.perModel.length)
                   : null;
                 // Estimate competitor share from remaining share
-                const remainingShare = 100 - biSummary.shareOfVoice;
+                const remainingShare = 100 - (biSummary.shareOfVoice ?? 0);
                 const perCompetitor = scoredDrafts.length > 0 ? Math.round(remainingShare / scoredDrafts.length) : 0;
                 return (
                   <ShareBar
