@@ -282,6 +282,7 @@ function OverviewInner() {
           .from('brand_identities')
           .select('name')
           .eq('id', selection.brandId)
+          .is('deleted_at', null)
           .maybeSingle();
         setBrandName((data as any)?.name || null);
       } catch {}

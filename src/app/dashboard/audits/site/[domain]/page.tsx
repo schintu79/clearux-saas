@@ -87,6 +87,7 @@ export default function DomainAuditsPage({ params }: { params: Promise<{ domain:
         .from('audits')
         .select('*')
         .eq('user_id', userId)
+        .is('deleted_at', null)
         .order('created_at', { ascending: false });
 
       if (fetchError) throw fetchError;

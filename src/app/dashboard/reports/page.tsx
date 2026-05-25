@@ -44,6 +44,7 @@ export default function ReportsPage() {
         .select('id, product_url, completed_at, share_enabled, share_token')
         .eq('user_id', user.id)
         .eq('status', 'completed')
+        .is('deleted_at', null)
         .order('completed_at', { ascending: false });
       const audIds = (audits || []).map((a: any) => a.id);
       const scoreMap = new Map<string, number | null>();

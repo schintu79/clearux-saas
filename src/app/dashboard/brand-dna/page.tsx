@@ -278,6 +278,7 @@ export default function BrandDnaPage() {
         .from('audits')
         .select('product_url, brand_identity_id, completed_at')
         .eq('user_id', user.id)
+        .is('deleted_at', null)
         .order('completed_at', { ascending: false, nullsFirst: false } as any)
         .limit(100);
       const match = (audits || []).find((a: any) => hostnameOf(a.product_url) === selection.host && !!a.brand_identity_id);
@@ -298,6 +299,7 @@ export default function BrandDnaPage() {
       .select('*')
       .eq('brand_identity_id', brandId)
       .eq('audit_type', 'brand_identity')
+      .is('deleted_at', null)
       .order('created_at', { ascending: false })
       .limit(1);
     const latest = audits?.[0] || null;

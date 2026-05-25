@@ -166,6 +166,7 @@ const DashboardShell: React.FC<DashboardShellProps> = ({ children }) => {
         .from('audits')
         .select('id, product_url, completed_at, created_at, status, brand_identity_id')
         .eq('user_id', user.id)
+        .is('deleted_at', null)
         .order('completed_at', { ascending: false, nullsFirst: false } as any)
         .limit(50),
       fetch('/api/brand-identities').then(r => r.ok ? r.json() : { identities: [] }).catch(() => ({ identities: [] })),

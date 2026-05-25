@@ -83,6 +83,7 @@ export default function BrandAuditsPage({ params }: { params: Promise<{ name: st
         .from('brand_identities')
         .select('id, name, website_url')
         .eq('user_id', userId)
+        .is('deleted_at', null)
         .ilike('name', brandName);
 
       if (!brands || brands.length === 0) {
@@ -119,6 +120,7 @@ export default function BrandAuditsPage({ params }: { params: Promise<{ name: st
         .from('audits')
         .select('*')
         .eq('user_id', userId)
+        .is('deleted_at', null)
         .or('audit_type.is.null,audit_type.eq.website,audit_type.eq.brand_identity')
         .order('created_at', { ascending: false })
         .limit(200);

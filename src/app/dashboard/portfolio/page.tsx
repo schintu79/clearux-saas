@@ -78,6 +78,7 @@ export default function PortfolioPage() {
             .select('id, product_url, status, completed_at, brand_identity_id, audit_type')
             .eq('user_id', user.id)
             .eq('status', 'completed')
+            .is('deleted_at', null)
             .order('completed_at', { ascending: false }),
           fetch('/api/brand-identities').then((r) => r.ok ? r.json() : { identities: [] }),
         ]);
