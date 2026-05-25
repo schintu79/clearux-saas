@@ -89,7 +89,7 @@ export default function BrandIntelligenceCard({
   return (
     <Link
       href="/dashboard/intelligence"
-      className="rounded-xl p-4 sm:p-5 flex flex-col h-full transition-all hover:shadow-md hover:-translate-y-0.5 group col-span-1 md:col-span-2"
+      className="rounded-xl p-4 sm:p-5 flex flex-col h-full transition-all hover:shadow-md hover:-translate-y-0.5 group"
       style={{ background: 'var(--card)', border: '1px solid var(--rule)' }}
       aria-label="Open Brand Intelligence"
     >

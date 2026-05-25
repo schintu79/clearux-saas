@@ -172,23 +172,28 @@ export default function WebsiteSpeedCard({
           {result && (
             <div className="flex flex-col gap-1.5 mb-3">
               {([
-                { key: 'lcp', label: 'LCP' },
-                { key: 'cls', label: 'CLS' },
-                { key: 'inp', label: 'INP' },
-              ] as const).map(({ key, label }) => {
+                { key: 'lcp', label: 'Loading time', abbr: 'LCP', desc: 'How fast main content appears' },
+                { key: 'cls', label: 'Visual stability', abbr: 'CLS', desc: 'How much the layout shifts while loading' },
+                { key: 'inp', label: 'Responsiveness', abbr: 'INP', desc: 'How fast the page reacts to clicks' },
+              ] as const).map(({ key, label, abbr, desc }) => {
                 const metric = result.metrics[key]
                 return (
-                  <div key={key} className="flex items-center justify-between px-2 py-1.5 rounded-lg" style={{ background: 'color-mix(in srgb, var(--ink) 3%, transparent)' }}>
-                    <div className="flex items-center gap-2">
+                  <div key={key} className="flex items-center justify-between px-2.5 py-2 rounded-lg" style={{ background: 'color-mix(in srgb, var(--ink) 3%, transparent)' }}>
+                    <div className="flex items-center gap-2 min-w-0">
                       <span
                         className="w-1.5 h-1.5 rounded-full flex-shrink-0"
                         style={{ background: statusDot(metric.status) }}
                       />
-                      <span className="text-[11px] font-medium" style={{ color: 'var(--ink)' }}>
-                        {label}
-                      </span>
+                      <div className="min-w-0">
+                        <span className="text-[11px] font-medium block leading-tight" style={{ color: 'var(--ink)' }}>
+                          {label}
+                        </span>
+                        <span className="text-[9px] leading-tight block" style={{ color: 'var(--m-muted)' }}>
+                          {desc}
+                        </span>
+                      </div>
                     </div>
-                    <span className="text-[11px] tabular-nums font-medium" style={{ color: statusDot(metric.status) }}>
+                    <span className="text-[11px] tabular-nums font-semibold flex-shrink-0 ml-2" style={{ color: statusDot(metric.status) }}>
                       {metric.displayValue}
                     </span>
                   </div>

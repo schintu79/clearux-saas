@@ -907,7 +907,7 @@ function OverviewInner() {
       )}
 
       {/* ── Row 3: Issues · Speed · Brand Intelligence (unified) ─ */}
-      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4 mb-4 auto-rows-fr">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4 auto-rows-fr">
         <IssuesByImportance
           severityCounts={severityCounts}
           onCardClick={handleStatCardClick}
@@ -2014,7 +2014,7 @@ function InProgressOverview({
       </div>
 
       {/* Row 3 — Issues / Speed / Brand Intelligence */}
-      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4 mb-4 auto-rows-fr">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4 auto-rows-fr">
         {/* Issues card — reveals when findings arrive */}
         {hasFindings ? (
           <PopulatedCard>
