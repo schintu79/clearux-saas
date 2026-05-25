@@ -52,6 +52,7 @@ import {
   MessageSquare,
   Scale,
   WifiOff,
+  Loader2,
 } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { useAuditBundle } from '@/context/AuditBundleContext';
@@ -696,7 +697,7 @@ function OverviewInner() {
             className="inline-flex items-center gap-1.5 bg-brand text-surface text-xs font-medium px-3.5 py-2 rounded-lg transition-all hover:brightness-110"
           >
             <RefreshCw size={13} />
-            Re-audit
+            Re-run Website Audit
           </Link>
           <div className="relative">
             <button
@@ -1850,6 +1851,33 @@ function InProgressOverview({
   const meta = statusMeta[audit.status] || statusMeta.payment_received;
   const StatusIcon = meta.icon;
 
+  // Restart audit state — immediate feedback to prevent spam clicks (Bug 3)
+  const [restartState, setRestartState] = useState<'idle' | 'pending' | 'error'>('idle');
+  const [restartError, setRestartError] = useState<string | null>(null);
+  const { invalidate } = useAuditBundle();
+
+  const handleRestart = async () => {
+    if (restartState === 'pending') return; // Guard — ignore duplicate clicks
+    setRestartState('pending');
+    setRestartError(null);
+    try {
+      const res = await fetch(`/api/audits/${audit.id}/restart`, { method: 'POST' });
+      const data = await res.json();
+      if (!res.ok) {
+        setRestartError(data.error || 'Failed to restart audit');
+        setRestartState('error');
+        return;
+      }
+      // Success — invalidate the bundle to pick up the restarted audit state
+      invalidate();
+      // Keep button in pending state — the InProgressOverview will re-render
+      // with fresh skeleton state once the bundle updates
+    } catch (err) {
+      setRestartError('Network error. Please try again.');
+      setRestartState('error');
+    }
+  };
+
   // Progressive loading state
   const { data: progress } = useAuditProgress(audit.id)
   const [partial, setPartial] = useState<PartialAuditData | null>(null)
@@ -1943,13 +1971,34 @@ function InProgressOverview({
             </div>
           )}
         </div>
-        <Link
-          href={`/dashboard/audits/${audit.id}`}
-          className="flex-shrink-0 inline-flex items-center gap-1 text-[12px] font-semibold px-3 py-1.5 rounded-lg border border-border text-text hover:bg-surface-alt transition-colors"
-        >
-          View progress <ChevronRight size={12} />
-        </Link>
+        <div className="flex items-center gap-2 flex-shrink-0">
+          <button
+            type="button"
+            onClick={handleRestart}
+            disabled={restartState === 'pending'}
+            className="inline-flex items-center gap-1 text-[12px] font-semibold px-3 py-1.5 rounded-lg border border-border text-text hover:bg-surface-alt transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            title="Restart this audit"
+          >
+            {restartState === 'pending' ? (
+              <><Loader2 size={12} className="animate-spin" /> Restarting...</>
+            ) : (
+              <><RefreshCw size={12} /> Restart</>
+            )}
+          </button>
+          <Link
+            href={`/dashboard/audits/${audit.id}`}
+            className="inline-flex items-center gap-1 text-[12px] font-semibold px-3 py-1.5 rounded-lg border border-border text-text hover:bg-surface-alt transition-colors"
+          >
+            View progress <ChevronRight size={12} />
+          </Link>
+        </div>
       </div>
+      {/* Restart error message */}
+      {restartError && (
+        <div className="mb-3 px-3 py-2 rounded-lg text-[12px]" style={{ background: 'color-mix(in srgb, var(--severe) 6%, transparent)', color: 'var(--severe)' }}>
+          {restartError}
+        </div>
+      )}
 
       {/* Row 1 — Health Score, Score Over Time, Heuristic Breakdown */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-4 auto-rows-fr">

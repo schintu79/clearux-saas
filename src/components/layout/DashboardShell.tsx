@@ -610,6 +610,10 @@ const DashboardShell: React.FC<DashboardShellProps> = ({ children }) => {
                           onClick={() => {
                             selectSiteInternal(s.id);
                             setBrandMenuOpen(false);
+                            // Always navigate so the page content updates —
+                            // fixes Bug 4 where switching brands during an
+                            // active audit would flash and revert.
+                            router.push('/dashboard/overview');
                           }}
                           className="w-full flex items-center gap-2 px-3 py-2 text-left transition-colors hover:bg-black/[0.04]"
                         >
@@ -678,10 +682,10 @@ const DashboardShell: React.FC<DashboardShellProps> = ({ children }) => {
                 }}
                 className="flex-1 flex items-center justify-center gap-1.5 px-2 py-[7px] text-[12px] font-medium rounded-md transition-all hover:opacity-90"
                 style={{ background: 'var(--ink)', color: 'var(--paper)' }}
-                title="Re-audit this brand"
+                title="Re-run website audit for this brand"
               >
                 <RefreshCw size={12} strokeWidth={1.75} />
-                Re-audit
+                Re-run audit
               </button>
               <button
                 onClick={() => {

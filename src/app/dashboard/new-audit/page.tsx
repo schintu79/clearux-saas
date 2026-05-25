@@ -584,7 +584,7 @@ const NewAuditInner: React.FC = () => {
       {/* Hero */}
       <div className="text-center mb-10">
         <h1 className="text-xl font-medium font-sans mb-2" style={{ color: 'var(--ink)' }}>
-          {isReAuditMode ? 'Re-audit' : isDigDeeperMode ? 'Dig deeper' : 'Add new site or brand'}
+          {isReAuditMode ? 'Re-run Website Audit' : isDigDeeperMode ? 'Dig deeper' : 'Add new site or brand'}
         </h1>
         <p className="text-[14px]" style={{ color: 'var(--m-muted)' }}>
           {isReAuditMode
@@ -1189,17 +1189,17 @@ const NewAuditInner: React.FC = () => {
           </>
         ) : firstAuditFree ? (
           <>
-            Start free audit
+            Start free {auditType === 'brand_identity' ? 'Brand DNA ' : 'Website '}audit
             <ArrowRight size={20} />
           </>
         ) : hasCredits ? (
           <>
-            Use 1 Credit — Start {auditType === 'brand_identity' ? 'Brand' : ''} Audit
+            Use 1 Credit — Start {auditType === 'brand_identity' ? 'Brand DNA' : 'Website'} Audit
             <ArrowRight size={20} />
           </>
         ) : (
           <>
-            Start {auditType === 'brand_identity' ? 'Brand ' : ''}Audit — $13
+            Start {auditType === 'brand_identity' ? 'Brand DNA' : 'Website'} Audit — $13
             <ArrowRight size={20} />
           </>
         )}
