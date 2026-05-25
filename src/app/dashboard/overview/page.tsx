@@ -1829,6 +1829,7 @@ interface PartialAuditData {
   findingsCount: number
   severityBreakdown: { critical: number; major: number; moderate: number; minor: number }
   pagesCrawled: number
+  stage: string | null
 }
 
 function InProgressOverview({
@@ -1857,8 +1858,8 @@ function InProgressOverview({
   // Fetch partial data whenever progress changes meaningfully
   useEffect(() => {
     if (!progress) return
-    // Build a fingerprint to avoid redundant fetches
-    const fp = `${progress.data.hasSpeedData}-${progress.data.findingsCount}-${progress.data.overallScore}-${progress.data.pagesCrawled}`
+    // Build a fingerprint — includes stage so we refetch when pipeline advances
+    const fp = `${progress.stage}-${progress.data.hasSpeedData}-${progress.data.findingsCount}-${progress.data.overallScore}-${progress.data.pagesCrawled}`
     if (fp === lastFetchRef.current) return
     lastFetchRef.current = fp
 

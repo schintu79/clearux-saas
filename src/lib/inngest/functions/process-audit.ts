@@ -1084,24 +1084,20 @@ export const processAuditFn = inngest.createFunction(
         }
       }
 
-      // ── Execution order: lightweight probes first, then API-heavy ones sequentially ──
-      // This prevents 30+ concurrent Anthropic API calls from hitting rate limits.
-
-      // Phase 1: Run lightweight probes in parallel (no Anthropic API calls)
-      const [aiDisc, sdResult] = await Promise.all([
+      // ── Run ALL probes in parallel for maximum speed ──
+      // Lightweight probes (AI discovery, structured data, readability) run
+      // alongside the heavier API probes (LLM probe, citation, multi-model).
+      // Rate limit risk is acceptable — providers use per-minute token budgets
+      // and our calls are spread across different providers (Anthropic, OpenAI,
+      // Google, Perplexity).
+      const [aiDisc, sdResult, , llmProbe, citation, multiModel] = await Promise.all([
         aiDiscoveryPromise,
         structuredDataPromise,
         readabilityPromise,
+        runLlmProbeStep(),
+        runCitationStep(),
+        runMultiModelStep(),
       ])
-
-      // Phase 2: Run LLM probe (5+1 Anthropic API calls)
-      const llmProbe = await runLlmProbeStep()
-
-      // Phase 3: Run citation audit (mostly HTTP fetches, 1 Anthropic call)
-      const citation = await runCitationStep()
-
-      // Phase 4: Run multi-model benchmark LAST (12+ API calls across providers + 4 grading)
-      const multiModel = await runMultiModelStep()
 
       await setProgress(auditId, 25)
 
@@ -2164,166 +2160,66 @@ RULES FOR RE-AUDIT:
           console.log(`[inngest] Evidence enrichment: populated proposed_value/affected_selector on ${enriched} finding${enriched > 1 ? 's' : ''}`)
         }
       }
-    })
 
-    // ──────────────────────────────────────────────────────────
-    // Score findings by historical relevance (separate step —
-    // involves its own DB reads that depend on dedup/filter above)
-    // ──────────────────────────────────────────────────────────
-    await step.run('score-relevance', async () => {
+      // ── 6. Score findings by historical relevance ───
+      // (Merged into quality-gates to eliminate Inngest step cold-start overhead)
       try {
-        const db = getDb()
-        const { data: allFindings } = await db
+        const { data: relFindings } = await db
           .from('audit_findings')
           .select('id, title, description, severity, confidence_level')
           .eq('audit_id', auditId)
 
-        if (!allFindings || allFindings.length === 0) return
+        if (relFindings && relFindings.length > 0) {
+          const { scored, removedIds } = await scoreFindings(
+            relFindings.map((f: any) => ({
+              id: f.id,
+              title: f.title || '',
+              description: f.description || '',
+              severity: f.severity || 'medium',
+              confidence_level: f.confidence_level || 'heuristic',
+            })),
+            db,
+          )
 
-        const { scored, removedIds } = await scoreFindings(
-          allFindings.map((f: any) => ({
-            id: f.id,
-            title: f.title || '',
-            description: f.description || '',
-            severity: f.severity || 'medium',
-            confidence_level: f.confidence_level || 'heuristic',
-          })),
-          db,
-        )
-
-        // Remove findings with very low relevance (consistently dismissed pattern)
-        if (removedIds.length > 0) {
-          for (const id of removedIds) {
-            await db.from('audit_findings').delete().eq('id', id)
+          if (removedIds.length > 0) {
+            for (const id of removedIds) {
+              await db.from('audit_findings').delete().eq('id', id)
+            }
+            await auditLog(auditId, 'relevance_filtered', 'info',
+              `Removed ${removedIds.length} low-relevance finding${removedIds.length > 1 ? 's' : ''} (historically dismissed >85% of the time)`)
+            console.log(`[inngest] Relevance scorer: removed ${removedIds.length} findings`)
           }
-          await auditLog(auditId, 'relevance_filtered', 'info',
-            `Removed ${removedIds.length} low-relevance finding${removedIds.length > 1 ? 's' : ''} (historically dismissed >85% of the time)`)
-          console.log(`[inngest] Relevance scorer: removed ${removedIds.length} findings`)
-        }
 
-        // Log scoring summary
-        const lowCount = scored.filter(s => s.flag === 'low').length
-        const medCount = scored.filter(s => s.flag === 'medium').length
-        const noData = scored.filter(s => s.flag === 'no_data').length
-        if (lowCount > 0 || medCount > 0) {
-          console.log(`[inngest] Relevance: ${lowCount} low, ${medCount} medium, ${noData} no_data out of ${scored.length}`)
+          const lowCount = scored.filter(s => s.flag === 'low').length
+          const medCount = scored.filter(s => s.flag === 'medium').length
+          const noData = scored.filter(s => s.flag === 'no_data').length
+          if (lowCount > 0 || medCount > 0) {
+            console.log(`[inngest] Relevance: ${lowCount} low, ${medCount} medium, ${noData} no_data out of ${scored.length}`)
+          }
         }
       } catch (err) {
-        // Relevance scoring is non-fatal — audit should complete without it
         console.error('[inngest] Relevance scorer error (non-fatal):', err)
         await auditLog(auditId, 'relevance_error', 'warning',
           `Relevance scoring failed: ${err instanceof Error ? err.message : String(err)}`)
       }
-    })
 
-    // Verify findings count + update progress (combined to reduce step overhead)
-    await step.run('verify-findings', async () => {
-      const db = getDb()
-      const { count: findingsCount } = await db
+      // ── 7. Verify findings count ───
+      const { count: verifiedCount } = await db
         .from('audit_findings')
         .select('id', { count: 'exact', head: true })
         .eq('audit_id', auditId)
 
-      if ((findingsCount ?? 0) === 0) {
+      if ((verifiedCount ?? 0) === 0) {
         console.warn(`[inngest] Audit ${auditId}: zero findings — continuing`)
         await auditLog(auditId, 'findings_warning', 'warning', 'Zero findings — site may be clean or all issues resolved')
       } else {
-        await auditLog(auditId, 'findings_verified', 'success', `${findingsCount} findings verified`)
+        await auditLog(auditId, 'findings_verified', 'success', `${verifiedCount} findings verified`)
       }
       await setProgress(auditId, 75)
     })
 
     // ──────────────────────────────────────────────────────────
-    // STEP 8: Capture screenshots — page overviews + highlighted findings
-    // Uses /api/screenshot endpoint so each capture gets its own
-    // serverless invocation with dedicated memory and timeout.
-    // ──────────────────────────────────────────────────────────
-    await step.run('capture-screenshots', async () => {
-      const db = getDb()
-
-      await auditLog(auditId, 'screenshots_started', 'info', 'Capturing screenshots for pages and findings')
-
-      try {
-        // Fetch all findings with target_element and page_url
-        const { data: findingsWithTargets, error: findingsErr } = await db
-          .from('audit_findings')
-          .select('id, title, severity, target_element, page_url')
-          .eq('audit_id', auditId)
-          .order('sort_order', { ascending: true })
-
-        if (findingsErr) {
-          console.error(`[inngest] Screenshots: failed to fetch findings: ${findingsErr.message}`)
-        }
-
-        const findingsToCapture = (findingsWithTargets || []).map((f: any) => ({
-          id: f.id as string,
-          title: f.title as string,
-          severity: f.severity as string,
-          targetElement: f.target_element as string | null,
-          pageUrl: f.page_url as string | null,
-        }))
-
-        const mainUrl = crawlResult.firstPageUrl || auditDetails.productUrl
-
-        // Detailed pre-capture logging
-        const uniquePageUrls = new Set([mainUrl, ...findingsToCapture.map(f => f.pageUrl).filter(Boolean)])
-        console.log(`[inngest] Screenshots: mainUrl=${mainUrl}`)
-        console.log(`[inngest] Screenshots: ${findingsToCapture.length} findings, ${uniquePageUrls.size} unique page URLs`)
-        console.log(`[inngest] Screenshots: SCREENSHOTONE_API_KEY=${process.env.SCREENSHOTONE_API_KEY ? 'set' : 'MISSING'}`)
-        console.log(`[inngest] Screenshots: SCREENSHOT_INTERNAL_KEY=${process.env.SCREENSHOT_INTERNAL_KEY ? 'set' : 'MISSING'}`)
-        await auditLog(auditId, 'screenshots_debug', 'info',
-          `Pre-capture: ${findingsToCapture.length} findings, ${uniquePageUrls.size} pages, mainUrl=${mainUrl}, s1Key=${process.env.SCREENSHOTONE_API_KEY ? 'set' : 'MISSING'}`)
-
-        const { pageScreenshots, findingScreenshots } = await captureAuditScreenshots(
-          findingsToCapture,
-          mainUrl,
-          auditId,
-          5, // capture top 5 finding screenshots (critical + high priority)
-        )
-
-        // Update audit_pages with their page-level screenshots
-        for (const [url, screenshotUrl] of pageScreenshots) {
-          const { data: pages } = await db
-            .from('audit_pages')
-            .select('id')
-            .eq('audit_id', auditId)
-            .eq('url', url)
-            .limit(1)
-
-          if (pages && pages.length > 0) {
-            await db
-              .from('audit_pages')
-              .update({ screenshot_url: screenshotUrl } as any)
-              .eq('id', (pages[0] as any).id)
-          }
-        }
-
-        // Update findings with their highlighted screenshots
-        let uploadedCount = 0
-        for (const [findingId, screenshotUrl] of findingScreenshots) {
-          await db
-            .from('audit_findings')
-            .update({ screenshot_url: screenshotUrl } as any)
-            .eq('id', findingId)
-          uploadedCount++
-        }
-
-        await auditLog(auditId, 'screenshots_completed', 'success',
-          `Captured ${pageScreenshots.size} page + ${uploadedCount} finding screenshots`, {
-            page_screenshots: pageScreenshots.size,
-            finding_screenshots: uploadedCount,
-          })
-      } catch (err) {
-        // Screenshots are non-fatal — audit can complete without them
-        const errMsg = err instanceof Error ? err.message : String(err)
-        console.error('[inngest] Screenshot capture error (non-fatal):', errMsg)
-        console.error('[inngest] Screenshot stack:', err instanceof Error ? err.stack : 'no stack')
-        await auditLog(auditId, 'screenshots_error', 'warning', `Screenshot capture failed: ${errMsg.slice(0, 300)}`)
-      }
-    })
-
-    // ──────────────────────────────────────────────────────────
-    // STEP 9: Generate report
+    // STEP 8: Generate report (screenshots moved to enrichment)
     // ──────────────────────────────────────────────────────────
     await step.run('generate-report', async () => {
       await setStatus(auditId, 'generating_report', 85)
@@ -2814,6 +2710,64 @@ RULES FOR RE-AUDIT:
         }
       })()
 
+      // ── 7. Screenshots (moved from standalone step to enrichment) ──
+      const screenshotPromise = (async () => {
+        try {
+          const db = getDb()
+          const { data: findingsWithTargets } = await db
+            .from('audit_findings')
+            .select('id, title, severity, target_element, page_url')
+            .eq('audit_id', auditId)
+            .order('sort_order', { ascending: true })
+
+          const findingsToCapture = (findingsWithTargets || []).map((f: any) => ({
+            id: f.id as string,
+            title: f.title as string,
+            severity: f.severity as string,
+            targetElement: f.target_element as string | null,
+            pageUrl: f.page_url as string | null,
+          }))
+
+          const mainUrl = crawlResult.firstPageUrl || auditDetails.productUrl
+
+          const { pageScreenshots, findingScreenshots } = await captureAuditScreenshots(
+            findingsToCapture,
+            mainUrl,
+            auditId,
+            5,
+          )
+
+          for (const [url, screenshotUrl] of pageScreenshots) {
+            const { data: pages } = await db
+              .from('audit_pages')
+              .select('id')
+              .eq('audit_id', auditId)
+              .eq('url', url)
+              .limit(1)
+            if (pages && pages.length > 0) {
+              await db.from('audit_pages')
+                .update({ screenshot_url: screenshotUrl } as any)
+                .eq('id', (pages[0] as any).id)
+            }
+          }
+
+          let uploadedCount = 0
+          for (const [findingId, screenshotUrl] of findingScreenshots) {
+            await db.from('audit_findings')
+              .update({ screenshot_url: screenshotUrl } as any)
+              .eq('id', findingId)
+            uploadedCount++
+          }
+
+          await auditLog(auditId, 'screenshots_completed', 'success',
+            `Captured ${pageScreenshots.size} page + ${uploadedCount} finding screenshots`)
+        } catch (err) {
+          const errMsg = err instanceof Error ? err.message : String(err)
+          console.error('[inngest] Screenshot capture error (non-fatal):', errMsg)
+          await auditLog(auditId, 'screenshots_error', 'warning', `Screenshot capture failed: ${errMsg.slice(0, 300)}`)
+        }
+      })()
+
       // Run all enrichment tasks in parallel with individual timeouts
       // to prevent a single hanging call from blocking the entire step
       const ENRICH_TIMEOUT = 90_000 // 90 seconds per task
@@ -2824,6 +2778,7 @@ RULES FOR RE-AUDIT:
         withTimeout(minimumFindingsPromise, ENRICH_TIMEOUT, 'minimum-findings'),
         withTimeout(pipelineLearnPromise, ENRICH_TIMEOUT, 'pipeline-learn'),
         withTimeout(predictivePromise, ENRICH_TIMEOUT, 'predictive-recs'),
+        withTimeout(screenshotPromise, ENRICH_TIMEOUT, 'screenshots'),
       ])
     })
 
