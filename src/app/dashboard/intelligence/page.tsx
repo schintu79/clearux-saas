@@ -437,7 +437,7 @@ export default function IntelligencePage() {
           dataSource={biSummary?.shareOfVoice != null ? `Your brand's share in AI responses` : null}
           trend={trendIcon(latestSnap?.share_of_voice, prevSnap?.share_of_voice)}
           scrollTarget="share-of-voice"
-          emptyMessage="Share of Voice requires tracking competitors and collecting AI response data."
+          emptyMessage="Share of Voice is calculated from AI model responses. Run an audit with the Brand module enabled to generate this data."
         />
         {/* Human Sentiment */}
         <HeroMetricCard
@@ -448,7 +448,7 @@ export default function IntelligencePage() {
           dataSource={humanSignalCount > 0 ? `Based on ${humanSignalCount} signal${humanSignalCount !== 1 ? 's' : ''}` : null}
           trend={null}
           scrollTarget="human-signals"
-          emptyMessage="Connect review sources to start tracking real user sentiment."
+          emptyMessage="Human sentiment is collected automatically from reviews, Reddit, and web mentions during audits. No data was found for this brand yet."
         />
       </div>
 
@@ -501,12 +501,12 @@ export default function IntelligencePage() {
               <SentimentSourceCard
                 label="Human Reviews"
                 score={hp?.reviewScore != null ? Math.round(hp.reviewScore * 20) : null}
-                source={hp?.reviewCount ? `From ${hp.reviewCount} review${hp.reviewCount !== 1 ? 's' : ''}` : 'No review data collected yet'}
+                source={hp?.reviewCount ? `From ${hp.reviewCount} review${hp.reviewCount !== 1 ? 's' : ''}` : 'No reviews found for this brand'}
               />
               <SentimentSourceCard
                 label="Social Mentions"
                 score={hp?.socialSentiment ?? null}
-                source={hp?.redditMentionCount || hp?.webMentionCount ? `From ${(hp?.redditMentionCount ?? 0) + (hp?.webMentionCount ?? 0)} mention${((hp?.redditMentionCount ?? 0) + (hp?.webMentionCount ?? 0)) !== 1 ? 's' : ''}` : 'No social data collected yet'}
+                source={hp?.redditMentionCount || hp?.webMentionCount ? `From ${(hp?.redditMentionCount ?? 0) + (hp?.webMentionCount ?? 0)} mention${((hp?.redditMentionCount ?? 0) + (hp?.webMentionCount ?? 0)) !== 1 ? 's' : ''}` : 'No mentions found for this brand'}
               />
             </div>
 
@@ -982,7 +982,7 @@ export default function IntelligencePage() {
         ) : (
           <EmptySection
             icon={<Users size={20} />}
-            message="No human signals collected yet. Connect review sources to start tracking real user sentiment."
+            message="No human signals found for this brand yet. Reviews, Reddit mentions, and web mentions are collected automatically during audits when external data is available."
           />
         )}
       </section>
