@@ -87,6 +87,7 @@ import { matchFindingToCategory } from '@/lib/audit-engine/pipeline/category-key
 import { readSelection, writeSelection } from '@/lib/dashboard/brand-selection';
 import { WcagOverview } from '@/components/dashboard/v2/WcagChecklist';
 import { ACCURACY_TOOLTIP, AccuracyTooltip } from '@/components/dashboard/AIXRayComparison';
+import { useAuditProgress, type AuditProgressData } from '@/hooks/useAuditProgress';
 
 /* ── Helpers ─────────────────────────────────────────────── */
 
@@ -246,6 +247,18 @@ const STAGE_LABEL: Record<string, string> = {
   completed: 'Complete',
 };
 
+/* ── Progressive stage pipeline labels ──────────────────── */
+const PIPELINE_STAGES: Array<{ key: string; label: string; description: string }> = [
+  { key: 'preflight', label: 'Preflight', description: 'Validating URL and preparing scan' },
+  { key: 'crawling', label: 'Crawling', description: 'Discovering and scanning pages' },
+  { key: 'checking', label: 'Speed & WCAG', description: 'Running performance and accessibility tests' },
+  { key: 'probing', label: 'AI probe', description: 'Testing how AI models perceive your site' },
+  { key: 'analysing', label: 'Analysis', description: 'Evaluating UX across 24 categories' },
+  { key: 'reporting', label: 'Report', description: 'Generating scores and recommendations' },
+  { key: 'enriching', label: 'Enrichment', description: 'Adding benchmarks and intelligence' },
+  { key: 'complete', label: 'Done', description: 'Audit complete' },
+];
+
 
 /* ── Coffee cup SVG — minimal thin-line, monochrome ──────────── */
 function CoffeeCup() {
@@ -278,14 +291,21 @@ function CoffeeCup() {
   );
 }
 
-/* ── Audit progress loader — coffee animation + deep scan copy ──── */
+/* ── Audit progress loader — progressive stage pipeline ──── */
 function AuditProgressLoader({
   status,
   percent,
+  auditId,
 }: {
   status: string;
   percent: number | null | undefined;
+  auditId: string;
 }) {
+  const { data: progressData } = useAuditProgress(auditId, {
+    enabled: ['payment_received', 'crawling', 'analysing', 'generating_report'].includes(status),
+    interval: 2500,
+  });
+
   const stageFallback: Record<string, number> = {
     payment_received: 5,
     crawling: 25,
@@ -293,10 +313,10 @@ function AuditProgressLoader({
     generating_report: 85,
     completed: 100,
   };
-  const target = Math.max(
-    0,
-    Math.min(100, typeof percent === 'number' ? percent : stageFallback[status] ?? 0),
-  );
+
+  // Use progress endpoint data if available, otherwise fallback
+  const rawTarget = progressData?.progress ?? (typeof percent === 'number' ? percent : stageFallback[status] ?? 0);
+  const target = Math.max(0, Math.min(100, rawTarget));
 
   const [display, setDisplay] = useState<number>(target);
   useEffect(() => {
@@ -313,11 +333,14 @@ function AuditProgressLoader({
     return () => cancelAnimationFrame(raf);
   }, [target]);
 
-  const label = STAGE_LABEL[status] || 'Processing';
+  // Current active stage from progress data
+  const currentStage = progressData?.stage || 'preflight';
+  const stages = progressData?.stages;
+  const pData = progressData?.data;
 
   return (
     <div
-      className="py-10 px-6 flex flex-col items-center gap-5"
+      className="py-8 px-6 flex flex-col items-center gap-5"
       role="progressbar"
       aria-valuemin={0}
       aria-valuemax={100}
@@ -333,7 +356,7 @@ function AuditProgressLoader({
       </span>
 
       {/* Thin progress bar */}
-      <div className="w-full max-w-[280px]">
+      <div className="w-full max-w-[320px]">
         <div
           className="h-[2px] rounded-full overflow-hidden"
           style={{ background: 'color-mix(in srgb, var(--ink) 8%, transparent)' }}
@@ -349,17 +372,71 @@ function AuditProgressLoader({
         </div>
       </div>
 
-      {/* Stage label */}
-      <p className="text-[12px] font-medium" style={{ color: 'var(--m-muted)' }}>
-        {label}
-      </p>
+      {/* Stage pipeline — vertical list */}
+      <div className="w-full max-w-[320px] mt-2">
+        {PIPELINE_STAGES.map((stage, idx) => {
+          const isDone = stages?.[stage.key as keyof typeof stages] ?? false;
+          const isActive = currentStage === stage.key && !isDone;
+          const isPending = !isDone && !isActive;
 
-      {/* Scan copy */}
+          return (
+            <div
+              key={stage.key}
+              className="flex items-center gap-3 py-1.5"
+            >
+              {/* Status indicator */}
+              <div className="w-4 h-4 flex items-center justify-center flex-shrink-0">
+                {isDone ? (
+                  <CheckCircle2 size={13} style={{ color: 'var(--ok)' }} />
+                ) : isActive ? (
+                  <Loader2 size={13} className="animate-spin" style={{ color: 'var(--ink)' }} />
+                ) : (
+                  <div className="w-2 h-2 rounded-full" style={{ background: 'color-mix(in srgb, var(--ink) 15%, transparent)' }} />
+                )}
+              </div>
+
+              {/* Label */}
+              <span
+                className="text-[12px] font-medium flex-1"
+                style={{
+                  color: isDone ? 'var(--m-muted)' : isActive ? 'var(--ink)' : 'color-mix(in srgb, var(--ink) 30%, transparent)',
+                }}
+              >
+                {stage.label}
+              </span>
+
+              {/* Partial results indicator */}
+              {isDone && stage.key === 'crawling' && pData && pData.pagesCrawled > 0 && (
+                <span className="text-[11px] tabular-nums" style={{ color: 'var(--m-muted)' }}>
+                  {pData.pagesCrawled} pages
+                </span>
+              )}
+              {isDone && stage.key === 'checking' && pData?.hasSpeedData && (
+                <span className="text-[11px]" style={{ color: 'var(--m-muted)' }}>
+                  Speed tested
+                </span>
+              )}
+              {isDone && stage.key === 'analysing' && pData && pData.findingsCount > 0 && (
+                <span className="text-[11px] tabular-nums" style={{ color: 'var(--m-muted)' }}>
+                  {pData.findingsCount} findings
+                </span>
+              )}
+              {isDone && stage.key === 'reporting' && pData?.overallScore != null && (
+                <span className="text-[11px] font-medium tabular-nums" style={{ color: 'var(--ink)' }}>
+                  Score: {pData.overallScore}
+                </span>
+              )}
+            </div>
+          );
+        })}
+      </div>
+
+      {/* Active stage description */}
       <p
-        className="text-[12px] leading-[1.6] text-center max-w-sm"
+        className="text-[12px] leading-[1.6] text-center max-w-sm mt-1"
         style={{ color: 'var(--m-muted)' }}
       >
-        Deep scanning your website. This usually takes 1-3 minutes.
+        {PIPELINE_STAGES.find(s => s.key === currentStage)?.description || 'Processing your audit'}
       </p>
 
       {/* Secondary CTA */}
@@ -2129,6 +2206,7 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
           <AuditProgressLoader
             status={audit.status}
             percent={(audit as any).progress_percent}
+            auditId={audit.id}
           />
 
           <div className="px-5 pb-5 text-center">

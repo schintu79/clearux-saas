@@ -118,7 +118,12 @@ export interface Audit {
   // Website Speed (PageSpeed Insights)
   speed_data:       SpeedDataSummary | null
   speed_tested_at:  string | null
+  // Progressive loading: current pipeline stage
+  audit_stage:      AuditStage | null
 }
+
+/** Pipeline stage for progressive frontend loading */
+export type AuditStage = 'preflight' | 'crawling' | 'checking' | 'probing' | 'analysing' | 'reporting' | 'enriching' | 'complete'
 
 /** Structured crawl summary stored as jsonb on audits table */
 export interface CrawlSummary {

@@ -363,7 +363,7 @@ function AuditsPageInner() {
     if (!user) return;
     const hasInProgress = audits.some((a) => ['payment_received', 'crawling', 'analysing', 'generating_report'].includes(a.status));
     if (!hasInProgress) return;
-    const iv = setInterval(() => fetchAudits(user.id), 10000);
+    const iv = setInterval(() => fetchAudits(user.id), 5000);
     return () => clearInterval(iv);
   }, [audits, user, fetchAudits]);
 

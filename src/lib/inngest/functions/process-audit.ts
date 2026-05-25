@@ -114,6 +114,19 @@ async function setProgress(auditId: string, progressPercent: number) {
   if (error) console.error(`[inngest] progress update error:`, error.message)
 }
 
+/**
+ * Update the audit_stage field for progressive frontend loading.
+ * Stages: preflight → crawling → checking → analysing → reporting → enriching → complete
+ */
+async function setStage(auditId: string, stage: string) {
+  const db = getDb()
+  const { error } = await db
+    .from('audits')
+    .update({ audit_stage: stage, updated_at: new Date().toISOString() } as any)
+    .eq('id', auditId)
+  if (error) console.error(`[inngest] stage update error:`, error.message)
+}
+
 async function auditLog(
   auditId: string,
   event: string,
@@ -254,6 +267,7 @@ export const processAuditFn = inngest.createFunction(
     // ──────────────────────────────────────────────────────────
     await step.run('crawl-preflight', async () => {
       await setStatus(auditId, 'crawling', 2)
+      await setStage(auditId, 'preflight')
       await auditLog(auditId, 'preflight_started', 'info', `Pre-flight check on ${auditDetails.productUrl}`)
 
       const preflight = await runCrawlPreflight(auditDetails.productUrl)
@@ -295,6 +309,7 @@ export const processAuditFn = inngest.createFunction(
     // ──────────────────────────────────────────────────────────
     const crawlResult = await step.run('crawl-pages', async () => {
       await setStatus(auditId, 'crawling', 5)
+      await setStage(auditId, 'crawling')
       await auditLog(auditId, 'crawl_started', 'info', `Crawling ${auditDetails.productUrl}`)
 
       const maxPages = auditDetails.plan === 'free_preview' ? 5 : auditDetails.plan === 'starter' ? 8 : 25
@@ -468,299 +483,289 @@ export const processAuditFn = inngest.createFunction(
     }
 
     // ──────────────────────────────────────────────────────────
-    // STEP 2b: Responsive design check (Puppeteer)
-    // Renders crawled pages at 375, 768, 1024, 1440 viewports
-    // and detects real layout issues (overflow, touch targets,
-    // text size, etc). Findings go into category 11
-    // (Mobile Experience & Responsive Design).
+    // STEP 2b: PARALLEL CHECKS — responsive, pagespeed, WCAG
+    // These three checks are independent of each other and can
+    // run concurrently within a single Inngest step, saving
+    // ~25-60s of sequential execution + 2 cold starts.
     // ──────────────────────────────────────────────────────────
-    const responsiveCheck = await step.run('check-responsive-design', async () => {
+    const parallelChecks = await step.run('parallel-site-checks', async () => {
       await setProgress(auditId, 15)
-      try {
-        const maxUrls = auditDetails.plan === 'free_preview' ? 1 : 3
-        const result = await checkResponsiveDesign(crawlResult.crawledUrls, maxUrls)
+      await setStage(auditId, 'checking')
 
-        // Store responsive findings in audit_findings
-        if (result.findings.length > 0) {
-          const db = getDb()
-          // Get current max sort_order
-          const { data: existingFindings } = await db
-            .from('audit_findings')
-            .select('sort_order')
-            .eq('audit_id', auditId)
-            .order('sort_order', { ascending: false })
-            .limit(1)
+      // ── Responsive Design Check ──
+      const responsivePromise = (async () => {
+        try {
+          const maxUrls = auditDetails.plan === 'free_preview' ? 1 : 3
+          const result = await checkResponsiveDesign(crawlResult.crawledUrls, maxUrls)
 
-          let sortOrder = ((existingFindings?.[0] as any)?.sort_order ?? -1) + 1
-
-          const responsiveInserts = result.findings.map((finding) => {
-            const cls = classifyFinding({ title: finding.title, description: finding.description, recommendation: finding.recommendation, severity: finding.severity, categoryIndex: finding.categoryIndex ?? null })
-            return {
-              audit_id: auditId,
-              checklist_item_id: null,
-              category_index: finding.categoryIndex ?? null,
-              finding_type: cls.findingType,
-              fix_type: cls.fixType,
-              severity: finding.severity,
-              title: finding.title,
-              description: finding.description,
-              evidence: null,
-              page_url: finding.pageUrl || crawlResult.firstPageUrl,
-              recommendation: finding.recommendation,
-              estimated_impact: finding.estimatedImpact || null,
-              target_element: finding.targetElement || null,
-              screenshot_url: null,
-              sort_order: sortOrder++,
-              confidence_level: 'deterministic',
-              detection_source: 'responsive_checker',
-              ...computeActionModelFields({ title: finding.title, description: finding.description, recommendation: finding.recommendation, fix_type: cls.fixType, finding_type: cls.findingType }),
-            }
-          })
-          await db.from('audit_findings').insert(responsiveInserts as any)
-        }
-
-        // Update audit_pages with mobile-friendly data (parallel)
-        if (result.results.length > 0) {
-          const db = getDb()
-          await Promise.all(result.results.map((r) => {
-            const issueCount = r.viewportIssues.filter(i => i.viewport === 'Mobile').length
-            return db
-              .from('audit_pages')
-              .update({
-                is_mobile_friendly: issueCount === 0,
-                viewport_meta: r.hasMobileViewport ? 'width=device-width, initial-scale=1' : null,
-              } as any)
+          // Store responsive findings in audit_findings
+          if (result.findings.length > 0) {
+            const db = getDb()
+            const { data: existingFindings } = await db
+              .from('audit_findings')
+              .select('sort_order')
               .eq('audit_id', auditId)
-              .eq('url', r.url)
-          }))
-        }
+              .order('sort_order', { ascending: false })
+              .limit(1)
 
-        await auditLog(auditId, 'responsive_check_completed', 'success',
-          `Responsive check: ${result.findings.length} findings across ${result.results.length} page(s)`, {
-            findings_count: result.findings.length,
-            pages_checked: result.results.length,
-            viewports: [375, 768, 1024, 1440],
-          })
+            let sortOrder = ((existingFindings?.[0] as any)?.sort_order ?? -1) + 1
 
-        // Transparency: if no responsive issues found, note the checker's scope
-        if (result.findings.length === 0) {
-          auditLimitations.push({
-            id: 'responsive_no_issues',
-            title: 'No technical responsive issues detected',
-            description: 'Our browser-based responsive check found no technical layout issues (overflow, undersized touch targets, missing viewport meta). This check focuses on measurable technical problems. Subjective visual quality aspects like content density, whitespace balance, and layout aesthetics are not covered by automated testing.',
-            tab: 'responsive',
-          })
-        }
-
-        return {
-          summary: result.summary,
-          findingsCount: result.findings.length,
-        }
-      } catch (err) {
-        // Non-fatal — if Puppeteer fails (e.g., no Chromium in env),
-        // the audit continues with text-based analysis only
-        console.error('[inngest] Responsive check failed (non-fatal):', err)
-        await auditLog(auditId, 'responsive_check_failed', 'warning',
-          `Responsive check failed: ${err instanceof Error ? err.message : String(err)}. Continuing with text-based analysis.`)
-        auditLimitations.push({
-          id: 'responsive_check_unavailable',
-          title: 'Visual responsive check unavailable',
-          description: 'We could not render this website in a browser to check responsive layout issues. The responsive analysis is based on code inspection only, so some visual layout problems (spacing, readability, content density) may not be detected.',
-          tab: 'responsive',
-        })
-        return { summary: '', findingsCount: 0 }
-      }
-    })
-
-    // ──────────────────────────────────────────────────────────
-    // STEP 2c: PageSpeed Insights — real Core Web Vitals
-    // Runs Google PSI for mobile + desktop, stores speed_data
-    // on the audit record, and generates speed-related findings.
-    // ──────────────────────────────────────────────────────────
-    await step.run('pagespeed-test', async () => {
-      // Only run for website audits (not brand audits)
-      if (auditDetails.auditType === 'brand_identity') return
-
-      try {
-        await auditLog(auditId, 'pagespeed_started', 'info', `Running PageSpeed test for ${auditDetails.productUrl}`)
-        const speedData = await runFullSpeedTest(auditDetails.productUrl)
-
-        // Store speed data on audit record (full SpeedDataSummary shape)
-        const speedSummary = {
-          mobile: speedData.mobile ? {
-            score: speedData.mobile.score,
-            strategy: 'mobile' as const,
-            metrics: speedData.mobile.metrics,
-            issueCount: speedData.mobile.diagnostics.length,
-            finalUrl: speedData.mobile.finalUrl,
-            testedAt: speedData.mobile.testedAt,
-          } : null,
-          desktop: speedData.desktop ? {
-            score: speedData.desktop.score,
-            strategy: 'desktop' as const,
-            metrics: speedData.desktop.metrics,
-            issueCount: speedData.desktop.diagnostics.length,
-            finalUrl: speedData.desktop.finalUrl,
-            testedAt: speedData.desktop.testedAt,
-          } : null,
-          testedAt: speedData.testedAt,
-        }
-
-        const db = getDb()
-        await db
-          .from('audits')
-          .update({ speed_data: speedSummary, speed_tested_at: speedData.testedAt } as any)
-          .eq('id', auditId)
-
-        // Generate speed findings and store them
-        const speedFindings = generateSpeedFindings(speedData)
-        if (speedFindings.length > 0) {
-          const findingRows = speedFindings.map((f, i) => ({
-            audit_id: auditId,
-            category: 'Performance & Page Speed',
-            category_index: 23,
-            title: f.title,
-            description: f.description,
-            recommendation: f.recommendation,
-            severity: f.severity,
-            detection_source: 'pagespeed_api',
-            status: 'open' as const,
-            position: 900 + i,
-          }))
-          await db.from('audit_findings').insert(findingRows)
-        }
-
-        await auditLog(auditId, 'pagespeed_completed', 'success',
-          `PageSpeed: score ${speedSummary.mobile?.score ?? '?'}(m) / ${speedSummary.desktop?.score ?? '?'}(d), ${speedFindings.length} finding(s)`)
-      } catch (err) {
-        console.error('[process-audit] PageSpeed test error (non-fatal):', err)
-        await auditLog(auditId, 'pagespeed_error', 'warning', 'PageSpeed API call failed — continuing without real CWV data')
-      }
-    })
-
-    // ──────────────────────────────────────────────────────────
-    // STEP 2b2: WCAG 2.1 AA Compliance Check (Puppeteer)
-    // Runs comprehensive automated accessibility checks against
-    // all WCAG 2.1 Level AA criteria. Individual failures are
-    // stored as findings; results are injected into the AI
-    // analyzer context so it generates specific fixes, not
-    // "conduct an audit" recommendations.
-    // ──────────────────────────────────────────────────────────
-    const wcagCheck = await step.run('check-wcag-compliance', async () => {
-      try {
-        const maxUrls = auditDetails.plan === 'free_preview' ? 1 : 3
-        const { automatedResults, heuristicPrompts } = await checkWcagAutomated(crawlResult.crawledUrls, maxUrls)
-
-        // Run AI heuristic analysis for criteria Puppeteer can't check (parallel)
-        const heuristicResults = new Map<string, WcagCheckResult[]>()
-        const Anthropic = (await import('@anthropic-ai/sdk')).default
-        const anthropic = new Anthropic()
-        await Promise.all(Array.from(heuristicPrompts.entries()).map(async ([url, prompt]) => {
-          try {
-            const msg = await anthropic.messages.create({
-              model: 'claude-sonnet-4-20250514',
-              max_tokens: 2000,
-              messages: [{ role: 'user', content: prompt }],
-            })
-            const text = msg.content.find(b => b.type === 'text')?.text || ''
-            if (text) heuristicResults.set(url, parseHeuristicResponse(text))
-          } catch {
-            // Heuristic analysis failed — automated results still valid
-          }
-        }))
-
-        const wcagResult = buildWcagResults(automatedResults, heuristicResults)
-
-        // Store WCAG findings in audit_findings (category 8 = Accessibility & WCAG)
-        if (wcagResult.totalFindings > 0) {
-          const db = getDb()
-          const { data: existingFindings } = await db
-            .from('audit_findings')
-            .select('sort_order')
-            .eq('audit_id', auditId)
-            .order('sort_order', { ascending: false })
-            .limit(1)
-
-          let sortOrder = ((existingFindings?.[0] as any)?.sort_order ?? -1) + 1
-
-          const wcagInserts: any[] = []
-          for (const page of wcagResult.pages) {
-            for (const finding of page.findings) {
-              const cls = classifyFinding({
-                title: finding.title,
-                description: finding.description,
-                recommendation: finding.recommendation,
-                severity: finding.severity,
-                categoryIndex: 8, // Accessibility & WCAG Compliance
-              })
-              const wcagDesc = `[WCAG ${finding.wcagCriterion}] ${finding.description}`
-              wcagInserts.push({
+            const responsiveInserts = result.findings.map((finding) => {
+              const cls = classifyFinding({ title: finding.title, description: finding.description, recommendation: finding.recommendation, severity: finding.severity, categoryIndex: finding.categoryIndex ?? null })
+              return {
                 audit_id: auditId,
                 checklist_item_id: null,
-                category_index: 8, // Accessibility & WCAG Compliance
+                category_index: finding.categoryIndex ?? null,
                 finding_type: cls.findingType,
                 fix_type: cls.fixType,
                 severity: finding.severity,
                 title: finding.title,
-                description: wcagDesc,
-                evidence: finding.evidence || null,
+                description: finding.description,
+                evidence: null,
                 page_url: finding.pageUrl || crawlResult.firstPageUrl,
                 recommendation: finding.recommendation,
-                estimated_impact: null,
-                target_element: finding.element || null,
+                estimated_impact: finding.estimatedImpact || null,
+                target_element: finding.targetElement || null,
                 screenshot_url: null,
                 sort_order: sortOrder++,
                 confidence_level: 'deterministic',
-                detection_source: 'wcag_checker',
-                ...computeActionModelFields({ title: finding.title, description: wcagDesc, recommendation: finding.recommendation, fix_type: cls.fixType, finding_type: cls.findingType }),
+                detection_source: 'responsive_checker',
+                ...computeActionModelFields({ title: finding.title, description: finding.description, recommendation: finding.recommendation, fix_type: cls.fixType, finding_type: cls.findingType }),
+              }
+            })
+            await db.from('audit_findings').insert(responsiveInserts as any)
+          }
+
+          // Update audit_pages with mobile-friendly data
+          if (result.results.length > 0) {
+            const db = getDb()
+            await Promise.all(result.results.map((r) => {
+              const issueCount = r.viewportIssues.filter(i => i.viewport === 'Mobile').length
+              return db
+                .from('audit_pages')
+                .update({
+                  is_mobile_friendly: issueCount === 0,
+                  viewport_meta: r.hasMobileViewport ? 'width=device-width, initial-scale=1' : null,
+                } as any)
+                .eq('audit_id', auditId)
+                .eq('url', r.url)
+            }))
+          }
+
+          await auditLog(auditId, 'responsive_check_completed', 'success',
+            `Responsive check: ${result.findings.length} findings across ${result.results.length} page(s)`, {
+              findings_count: result.findings.length,
+              pages_checked: result.results.length,
+              viewports: [375, 768, 1024, 1440],
+            })
+
+          return { summary: result.summary, findingsCount: result.findings.length }
+        } catch (err) {
+          console.error('[inngest] Responsive check failed (non-fatal):', err)
+          await auditLog(auditId, 'responsive_check_failed', 'warning',
+            `Responsive check failed: ${err instanceof Error ? err.message : String(err)}. Continuing with text-based analysis.`)
+          return { summary: '', findingsCount: 0 }
+        }
+      })()
+
+      // ── PageSpeed Insights ──
+      const pagespeedPromise = (async () => {
+        if (auditDetails.auditType === 'brand_identity') return null
+        try {
+          await auditLog(auditId, 'pagespeed_started', 'info', `Running PageSpeed test for ${auditDetails.productUrl}`)
+          const speedData = await runFullSpeedTest(auditDetails.productUrl)
+
+          const speedSummary = {
+            mobile: speedData.mobile ? {
+              score: speedData.mobile.score,
+              strategy: 'mobile' as const,
+              metrics: speedData.mobile.metrics,
+              issueCount: speedData.mobile.diagnostics.length,
+              finalUrl: speedData.mobile.finalUrl,
+              testedAt: speedData.mobile.testedAt,
+            } : null,
+            desktop: speedData.desktop ? {
+              score: speedData.desktop.score,
+              strategy: 'desktop' as const,
+              metrics: speedData.desktop.metrics,
+              issueCount: speedData.desktop.diagnostics.length,
+              finalUrl: speedData.desktop.finalUrl,
+              testedAt: speedData.desktop.testedAt,
+            } : null,
+            testedAt: speedData.testedAt,
+          }
+
+          const db = getDb()
+          await db
+            .from('audits')
+            .update({ speed_data: speedSummary, speed_tested_at: speedData.testedAt } as any)
+            .eq('id', auditId)
+
+          const speedFindings = generateSpeedFindings(speedData)
+          if (speedFindings.length > 0) {
+            const findingRows = speedFindings.map((f, i) => ({
+              audit_id: auditId,
+              category: 'Performance & Page Speed',
+              category_index: 23,
+              title: f.title,
+              description: f.description,
+              recommendation: f.recommendation,
+              severity: f.severity,
+              detection_source: 'pagespeed_api',
+              status: 'open' as const,
+              position: 900 + i,
+            }))
+            await db.from('audit_findings').insert(findingRows)
+          }
+
+          await auditLog(auditId, 'pagespeed_completed', 'success',
+            `PageSpeed: score ${speedSummary.mobile?.score ?? '?'}(m) / ${speedSummary.desktop?.score ?? '?'}(d), ${speedFindings.length} finding(s)`)
+          return speedSummary
+        } catch (err) {
+          console.error('[process-audit] PageSpeed test error (non-fatal):', err)
+          await auditLog(auditId, 'pagespeed_error', 'warning', 'PageSpeed API call failed — continuing without real CWV data')
+          return null
+        }
+      })()
+
+      // ── WCAG 2.1 AA Compliance Check ──
+      const wcagPromise = (async () => {
+        try {
+          const maxUrls = auditDetails.plan === 'free_preview' ? 1 : 3
+          const { automatedResults, heuristicPrompts } = await checkWcagAutomated(crawlResult.crawledUrls, maxUrls)
+
+          const heuristicResults = new Map<string, WcagCheckResult[]>()
+          const Anthropic = (await import('@anthropic-ai/sdk')).default
+          const anthropic = new Anthropic()
+          await Promise.all(Array.from(heuristicPrompts.entries()).map(async ([url, prompt]) => {
+            try {
+              const msg = await anthropic.messages.create({
+                model: 'claude-sonnet-4-20250514',
+                max_tokens: 2000,
+                messages: [{ role: 'user', content: prompt }],
               })
+              const text = msg.content.find(b => b.type === 'text')?.text || ''
+              if (text) heuristicResults.set(url, parseHeuristicResponse(text))
+            } catch {
+              // Heuristic analysis failed — automated results still valid
+            }
+          }))
+
+          const wcagResult = buildWcagResults(automatedResults, heuristicResults)
+
+          if (wcagResult.totalFindings > 0) {
+            const db = getDb()
+            const { data: existingFindings } = await db
+              .from('audit_findings')
+              .select('sort_order')
+              .eq('audit_id', auditId)
+              .order('sort_order', { ascending: false })
+              .limit(1)
+
+            let sortOrder = ((existingFindings?.[0] as any)?.sort_order ?? -1) + 1
+
+            const wcagInserts: any[] = []
+            for (const page of wcagResult.pages) {
+              for (const finding of page.findings) {
+                const cls = classifyFinding({
+                  title: finding.title,
+                  description: finding.description,
+                  recommendation: finding.recommendation,
+                  severity: finding.severity,
+                  categoryIndex: 8,
+                })
+                const wcagDesc = `[WCAG ${finding.wcagCriterion}] ${finding.description}`
+                wcagInserts.push({
+                  audit_id: auditId,
+                  checklist_item_id: null,
+                  category_index: 8,
+                  finding_type: cls.findingType,
+                  fix_type: cls.fixType,
+                  severity: finding.severity,
+                  title: finding.title,
+                  description: wcagDesc,
+                  evidence: finding.evidence || null,
+                  page_url: finding.pageUrl || crawlResult.firstPageUrl,
+                  recommendation: finding.recommendation,
+                  estimated_impact: null,
+                  target_element: finding.element || null,
+                  screenshot_url: null,
+                  sort_order: sortOrder++,
+                  confidence_level: 'deterministic',
+                  detection_source: 'wcag_checker',
+                  ...computeActionModelFields({ title: finding.title, description: wcagDesc, recommendation: finding.recommendation, fix_type: cls.fixType, finding_type: cls.findingType }),
+                })
+              }
+            }
+            if (wcagInserts.length > 0) {
+              await db.from('audit_findings').insert(wcagInserts)
             }
           }
-          if (wcagInserts.length > 0) {
-            await db.from('audit_findings').insert(wcagInserts)
+
+          if (wcagResult.pages.length > 0) {
+            const db = getDb()
+            await Promise.all(wcagResult.pages.map((page) =>
+              db
+                .from('audit_pages')
+                .update({
+                  wcag_checklist: JSON.stringify(page.checklist),
+                  wcag_score: page.score,
+                } as any)
+                .eq('audit_id', auditId)
+                .eq('url', page.url)
+            ))
           }
-        }
 
-        // Store WCAG checklist data in audit_pages for the UI panel (parallel)
-        if (wcagResult.pages.length > 0) {
-          const db = getDb()
-          await Promise.all(wcagResult.pages.map((page) =>
-            db
-              .from('audit_pages')
-              .update({
-                wcag_checklist: JSON.stringify(page.checklist),
-                wcag_score: page.score,
-              } as any)
-              .eq('audit_id', auditId)
-              .eq('url', page.url)
-          ))
-        }
+          await auditLog(auditId, 'wcag_check_completed', 'success',
+            `WCAG 2.1 AA check: ${wcagResult.totalFindings} findings, score ${wcagResult.overallScore}/100`, {
+              findings_count: wcagResult.totalFindings,
+              pages_checked: wcagResult.pages.length,
+              overall_score: wcagResult.overallScore,
+            })
 
-        await auditLog(auditId, 'wcag_check_completed', 'success',
-          `WCAG 2.1 AA check: ${wcagResult.totalFindings} findings, score ${wcagResult.overallScore}/100`, {
-            findings_count: wcagResult.totalFindings,
-            pages_checked: wcagResult.pages.length,
-            overall_score: wcagResult.overallScore,
-          })
-
-        return {
-          summary: formatWcagForPrompt(wcagResult),
-          findingsCount: wcagResult.totalFindings,
-          overallScore: wcagResult.overallScore,
+          return {
+            summary: formatWcagForPrompt(wcagResult),
+            findingsCount: wcagResult.totalFindings,
+            overallScore: wcagResult.overallScore,
+          }
+        } catch (err) {
+          console.error('[inngest] WCAG check failed (non-fatal):', err)
+          await auditLog(auditId, 'wcag_check_failed', 'warning',
+            `WCAG check failed: ${err instanceof Error ? err.message : String(err)}. Continuing with text-based analysis.`)
+          return { summary: '', findingsCount: 0, overallScore: 0 }
         }
-      } catch (err) {
-        console.error('[inngest] WCAG check failed (non-fatal):', err)
-        await auditLog(auditId, 'wcag_check_failed', 'warning',
-          `WCAG check failed: ${err instanceof Error ? err.message : String(err)}. Continuing with text-based analysis.`)
+      })()
+
+      // Run all three in parallel
+      const [responsive, _pagespeed, wcag] = await Promise.all([
+        responsivePromise,
+        pagespeedPromise,
+        wcagPromise,
+      ])
+
+      // Handle transparency notes
+      if (responsive.findingsCount === 0) {
+        auditLimitations.push({
+          id: 'responsive_no_issues',
+          title: 'No technical responsive issues detected',
+          description: 'Our browser-based responsive check found no technical layout issues (overflow, undersized touch targets, missing viewport meta). This check focuses on measurable technical problems. Subjective visual quality aspects like content density, whitespace balance, and layout aesthetics are not covered by automated testing.',
+          tab: 'responsive',
+        })
+      }
+      if (wcag.summary === '') {
         auditLimitations.push({
           id: 'wcag_check_unavailable',
           title: 'Automated WCAG compliance check unavailable',
           description: 'We could not render this website in a browser to run WCAG 2.1 AA compliance checks. The accessibility analysis is based on AI text review only.',
           tab: 'findings',
         })
-        return { summary: '', findingsCount: 0, overallScore: 0 }
       }
+
+      return { responsive, wcag }
     })
+
+    const responsiveCheck = parallelChecks.responsive
+    const wcagCheck = parallelChecks.wcag
 
     // ──────────────────────────────────────────────────────────
     // STEP 2c-2i COMBINED: Run all probe steps in parallel
@@ -771,6 +776,7 @@ export const processAuditFn = inngest.createFunction(
     // ──────────────────────────────────────────────────────────
     const probeResults = await step.run('parallel-probes', async () => {
       await setProgress(auditId, 18)
+      await setStage(auditId, 'probing')
 
       // ── AI Discovery probe ──
       const aiDiscoveryPromise = (async () => {
@@ -1182,6 +1188,7 @@ export const processAuditFn = inngest.createFunction(
     // ──────────────────────────────────────────────────────────
     const siteContext = await step.run('build-site-context', async () => {
       await setStatus(auditId, 'analysing', 30)
+      await setStage(auditId, 'analysing')
 
       // Build a structured map of what each page contains
       const lines: string[] = []
@@ -2290,6 +2297,7 @@ RULES FOR RE-AUDIT:
     // ──────────────────────────────────────────────────────────
     await step.run('generate-report', async () => {
       await setStatus(auditId, 'generating_report', 85)
+      await setStage(auditId, 'reporting')
 
       const db = getDb()
 
@@ -2442,428 +2450,350 @@ RULES FOR RE-AUDIT:
     })
 
     // ──────────────────────────────────────────────────────────
-    // STEP 9a: Snapshot industry benchmark into report
-    // Freezes the benchmark at audit-completion time so the
-    // "How you compare" section shows stable numbers that never
-    // shift when new audits are added to the pool.
+    // STEP 9a: POST-REPORT ENRICHMENT — all run in parallel
+    // Saves ~30-50s by running benchmark, brand intelligence,
+    // human perception, minimum findings, pipeline learn, and
+    // predictive recommendations concurrently in one step.
     // ──────────────────────────────────────────────────────────
-    await step.run('snapshot-industry-benchmark', async () => {
-      try {
-        const db = getDb()
+    await step.run('post-report-enrichment', async () => {
+      await setStage(auditId, 'enriching')
+      await setProgress(auditId, 90)
 
-        // Fetch the report + audit industry
-        const [{ data: report }, { data: audit }] = await Promise.all([
-          db.from('reports')
-            .select('ai_visibility_breakdown, overall_score, raw_json')
+      // ── 1. Snapshot industry benchmark ──
+      const benchmarkPromise = (async () => {
+        try {
+          const db = getDb()
+          const [{ data: report }, { data: audit }] = await Promise.all([
+            db.from('reports')
+              .select('ai_visibility_breakdown, overall_score, raw_json')
+              .eq('audit_id', auditId)
+              .single(),
+            db.from('audits')
+              .select('detected_industry')
+              .eq('id', auditId)
+              .single(),
+          ])
+
+          if (!report) return
+
+          const aiVis = (report as any).ai_visibility_breakdown as { overall?: number } | null
+          const score = aiVis?.overall || (report as any).overall_score || 0
+          const industry = (audit as any)?.detected_industry || 'General'
+
+          const benchmarkSnapshot = await getUserBenchmarkPosition(db, score, industry)
+
+          const rawJson = (report as any).raw_json || {}
+          rawJson._industryBenchmarkSnapshot = benchmarkSnapshot
+
+          await db.from('reports')
+            .update({ raw_json: rawJson } as any)
             .eq('audit_id', auditId)
-            .single(),
-          db.from('audits')
-            .select('detected_industry')
+
+          await auditLog(auditId, 'benchmark_snapshot', 'info',
+            `Industry benchmark snapshot: ${industry} avg ${benchmarkSnapshot.benchmark.avgScore}, user score ${score} (${benchmarkSnapshot.rankLabel})`)
+        } catch (err) {
+          console.error('[inngest] Benchmark snapshot failed (non-fatal):', err)
+          await auditLog(auditId, 'benchmark_snapshot_failed', 'warning',
+            `Benchmark snapshot failed: ${err instanceof Error ? err.message : 'unknown'}`)
+        }
+      })()
+
+      // ── 2. Brand Intelligence ──
+      const brandIntelPromise = (async () => {
+        try {
+          const db = getDb()
+          const { data: probes } = await db
+            .from('multi_model_probes')
+            .select('model_id, model_label, accuracy_score, results_json, status')
+            .eq('audit_id', auditId)
+
+          if (!probes || probes.length === 0) return
+          const measured = probes.filter((p: any) => p.status === 'measured' && p.results_json)
+          if (measured.length === 0) return
+
+          const { data: audit } = await db
+            .from('audits')
+            .select('product_url, brand_name')
             .eq('id', auditId)
-            .single(),
-        ])
-
-        if (!report) return
-
-        const aiVis = (report as any).ai_visibility_breakdown as { overall?: number } | null
-        const score = aiVis?.overall || (report as any).overall_score || 0
-        const industry = (audit as any)?.detected_industry || 'General'
-
-        const benchmarkSnapshot = await getUserBenchmarkPosition(db, score, industry)
-
-        // Store snapshot in report's raw_json so it's frozen forever
-        const rawJson = (report as any).raw_json || {}
-        rawJson._industryBenchmarkSnapshot = benchmarkSnapshot
-
-        await db.from('reports')
-          .update({ raw_json: rawJson } as any)
-          .eq('audit_id', auditId)
-
-        await auditLog(auditId, 'benchmark_snapshot', 'info',
-          `Industry benchmark snapshot: ${industry} avg ${benchmarkSnapshot.benchmark.avgScore}, user score ${score} (${benchmarkSnapshot.rankLabel})`)
-      } catch (err) {
-        console.error('[inngest] Benchmark snapshot failed (non-fatal):', err)
-        await auditLog(auditId, 'benchmark_snapshot_failed', 'warning',
-          `Benchmark snapshot failed: ${err instanceof Error ? err.message : 'unknown'}`)
-      }
-    })
-
-    // ──────────────────────────────────────────────────────────
-    // STEP 9a2: Brand Intelligence — sentiment analysis + composite score
-    // Runs after multi-model probes complete. Extracts sentiment per model,
-    // computes composite Brand Intelligence Score, stores on report.
-    // ──────────────────────────────────────────────────────────
-    await step.run('brand-intelligence-analysis', async () => {
-      try {
-        const db = getDb()
-
-        // Fetch multi-model probes for this audit
-        const { data: probes } = await db
-          .from('multi_model_probes')
-          .select('model_id, model_label, accuracy_score, results_json, status')
-          .eq('audit_id', auditId)
-
-        if (!probes || probes.length === 0) return
-
-        // Only process successfully measured probes
-        const measured = probes.filter((p: any) => p.status === 'measured' && p.results_json)
-        if (measured.length === 0) return
-
-        // Extract brand name from audit details
-        const { data: audit } = await db
-          .from('audits')
-          .select('product_url, brand_name')
-          .eq('id', auditId)
-          .single()
-
-        const brandName = (audit as any)?.brand_name ||
-          ((audit as any)?.product_url ? new URL((audit as any).product_url).hostname.replace(/^www\./, '') : 'Unknown')
-
-        // Run brand intelligence analysis
-        const biSummary = await runBrandIntelligenceAnalysis(
-          brandName,
-          measured.map((p: any) => ({
-            modelId: p.model_id,
-            modelLabel: p.model_label,
-            accuracyScore: p.accuracy_score || 0,
-            responses: (p.results_json || []).map((r: any) => ({
-              question: r.question || '',
-              answer: r.answer || '',
-            })),
-          })),
-          null, // competitorVisibility — Tier 2
-        )
-
-        // Store per-model sentiment + placement + share of voice back on probes
-        for (const model of biSummary.perModel) {
-          await db.from('multi_model_probes')
-            .update({
-              sentiment_score: model.sentimentScore,
-              sentiment_themes: model.themes,
-              placement_score: model.placement,
-              share_of_voice: (model as any).shareOfVoice ?? null,
-            } as any)
-            .eq('audit_id', auditId)
-            .eq('model_id', model.modelId)
-        }
-
-        // Store aggregate BI summary on report
-        await db.from('reports')
-          .update({ brand_intelligence: biSummary } as any)
-          .eq('audit_id', auditId)
-
-        // Store sentiment_data directly on audit record for quick access
-        await db.from('audits')
-          .update({ sentiment_data: biSummary } as any)
-          .eq('id', auditId)
-
-        await auditLog(auditId, 'brand_intelligence_computed', 'info',
-          `Brand Intelligence Score: ${biSummary.score}/100. AI Visibility: ${biSummary.aiVisibility}%. Sentiment: ${biSummary.overallSentiment}/100.`)
-      } catch (err) {
-        console.error('[inngest] Brand intelligence analysis failed (non-fatal):', err)
-        await auditLog(auditId, 'brand_intelligence_failed', 'warning',
-          `Brand intelligence failed: ${err instanceof Error ? err.message : 'unknown'}`)
-      }
-    })
-
-    // ──────────────────────────────────────────────────────────
-    // STEP 9a-2: Human Perception Intelligence (Tier 2)
-    // Fetches reviews, Reddit mentions, web mentions, runs prompt library,
-    // builds causal links, and generates content gap briefs.
-    // Non-fatal — gracefully handles missing API keys.
-    // ──────────────────────────────────────────────────────────
-    await step.run('human-perception-analysis', async () => {
-      try {
-        const { runHumanPerceptionPipeline } = await import('@/lib/human-perception')
-        const db = getDb()
-
-        // Get audit details
-        const { data: audit } = await db
-          .from('audits')
-          .select('user_id, product_url, brand_name, detected_industry, sentiment_data')
-          .eq('id', auditId)
-          .single()
-
-        if (!audit) return
-
-        const brandDomain = (audit as any).product_url
-          ? new URL((audit as any).product_url).hostname.replace(/^www\./, '')
-          : null
-        if (!brandDomain) return
-
-        const brandName = (audit as any).brand_name || brandDomain.replace(/\.(com|io|co|org|net)$/, '')
-
-        const summary = await runHumanPerceptionPipeline({
-          auditId,
-          userId: (audit as any).user_id,
-          brandDomain,
-          brandName,
-          detectedIndustry: (audit as any).detected_industry,
-          biSummary: (audit as any).sentiment_data,
-        })
-
-        // Store human perception data on audit record
-        await db.from('audits')
-          .update({ human_perception_data: summary } as any)
-          .eq('id', auditId)
-
-        await auditLog(auditId, 'human_perception_computed', 'info',
-          `Human Perception: ${summary.reviewCount} reviews, ${summary.webMentionCount} web mentions, ${summary.redditMentionCount} Reddit mentions. Sentiment: ${summary.socialSentiment}/100.`)
-      } catch (err) {
-        console.error('[inngest] Human perception analysis failed (non-fatal):', err)
-        await auditLog(auditId, 'human_perception_failed', 'warning',
-          `Human perception failed: ${err instanceof Error ? err.message : 'unknown'}`)
-      }
-    })
-
-    // ──────────────────────────────────────────────────────────
-    // STEP 9b: Minimum findings enforcement
-    // After report generation, check for categories with low scores
-    // but 0 findings. Generate targeted findings so users understand
-    // WHY a category scored poorly.
-    // ──────────────────────────────────────────────────────────
-    await step.run('enforce-minimum-findings', async () => {
-      try {
-        const db = getDb()
-
-        // 1. Fetch the report to get category scores + summaries
-        const { data: report } = await db
-          .from('reports')
-          .select('raw_json')
-          .eq('audit_id', auditId)
-          .single()
-
-        if (!report?.raw_json?.categoryScores) return
-
-        const categoryScores = (report.raw_json as any).categoryScores as Array<{
-          name: string; score: number; summary?: string
-        }>
-
-        // 2. Count findings per category index
-        const { data: allFindings } = await db
-          .from('audit_findings')
-          .select('category_index')
-          .eq('audit_id', auditId)
-
-        const findingsPerCategory: Record<string, number> = {}
-        for (const f of (allFindings || []) as any[]) {
-          const catIdx = f.category_index
-          if (catIdx != null && catIdx < categoryScores.length) {
-            const catName = categoryScores[catIdx]?.name
-            if (catName) {
-              findingsPerCategory[catName] = (findingsPerCategory[catName] ?? 0) + 1
-            }
-          }
-        }
-
-        // 3. Identify starved categories (score < 70, 0 findings)
-        const starved = identifyStarvedCategories(categoryScores, findingsPerCategory)
-
-        if (starved.length === 0) {
-          await auditLog(auditId, 'minimum_findings_ok', 'info',
-            'All low-scoring categories have findings — no gap to fill')
-          return
-        }
-
-        console.log(`[inngest] Minimum findings: ${starved.length} starved categories:`,
-          starved.map(s => `${s.categoryName} (score ${s.score}, 0 findings)`).join(', '))
-
-        // 4. Generate findings for starved categories
-        const generated = await generateFindingsForStarvedCategories(
-          starved,
-          auditDetails.productUrl,
-          auditDetails.language,
-        )
-
-        // 5. Insert generated findings into DB
-        const { data: existingFindings } = await db
-          .from('audit_findings')
-          .select('sort_order')
-          .eq('audit_id', auditId)
-          .order('sort_order', { ascending: false })
-          .limit(1)
-
-        let sortOrder = ((existingFindings?.[0] as any)?.sort_order ?? -1) + 1
-        let totalInserted = 0
-
-        for (const [categoryIndex, findings] of generated) {
-          for (const finding of findings) {
-            const classification = classifyFinding({
-              title: finding.title,
-              description: finding.description,
-              recommendation: finding.recommendation,
-              severity: finding.severity,
-              categoryIndex,
-            })
-            const validated = validateFixableRecommendation({
-              title: finding.title,
-              description: finding.description,
-              recommendation: finding.recommendation,
-              severity: finding.severity,
-              ...classification,
-            })
-            await db.from('audit_findings').insert({
-              audit_id: auditId,
-              checklist_item_id: null,
-              category_index: categoryIndex,
-              severity: finding.severity,
-              title: finding.title,
-              description: finding.description,
-              evidence: null,
-              page_url: finding.pageUrl || auditDetails.productUrl,
-              recommendation: finding.recommendation,
-              estimated_impact: finding.estimatedImpact || null,
-              target_element: finding.targetElement || null,
-              screenshot_url: null,
-              sort_order: sortOrder++,
-              finding_type: validated.findingType,
-              fix_type: validated.fixType,
-              confidence_level: 'interpretive',
-              detection_source: 'analyzer',
-            } as any)
-            totalInserted++
-          }
-        }
-
-        // 6. Update report total_issues count
-        if (totalInserted > 0) {
-          const { data: currentReport } = await db
-            .from('reports')
-            .select('total_issues')
-            .eq('audit_id', auditId)
             .single()
 
-          const currentTotal = (currentReport as any)?.total_issues ?? 0
-          await db
-            .from('reports')
-            .update({ total_issues: currentTotal + totalInserted } as any)
+          const brandName = (audit as any)?.brand_name ||
+            ((audit as any)?.product_url ? new URL((audit as any).product_url).hostname.replace(/^www\./, '') : 'Unknown')
+
+          const biSummary = await runBrandIntelligenceAnalysis(
+            brandName,
+            measured.map((p: any) => ({
+              modelId: p.model_id,
+              modelLabel: p.model_label,
+              accuracyScore: p.accuracy_score || 0,
+              responses: (p.results_json || []).map((r: any) => ({
+                question: r.question || '',
+                answer: r.answer || '',
+              })),
+            })),
+            null,
+          )
+
+          for (const model of biSummary.perModel) {
+            await db.from('multi_model_probes')
+              .update({
+                sentiment_score: model.sentimentScore,
+                sentiment_themes: model.themes,
+                placement_score: model.placement,
+                share_of_voice: (model as any).shareOfVoice ?? null,
+              } as any)
+              .eq('audit_id', auditId)
+              .eq('model_id', model.modelId)
+          }
+
+          await db.from('reports')
+            .update({ brand_intelligence: biSummary } as any)
             .eq('audit_id', auditId)
-        }
 
-        // Transparency: let user know we generated findings from summary context
-        if (totalInserted > 0) {
-          auditLimitations.push({
-            id: 'minimum_findings_generated',
-            title: 'Additional findings generated',
-            description: `${starved.length} categor${starved.length > 1 ? 'ies' : 'y'} scored below 70 but had no specific findings after quality filtering. We generated ${totalInserted} finding${totalInserted > 1 ? 's' : ''} from the category analysis to help you understand what needs improvement.`,
+          await db.from('audits')
+            .update({ sentiment_data: biSummary } as any)
+            .eq('id', auditId)
+
+          await auditLog(auditId, 'brand_intelligence_computed', 'info',
+            `Brand Intelligence Score: ${biSummary.score}/100. AI Visibility: ${biSummary.aiVisibility}%. Sentiment: ${biSummary.overallSentiment}/100.`)
+        } catch (err) {
+          console.error('[inngest] Brand intelligence analysis failed (non-fatal):', err)
+          await auditLog(auditId, 'brand_intelligence_failed', 'warning',
+            `Brand intelligence failed: ${err instanceof Error ? err.message : 'unknown'}`)
+        }
+      })()
+
+      // ── 3. Human Perception ──
+      const humanPerceptionPromise = (async () => {
+        try {
+          const { runHumanPerceptionPipeline } = await import('@/lib/human-perception')
+          const db = getDb()
+
+          const { data: audit } = await db
+            .from('audits')
+            .select('user_id, product_url, brand_name, detected_industry, sentiment_data')
+            .eq('id', auditId)
+            .single()
+
+          if (!audit) return
+
+          const brandDomain = (audit as any).product_url
+            ? new URL((audit as any).product_url).hostname.replace(/^www\./, '')
+            : null
+          if (!brandDomain) return
+
+          const brandName = (audit as any).brand_name || brandDomain.replace(/\.(com|io|co|org|net)$/, '')
+
+          const summary = await runHumanPerceptionPipeline({
+            auditId,
+            userId: (audit as any).user_id,
+            brandDomain,
+            brandName,
+            detectedIndustry: (audit as any).detected_industry,
+            biSummary: (audit as any).sentiment_data,
           })
+
+          await db.from('audits')
+            .update({ human_perception_data: summary } as any)
+            .eq('id', auditId)
+
+          await auditLog(auditId, 'human_perception_computed', 'info',
+            `Human Perception: ${summary.reviewCount} reviews, ${summary.webMentionCount} web mentions, ${summary.redditMentionCount} Reddit mentions. Sentiment: ${summary.socialSentiment}/100.`)
+        } catch (err) {
+          console.error('[inngest] Human perception analysis failed (non-fatal):', err)
+          await auditLog(auditId, 'human_perception_failed', 'warning',
+            `Human perception failed: ${err instanceof Error ? err.message : 'unknown'}`)
         }
+      })()
 
-        await auditLog(auditId, 'minimum_findings_enforced', 'success',
-          `Generated ${totalInserted} findings for ${starved.length} starved categories: ${starved.map(s => `${s.categoryName} (${s.score})`).join(', ')}`)
-
-        // Update report raw_json with latest limitations (including this step's)
-        if (auditLimitations.length > 0) {
-          const { data: currentReport } = await db
+      // ── 4. Minimum findings enforcement ──
+      const minimumFindingsPromise = (async () => {
+        try {
+          const db = getDb()
+          const { data: report } = await db
             .from('reports')
             .select('raw_json')
             .eq('audit_id', auditId)
             .single()
 
-          if (currentReport?.raw_json) {
-            await db
-              .from('reports')
-              .update({
-                raw_json: { ...(currentReport.raw_json as any), auditLimitations },
-              } as any)
-              .eq('audit_id', auditId)
+          if (!report?.raw_json?.categoryScores) return
+
+          const categoryScores = (report.raw_json as any).categoryScores as Array<{
+            name: string; score: number; summary?: string
+          }>
+
+          const { data: allFindings } = await db
+            .from('audit_findings')
+            .select('category_index')
+            .eq('audit_id', auditId)
+
+          const findingsPerCategory: Record<string, number> = {}
+          for (const f of (allFindings || []) as any[]) {
+            const catIdx = f.category_index
+            if (catIdx != null && catIdx < categoryScores.length) {
+              const catName = categoryScores[catIdx]?.name
+              if (catName) {
+                findingsPerCategory[catName] = (findingsPerCategory[catName] ?? 0) + 1
+              }
+            }
           }
+
+          const starved = identifyStarvedCategories(categoryScores, findingsPerCategory)
+          if (starved.length === 0) {
+            await auditLog(auditId, 'minimum_findings_ok', 'info',
+              'All low-scoring categories have findings — no gap to fill')
+            return
+          }
+
+          const generated = await generateFindingsForStarvedCategories(
+            starved, auditDetails.productUrl, auditDetails.language,
+          )
+
+          const { data: existingFindings } = await db
+            .from('audit_findings')
+            .select('sort_order')
+            .eq('audit_id', auditId)
+            .order('sort_order', { ascending: false })
+            .limit(1)
+
+          let sortOrder = ((existingFindings?.[0] as any)?.sort_order ?? -1) + 1
+          let totalInserted = 0
+
+          for (const [categoryIndex, findings] of generated) {
+            for (const finding of findings) {
+              const classification = classifyFinding({
+                title: finding.title, description: finding.description,
+                recommendation: finding.recommendation, severity: finding.severity, categoryIndex,
+              })
+              const validated = validateFixableRecommendation({
+                title: finding.title, description: finding.description,
+                recommendation: finding.recommendation, severity: finding.severity, ...classification,
+              })
+              await db.from('audit_findings').insert({
+                audit_id: auditId, checklist_item_id: null, category_index: categoryIndex,
+                severity: finding.severity, title: finding.title, description: finding.description,
+                evidence: null, page_url: finding.pageUrl || auditDetails.productUrl,
+                recommendation: finding.recommendation, estimated_impact: finding.estimatedImpact || null,
+                target_element: finding.targetElement || null, screenshot_url: null,
+                sort_order: sortOrder++, finding_type: validated.findingType, fix_type: validated.fixType,
+                confidence_level: 'interpretive', detection_source: 'analyzer',
+              } as any)
+              totalInserted++
+            }
+          }
+
+          if (totalInserted > 0) {
+            const { data: currentReport } = await db
+              .from('reports').select('total_issues').eq('audit_id', auditId).single()
+            const currentTotal = (currentReport as any)?.total_issues ?? 0
+            await db.from('reports')
+              .update({ total_issues: currentTotal + totalInserted } as any)
+              .eq('audit_id', auditId)
+
+            auditLimitations.push({
+              id: 'minimum_findings_generated',
+              title: 'Additional findings generated',
+              description: `${starved.length} categor${starved.length > 1 ? 'ies' : 'y'} scored below 70 but had no specific findings after quality filtering. We generated ${totalInserted} finding${totalInserted > 1 ? 's' : ''} from the category analysis to help you understand what needs improvement.`,
+            })
+          }
+
+          await auditLog(auditId, 'minimum_findings_enforced', 'success',
+            `Generated ${totalInserted} findings for ${starved.length} starved categories`)
+
+          // Update limitations in report
+          if (auditLimitations.length > 0) {
+            const { data: currentReport } = await db
+              .from('reports').select('raw_json').eq('audit_id', auditId).single()
+            if (currentReport?.raw_json) {
+              await db.from('reports')
+                .update({ raw_json: { ...(currentReport.raw_json as any), auditLimitations } } as any)
+                .eq('audit_id', auditId)
+            }
+          }
+        } catch (err) {
+          console.error('[inngest] Minimum findings enforcement error (non-fatal):', err)
+          await auditLog(auditId, 'minimum_findings_error', 'warning',
+            `Minimum findings enforcement failed: ${err instanceof Error ? err.message : String(err)}`)
         }
-      } catch (err) {
-        // Non-fatal — audit can complete without minimum findings enforcement
-        console.error('[inngest] Minimum findings enforcement error (non-fatal):', err)
-        await auditLog(auditId, 'minimum_findings_error', 'warning',
-          `Minimum findings enforcement failed: ${err instanceof Error ? err.message : String(err)}`)
-      }
-    })
+      })()
 
-    // ──────────────────────────────────────────────────────────
-    // PROPRIETARY PIPELINE: Record patterns + run learning
-    // Logic lives in:
-    //   src/lib/audit-engine/pipeline/relevance-scorer.ts (record shown)
-    //   src/lib/audit-engine/pipeline/quality-stats.ts (aggregate stats)
-    //   src/lib/audit-engine/pipeline/pattern-learner.ts (learn from data)
-    // ──────────────────────────────────────────────────────────
-    await step.run('pipeline-learn', async () => {
-      const db = getDb()
+      // ── 5. Pipeline learn ──
+      const pipelineLearnPromise = (async () => {
+        try {
+          const db = getDb()
+          const { data: finalFindings } = await db
+            .from('audit_findings')
+            .select('title, description, severity, sort_order')
+            .eq('audit_id', auditId)
+            .order('sort_order', { ascending: true })
 
-      try {
-        // 1. Fetch all final findings for this audit
-        const { data: finalFindings } = await db
-          .from('audit_findings')
-          .select('title, description, severity, sort_order')
-          .eq('audit_id', auditId)
-          .order('sort_order', { ascending: true })
+          if (!finalFindings || finalFindings.length === 0) return
 
-        if (!finalFindings || finalFindings.length === 0) return
+          for (const f of finalFindings as any[]) {
+            await recordFindingShown(db, f.title, f.severity)
+          }
+          await recordAuditStats(db, auditId)
+          const titles = (finalFindings as any[]).map((f: any) => f.title)
+          const learningResult = await postAuditLearn(db, titles)
 
-        // 2. Record each finding in the patterns table (increments total_shown)
-        for (const f of finalFindings as any[]) {
-          await recordFindingShown(db, f.title, f.severity)
+          await auditLog(auditId, 'pipeline_learn', 'success',
+            `Recorded ${finalFindings.length} finding patterns | New insights: ${learningResult.newInsights}`)
+        } catch (learnErr) {
+          console.error('[inngest] Pipeline learn error (non-fatal):', learnErr)
+          await auditLog(auditId, 'pipeline_learn_error', 'warning',
+            `Learning step failed: ${learnErr instanceof Error ? learnErr.message : String(learnErr)}`)
         }
+      })()
 
-        // 3. Record aggregate stats for this audit
-        await recordAuditStats(db, auditId)
+      // ── 6. Predictive recommendations ──
+      const predictivePromise = (async () => {
+        try {
+          const db = getDb()
+          const { data: report } = await db
+            .from('reports')
+            .select('overall_score, ai_visibility_breakdown')
+            .eq('audit_id', auditId)
+            .single()
 
-        // 4. Run lightweight post-audit learning check
-        const titles = (finalFindings as any[]).map((f: any) => f.title)
-        const learningResult = await postAuditLearn(db, titles)
+          if (!report) return
 
-        await auditLog(auditId, 'pipeline_learn', 'success',
-          `Recorded ${finalFindings.length} finding patterns | Stats updated | New insights: ${learningResult.newInsights}`)
-        console.log(`[inngest] Pipeline learn: ${finalFindings.length} patterns recorded, ${learningResult.newInsights} new insights`)
-      } catch (learnErr) {
-        // Learning is non-fatal — audit should complete even if learning fails
-        console.error('[inngest] Pipeline learn error (non-fatal):', learnErr)
-        await auditLog(auditId, 'pipeline_learn_error', 'warning',
-          `Learning step failed: ${learnErr instanceof Error ? learnErr.message : String(learnErr)}`)
-      }
-    })
+          const aiVis = (report as any).ai_visibility_breakdown as { overall?: number } | null
+          const currentScore = aiVis?.overall || (report as any).overall_score || 50
 
-    // ──────────────────────────────────────────────────────────
-    // STEP 10: Predictive recommendations (non-fatal)
-    // Generates data-driven predictions based on fix patterns.
-    // ──────────────────────────────────────────────────────────
-    await step.run('predictive-recommendations', async () => {
-      try {
-        const db = getDb()
+          const predictiveReport = await generatePredictiveRecommendations(db, auditId, currentScore)
 
-        // Get the report's overall score
-        const { data: report } = await db
-          .from('reports')
-          .select('overall_score, ai_visibility_breakdown')
-          .eq('audit_id', auditId)
-          .single()
+          if (predictiveReport.recommendations.length > 0) {
+            const inserts = predictiveReport.recommendations.map(r => ({
+              audit_id: auditId,
+              action: r.action,
+              predicted_impact: r.predictedImpact,
+              confidence: r.confidence,
+              data_points: r.dataPoints,
+              avg_improvement: r.avgImprovement,
+              category: r.category,
+              evidence: r.evidence,
+            }))
+            await db.from('predictive_recommendations').insert(inserts as any)
+          }
 
-        if (!report) return
-
-        const aiVis = (report as any).ai_visibility_breakdown as { overall?: number } | null
-        const currentScore = aiVis?.overall || (report as any).overall_score || 50
-
-        const predictiveReport = await generatePredictiveRecommendations(db, auditId, currentScore)
-
-        // Store recommendations
-        if (predictiveReport.recommendations.length > 0) {
-          const inserts = predictiveReport.recommendations.map(r => ({
-            audit_id: auditId,
-            action: r.action,
-            predicted_impact: r.predictedImpact,
-            confidence: r.confidence,
-            data_points: r.dataPoints,
-            avg_improvement: r.avgImprovement,
-            category: r.category,
-            evidence: r.evidence,
-          }))
-          await db.from('predictive_recommendations').insert(inserts as any)
+          await auditLog(auditId, 'predictive_recommendations_generated', 'info',
+            `Generated ${predictiveReport.recommendations.length} predictive recommendation(s)`)
+        } catch (err) {
+          console.error('[inngest] Predictive recommendations failed (non-fatal):', err)
+          await auditLog(auditId, 'predictive_recommendations_failed', 'warning',
+            `Predictive recommendations failed: ${err instanceof Error ? err.message : String(err)}`)
         }
+      })()
 
-        await auditLog(auditId, 'predictive_recommendations_generated', 'info',
-          `Generated ${predictiveReport.recommendations.length} predictive recommendation(s)`)
-      } catch (err) {
-        console.error('[inngest] Predictive recommendations failed (non-fatal):', err)
-        await auditLog(auditId, 'predictive_recommendations_failed', 'warning',
-          `Predictive recommendations failed: ${err instanceof Error ? err.message : String(err)}`)
-      }
+      // Run all enrichment tasks in parallel
+      await Promise.all([
+        benchmarkPromise,
+        brandIntelPromise,
+        humanPerceptionPromise,
+        minimumFindingsPromise,
+        pipelineLearnPromise,
+        predictivePromise,
+      ])
     })
 
     // ──────────────────────────────────────────────────────────
@@ -2873,6 +2803,7 @@ RULES FOR RE-AUDIT:
       const db = getDb()
 
       await setStatus(auditId, 'completed', 100)
+      await setStage(auditId, 'complete')
       await db
         .from('audits')
         .update({ completed_at: new Date().toISOString(), updated_at: new Date().toISOString() } as any)
