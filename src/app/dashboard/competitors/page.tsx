@@ -1,11 +1,12 @@
 'use client';
 
 /**
- * Competitors — competitive benchmark and industry positioning.
+ * Competitors — pure brand vs. competitors comparison.
  *
- * Shows the brand's competitive landscape with real data from the
- * intelligence API: pillar score comparison, AI visibility trends,
- * per-model sentiment, share of voice, and a side-by-side table.
+ * Every section on this page shows the audited brand alongside
+ * competitor data in a grid. If a section has no comparative data
+ * it is not shown. Non-comparative data (AI visibility by model,
+ * visibility trend, sentiment themes) belongs on Brand Intelligence.
  */
 
 import React, { useEffect, useMemo, useState, useCallback } from 'react';
@@ -23,14 +24,10 @@ import {
   Minus,
   Search,
   Pencil,
-  ExternalLink,
   Eye,
-  BarChart3,
-  Award,
   Zap,
   Shield,
   Users,
-  ArrowUpRight,
 } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { useAuditBundle } from '@/context/AuditBundleContext';
@@ -62,24 +59,6 @@ type DraftCompetitor = {
   name?: string;
   category?: string;
   note?: string;
-};
-
-type ModelProbe = {
-  model_id: string;
-  model_label: string;
-  accuracy_score: number;
-  sentiment_score?: number | null;
-  placement_score?: number | null;
-  share_of_voice?: number | null;
-  status?: 'measured' | 'skipped' | 'error' | null;
-};
-
-type TrendSnapshot = {
-  snapshot_at: string;
-  bi_score: number;
-  ai_visibility: number;
-  overall_sentiment: number;
-  share_of_voice: number | null;
 };
 
 type PromptResult = {
@@ -122,13 +101,6 @@ const PILLAR_ICONS: Record<string, React.ReactNode> = {
   'Future Readiness': <Zap size={13} strokeWidth={1.75} />,
 };
 
-function formatMonth(dateStr: string): string {
-  try {
-    const d = new Date(dateStr);
-    return d.toLocaleDateString('en-US', { month: 'short' });
-  } catch { return ''; }
-}
-
 function deltaLabel(delta: number): { text: string; color: string; icon: React.ReactNode } {
   if (delta > 0) return { text: `+${delta}`, color: 'var(--ok)', icon: <TrendingUp size={12} /> };
   if (delta < 0) return { text: `${delta}`, color: 'var(--severe)', icon: <TrendingDown size={12} /> };
@@ -166,8 +138,6 @@ export default function CompetitorsPage() {
 
   // Intelligence data
   const [biSummary, setBiSummary] = useState<BrandIntelligenceSummary | null>(null);
-  const [modelProbes, setModelProbes] = useState<ModelProbe[]>([]);
-  const [trendSnapshots, setTrendSnapshots] = useState<TrendSnapshot[]>([]);
   const [promptResults, setPromptResults] = useState<PromptResult[]>([]);
   const [industry, setIndustry] = useState<string | null>(null);
   const [benchmarkPosition, setBenchmarkPosition] = useState<any>(null);
@@ -188,20 +158,14 @@ export default function CompetitorsPage() {
   try { domain = new URL(productUrl || '').hostname.replace(/^www\./, ''); } catch {}
   const brandName = (audit as any)?.brand_name || domain || 'Your site';
 
-  // Speed data
-  const speedData = useMemo(() => {
-    const sd = (audit as any)?.speed_data;
-    if (!sd) return null;
-    return typeof sd === 'string' ? JSON.parse(sd) : sd;
-  }, [audit]);
+  const canAddMore = drafts.length < 5;
 
   /* ── Load data ────────────────────────────────────── */
 
   useEffect(() => {
     if (!audit) {
       setDrafts([]); setServerSnapshot([]); setBenchmarkPosition(null);
-      setIndustry(null); setBiSummary(null); setModelProbes([]);
-      setTrendSnapshots([]); setPromptResults([]);
+      setIndustry(null); setBiSummary(null); setPromptResults([]);
       return;
     }
 
@@ -217,8 +181,6 @@ export default function CompetitorsPage() {
         if (!d) return;
         setBenchmarkPosition(d?.benchmarkPosition || null);
         if (d?.industry) setIndustry(d.industry);
-        setModelProbes(d?.modelProbes || []);
-        setTrendSnapshots(d?.trendSnapshots || []);
         setPromptResults(d?.promptResults || []);
       })
       .catch(() => {});
@@ -238,7 +200,7 @@ export default function CompetitorsPage() {
   /* ── Competitor actions ─────────────────────────── */
 
   const addBlank = () => {
-    if (drafts.length >= 5) { setError('You can track up to 5 competitors.'); return; }
+    if (!canAddMore) { setError('You can track up to 5 competitors.'); return; }
     setDrafts(prev => [...prev, { id: makeDraftId(), domain: '', score: null, source: 'manual' }]);
     setShowEditor(true);
   };
@@ -337,13 +299,17 @@ export default function CompetitorsPage() {
     return first?.pillarScores?.map(p => p.name) || [];
   }, [drafts]);
 
-  // AI model probes — only measured
-  const measuredProbes = useMemo(() => modelProbes.filter(p => p.status === 'measured'), [modelProbes]);
-
-  // Competitor mentions from prompt results
+  // Competitor mentions from prompt results — this IS comparative
   const competitorMentions = useMemo(() => {
     const map = new Map<string, { mentions: number; avgPlacement: number; placements: number[] }>();
+    // Count brand mentions
+    let brandMentions = 0;
+    let brandPlacements: number[] = [];
     promptResults.forEach(pr => {
+      if (pr.brand_mentioned) {
+        brandMentions++;
+        if (pr.placement != null) brandPlacements.push(pr.placement);
+      }
       pr.competitors_mentioned?.forEach(cm => {
         const key = cm.name.toLowerCase();
         const existing = map.get(key) || { mentions: 0, avgPlacement: 0, placements: [] };
@@ -357,10 +323,21 @@ export default function CompetitorsPage() {
         ? Math.round((v.placements.reduce((a, b) => a + b, 0) / v.placements.length) * 10) / 10
         : 0;
     });
-    return Array.from(map.entries())
-      .map(([name, data]) => ({ name, ...data }))
+    const competitors = Array.from(map.entries())
+      .map(([name, data]) => ({ name, ...data, isUser: false }))
       .sort((a, b) => b.mentions - a.mentions)
       .slice(0, 8);
+
+    // Insert brand at top for comparison
+    const brandAvgPlacement = brandPlacements.length > 0
+      ? Math.round((brandPlacements.reduce((a, b) => a + b, 0) / brandPlacements.length) * 10) / 10
+      : 0;
+
+    return {
+      brand: { mentions: brandMentions, avgPlacement: brandAvgPlacement },
+      competitors,
+      totalPrompts: promptResults.length,
+    };
   }, [promptResults]);
 
   /* ── Render ─────────────────────────────────────── */
@@ -386,11 +363,11 @@ export default function CompetitorsPage() {
           <button
             onClick={rescan}
             disabled={detecting}
-            className="flex items-center gap-1.5 px-3 py-1.5 text-[12px] font-medium rounded-md transition-colors hover:bg-black/[0.04]"
-            style={{ color: 'var(--ink)', border: '1px solid var(--rule)' }}
+            className="flex items-center gap-1.5 px-3 py-1.5 text-[12px] font-medium rounded-md transition-all hover:opacity-90"
+            style={{ background: 'var(--ink)', color: 'var(--paper)' }}
           >
             <RefreshCw size={12} className={detecting ? 'animate-spin' : ''} />
-            Rescan
+            {detecting ? 'Scanning...' : 'Rescan'}
           </button>
         )}
         {drafts.length === 0 && (
@@ -404,14 +381,6 @@ export default function CompetitorsPage() {
             {detecting ? 'Detecting...' : 'Auto-detect'}
           </button>
         )}
-        <button
-          onClick={addBlank}
-          className="flex items-center gap-1 px-3 py-1.5 text-[12px] font-medium rounded-md transition-colors hover:bg-black/[0.04]"
-          style={{ color: 'var(--ink)', border: '1px solid var(--rule)' }}
-        >
-          <Plus size={12} />
-          Add
-        </button>
       </PageHeader>
 
       {/* ══════════════════════════════════════════════════
@@ -457,11 +426,27 @@ export default function CompetitorsPage() {
       </DashCard>
 
       {/* ══════════════════════════════════════════════════
-          2. COMPETITOR COMPARISON — Unified ranking + pillar breakdown
+          2. COMPETITOR COMPARISON — Unified scoring table
          ══════════════════════════════════════════════════ */}
       <DashCard>
         <div className="flex items-center justify-between mb-1">
           <SectionTitle>Competitor comparison</SectionTitle>
+          {/* Add button — inside the card, muted at 5 */}
+          <button
+            onClick={addBlank}
+            disabled={!canAddMore}
+            className="flex items-center gap-1 px-2.5 py-1 text-[12px] font-medium rounded-md transition-colors"
+            style={{
+              color: canAddMore ? 'var(--ink)' : 'var(--m-muted)',
+              border: '1px solid var(--rule)',
+              opacity: canAddMore ? 1 : 0.5,
+              cursor: canAddMore ? 'pointer' : 'default',
+            }}
+          >
+            <Plus size={12} />
+            Add
+            {!canAddMore && <span className="text-[10px] ml-0.5">(5/5)</span>}
+          </button>
         </div>
         <SectionDesc>
           {brandName} vs. competitors — overall and category scores.
@@ -564,17 +549,17 @@ export default function CompetitorsPage() {
                     <td className="text-center py-2.5 px-3 text-[13px] font-bold tabular-nums" style={{ color: c.score != null ? getScoreColor(c.score) : 'var(--m-muted)' }}>
                       {c.score != null ? c.score : '--'}
                     </td>
-                    {pillarNames.length > 0 ? (
-                      (c.pillarScores || []).map(p => (
+                    {pillarNames.length > 0 && (c.pillarScores && c.pillarScores.length > 0) ? (
+                      c.pillarScores.map(p => (
                         <td key={p.name} className="text-center py-2.5 px-3 tabular-nums" style={{ color: getScoreColor(p.score) }}>
                           {p.score}
                         </td>
                       ))
+                    ) : pillarNames.length > 0 ? (
+                      pillarNames.map(p => (
+                        <td key={p} className="text-center py-2.5 px-3 text-[12px]" style={{ color: 'var(--m-muted)' }}>--</td>
+                      ))
                     ) : null}
-                    {/* Fill empty pillar cells if this competitor has no pillar data */}
-                    {pillarNames.length > 0 && (!c.pillarScores || c.pillarScores.length === 0) && pillarNames.map(p => (
-                      <td key={p} className="text-center py-2.5 px-3 text-[12px]" style={{ color: 'var(--m-muted)' }}>--</td>
-                    ))}
                     <td className="hidden sm:table-cell text-center py-2.5 px-2">
                       <span className="text-[10px] font-medium px-1.5 py-0.5 rounded capitalize" style={{
                         background: c.source === 'auto' ? 'color-mix(in srgb, var(--warn) 10%, transparent)' : 'color-mix(in srgb, var(--ink) 6%, transparent)',
@@ -622,271 +607,77 @@ export default function CompetitorsPage() {
       </DashCard>
 
       {/* ══════════════════════════════════════════════════
-          4. AI VISIBILITY — Per-model performance
+          3. AI MENTIONS — Brand vs competitors in AI responses
          ══════════════════════════════════════════════════ */}
-      {measuredProbes.length > 0 && (
+      {competitorMentions.competitors.length > 0 && competitorMentions.totalPrompts > 0 && (
         <DashCard>
-          <SectionTitle>AI visibility by model</SectionTitle>
-          <SectionDesc>How each AI model perceives and represents {brandName}.</SectionDesc>
-
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-            {measuredProbes.map(probe => (
-              <div
-                key={probe.model_id}
-                className="rounded-lg p-3"
-                style={{ background: 'color-mix(in srgb, var(--ink) 3%, transparent)' }}
-              >
-                <p className="text-[11px] font-semibold uppercase tracking-wider mb-2" style={{ color: 'var(--m-muted)' }}>
-                  {probe.model_label}
-                </p>
-                <div className="flex items-baseline gap-1.5">
-                  <span className="text-[22px] font-bold tabular-nums" style={{ color: getScoreColor(probe.accuracy_score) }}>
-                    {probe.accuracy_score}
-                  </span>
-                  <span className="text-[11px]" style={{ color: 'var(--m-muted)' }}>accuracy</span>
-                </div>
-                <div className="mt-2 space-y-1">
-                  {probe.sentiment_score != null && (
-                    <div className="flex items-center justify-between text-[11px]">
-                      <span style={{ color: 'var(--m-muted)' }}>Sentiment</span>
-                      <span className="font-semibold tabular-nums" style={{ color: getScoreColor(probe.sentiment_score) }}>{probe.sentiment_score}</span>
-                    </div>
-                  )}
-                  {probe.share_of_voice != null && (
-                    <div className="flex items-center justify-between text-[11px]">
-                      <span style={{ color: 'var(--m-muted)' }}>Share of voice</span>
-                      <span className="font-semibold tabular-nums" style={{ color: 'var(--ink)' }}>{probe.share_of_voice}%</span>
-                    </div>
-                  )}
-                  {probe.placement_score != null && (
-                    <div className="flex items-center justify-between text-[11px]">
-                      <span style={{ color: 'var(--m-muted)' }}>Avg placement</span>
-                      <span className="font-semibold tabular-nums" style={{ color: 'var(--ink)' }}>#{probe.placement_score}</span>
-                    </div>
-                  )}
-                </div>
-              </div>
-            ))}
-          </div>
-        </DashCard>
-      )}
-
-      {/* ══════════════════════════════════════════════════
-          5. COMPETITOR MENTIONS — Who gets mentioned in AI
-         ══════════════════════════════════════════════════ */}
-      {competitorMentions.length > 0 && (
-        <DashCard>
-          <SectionTitle>Who AI models mention</SectionTitle>
-          <SectionDesc>Brands that appear alongside {brandName} when AI models answer industry questions.</SectionDesc>
-
-          <div className="space-y-0">
-            <div className="grid grid-cols-[1fr_80px_80px] gap-3 px-3 py-2 text-[11px] font-semibold uppercase tracking-wider" style={{ color: 'var(--m-muted)', borderBottom: '1px solid var(--rule)' }}>
-              <span>Competitor</span>
-              <span className="text-right">Mentions</span>
-              <span className="text-right">Avg rank</span>
-            </div>
-            {competitorMentions.map(cm => {
-              const matchedDraft = drafts.find(d => d.domain.includes(cm.name) || (d.name || '').toLowerCase().includes(cm.name));
-              return (
-                <div key={cm.name} className="grid grid-cols-[1fr_80px_80px] gap-3 items-center px-3 py-2.5 hover:bg-black/[0.02] transition-colors" style={{ borderBottom: '1px solid var(--rule)' }}>
-                  <div className="flex items-center gap-2 min-w-0">
-                    {matchedDraft ? (
-                      <SiteFavicon hostname={matchedDraft.domain} size={14} />
-                    ) : (
-                      <div className="w-3.5 h-3.5 rounded-sm" style={{ background: 'color-mix(in srgb, var(--ink) 10%, transparent)' }} />
-                    )}
-                    <span className="text-[13px] font-medium capitalize truncate" style={{ color: 'var(--ink)' }}>{cm.name}</span>
-                  </div>
-                  <span className="text-right text-[13px] font-semibold tabular-nums" style={{ color: 'var(--ink)' }}>
-                    {cm.mentions}
-                  </span>
-                  <span className="text-right text-[13px] tabular-nums" style={{ color: cm.avgPlacement <= 2 ? 'var(--ok)' : cm.avgPlacement <= 3 ? 'var(--warn)' : 'var(--severe)' }}>
-                    {cm.avgPlacement > 0 ? `#${cm.avgPlacement}` : '--'}
-                  </span>
-                </div>
-              );
-            })}
-          </div>
-        </DashCard>
-      )}
-
-      {/* ══════════════════════════════════════════════════
-          6. SPEED COMPARISON — If speed data available
-         ══════════════════════════════════════════════════ */}
-      {speedData && (speedData.mobile || speedData.desktop) && (
-        <DashCard>
-          <SectionTitle>Performance snapshot</SectionTitle>
-          <SectionDesc>{brandName} page speed compared to competitor benchmarks.</SectionDesc>
-
-          <div className="grid grid-cols-2 gap-4">
-            {speedData.mobile && (
-              <div className="rounded-lg p-4" style={{ background: 'color-mix(in srgb, var(--ink) 3%, transparent)' }}>
-                <p className="text-[11px] font-semibold uppercase tracking-wider mb-3" style={{ color: 'var(--m-muted)' }}>Mobile</p>
-                <div className="flex items-center gap-3">
-                  <ScoreCircle score={speedData.mobile.score} size="normal" />
-                  <div>
-                    <p className="text-[13px] font-semibold" style={{ color: 'var(--ink)' }}>Performance</p>
-                    {speedData.mobile.metrics?.lcp && (
-                      <p className="text-[11px]" style={{ color: 'var(--m-muted)' }}>
-                        LCP: {(speedData.mobile.metrics.lcp.value / 1000).toFixed(1)}s
-                      </p>
-                    )}
-                    {speedData.mobile.metrics?.cls && (
-                      <p className="text-[11px]" style={{ color: 'var(--m-muted)' }}>
-                        CLS: {speedData.mobile.metrics.cls.value.toFixed(3)}
-                      </p>
-                    )}
-                  </div>
-                </div>
-                {speedData.mobile.categories && (
-                  <div className="mt-3 pt-3 grid grid-cols-2 gap-2" style={{ borderTop: '1px solid var(--rule)' }}>
-                    {Object.entries(speedData.mobile.categories as Record<string, number>).map(([key, val]) => (
-                      <div key={key} className="flex items-center justify-between text-[11px]">
-                        <span className="capitalize" style={{ color: 'var(--m-muted)' }}>{key.replace(/([A-Z])/g, ' $1').trim()}</span>
-                        <span className="font-semibold tabular-nums" style={{ color: getScoreColor(val) }}>{val}</span>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-            )}
-            {speedData.desktop && (
-              <div className="rounded-lg p-4" style={{ background: 'color-mix(in srgb, var(--ink) 3%, transparent)' }}>
-                <p className="text-[11px] font-semibold uppercase tracking-wider mb-3" style={{ color: 'var(--m-muted)' }}>Desktop</p>
-                <div className="flex items-center gap-3">
-                  <ScoreCircle score={speedData.desktop.score} size="normal" />
-                  <div>
-                    <p className="text-[13px] font-semibold" style={{ color: 'var(--ink)' }}>Performance</p>
-                    {speedData.desktop.metrics?.lcp && (
-                      <p className="text-[11px]" style={{ color: 'var(--m-muted)' }}>
-                        LCP: {(speedData.desktop.metrics.lcp.value / 1000).toFixed(1)}s
-                      </p>
-                    )}
-                    {speedData.desktop.metrics?.cls && (
-                      <p className="text-[11px]" style={{ color: 'var(--m-muted)' }}>
-                        CLS: {speedData.desktop.metrics.cls.value.toFixed(3)}
-                      </p>
-                    )}
-                  </div>
-                </div>
-                {speedData.desktop.categories && (
-                  <div className="mt-3 pt-3 grid grid-cols-2 gap-2" style={{ borderTop: '1px solid var(--rule)' }}>
-                    {Object.entries(speedData.desktop.categories as Record<string, number>).map(([key, val]) => (
-                      <div key={key} className="flex items-center justify-between text-[11px]">
-                        <span className="capitalize" style={{ color: 'var(--m-muted)' }}>{key.replace(/([A-Z])/g, ' $1').trim()}</span>
-                        <span className="font-semibold tabular-nums" style={{ color: getScoreColor(val) }}>{val}</span>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-            )}
-          </div>
-        </DashCard>
-      )}
-
-      {/* ══════════════════════════════════════════════════
-          7. TREND — Intelligence score over time
-         ══════════════════════════════════════════════════ */}
-      {trendSnapshots.length >= 2 && (
-        <DashCard>
-          <SectionTitle>Visibility trend</SectionTitle>
+          <SectionTitle>AI mention comparison</SectionTitle>
           <SectionDesc>
-            Track how {brandName} AI visibility changes over time.
-            <span className="ml-1 text-[11px]" style={{ color: 'var(--m-muted)' }}>Based on {trendSnapshots.length} audit snapshots.</span>
+            How often each brand appears when AI models answer {competitorMentions.totalPrompts} industry questions.
           </SectionDesc>
 
-          {/* Simple sparkline-style trend visualization */}
-          <div className="relative h-32 mt-2">
-            <svg width="100%" height="100%" viewBox="0 0 400 100" preserveAspectRatio="none" className="overflow-visible">
-              {/* Grid lines */}
-              {[0, 25, 50, 75, 100].map(y => (
-                <line key={y} x1="0" y1={100 - y} x2="400" y2={100 - y} stroke="var(--rule)" strokeWidth="0.5" strokeDasharray="4 4" />
-              ))}
-              {/* Score line */}
-              <polyline
-                fill="none"
-                stroke="var(--ink)"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                points={trendSnapshots.map((s, i) => {
-                  const x = (i / (trendSnapshots.length - 1)) * 400;
-                  const y = 100 - (s.bi_score || 0);
-                  return `${x},${y}`;
-                }).join(' ')}
-              />
-              {/* AI Visibility line */}
-              <polyline
-                fill="none"
-                stroke="var(--ok)"
-                strokeWidth="1.5"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeDasharray="4 2"
-                points={trendSnapshots.map((s, i) => {
-                  const x = (i / (trendSnapshots.length - 1)) * 400;
-                  const y = 100 - (s.ai_visibility || 0);
-                  return `${x},${y}`;
-                }).join(' ')}
-              />
-            </svg>
-          </div>
-          <div className="flex items-center justify-between mt-2">
-            <span className="text-[11px]" style={{ color: 'var(--m-muted)' }}>{formatMonth(trendSnapshots[0].snapshot_at)}</span>
-            <div className="flex items-center gap-4 text-[11px]">
-              <span className="flex items-center gap-1.5">
-                <span className="w-3 h-0.5 rounded-full" style={{ background: 'var(--ink)' }} />
-                <span style={{ color: 'var(--m-muted)' }}>Score</span>
-              </span>
-              <span className="flex items-center gap-1.5">
-                <span className="w-3 h-0.5 rounded-full" style={{ background: 'var(--ok)', opacity: 0.7 }} />
-                <span style={{ color: 'var(--m-muted)' }}>AI visibility</span>
-              </span>
-            </div>
-            <span className="text-[11px]" style={{ color: 'var(--m-muted)' }}>{formatMonth(trendSnapshots[trendSnapshots.length - 1].snapshot_at)}</span>
+          <div className="overflow-x-auto -mx-5 px-5">
+            <table className="w-full text-[12px]" style={{ minWidth: 400 }}>
+              <thead>
+                <tr style={{ borderBottom: '1px solid var(--rule)' }}>
+                  <th className="text-left py-2 pr-4 font-semibold text-[11px] uppercase tracking-wider" style={{ color: 'var(--m-muted)' }}>Brand</th>
+                  <th className="text-center py-2 px-3 font-semibold text-[11px] uppercase tracking-wider" style={{ color: 'var(--m-muted)' }}>Mentions</th>
+                  <th className="text-center py-2 px-3 font-semibold text-[11px] uppercase tracking-wider" style={{ color: 'var(--m-muted)' }}>Mention rate</th>
+                  <th className="text-center py-2 px-3 font-semibold text-[11px] uppercase tracking-wider" style={{ color: 'var(--m-muted)' }}>Avg placement</th>
+                </tr>
+              </thead>
+              <tbody>
+                {/* Brand row — highlighted */}
+                <tr style={{ background: 'color-mix(in srgb, var(--ink) 3%, transparent)' }}>
+                  <td className="py-3 pr-4">
+                    <div className="flex items-center gap-2.5">
+                      <SiteFavicon hostname={domain || ''} size={16} />
+                      <span className="text-[13px] font-semibold truncate" style={{ color: 'var(--ink)' }}>{brandName}</span>
+                    </div>
+                  </td>
+                  <td className="text-center py-3 px-3 text-[13px] font-bold tabular-nums" style={{ color: 'var(--ink)' }}>
+                    {competitorMentions.brand.mentions}
+                  </td>
+                  <td className="text-center py-3 px-3 text-[13px] font-semibold tabular-nums" style={{ color: competitorMentions.totalPrompts > 0 ? getScoreColor(Math.round((competitorMentions.brand.mentions / competitorMentions.totalPrompts) * 100)) : 'var(--m-muted)' }}>
+                    {competitorMentions.totalPrompts > 0 ? `${Math.round((competitorMentions.brand.mentions / competitorMentions.totalPrompts) * 100)}%` : '--'}
+                  </td>
+                  <td className="text-center py-3 px-3 text-[13px] font-semibold tabular-nums" style={{ color: competitorMentions.brand.avgPlacement > 0 && competitorMentions.brand.avgPlacement <= 2 ? 'var(--ok)' : competitorMentions.brand.avgPlacement <= 3 ? 'var(--warn)' : 'var(--m-muted)' }}>
+                    {competitorMentions.brand.avgPlacement > 0 ? `#${competitorMentions.brand.avgPlacement}` : '--'}
+                  </td>
+                </tr>
+
+                {/* Competitor rows */}
+                {competitorMentions.competitors.map(cm => {
+                  const matchedDraft = drafts.find(d => d.domain.includes(cm.name) || (d.name || '').toLowerCase().includes(cm.name));
+                  const mentionRate = competitorMentions.totalPrompts > 0 ? Math.round((cm.mentions / competitorMentions.totalPrompts) * 100) : 0;
+                  return (
+                    <tr key={cm.name} className="hover:bg-black/[0.02] transition-colors" style={{ borderBottom: '1px solid var(--rule)' }}>
+                      <td className="py-2.5 pr-4">
+                        <div className="flex items-center gap-2.5 min-w-0">
+                          {matchedDraft ? (
+                            <SiteFavicon hostname={matchedDraft.domain} size={16} />
+                          ) : (
+                            <div className="w-4 h-4 rounded-sm flex-shrink-0" style={{ background: 'color-mix(in srgb, var(--ink) 10%, transparent)' }} />
+                          )}
+                          <span className="text-[13px] font-medium capitalize truncate" style={{ color: 'var(--ink)' }}>{cm.name}</span>
+                        </div>
+                      </td>
+                      <td className="text-center py-2.5 px-3 text-[13px] font-semibold tabular-nums" style={{ color: 'var(--ink)' }}>
+                        {cm.mentions}
+                      </td>
+                      <td className="text-center py-2.5 px-3 text-[13px] tabular-nums" style={{ color: getScoreColor(mentionRate) }}>
+                        {mentionRate}%
+                      </td>
+                      <td className="text-center py-2.5 px-3 text-[13px] tabular-nums" style={{ color: cm.avgPlacement <= 2 ? 'var(--ok)' : cm.avgPlacement <= 3 ? 'var(--warn)' : 'var(--severe)' }}>
+                        {cm.avgPlacement > 0 ? `#${cm.avgPlacement}` : '--'}
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
           </div>
         </DashCard>
-      )}
-
-      {/* ══════════════════════════════════════════════════
-          8. SENTIMENT THEMES — What AI says positively/negatively
-         ══════════════════════════════════════════════════ */}
-      {biSummary && ((biSummary.positiveThemes?.length || 0) > 0 || (biSummary.negativeThemes?.length || 0) > 0) && (
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          {(biSummary.positiveThemes?.length || 0) > 0 && (
-            <DashCard>
-              <div className="flex items-center gap-2 mb-3">
-                <TrendingUp size={14} style={{ color: 'var(--ok)' }} />
-                <h3 className="text-[13px] font-semibold" style={{ color: 'var(--ink)' }}>Strengths AI highlights</h3>
-              </div>
-              <div className="space-y-1.5">
-                {biSummary.positiveThemes?.slice(0, 5).map((theme, i) => (
-                  <div key={i} className="flex items-center gap-2 text-[12px] px-2.5 py-1.5 rounded-md" style={{ background: 'color-mix(in srgb, var(--ok) 8%, transparent)' }}>
-                    <span className="w-1 h-1 rounded-full flex-shrink-0" style={{ background: 'var(--ok)' }} />
-                    <span style={{ color: 'var(--ink)' }}>{theme}</span>
-                  </div>
-                ))}
-              </div>
-            </DashCard>
-          )}
-          {(biSummary.negativeThemes?.length || 0) > 0 && (
-            <DashCard>
-              <div className="flex items-center gap-2 mb-3">
-                <TrendingDown size={14} style={{ color: 'var(--severe)' }} />
-                <h3 className="text-[13px] font-semibold" style={{ color: 'var(--ink)' }}>Weaknesses AI identifies</h3>
-              </div>
-              <div className="space-y-1.5">
-                {biSummary.negativeThemes?.slice(0, 5).map((theme, i) => (
-                  <div key={i} className="flex items-center gap-2 text-[12px] px-2.5 py-1.5 rounded-md" style={{ background: 'color-mix(in srgb, var(--severe) 8%, transparent)' }}>
-                    <span className="w-1 h-1 rounded-full flex-shrink-0" style={{ background: 'var(--severe)' }} />
-                    <span style={{ color: 'var(--ink)' }}>{theme}</span>
-                  </div>
-                ))}
-              </div>
-            </DashCard>
-          )}
-        </div>
       )}
     </div>
   );
