@@ -141,15 +141,70 @@ const METRIC_CONFIG: Array<{
   Icon: any;
   goodThreshold: string;
   poorThreshold: string;
+  /** Numeric thresholds for bar visualization (in raw metric units) */
+  goodLimit: number;
+  poorLimit: number;
+  /** Maximum value for the bar (typically ~1.5× poor limit) */
+  barMax: number;
+  /** Whether this is a Core Web Vital (LCP, INP, CLS) */
+  coreVital: boolean;
 }> = [
-  { key: 'fcp', label: 'FCP', fullLabel: 'First Contentful Paint', friendlyLabel: 'First paint', description: 'How quickly the first text or image is painted on screen.', Icon: Zap, goodThreshold: '< 1.8s', poorThreshold: '> 3.0s' },
-  { key: 'lcp', label: 'LCP', fullLabel: 'Largest Contentful Paint', friendlyLabel: 'Loading time', description: 'How long the largest visible element takes to render. The primary loading metric users notice.', Icon: Zap, goodThreshold: '< 2.5s', poorThreshold: '> 4.0s' },
-  { key: 'cls', label: 'CLS', fullLabel: 'Cumulative Layout Shift', friendlyLabel: 'Visual stability', description: 'How much the page layout shifts unexpectedly while loading.', Icon: Move, goodThreshold: '< 0.1', poorThreshold: '> 0.25' },
-  { key: 'inp', label: 'INP', fullLabel: 'Interaction to Next Paint', friendlyLabel: 'Responsiveness', description: 'How quickly the page responds to user interactions like clicks and taps.', Icon: MousePointerClick, goodThreshold: '< 200ms', poorThreshold: '> 500ms' },
-  { key: 'ttfb', label: 'TTFB', fullLabel: 'Time to First Byte', friendlyLabel: 'Server speed', description: 'How long the server takes to start sending a response.', Icon: Clock, goodThreshold: '< 800ms', poorThreshold: '> 1800ms' },
-  { key: 'speedIndex', label: 'SI', fullLabel: 'Speed Index', friendlyLabel: 'Render speed', description: 'How quickly visible content is progressively rendered on screen.', Icon: BarChart3, goodThreshold: '< 3.4s', poorThreshold: '> 5.8s' },
-  { key: 'tbt', label: 'TBT', fullLabel: 'Total Blocking Time', friendlyLabel: 'Thread blocking', description: 'Total time the main thread was blocked, preventing input responsiveness.', Icon: Timer, goodThreshold: '< 200ms', poorThreshold: '> 600ms' },
+  { key: 'lcp', label: 'LCP', fullLabel: 'Largest Contentful Paint', friendlyLabel: 'Loading time', description: 'How long the largest visible element takes to render. The primary loading metric users notice.', Icon: Zap, goodThreshold: '< 2.5s', poorThreshold: '> 4.0s', goodLimit: 2500, poorLimit: 4000, barMax: 6000, coreVital: true },
+  { key: 'inp', label: 'INP', fullLabel: 'Interaction to Next Paint', friendlyLabel: 'Responsiveness', description: 'How quickly the page responds to user interactions like clicks and taps.', Icon: MousePointerClick, goodThreshold: '< 200ms', poorThreshold: '> 500ms', goodLimit: 200, poorLimit: 500, barMax: 750, coreVital: true },
+  { key: 'cls', label: 'CLS', fullLabel: 'Cumulative Layout Shift', friendlyLabel: 'Visual stability', description: 'How much the page layout shifts unexpectedly while loading.', Icon: Move, goodThreshold: '< 0.1', poorThreshold: '> 0.25', goodLimit: 0.1, poorLimit: 0.25, barMax: 0.4, coreVital: true },
+  { key: 'fcp', label: 'FCP', fullLabel: 'First Contentful Paint', friendlyLabel: 'First paint', description: 'How quickly the first text or image is painted on screen.', Icon: Zap, goodThreshold: '< 1.8s', poorThreshold: '> 3.0s', goodLimit: 1800, poorLimit: 3000, barMax: 4500, coreVital: false },
+  { key: 'ttfb', label: 'TTFB', fullLabel: 'Time to First Byte', friendlyLabel: 'Server speed', description: 'How long the server takes to start sending a response.', Icon: Clock, goodThreshold: '< 800ms', poorThreshold: '> 1800ms', goodLimit: 800, poorLimit: 1800, barMax: 2700, coreVital: false },
+  { key: 'speedIndex', label: 'SI', fullLabel: 'Speed Index', friendlyLabel: 'Render speed', description: 'How quickly visible content is progressively rendered on screen.', Icon: BarChart3, goodThreshold: '< 3.4s', poorThreshold: '> 5.8s', goodLimit: 3400, poorLimit: 5800, barMax: 8700, coreVital: false },
+  { key: 'tbt', label: 'TBT', fullLabel: 'Total Blocking Time', friendlyLabel: 'Thread blocking', description: 'Total time the main thread was blocked, preventing input responsiveness.', Icon: Timer, goodThreshold: '< 200ms', poorThreshold: '> 600ms', goodLimit: 200, poorLimit: 600, barMax: 900, coreVital: false },
 ];
+
+/* ── MetricBar — PSI-style range bar with position marker ── */
+
+function MetricBar({
+  value,
+  goodLimit,
+  poorLimit,
+  barMax,
+  status,
+}: {
+  value: number;
+  goodLimit: number;
+  poorLimit: number;
+  barMax: number;
+  status: SpeedMetric['status'];
+}) {
+  const clampedMax = Math.max(barMax, value * 1.2);
+  const goodPct = (goodLimit / clampedMax) * 100;
+  const warnPct = ((poorLimit - goodLimit) / clampedMax) * 100;
+  const poorPct = 100 - goodPct - warnPct;
+  const markerPct = Math.min((value / clampedMax) * 100, 99);
+
+  return (
+    <div className="relative w-full h-2 mt-1.5 mb-0.5">
+      {/* Three-section bar */}
+      <div className="flex w-full h-full rounded-full overflow-hidden">
+        <div style={{ width: `${goodPct}%`, background: 'var(--ok)' }} />
+        <div style={{ width: `${warnPct}%`, background: 'var(--warn)' }} />
+        <div style={{ width: `${poorPct}%`, background: 'var(--severe)' }} />
+      </div>
+      {/* Marker */}
+      <div
+        className="absolute top-1/2 -translate-y-1/2"
+        style={{ left: `${markerPct}%` }}
+      >
+        <div
+          className="w-3 h-3 rounded-full border-2"
+          style={{
+            background: 'var(--card)',
+            borderColor: statusColor(status),
+            marginLeft: '-6px',
+            boxShadow: '0 1px 3px rgba(0,0,0,0.15)',
+          }}
+        />
+      </div>
+    </div>
+  );
+}
 
 /* ── Main Page ─────────────────────────────────────── */
 
@@ -566,84 +621,112 @@ export default function WebsiteSpeedPage() {
                 </div>
               </button>
 
-              {/* Metrics grid */}
-              {metricsExpanded && (
-                <div className="grid grid-cols-1 sm:grid-cols-2 divide-y sm:divide-y-0" style={{ borderColor: 'color-mix(in srgb, var(--rule) 50%, transparent)' }}>
-                  {sortedMetrics.map((m, idx) => {
-                    const metric = result.metrics[m.key];
-                    if (!metric) return null;
+              {/* Metrics content */}
+              {metricsExpanded && (() => {
+                const coreVitals = sortedMetrics.filter(m => m.coreVital && result.metrics[m.key]);
+                const otherMetrics = sortedMetrics.filter(m => !m.coreVital && result.metrics[m.key]);
 
-                    const color = statusColor(metric.status);
-                    const rec = metric.status !== 'good'
-                      ? METRIC_RECOMMENDATIONS[m.key]?.[metric.status]
-                      : null;
+                const renderMetricCard = (m: typeof METRIC_CONFIG[number], idx: number, total: number) => {
+                  const metric = result.metrics[m.key];
+                  if (!metric) return null;
 
-                    return (
-                      <div
-                        key={m.key}
-                        className="px-4 sm:px-5 py-4"
-                        style={{
-                          borderBottom: '1px solid color-mix(in srgb, var(--rule) 50%, transparent)',
-                          borderRight: idx % 2 === 0 ? '1px solid color-mix(in srgb, var(--rule) 50%, transparent)' : 'none',
-                        }}
-                      >
-                        {/* Metric header row */}
-                        <div className="flex items-start justify-between gap-3 mb-1.5">
-                          <div className="flex items-center gap-2.5 min-w-0">
-                            <span
-                              className="w-2.5 h-2.5 rounded-full flex-shrink-0"
-                              style={{ background: color }}
-                            />
-                            <span className="text-[13px] font-semibold truncate" style={{ color: 'var(--ink)' }}>
-                              {m.fullLabel}
-                            </span>
-                            <span
-                              className="px-1.5 py-0.5 rounded text-[9px] font-bold tracking-[0.02em] flex-shrink-0"
-                              style={{ background: `color-mix(in srgb, ${color} 10%, transparent)`, color }}
-                            >
-                              {m.label}
-                            </span>
+                  const color = statusColor(metric.status);
+                  const rec = metric.status !== 'good'
+                    ? METRIC_RECOMMENDATIONS[m.key]?.[metric.status]
+                    : null;
+
+                  return (
+                    <div
+                      key={m.key}
+                      className="px-4 sm:px-5 py-4"
+                      style={{
+                        borderBottom: '1px solid color-mix(in srgb, var(--rule) 50%, transparent)',
+                        borderRight: idx % 2 === 0 && idx < total - 1 ? '1px solid color-mix(in srgb, var(--rule) 50%, transparent)' : 'none',
+                      }}
+                    >
+                      {/* Metric label + abbreviation */}
+                      <div className="flex items-center gap-2 mb-1">
+                        <span
+                          className="w-2 h-2 rounded-full flex-shrink-0"
+                          style={{ background: color }}
+                        />
+                        <span className="text-[13px] font-semibold" style={{ color: 'var(--ink)' }}>
+                          {m.fullLabel}
+                        </span>
+                        <span
+                          className="px-1.5 py-0.5 rounded text-[9px] font-bold tracking-[0.02em] flex-shrink-0"
+                          style={{ background: `color-mix(in srgb, ${color} 10%, transparent)`, color }}
+                        >
+                          {m.label}
+                        </span>
+                      </div>
+
+                      {/* Value display */}
+                      <p className="text-[22px] font-semibold tabular-nums leading-none mt-2 mb-0.5" style={{ color }}>
+                        {metric.displayValue}
+                      </p>
+
+                      {/* Range bar */}
+                      <MetricBar
+                        value={metric.value}
+                        goodLimit={m.goodLimit}
+                        poorLimit={m.poorLimit}
+                        barMax={m.barMax}
+                        status={metric.status}
+                      />
+
+                      {/* Description */}
+                      <p className="text-[11px] leading-relaxed mt-2" style={{ color: 'var(--m-muted)' }}>
+                        {m.description}
+                      </p>
+
+                      {/* Inline recommendation */}
+                      {rec && (
+                        <div
+                          className="mt-2.5 rounded-lg p-2.5"
+                          style={{ background: `color-mix(in srgb, ${color} 5%, transparent)` }}
+                        >
+                          <div className="flex items-center gap-1.5 mb-1">
+                            <Lightbulb size={11} strokeWidth={1.75} style={{ color }} />
+                            <span className="text-[10px] font-semibold" style={{ color }}>How to improve</span>
                           </div>
-                          <p className="text-[20px] font-semibold tabular-nums leading-none flex-shrink-0" style={{ color }}>
-                            {metric.displayValue}
+                          <p className="text-[11px] leading-relaxed" style={{ color: 'var(--ink)' }}>
+                            {rec}
                           </p>
                         </div>
+                      )}
+                    </div>
+                  );
+                };
 
-                        {/* Description */}
-                        <p className="text-[11px] leading-relaxed ml-[18px] mb-2" style={{ color: 'var(--m-muted)' }}>
-                          {m.description}
-                        </p>
+                return (
+                  <>
+                    {/* Core Web Vitals */}
+                    {coreVitals.length > 0 && (
+                      <div className="grid grid-cols-1 sm:grid-cols-3">
+                        {coreVitals.map((m, i) => renderMetricCard(m, i, coreVitals.length))}
+                      </div>
+                    )}
 
-                        {/* Thresholds */}
-                        <div className="flex items-center gap-3 ml-[18px] mb-1">
-                          <span className="text-[10px]" style={{ color: 'var(--m-muted)' }}>
-                            Good: <span style={{ color: 'var(--ok)' }}>{m.goodThreshold}</span>
-                          </span>
-                          <span className="text-[10px]" style={{ color: 'var(--m-muted)' }}>
-                            Poor: <span style={{ color: 'var(--severe)' }}>{m.poorThreshold}</span>
+                    {/* Other notable metrics */}
+                    {otherMetrics.length > 0 && (
+                      <>
+                        <div
+                          className="px-4 sm:px-5 py-2.5"
+                          style={{ borderBottom: '1px solid color-mix(in srgb, var(--rule) 50%, transparent)' }}
+                        >
+                          <span className="text-[10px] font-semibold tracking-[0.06em] uppercase" style={{ color: 'var(--m-muted)' }}>
+                            Other notable metrics
                           </span>
                         </div>
-
-                        {/* Inline recommendation */}
-                        {rec && (
-                          <div
-                            className="mt-2.5 ml-[18px] rounded-lg p-2.5"
-                            style={{ background: `color-mix(in srgb, ${color} 5%, transparent)` }}
-                          >
-                            <div className="flex items-center gap-1.5 mb-1">
-                              <Lightbulb size={11} strokeWidth={1.75} style={{ color }} />
-                              <span className="text-[10px] font-semibold" style={{ color }}>How to improve</span>
-                            </div>
-                            <p className="text-[11px] leading-relaxed" style={{ color: 'var(--ink)' }}>
-                              {rec}
-                            </p>
-                          </div>
-                        )}
-                      </div>
-                    );
-                  })}
-                </div>
-              )}
+                        <div className="grid grid-cols-1 sm:grid-cols-2">
+                          {otherMetrics.map((m, i) => renderMetricCard(m, i, otherMetrics.length))}
+                        </div>
+                      </>
+                    )}
+                  </>
+                );
+              })()}
             </div>
           )}
 
