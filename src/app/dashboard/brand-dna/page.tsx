@@ -261,6 +261,15 @@ export default function BrandDnaPage() {
   const [auditLoading, setAuditLoading] = useState(false);
   const [triggeringAudit, setTriggeringAudit] = useState(false);
 
+  /* ── Share / delete state ── */
+  const [shareUrl, setShareUrl] = useState<string | null>(null);
+  const [shareCopied, setShareCopied] = useState(false);
+  const [shareLoading, setShareLoading] = useState(false);
+  const [deletingAudit, setDeletingAudit] = useState(false);
+
+  /* ── Collapsible files section ── */
+  const [filesOpen, setFilesOpen] = useState(true);
+
   /* ── Load brand identity ── */
   const loadIdentity = useCallback(async () => {
     if (!user || !selection) return null;
@@ -346,8 +355,14 @@ export default function BrandDnaPage() {
         setIdentity(id);
         if (id) {
           setAuditLoading(true);
-          await loadBrandAudit(id.id);
-          if (!cancelled) setAuditLoading(false);
+          const loadedAudit = await loadBrandAudit(id.id);
+          if (!cancelled) {
+            setAuditLoading(false);
+            // Collapse files section when audit exists
+            if (loadedAudit && (loadedAudit as any).status === 'completed') {
+              setFilesOpen(false);
+            }
+          }
         }
       } catch {
         if (!cancelled) setError('Could not load Brand DNA.');
@@ -480,6 +495,42 @@ export default function BrandDnaPage() {
     } catch (err) {
       setError('Failed to start brand audit.');
     } finally { setTriggeringAudit(false); }
+  };
+
+  /* ── Share audit ── */
+  const handleShare = async () => {
+    if (!audit) return;
+    setShareLoading(true);
+    try {
+      const res = await fetch(`/api/audits/${audit.id}/share`, { method: 'POST' });
+      if (!res.ok) throw new Error();
+      const data = await res.json();
+      const url = data.share_url || data.url;
+      setShareUrl(url);
+      await navigator.clipboard.writeText(url);
+      setShareCopied(true);
+      setTimeout(() => setShareCopied(false), 2500);
+    } catch {
+      setError('Failed to generate share link.');
+    } finally { setShareLoading(false); }
+  };
+
+  /* ── Delete audit (soft) ── */
+  const handleDeleteAudit = async () => {
+    if (!audit) return;
+    if (!window.confirm('Delete this brand audit? You can re-run a new audit at any time.')) return;
+    setDeletingAudit(true);
+    try {
+      const res = await fetch(`/api/audits/${audit.id}`, { method: 'DELETE' });
+      if (!res.ok) throw new Error();
+      setAudit(null);
+      setReport(null);
+      setFindings([]);
+      setShareUrl(null);
+      setFilesOpen(true);
+    } catch {
+      setError('Failed to delete audit.');
+    } finally { setDeletingAudit(false); }
   };
 
   /* ── Computed ── */
@@ -705,10 +756,13 @@ export default function BrandDnaPage() {
       {/* ── 2. File Upload ────────────────────────────────── */}
       {!editing && (
         <section
-          className="rounded-xl p-5 mb-4"
+          className="rounded-xl mb-4 overflow-hidden"
           style={{ background: 'var(--card)', border: '1px solid var(--rule)' }}
         >
-          <div className="flex items-center justify-between mb-4">
+          <button
+            onClick={() => setFilesOpen(!filesOpen)}
+            className="w-full flex items-center justify-between p-5 text-left transition-colors hover:opacity-80"
+          >
             <div className="flex items-center gap-2.5">
               <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0" style={{ background: 'color-mix(in srgb, var(--signal) 10%, transparent)' }}>
                 <Upload size={15} strokeWidth={1.6} style={{ color: 'var(--signal)' }} />
@@ -720,7 +774,11 @@ export default function BrandDnaPage() {
                 </p>
               </div>
             </div>
-          </div>
+            <ChevronDown size={14} className="flex-shrink-0 transition-transform" style={{ color: 'var(--m-muted)', transform: filesOpen ? 'rotate(180deg)' : 'none' }} />
+          </button>
+
+          {filesOpen && (
+          <div className="px-5 pb-5">
 
           {/* Drop zone — large and prominent */}
           <div
@@ -788,6 +846,9 @@ export default function BrandDnaPage() {
                 </div>
               ))}
             </div>
+          )}
+
+          </div>
           )}
         </section>
       )}
@@ -879,18 +940,28 @@ export default function BrandDnaPage() {
 
               {/* Action strip */}
               <div className="flex items-center gap-2 px-5 py-3" style={{ borderTop: '1px solid var(--rule)' }}>
-                <a href={`/api/reports/${audit!.id}/pdf`} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-[11px] font-semibold transition-all" style={{ color: 'var(--ink)', border: '1px solid var(--rule)' }}>
-                  <Download size={11} /> PDF
-                </a>
-                <a href={`/api/reports/${audit!.id}/docx`} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-[11px] font-semibold transition-all" style={{ color: 'var(--ink)', border: '1px solid var(--rule)' }}>
-                  <Download size={11} /> Word
-                </a>
+                <button
+                  onClick={handleShare}
+                  disabled={shareLoading}
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-[11px] font-semibold transition-all"
+                  style={{ color: 'var(--ink)', border: '1px solid var(--rule)' }}
+                >
+                  {shareCopied ? <><Check size={11} style={{ color: 'var(--ok)' }} /> Link copied</> : shareLoading ? <><Loader2 size={11} className="animate-spin" /> Sharing...</> : <><Share2 size={11} /> Share</>}
+                </button>
+                <button
+                  onClick={handleDeleteAudit}
+                  disabled={deletingAudit}
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-[11px] font-semibold transition-all"
+                  style={{ color: 'var(--m-muted)', border: '1px solid var(--rule)' }}
+                >
+                  {deletingAudit ? <Loader2 size={11} className="animate-spin" /> : <Trash2 size={11} />} Delete
+                </button>
                 <div className="flex-1" />
                 <button
                   onClick={triggerAudit}
                   disabled={triggeringAudit}
                   className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-[11px] font-semibold transition-all"
-                  style={{ color: 'var(--ink)', border: '1px solid var(--rule)' }}
+                  style={{ background: 'var(--ink)', color: 'var(--paper)' }}
                 >
                   <RefreshCw size={11} /> Re-audit brand DNA
                 </button>
