@@ -33,8 +33,6 @@ import {
   Monitor,
   Smartphone,
   AlertTriangle,
-  CircleDot,
-  Square,
 } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { useAuditBundle } from '@/context/AuditBundleContext';
@@ -376,7 +374,7 @@ export default function WebsiteSpeedPage() {
                 <button
                   key={s}
                   onClick={() => setStrategy(s)}
-                  className="relative flex items-center gap-1.5 px-3.5 py-1.5 rounded-md text-[13px] font-medium transition-all"
+                  className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-md text-[13px] font-medium transition-all"
                   style={{
                     background: isActive ? 'var(--card)' : 'transparent',
                     color: isActive ? 'var(--ink)' : 'var(--m-muted)',
@@ -396,89 +394,88 @@ export default function WebsiteSpeedPage() {
                   {!data && (
                     <span className="text-[11px]" style={{ color: 'var(--m-muted)' }}>--</span>
                   )}
-                  {isActive && (
-                    <span
-                      className="absolute bottom-0 left-3 right-3 h-[2px] rounded-full"
-                      style={{ background: 'var(--ink)' }}
-                    />
-                  )}
                 </button>
               );
             })}
           </div>
 
-          {/* ── Category Score Circles (PSI style) ── */}
-          {result && (
-            <div
-              className="rounded-xl border p-5 sm:p-6"
-              style={{ background: 'var(--card)', borderColor: 'var(--rule)' }}
-            >
-              <div className="flex flex-wrap items-end justify-center gap-6 sm:gap-10">
-                {/* Performance — always shown, slightly larger */}
-                <div className="flex flex-col items-center gap-2">
-                  <ScoreCircle score={result.score} size="small" px={72} strokeWidth={7} />
-                  <span className="text-[12px] font-semibold" style={{ color: 'var(--ink)' }}>
-                    Performance
-                  </span>
-                </div>
-
-                {/* Accessibility, Best Practices, SEO — only if categories exist */}
-                {hasCategories && (
-                  <>
-                    {([
-                      { key: 'accessibility' as const, label: 'Accessibility' },
-                      { key: 'bestPractices' as const, label: 'Best Practices' },
-                      { key: 'seo' as const, label: 'SEO' },
-                    ]).map(cat => (
-                      <div key={cat.key} className="flex flex-col items-center gap-2">
-                        <ScoreCircle
-                          score={categories[cat.key]}
-                          size="small"
-                          px={56}
-                          strokeWidth={6}
-                        />
-                        <span className="text-[12px] font-medium" style={{ color: 'var(--m-muted)' }}>
-                          {cat.label}
-                        </span>
-                      </div>
-                    ))}
-                  </>
-                )}
-              </div>
-
-              {/* Legend */}
-              <div className="flex items-center justify-center gap-5 mt-5 pt-4" style={{ borderTop: '1px solid var(--rule)' }}>
-                <p className="text-[11px]" style={{ color: 'var(--m-muted)' }}>
-                  Values are estimated and may vary.
-                </p>
-                <div className="flex items-center gap-3">
-                  <span className="flex items-center gap-1">
-                    <span className="inline-block w-0 h-0" style={{ borderLeft: '5px solid transparent', borderRight: '5px solid transparent', borderBottom: '8px solid var(--severe)' }} />
-                    <span className="text-[10px]" style={{ color: 'var(--m-muted)' }}>0-49</span>
-                  </span>
-                  <span className="flex items-center gap-1">
-                    <span className="inline-block w-[8px] h-[8px] rounded-[1px]" style={{ background: 'var(--warn)' }} />
-                    <span className="text-[10px]" style={{ color: 'var(--m-muted)' }}>50-89</span>
-                  </span>
-                  <span className="flex items-center gap-1">
-                    <span className="inline-block w-[8px] h-[8px] rounded-full" style={{ background: 'var(--ok)' }} />
-                    <span className="text-[10px]" style={{ color: 'var(--m-muted)' }}>90-100</span>
-                  </span>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* ── Screenshot + Performance Score Hero ── */}
+          {/* ── Unified hero: Score circle + categories + screenshot ── */}
           {result && (
             <div
               className="rounded-xl border overflow-hidden"
               style={{ background: 'var(--card)', borderColor: 'var(--rule)' }}
             >
+              {/* Top: Category score circles row */}
+              <div className="px-5 sm:px-8 pt-6 pb-5">
+                <div className="flex flex-wrap items-end justify-center gap-6 sm:gap-10">
+                  {/* Performance */}
+                  <div className="flex flex-col items-center gap-2">
+                    <ScoreCircle score={result.score} size="small" px={56} strokeWidth={6} />
+                    <span className="text-[12px] font-semibold" style={{ color: 'var(--ink)' }}>
+                      Performance
+                    </span>
+                  </div>
+
+                  {/* Accessibility, Best Practices, SEO */}
+                  {hasCategories && ([
+                    { key: 'accessibility' as const, label: 'Accessibility' },
+                    { key: 'bestPractices' as const, label: 'Best Practices' },
+                    { key: 'seo' as const, label: 'SEO' },
+                  ]).map(cat => (
+                    <div key={cat.key} className="flex flex-col items-center gap-2">
+                      <ScoreCircle
+                        score={categories![cat.key]}
+                        size="small"
+                        px={56}
+                        strokeWidth={6}
+                      />
+                      <span className="text-[12px] font-medium" style={{ color: 'var(--m-muted)' }}>
+                        {cat.label}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Divider */}
+              <div style={{ borderTop: '1px solid var(--rule)' }} />
+
+              {/* Bottom: Performance hero + screenshot side by side */}
               <div className="flex flex-col sm:flex-row items-center">
-                {/* Screenshot thumbnail */}
+                {/* Performance score hero — left side */}
+                <div className="flex-1 flex flex-col items-center justify-center py-6 sm:py-8 px-6">
+                  <ScoreCircle score={result.score} size="large" px={120} strokeWidth={9} />
+                  <div className="text-center mt-3">
+                    <p className="text-[15px] font-semibold" style={{ color: 'var(--ink)' }}>
+                      Performance
+                    </p>
+                    <p className="text-[13px] mt-1 leading-relaxed max-w-[300px]" style={{ color: 'var(--m-muted)' }}>
+                      Values are estimated and may vary. The performance score is calculated directly from these metrics.
+                    </p>
+                  </div>
+                  {/* Legend */}
+                  <div className="flex items-center gap-4 mt-4">
+                    <span className="flex items-center gap-1.5">
+                      <span className="inline-block w-0 h-0" style={{ borderLeft: '5px solid transparent', borderRight: '5px solid transparent', borderBottom: '8px solid var(--severe)' }} />
+                      <span className="text-[11px]" style={{ color: 'var(--m-muted)' }}>0&ndash;49</span>
+                    </span>
+                    <span className="flex items-center gap-1.5">
+                      <span className="inline-block w-[8px] h-[8px] rounded-[1px]" style={{ background: 'var(--warn)' }} />
+                      <span className="text-[11px]" style={{ color: 'var(--m-muted)' }}>50&ndash;89</span>
+                    </span>
+                    <span className="flex items-center gap-1.5">
+                      <span className="inline-block w-[8px] h-[8px] rounded-full" style={{ background: 'var(--ok)' }} />
+                      <span className="text-[11px]" style={{ color: 'var(--m-muted)' }}>90&ndash;100</span>
+                    </span>
+                  </div>
+                </div>
+
+                {/* Screenshot thumbnail — right side */}
                 {result.screenshotUrl && (
-                  <div className="w-full sm:w-[280px] flex-shrink-0 p-4 sm:p-5 flex items-center justify-center" style={{ borderRight: '1px solid var(--rule)' }}>
+                  <div
+                    className="w-full sm:w-[320px] flex-shrink-0 p-5 sm:p-6 flex items-center justify-center"
+                    style={{ borderLeft: '1px solid var(--rule)' }}
+                  >
                     <div
                       className="rounded-lg overflow-hidden border"
                       style={{ borderColor: 'var(--rule)' }}
@@ -487,35 +484,37 @@ export default function WebsiteSpeedPage() {
                       <img
                         src={result.screenshotUrl}
                         alt="Page screenshot"
-                        className="w-full h-auto max-h-[200px] object-contain"
+                        className="w-full h-auto max-h-[240px] object-contain"
                         style={{ background: 'var(--paper)' }}
                       />
                     </div>
                   </div>
                 )}
+              </div>
 
-                {/* Performance score hero */}
-                <div className={`flex-1 flex flex-col items-center justify-center py-6 sm:py-8 px-4 ${!result.screenshotUrl ? 'w-full' : ''}`}>
-                  <ScoreCircle score={result.score} size="large" px={120} strokeWidth={9} />
-                  <div className="text-center mt-3">
-                    <p className="text-[11px] font-semibold tracking-[0.04em] uppercase" style={{ color: 'var(--m-muted)' }}>
-                      Performance
-                    </p>
-                    <p className="text-[14px] font-semibold mt-0.5" style={{ color: scoreColor(result.score) }}>
-                      {result.score >= 90 ? 'Fast' : result.score >= 50 ? 'Moderate' : 'Slow'}
-                    </p>
-                  </div>
+              {/* URL + tested timestamp */}
+              {(result.finalUrl || speedData?.testedAt) && (
+                <div
+                  className="px-5 sm:px-8 py-3 flex items-center justify-between gap-4"
+                  style={{ borderTop: '1px solid var(--rule)' }}
+                >
                   {result.finalUrl && (
                     <p
-                      className="text-[11px] mt-3 max-w-[300px] truncate text-center"
+                      className="text-[11px] truncate min-w-0"
                       style={{ color: 'var(--m-muted)' }}
                       title={result.finalUrl}
                     >
                       {result.finalUrl}
                     </p>
                   )}
+                  {speedData?.testedAt && (
+                    <p className="text-[11px] flex-shrink-0" style={{ color: 'var(--m-muted)' }}>
+                      Tested {new Date(speedData.testedAt).toLocaleDateString()} at{' '}
+                      {new Date(speedData.testedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                    </p>
+                  )}
                 </div>
-              </div>
+              )}
             </div>
           )}
 
