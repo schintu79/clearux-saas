@@ -405,43 +405,102 @@ export default function CompetitorsPage() {
       </PageHeader>
 
       {/* ══════════════════════════════════════════════════
-          1. HERO — Score ranking with position
+          1. HERO — Score + stat cards
          ══════════════════════════════════════════════════ */}
       <DashCard>
-        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-5">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-6">
+          {/* Score circle */}
           <div className="flex-shrink-0">
             <ScoreCircle score={userScore} size="big" />
           </div>
+
+          {/* Right side — brand name + stat grid */}
           <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-2 mb-1">
-              <SiteFavicon hostname={domain || ''} size={16} />
-              <h2 className="text-[17px] font-semibold" style={{ color: 'var(--ink)' }}>{brandName}</h2>
-            </div>
-            <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-[13px]" style={{ color: 'var(--m-muted)' }}>
-              {industry && <span>Industry: <span className="font-medium" style={{ color: 'var(--ink)' }}>{industry}</span></span>}
-              {userRank > 0 && rankedCompetitors.length > 1 && (
-                <span>Rank: <span className="font-semibold" style={{ color: 'var(--ink)' }}>#{userRank}</span> of {rankedCompetitors.length}</span>
-              )}
-              {userDelta != null && (
-                <span className="inline-flex items-center gap-1 font-semibold" style={{ color: userDelta > 0 ? 'var(--ok)' : userDelta < 0 ? 'var(--severe)' : 'var(--m-muted)' }}>
-                  {deltaLabel(userDelta).icon}
-                  {userDelta > 0 ? '+' : ''}{userDelta} vs. competitor avg
+            {/* Brand identity */}
+            <div className="flex items-center gap-2.5 mb-4">
+              <SiteFavicon hostname={domain || ''} size={18} />
+              <h2 className="text-[18px] font-semibold" style={{ color: 'var(--ink)' }}>{brandName}</h2>
+              {industry && (
+                <span
+                  className="px-2 py-0.5 rounded-full text-[11px] font-medium"
+                  style={{ background: 'color-mix(in srgb, var(--ink) 6%, transparent)', color: 'var(--m-muted)' }}
+                >
+                  {industry}
                 </span>
               )}
             </div>
-            {biSummary?.shareOfVoice != null && (
-              <p className="text-[13px] mt-1" style={{ color: 'var(--m-muted)' }}>
-                AI share of voice: <span className="font-semibold" style={{ color: 'var(--ink)' }}>{biSummary.shareOfVoice}%</span>
-              </p>
-            )}
-            {benchmarkPosition?.benchmark && (
-              <p className="text-[13px] mt-0.5" style={{ color: 'var(--m-muted)' }}>
-                Industry avg: <span className="font-medium" style={{ color: 'var(--ink)' }}>{benchmarkPosition.benchmark.avgScore ?? benchmarkPosition.benchmark}/100</span>
-                {benchmarkPosition.percentile != null && (
-                  <> &middot; {brandName} is in the <span className="font-semibold" style={{ color: 'var(--ink)' }}>top {100 - benchmarkPosition.percentile}%</span></>
-                )}
-              </p>
-            )}
+
+            {/* Stat cards grid */}
+            <div className="flex flex-wrap gap-3">
+              {/* Rank */}
+              {userRank > 0 && rankedCompetitors.length > 1 && (
+                <div
+                  className="flex items-center gap-3 px-4 py-3 rounded-lg"
+                  style={{ background: 'color-mix(in srgb, var(--ink) 4%, transparent)' }}
+                >
+                  <span className="text-[22px] font-bold tabular-nums leading-none" style={{ color: 'var(--ink)' }}>
+                    #{userRank}
+                  </span>
+                  <div>
+                    <p className="text-[10px] font-semibold uppercase tracking-wider" style={{ color: 'var(--m-muted)' }}>Rank</p>
+                    <p className="text-[12px] font-medium" style={{ color: 'var(--m-muted)' }}>of {rankedCompetitors.length} brands</p>
+                  </div>
+                </div>
+              )}
+
+              {/* Delta vs competitor avg */}
+              {userDelta != null && (() => {
+                const dColor = userDelta > 0 ? 'var(--ok)' : userDelta < 0 ? 'var(--severe)' : 'var(--m-muted)';
+                return (
+                  <div
+                    className="flex items-center gap-3 px-4 py-3 rounded-lg"
+                    style={{ background: `color-mix(in srgb, ${dColor} 6%, transparent)` }}
+                  >
+                    <span className="text-[22px] font-bold tabular-nums leading-none" style={{ color: dColor }}>
+                      {userDelta > 0 ? '+' : ''}{userDelta}
+                    </span>
+                    <div>
+                      <p className="text-[10px] font-semibold uppercase tracking-wider" style={{ color: 'var(--m-muted)' }}>Gap</p>
+                      <p className="text-[12px] font-medium" style={{ color: 'var(--m-muted)' }}>vs. competitor avg</p>
+                    </div>
+                  </div>
+                );
+              })()}
+
+              {/* Industry benchmark */}
+              {benchmarkPosition?.benchmark && (
+                <div
+                  className="flex items-center gap-3 px-4 py-3 rounded-lg"
+                  style={{ background: 'color-mix(in srgb, var(--ink) 4%, transparent)' }}
+                >
+                  <span className="text-[22px] font-bold tabular-nums leading-none" style={{ color: 'var(--ink)' }}>
+                    {benchmarkPosition.benchmark.avgScore ?? benchmarkPosition.benchmark}
+                  </span>
+                  <div>
+                    <p className="text-[10px] font-semibold uppercase tracking-wider" style={{ color: 'var(--m-muted)' }}>Industry avg</p>
+                    {benchmarkPosition.percentile != null && (
+                      <p className="text-[12px] font-medium" style={{ color: 'var(--m-muted)' }}>Top {100 - benchmarkPosition.percentile}% in sector</p>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {/* AI share of voice */}
+              {biSummary?.shareOfVoice != null && (
+                <div
+                  className="flex items-center gap-3 px-4 py-3 rounded-lg"
+                  style={{ background: 'color-mix(in srgb, var(--ink) 4%, transparent)' }}
+                >
+                  <span className="text-[22px] font-bold tabular-nums leading-none" style={{ color: 'var(--ink)' }}>
+                    {biSummary.shareOfVoice}%
+                  </span>
+                  <div>
+                    <p className="text-[10px] font-semibold uppercase tracking-wider" style={{ color: 'var(--m-muted)' }}>AI voice</p>
+                    <p className="text-[12px] font-medium" style={{ color: 'var(--m-muted)' }}>Share of mentions</p>
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
         </div>
       </DashCard>
