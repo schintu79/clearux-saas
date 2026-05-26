@@ -140,7 +140,7 @@ export default function SpeedDetailPanel({
           <div key={label} className="rounded-lg p-4 flex flex-col items-center" style={{ background: result ? scoreBg(result.score) : 'color-mix(in srgb, var(--ink) 3%, transparent)' }}>
             <p className="text-[10px] font-semibold tracking-[0.04em] uppercase text-m-muted mb-2">{label}</p>
             {result ? (
-              <ScoreCircle score={result.score} size="small" px={64} strokeWidth={5} />
+              <ScoreCircle score={result.score} size="normal" />
             ) : (
               <span className="text-[14px] text-m-muted">Not tested</span>
             )}

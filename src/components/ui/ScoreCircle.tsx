@@ -5,41 +5,44 @@ import React, { useEffect, useRef, useState } from 'react';
 /**
  * ScoreCircle — unified score ring component.
  *
- * Two sizes only:
- *  - 'large' (160px) — hero score on overview / main health score
- *  - 'small' (52px)  — module cards, speed card, intelligence card
+ * Four standardised sizes, proportionally scaled from the 160px reference:
  *
- * Color logic per the UX brief:
+ *  | Size   | px  | stroke | font | ratio |
+ *  |--------|-----|--------|------|-------|
+ *  | big    | 160 |   10   |  42  | 1.00  |
+ *  | medium | 100 |    6   |  26  | 0.625 |
+ *  | normal |  80 |    5   |  21  | 0.50  |
+ *  | small  |  56 |    4   |  15  | 0.35  |
+ *
+ * Color logic:
  *  - 80–100: --ok (green)
  *  - 60–79:  --warn (amber)
- *  - 40–59:  --warn (orange — same token, subtly different context)
- *  - 0–39:   --severe (red)
+ *  - 0–59:   --severe (red)
  *
  * Animates ring fill from 0 → score on mount (300ms ease-out).
  * Respects prefers-reduced-motion.
  */
 
 const SIZE_MAP = {
-  large: { px: 160, stroke: 10, fontSize: 42, fontWeight: 700 },
-  small: { px: 52, stroke: 4, fontSize: 16, fontWeight: 700 },
+  big:    { px: 160, stroke: 10, fontSize: 42, fontWeight: 700 },
+  medium: { px: 100, stroke:  6, fontSize: 26, fontWeight: 700 },
+  normal: { px:  80, stroke:  5, fontSize: 21, fontWeight: 700 },
+  small:  { px:  56, stroke:  4, fontSize: 15, fontWeight: 700 },
 } as const;
+
+type ScoreSize = keyof typeof SIZE_MAP;
 
 function getScoreColor(value: number): string {
   if (value >= 80) return 'var(--ok)';
   if (value >= 60) return 'var(--warn)';
-  if (value >= 40) return 'var(--warn)';
   return 'var(--severe)';
 }
 
 interface ScoreCircleProps {
   /** Score 0–100 */
   score: number | null;
-  /** Visual size variant */
-  size?: 'large' | 'small';
-  /** Optional: override pixel size directly */
-  px?: number;
-  /** Optional: override stroke width */
-  strokeWidth?: number;
+  /** Visual size variant: big (160), medium (100), normal (80), small (56) */
+  size?: ScoreSize;
   /** Optional className on the wrapper */
   className?: string;
 }
@@ -47,13 +50,11 @@ interface ScoreCircleProps {
 export default function ScoreCircle({
   score,
   size = 'small',
-  px: pxOverride,
-  strokeWidth: swOverride,
   className,
 }: ScoreCircleProps) {
   const config = SIZE_MAP[size];
-  const totalPx = pxOverride ?? config.px;
-  const stroke = swOverride ?? config.stroke;
+  const totalPx = config.px;
+  const stroke = config.stroke;
   const radius = (totalPx - stroke) / 2;
   const circumference = 2 * Math.PI * radius;
 

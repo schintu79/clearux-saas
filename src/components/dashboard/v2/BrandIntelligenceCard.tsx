@@ -177,7 +177,7 @@ export default function BrandIntelligenceCard({
           <div className="flex gap-5 flex-1 items-center">
             {/* Left: ScoreCircle — pushed left, thicker stroke */}
             <div className="flex-shrink-0">
-              <ScoreCircle score={primaryScore} size="small" px={100} strokeWidth={10} />
+              <ScoreCircle score={primaryScore} size="medium" />
             </div>
 
             {/* Right: Metric legend with icons */}

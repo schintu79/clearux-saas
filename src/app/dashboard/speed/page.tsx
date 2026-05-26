@@ -410,7 +410,7 @@ export default function WebsiteSpeedPage() {
                 <div className="flex flex-wrap items-end justify-center gap-6 sm:gap-10">
                   {/* Performance */}
                   <div className="flex flex-col items-center gap-2">
-                    <ScoreCircle score={result.score} size="small" px={56} strokeWidth={6} />
+                    <ScoreCircle score={result.score} size="small" />
                     <span className="text-[12px] font-semibold" style={{ color: 'var(--ink)' }}>
                       Performance
                     </span>
@@ -426,8 +426,6 @@ export default function WebsiteSpeedPage() {
                       <ScoreCircle
                         score={categories![cat.key]}
                         size="small"
-                        px={56}
-                        strokeWidth={6}
                       />
                       <span className="text-[12px] font-medium" style={{ color: 'var(--m-muted)' }}>
                         {cat.label}
@@ -444,7 +442,7 @@ export default function WebsiteSpeedPage() {
               <div className="flex flex-col sm:flex-row items-center">
                 {/* Performance score hero — left side */}
                 <div className="flex-1 flex flex-col items-center justify-center py-6 sm:py-8 px-6">
-                  <ScoreCircle score={result.score} size="large" px={120} strokeWidth={9} />
+                  <ScoreCircle score={result.score} size="medium" />
                   <div className="text-center mt-3">
                     <p className="text-[15px] font-semibold" style={{ color: 'var(--ink)' }}>
                       Performance

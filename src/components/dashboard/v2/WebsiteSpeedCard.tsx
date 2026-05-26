@@ -140,7 +140,7 @@ export default function WebsiteSpeedCard({
           <div className="flex gap-5 flex-1 items-center">
             {/* Left: ScoreCircle — pushed left, thicker stroke */}
             <div className="flex-shrink-0">
-              <ScoreCircle score={result.score} size="small" px={100} strokeWidth={10} />
+              <ScoreCircle score={result.score} size="medium" />
             </div>
 
             {/* Right: Metric legend */}

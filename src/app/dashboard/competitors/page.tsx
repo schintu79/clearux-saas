@@ -265,7 +265,7 @@ export default function CompetitorsPage() {
       <DashCard>
         <div className="flex flex-col sm:flex-row items-start sm:items-center gap-5">
           <div className="flex-shrink-0">
-            <ScoreCircle score={userScore} size="large" />
+            <ScoreCircle score={userScore} size="big" />
           </div>
           <div className="flex-1 min-w-0">
             <h2 className="text-[15px] font-semibold" style={{ color: 'var(--ink)' }}>Industry position</h2>

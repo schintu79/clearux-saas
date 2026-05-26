@@ -135,6 +135,11 @@ const DashboardShell: React.FC<DashboardShellProps> = ({ children }) => {
     const id = sidebarIdFromSelection(sel);
     if (id) setSelectedSiteId(id);
     const unsub = subscribeSelection((next) => {
+      // If an internal action (dropdown click) already set state AND
+      // wrote to localStorage in the same tick, skip the subscription
+      // update to avoid a competing setSelectedSiteId that races with
+      // the internal one and causes the two-click selection bug.
+      if (internalChangeRef.current) return;
       const nextId = sidebarIdFromSelection(next);
       // External change — do NOT flag as internal so the write-back
       // effect won't clobber what was just written to the store.
@@ -662,19 +667,21 @@ const DashboardShell: React.FC<DashboardShellProps> = ({ children }) => {
                               setBrandMenuOpen(false);
                               return;
                             }
-                            // Write to localStorage SYNCHRONOUSLY before
-                            // navigation so the target page reads the correct
-                            // selection immediately on mount.
+                            // Persist to localStorage SYNCHRONOUSLY so the
+                            // target page reads the correct value on mount.
                             const sel = selectionFromSidebarId(s.id);
                             writeSelection(sel);
-                            // Set local state without the internal flag — the
-                            // writeSelection above already persisted. Setting
-                            // internalChangeRef would cause effect #5 to
-                            // re-write the same value, firing the subscription
-                            // a second time.
-                            setSelectedSiteId(s.id);
+                            // Update local state through the internal path.
+                            // The write-back effect will see the flag but
+                            // skip the write because the value already matches
+                            // what writeSelection just persisted.
+                            selectSiteInternal(s.id);
                             setBrandMenuOpen(false);
-                            router.push('/dashboard/overview');
+                            // Navigate to overview (skip if already there to
+                            // avoid unnecessary re-render).
+                            if (pathname !== '/dashboard/overview') {
+                              router.push('/dashboard/overview');
+                            }
                           }}
                           className="w-full flex items-center gap-2 px-3 py-2 text-left transition-colors hover:bg-black/[0.04]"
                         >

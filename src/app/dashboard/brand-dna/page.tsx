@@ -945,7 +945,7 @@ export default function BrandDnaPage() {
               style={{ background: 'var(--card)', border: '1px solid var(--rule)' }}
             >
               <div className="p-5 flex items-center gap-5">
-                <ScoreCircle score={overallScore || 0} size="large" />
+                <ScoreCircle score={overallScore || 0} size="big" />
                 <div className="flex-1 min-w-0">
                   <h3 className="text-[16px] font-semibold mb-1" style={{ color: 'var(--ink)' }}>Brand Identity Score</h3>
                   {report.total_issues > 0 && (

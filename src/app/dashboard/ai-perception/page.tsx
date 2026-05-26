@@ -616,7 +616,7 @@ export default function AIPerceptionPage() {
           value={overallAccuracy != null ? `${overallAccuracy}%` : 'Not measured'}
           subtext={overallAccuracy != null ? `${measured.length} model${measured.length !== 1 ? 's' : ''} tested` : 'Run an audit to measure'}
           description="How well AI answers match what your website actually claims. We ask each model about your brand and grade their responses against your real content."
-          scoreCircle={<ScoreCircle score={overallAccuracy} size="small" px={56} />}
+          scoreCircle={<ScoreCircle score={overallAccuracy} size="small" />}
         />
 
         <MetricCard
@@ -631,7 +631,7 @@ export default function AIPerceptionPage() {
           value={sentimentLabel(avgSentiment)}
           subtext={hasSentiment ? `${avgSentiment}/100 average tone` : 'Needs brand intelligence analysis'}
           description="The overall tone AI models use when talking about your brand. Positive sentiment means AI recommends you confidently; negative means it hedges or warns users."
-          scoreCircle={<ScoreCircle score={avgSentiment} size="small" px={56} />}
+          scoreCircle={<ScoreCircle score={avgSentiment} size="small" />}
         />
 
         <MetricCard
@@ -645,7 +645,7 @@ export default function AIPerceptionPage() {
           subtext={hasPlacement ? 'position when AI lists options' : 'Needs brand intelligence analysis'}
           description="Where your brand appears in AI responses when someone asks for recommendations in your category. #1 means you are the first brand mentioned; #5 means you are buried at the bottom."
           scoreCircle={
-            <ScoreCircle score={placementScoreToPercent(avgPlacement)} size="small" px={56} />
+            <ScoreCircle score={placementScoreToPercent(avgPlacement)} size="small" />
           }
         />
       </div>

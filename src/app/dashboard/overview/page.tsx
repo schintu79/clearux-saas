@@ -802,7 +802,7 @@ function OverviewInner() {
           titleSize="lg"
         >
           <div className="flex flex-col items-center justify-center">
-            <ScoreCircle score={overallScore} size="large" />
+            <ScoreCircle score={overallScore} size="big" />
             <p className="text-[12px] mt-2" style={{ color: 'var(--m-muted)' }}>/100</p>
             <span
               className="text-[11px] font-medium mt-1.5 px-3 py-0.5 rounded-full"
@@ -2029,7 +2029,7 @@ function InProgressOverview({
               </div>
             </div>
             <div className="flex-1 flex items-center justify-center">
-              <ScoreCircle score={partial!.overallScore!} size="large" />
+              <ScoreCircle score={partial!.overallScore!} size="big" />
             </div>
           </PopulatedCard>
         ) : (
