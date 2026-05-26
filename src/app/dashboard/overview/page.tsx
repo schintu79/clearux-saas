@@ -932,9 +932,7 @@ function OverviewInner() {
           speedData={(latestCompleted as any)?.speed_data ?? null}
           auditId={latestCompleted?.id ?? null}
           onViewIssues={() => {
-            if (latestCompleted?.id) {
-              router.push(`/dashboard/audits/${latestCompleted.id}#technical`);
-            }
+            router.push('/dashboard/speed');
           }}
           onTestComplete={(newData) => {
             // Force a re-render by refreshing the bundle
