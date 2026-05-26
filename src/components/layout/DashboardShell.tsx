@@ -91,6 +91,10 @@ const DashboardShell: React.FC<DashboardShellProps> = ({ children }) => {
   // feature nav can deep-link into the audit detail tabs.
   const [sites, setSites] = useState<SiteEntry[]>([]);
   const [sitesLoaded, setSitesLoaded] = useState(false);
+  // Track IDs we've already added temporary placeholders for, so the
+  // "add missing entry" effect doesn't re-fire when loadSites replaces
+  // the sites array (which would remove the placeholder and loop).
+  const placeholderAddedRef = useRef(new Set<string>());
   // Selection persists via brand-selection store so that Overview/Find/Fix/
   // Track all scope queries to the SAME brand the sidebar shows. Initial
   // value is hydrated from localStorage on mount in the effect below.
@@ -262,6 +266,12 @@ const DashboardShell: React.FC<DashboardShellProps> = ({ children }) => {
     }
 
     const all = [...siteEntries, ...brandEntries];
+    // Clear placeholder tracking for IDs that are now in the real list,
+    // so the placeholder logic can re-fire if the user switches away and back.
+    const allIds = new Set(all.map(s => s.id));
+    for (const id of placeholderAddedRef.current) {
+      if (allIds.has(id)) placeholderAddedRef.current.delete(id);
+    }
     setSites(all);
     setSitesLoaded(true);
     // Default selection: prefer current route context, else most-recent site.
@@ -296,19 +306,31 @@ const DashboardShell: React.FC<DashboardShellProps> = ({ children }) => {
   // (e.g. new audit for a domain that hasn't completed), add a temporary
   // entry so the selector shows the new domain immediately, then refresh
   // the full list in the background.
+  //
+  // IMPORTANT: This effect must NOT depend on `sites` — otherwise it loops:
+  // 1. adds placeholder → sites changes → effect re-runs
+  // 2. loadSites replaces array (drops placeholder) → sites changes → re-runs
+  // 3. placeholder gone → re-adds it → loadSites → back to 1
+  // Instead we use a ref to track already-handled IDs.
   useEffect(() => {
-    if (!selectedSiteId || !sites.length) return;
-    const exists = sites.some(s => s.id === selectedSiteId);
-    if (!exists) {
-      // Parse the id to create a temporary entry
+    if (!selectedSiteId) return;
+    // Already added a placeholder for this ID — skip
+    if (placeholderAddedRef.current.has(selectedSiteId)) return;
+
+    // Check current sites via the state setter to avoid stale closure
+    setSites(prev => {
+      const exists = prev.some(s => s.id === selectedSiteId);
+      if (exists) return prev; // already in list, no change
+
+      placeholderAddedRef.current.add(selectedSiteId);
+
       if (selectedSiteId.startsWith('site:')) {
         const host = selectedSiteId.slice(5);
-        setSites(prev => [...prev, { kind: 'site', id: selectedSiteId, label: host, sub: 'Website', auditId: null }]);
+        return [...prev, { kind: 'site', id: selectedSiteId, label: host, sub: 'Website', auditId: null }];
       } else if (selectedSiteId.startsWith('brand:')) {
         const brandId = selectedSiteId.slice(6);
         // Fetch brand name so we don't show a raw UUID in the selector.
-        // Add a placeholder immediately, then replace with real data.
-        setSites(prev => [...prev, { kind: 'brand', id: selectedSiteId, label: 'Loading...', sub: 'Brand identity' }]);
+        // The placeholder is added synchronously; fetch replaces it.
         fetch('/api/brand-identities')
           .then(r => r.ok ? r.json() : { identities: [] })
           .then(data => {
@@ -318,7 +340,7 @@ const DashboardShell: React.FC<DashboardShellProps> = ({ children }) => {
               if (brand.website_url) {
                 try { brandHost = new URL(brand.website_url).hostname.replace(/^www\./, ''); } catch {}
               }
-              setSites(prev => prev.map(s =>
+              setSites(p => p.map(s =>
                 s.id === `brand:${brandId}`
                   ? { ...s, label: brand.name || brandHost || brandId, sub: brandHost ? 'Website' : 'Brand identity', hostname: brandHost || undefined }
                   : s
@@ -326,11 +348,14 @@ const DashboardShell: React.FC<DashboardShellProps> = ({ children }) => {
             }
           })
           .catch(() => {});
+        return [...prev, { kind: 'brand', id: selectedSiteId, label: 'Loading...', sub: 'Brand identity' }];
       }
-      // Refresh the full list so the entry gets proper metadata
-      loadSites();
-    }
-  }, [selectedSiteId, sites, loadSites]);
+      return prev;
+    });
+
+    // Refresh the full list so the entry gets proper metadata
+    loadSites();
+  }, [selectedSiteId, loadSites]);
 
   // Sync the selected site/brand with the current route so the selector
   // reflects what the user is looking at. Specifically: when the user is on
