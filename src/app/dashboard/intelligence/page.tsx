@@ -425,15 +425,15 @@ export default function IntelligencePage() {
          ═══════════════════════════════════════════════════════════ */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-4">
 
-        {/* ── Card 1: AI Master Overview ── */}
-        <DashCard>
-          <CardHeader title="AI Master Overview" subtitle="Overall score across core AI metrics" />
+        {/* ── Card 1: AI Master Overview (full-width hero) ── */}
+        <DashCard className="lg:col-span-2">
+          <CardHeader title="AI Master Overview" subtitle="Your brand's presence, accuracy, and perception across AI models" />
           {biSummary || overallScore > 0 ? (
-            <div className="grid grid-cols-2 gap-4 mt-4">
-              <MetricDonut label="AI Performance Score" value={overallScore} />
-              <MetricDonut label="Overall Visibility" value={visibilityScore} suffix="%" />
-              <MetricDonut label="Overall Placement" value={avgPlacement} isPlacement />
-              <MetricDonut label="Overall Sentiment Score" value={sentimentScore} />
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-4">
+              <MetricDonut label="Performance Score" value={overallScore} />
+              <MetricDonut label="AI Visibility" value={visibilityScore} suffix="%" />
+              <MetricDonut label="Avg. Placement" value={avgPlacement} isPlacement />
+              <MetricDonut label="Sentiment Score" value={sentimentScore} />
             </div>
           ) : (
             <EmptyCardBody message="Run an audit with the Brand module enabled to generate AI performance metrics." />
@@ -587,15 +587,22 @@ export default function IntelligencePage() {
 
         {/* ── Card 4: Sentiment & Signals ── */}
         <DashCard>
-          <CardHeader title="Sentiment & Signals" subtitle="How AI and humans feel about your brand" />
+          <CardHeader
+            title="Sentiment & Signals"
+            subtitle={hasRealHumanData ? "How AI and humans feel about your brand" : "How AI models perceive and represent your brand"}
+          />
 
           {biSummary || hasRealHumanData ? (
             <div className="mt-3">
-              {/* Sentiment scores row */}
-              <div className="grid grid-cols-3 gap-3 mb-4">
+              {/* Sentiment scores row — only show metrics that have data */}
+              <div className={`grid gap-3 mb-4 ${hasRealHumanData && allSignals.length > 0 ? 'grid-cols-3' : hasRealHumanData || allSignals.length > 0 ? 'grid-cols-2' : 'grid-cols-1 max-w-[220px]'}`}>
                 <MiniStat label="AI Sentiment" value={biSummary?.overallSentiment ?? null} suffix="/100" />
-                <MiniStat label="Human Sentiment" value={hasRealHumanData ? humanSentimentScore : null} suffix="/100" />
-                <MiniStat label="Signals" value={allSignals.length > 0 ? allSignals.length : null} suffix="" isCount />
+                {hasRealHumanData && humanSentimentScore != null && (
+                  <MiniStat label="Human Sentiment" value={humanSentimentScore} suffix="/100" />
+                )}
+                {allSignals.length > 0 && (
+                  <MiniStat label="Signals" value={allSignals.length} suffix="" isCount />
+                )}
               </div>
 
               {/* Positive / Negative themes — compact */}
@@ -707,15 +714,6 @@ export default function IntelligencePage() {
         </DashCard>
       )}
 
-      {/* Footer link */}
-      {!isBrandAudit && (
-        <p className="text-[11px] mb-4" style={{ color: 'var(--m-muted)' }}>
-          Want pillar-level breakdowns and raw competitor analysis?{' '}
-          <Link href={`/dashboard/audits/${bundle.audit.id}#intelligence`} className="inline-flex items-center gap-1 font-semibold hover:underline" style={{ color: 'var(--ink)' }}>
-            Open the full report <ExternalLink size={10} />
-          </Link>
-        </p>
-      )}
     </div>
   );
 }
