@@ -246,6 +246,25 @@ export default function AIPerceptionPage() {
         subtitle="How AI models see, describe, and rank your brand"
       />
 
+      {/* ── New brand / low-history notice ── */}
+      <div
+        className="flex items-start gap-3 rounded-lg border px-4 py-3"
+        style={{
+          background: 'rgba(34,197,94,0.06)',
+          borderColor: 'rgba(34,197,94,0.2)',
+        }}
+      >
+        <Info size={16} strokeWidth={1.75} className="mt-0.5 flex-shrink-0" style={{ color: 'var(--ok)' }} />
+        <p className="text-[12px] leading-relaxed" style={{ color: 'var(--ink)' }}>
+          <span className="font-semibold">New to the web?</span>{' '}
+          AI models can read and understand your website content, but they may not
+          confidently endorse your claims until independent sources corroborate them.
+          This is normal for recently launched sites or brands with limited web history.
+          Focus on fixing issues, building authoritative backlinks, and earning mentions —
+          as your online footprint grows, AI confidence in your brand will follow.
+        </p>
+      </div>
+
       {/* ── Summary metrics ── */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <DashCard>
