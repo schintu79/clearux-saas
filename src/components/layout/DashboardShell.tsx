@@ -90,6 +90,7 @@ const DashboardShell: React.FC<DashboardShellProps> = ({ children }) => {
   // brand_identities. Each site entry remembers its latest audit id so the
   // feature nav can deep-link into the audit detail tabs.
   const [sites, setSites] = useState<SiteEntry[]>([]);
+  const [sitesLoaded, setSitesLoaded] = useState(false);
   // Selection persists via brand-selection store so that Overview/Find/Fix/
   // Track all scope queries to the SAME brand the sidebar shows. Initial
   // value is hydrated from localStorage on mount in the effect below.
@@ -262,6 +263,7 @@ const DashboardShell: React.FC<DashboardShellProps> = ({ children }) => {
 
     const all = [...siteEntries, ...brandEntries];
     setSites(all);
+    setSitesLoaded(true);
     // Default selection: prefer current route context, else most-recent site.
     // Also auto-migrate stale site:host → brand:id when a brand now covers that host.
     //
@@ -668,8 +670,8 @@ const DashboardShell: React.FC<DashboardShellProps> = ({ children }) => {
           </div>
         )}
 
-        {/* Add new site/brand — only when nothing is selected */}
-        {!selectedSite && (
+        {/* Add new site/brand — only when sites have loaded and nothing is selected */}
+        {sitesLoaded && !selectedSite && (
           <div className={clsx('pb-2', collapsed ? 'px-2' : 'px-3')}>
             <Link
               href="/dashboard/new-audit"
