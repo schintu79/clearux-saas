@@ -428,66 +428,47 @@ export default function WebsiteSpeedPage() {
               className="rounded-xl border overflow-hidden"
               style={{ background: 'var(--card)', borderColor: 'var(--rule)' }}
             >
-              {/* Category score circles — centered full width */}
-              <div className="px-6 sm:px-12 py-8">
-                <div className="flex items-end justify-center gap-8 sm:gap-14">
-                  {/* Performance — slightly larger as primary */}
-                  <div className="flex flex-col items-center gap-2.5">
-                    <ScoreCircle score={result.score} size="normal" />
-                    <span className="text-[12px] font-semibold" style={{ color: 'var(--ink)' }}>
-                      Performance
-                    </span>
-                  </div>
-
-                  {/* Accessibility, Best Practices, SEO */}
-                  {hasCategories && ([
-                    { key: 'accessibility' as const, label: 'Accessibility' },
-                    { key: 'bestPractices' as const, label: 'Best Practices' },
-                    { key: 'seo' as const, label: 'SEO' },
-                  ]).map(cat => (
-                    <div key={cat.key} className="flex flex-col items-center gap-2.5">
-                      <ScoreCircle
-                        score={categories![cat.key]}
-                        size="small"
-                      />
-                      <span className="text-[12px] font-medium" style={{ color: 'var(--m-muted)' }}>
-                        {cat.label}
+              {/* Scores row: Performance (big) + secondary scores + screenshot */}
+              <div className="flex flex-col sm:flex-row items-center">
+                {/* Scores */}
+                <div className="flex-1 px-6 sm:px-10 py-8">
+                  <div className="flex items-end justify-center gap-8 sm:gap-12">
+                    {/* Performance — big primary circle */}
+                    <div className="flex flex-col items-center gap-2.5">
+                      <ScoreCircle score={result.score} size="big" />
+                      <span className="text-[12px] font-semibold" style={{ color: 'var(--ink)' }}>
+                        Performance
                       </span>
                     </div>
-                  ))}
-                </div>
-              </div>
 
-              {/* Note + screenshot */}
-              <div
-                className="flex flex-col sm:flex-row items-center"
-                style={{ borderTop: '1px solid var(--rule)' }}
-              >
-                {/* Left: explanation + legend */}
-                <div className="flex-1 flex flex-col items-center justify-center py-5 px-6 text-center">
-                  <p className="text-[12px] leading-relaxed max-w-[340px]" style={{ color: 'var(--m-muted)' }}>
+                    {/* Accessibility, Best Practices, SEO */}
+                    {hasCategories && ([
+                      { key: 'accessibility' as const, label: 'Accessibility' },
+                      { key: 'bestPractices' as const, label: 'Best Practices' },
+                      { key: 'seo' as const, label: 'SEO' },
+                    ]).map(cat => (
+                      <div key={cat.key} className="flex flex-col items-center gap-2.5">
+                        <ScoreCircle
+                          score={categories![cat.key]}
+                          size="small"
+                        />
+                        <span className="text-[12px] font-medium" style={{ color: 'var(--m-muted)' }}>
+                          {cat.label}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Note below scores */}
+                  <p className="text-[11px] leading-relaxed text-center mt-5 max-w-[380px] mx-auto" style={{ color: 'var(--m-muted)' }}>
                     Values are estimated and may vary. The performance score is calculated directly from the metrics below.
                   </p>
-                  <div className="flex items-center gap-4 mt-3">
-                    <span className="flex items-center gap-1.5">
-                      <span className="inline-block w-0 h-0" style={{ borderLeft: '5px solid transparent', borderRight: '5px solid transparent', borderBottom: '8px solid var(--severe)' }} />
-                      <span className="text-[11px]" style={{ color: 'var(--m-muted)' }}>0&ndash;49</span>
-                    </span>
-                    <span className="flex items-center gap-1.5">
-                      <span className="inline-block w-[8px] h-[8px] rounded-[1px]" style={{ background: 'var(--warn)' }} />
-                      <span className="text-[11px]" style={{ color: 'var(--m-muted)' }}>50&ndash;89</span>
-                    </span>
-                    <span className="flex items-center gap-1.5">
-                      <span className="inline-block w-[8px] h-[8px] rounded-full" style={{ background: 'var(--ok)' }} />
-                      <span className="text-[11px]" style={{ color: 'var(--m-muted)' }}>90&ndash;100</span>
-                    </span>
-                  </div>
                 </div>
 
-                {/* Right: screenshot */}
+                {/* Screenshot — right side */}
                 {result.screenshotUrl && (
                   <div
-                    className="w-full sm:w-[280px] flex-shrink-0 p-4 sm:p-5 flex items-center justify-center"
+                    className="w-full sm:w-[220px] flex-shrink-0 p-4 sm:p-5 flex items-center justify-center"
                     style={{ borderLeft: '1px solid var(--rule)' }}
                   >
                     <div
@@ -498,7 +479,7 @@ export default function WebsiteSpeedPage() {
                       <img
                         src={result.screenshotUrl}
                         alt="Page screenshot"
-                        className="w-full h-auto max-h-[200px] object-contain"
+                        className="w-full h-auto max-h-[220px] object-contain"
                         style={{ background: 'var(--paper)' }}
                       />
                     </div>
@@ -506,29 +487,43 @@ export default function WebsiteSpeedPage() {
                 )}
               </div>
 
-              {/* URL + tested timestamp */}
-              {(result.finalUrl || speedData?.testedAt) && (
-                <div
-                  className="px-5 sm:px-8 py-3 flex items-center justify-between gap-4"
-                  style={{ borderTop: '1px solid var(--rule)' }}
+              {/* Bottom row: URL | Legend | Tested date */}
+              <div
+                className="px-5 sm:px-8 py-3 flex items-center justify-between gap-4"
+                style={{ borderTop: '1px solid var(--rule)' }}
+              >
+                {/* Left: URL */}
+                <p
+                  className="text-[11px] truncate min-w-0 flex-1"
+                  style={{ color: 'var(--m-muted)' }}
+                  title={result.finalUrl || ''}
                 >
-                  {result.finalUrl && (
-                    <p
-                      className="text-[11px] truncate min-w-0"
-                      style={{ color: 'var(--m-muted)' }}
-                      title={result.finalUrl}
-                    >
-                      {result.finalUrl}
-                    </p>
-                  )}
-                  {speedData?.testedAt && (
-                    <p className="text-[11px] flex-shrink-0" style={{ color: 'var(--m-muted)' }}>
-                      Tested {new Date(speedData.testedAt).toLocaleDateString()} at{' '}
-                      {new Date(speedData.testedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                    </p>
-                  )}
+                  {result.finalUrl || ''}
+                </p>
+
+                {/* Center: Legend */}
+                <div className="flex items-center gap-4 flex-shrink-0">
+                  <span className="flex items-center gap-1.5">
+                    <span className="inline-block w-0 h-0" style={{ borderLeft: '5px solid transparent', borderRight: '5px solid transparent', borderBottom: '8px solid var(--severe)' }} />
+                    <span className="text-[11px]" style={{ color: 'var(--m-muted)' }}>0&ndash;49</span>
+                  </span>
+                  <span className="flex items-center gap-1.5">
+                    <span className="inline-block w-[8px] h-[8px] rounded-[1px]" style={{ background: 'var(--warn)' }} />
+                    <span className="text-[11px]" style={{ color: 'var(--m-muted)' }}>50&ndash;89</span>
+                  </span>
+                  <span className="flex items-center gap-1.5">
+                    <span className="inline-block w-[8px] h-[8px] rounded-full" style={{ background: 'var(--ok)' }} />
+                    <span className="text-[11px]" style={{ color: 'var(--m-muted)' }}>90&ndash;100</span>
+                  </span>
                 </div>
-              )}
+
+                {/* Right: Tested date */}
+                <p className="text-[11px] flex-shrink-0 flex-1 text-right" style={{ color: 'var(--m-muted)' }}>
+                  {speedData?.testedAt
+                    ? `Tested ${new Date(speedData.testedAt).toLocaleDateString()} at ${new Date(speedData.testedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`
+                    : ''}
+                </p>
+              </div>
             </div>
           )}
 
