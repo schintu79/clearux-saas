@@ -560,12 +560,9 @@ export default function AIPerceptionPage() {
               {rescanning ? 'Scanning...' : 'Re-scan AI models'}
             </button>
             {!rescanAvailable && cooldownMessage && !rescanMessage && (
-              <div className="flex items-start gap-1.5 max-w-[280px]">
-                <Info size={12} strokeWidth={1.75} className="mt-0.5 flex-shrink-0" style={{ color: 'var(--m-muted)' }} />
-                <p className="text-[11px] text-right leading-snug" style={{ color: 'var(--m-muted)' }}>
-                  {cooldownMessage}
-                </p>
-              </div>
+              <p className="text-[11px] max-w-[280px] text-right leading-snug" style={{ color: 'var(--m-muted)' }}>
+                {cooldownMessage}
+              </p>
             )}
             {rescanMessage && (
               <p className="text-[11px] max-w-[280px] text-right" style={{ color: 'var(--m-muted)' }}>
