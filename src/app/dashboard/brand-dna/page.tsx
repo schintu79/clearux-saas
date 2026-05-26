@@ -462,20 +462,18 @@ export default function BrandDnaPage() {
     if (!identity || !user) return;
     setTriggeringAudit(true);
     try {
-      const supabase = createBrowserSupabase();
-      // Check credits
-      const { data: profile } = await supabase
-        .from('user_profiles')
-        .select('credits_remaining, plan_type')
-        .eq('user_id', user.id)
-        .maybeSingle();
-      const hasCredits = (profile as any)?.credits_remaining > 0 || (profile as any)?.plan_type === 'unlimited';
+      // Check credits via the proper API (same as new-audit page)
+      const creditCheck = await fetch('/api/credits');
+      const creditData = await creditCheck.json();
+      const canAudit = creditData.can_audit === true;
+      const firstAuditFree = creditData.first_audit_free === true;
 
+      const supabase = createBrowserSupabase();
       const { data: newAudit, error: err } = await supabase
         .from('audits')
         .insert({
           user_id: user.id,
-          status: hasCredits ? 'payment_received' : 'pending_payment',
+          status: canAudit ? 'payment_received' : 'pending_payment',
           product_type: 'auto_detect',
           ux_concern: 'Brand identity audit',
           notes: null,
@@ -489,6 +487,31 @@ export default function BrandDnaPage() {
         .single();
 
       if (err) throw err;
+
+      if (canAudit) {
+        // Deduct credit and dispatch to Inngest for processing
+        const creditRes = await fetch('/api/credits', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ audit_id: newAudit!.id, is_free_first: firstAuditFree }),
+        });
+        if (!creditRes.ok) {
+          console.error('Failed to apply credit for brand audit');
+        }
+      } else {
+        // No credits — redirect to Stripe checkout
+        const checkoutRes = await fetch('/api/stripe/checkout', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ audit_id: newAudit!.id }),
+        });
+        const checkoutData = await checkoutRes.json();
+        if (checkoutRes.ok && checkoutData.url) {
+          window.location.href = checkoutData.url;
+          return;
+        }
+      }
+
       setAudit(newAudit as AuditRecord);
       setReport(null);
       setFindings([]);

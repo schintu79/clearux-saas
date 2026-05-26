@@ -209,7 +209,6 @@ async function fetchLatestAuditByStatus(
     .eq('user_id', userId)
     .in('status', statuses)
     .is('deleted_at', null)
-    .or('audit_type.is.null,audit_type.eq.website')
     .order('created_at', { ascending: false })
     .limit(25)
 
