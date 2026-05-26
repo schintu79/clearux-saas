@@ -55,6 +55,7 @@ import ScoreCircle from '@/components/ui/ScoreCircle';
 import { useAuditProgress } from '@/hooks/useAuditProgress';
 import OverviewBreadcrumb from '@/components/dashboard/OverviewBreadcrumb';
 import OverviewTabs from '@/components/dashboard/OverviewTabs';
+import PageHeader from '@/components/dashboard/v2/PageHeader';
 import clsx from 'clsx';
 
 /* ── Types ──────────────────────────────────────────────── */
@@ -267,7 +268,8 @@ export default function BrandDnaPage() {
   const [shareLoading, setShareLoading] = useState(false);
   const [deletingAudit, setDeletingAudit] = useState(false);
 
-  /* ── Collapsible files section ── */
+  /* ── Collapsible sections ── */
+  const [dnaOpen, setDnaOpen] = useState(true);
   const [filesOpen, setFilesOpen] = useState(true);
 
   /* ── Load brand identity ── */
@@ -358,8 +360,9 @@ export default function BrandDnaPage() {
           const loadedAudit = await loadBrandAudit(id.id);
           if (!cancelled) {
             setAuditLoading(false);
-            // Collapse files section when audit exists
+            // Collapse DNA + files sections when audit exists
             if (loadedAudit && (loadedAudit as any).status === 'completed') {
+              setDnaOpen(false);
               setFilesOpen(false);
             }
           }
@@ -550,6 +553,7 @@ export default function BrandDnaPage() {
       setReport(null);
       setFindings([]);
       setShareUrl(null);
+      setDnaOpen(true);
       setFilesOpen(true);
     } catch {
       setError('Failed to delete audit.');
@@ -601,7 +605,11 @@ export default function BrandDnaPage() {
     return (
       <div>
         <OverviewTabs />
-        <Header label={null} />
+        <PageHeader
+          icon={<Fingerprint size={18} strokeWidth={1.6} />}
+          title="Brand DNA"
+          subtitle="Capture your brand identity so audits can score consistency."
+        />
         <EmptyState
           title="Pick a brand to see its DNA"
           body="Brand DNA is scoped to the brand you have selected in the sidebar."
@@ -616,7 +624,11 @@ export default function BrandDnaPage() {
     return (
       <div>
         <OverviewTabs />
-        <Header label={selectedLabel} />
+        <PageHeader
+          icon={<Fingerprint size={18} strokeWidth={1.6} />}
+          title="Brand DNA"
+          subtitle={selectedLabel ? `Brand identity for ${selectedLabel}` : 'Capture your brand identity so audits can score consistency.'}
+        />
         <EmptyState
           title={selection.kind === 'brand' ? 'No Brand DNA on file yet' : `No Brand DNA for ${siteLabel || 'this site'}`}
           body="Add your brand name, voice, colours, and upload guidelines so we can audit brand consistency."
@@ -637,54 +649,60 @@ export default function BrandDnaPage() {
   const overallScore = report?.overall_score ?? null;
   const hasFiles = identity.brand_identity_files.length > 0;
 
+  /* ── Score label helper ── */
+  const brandScoreLabel = overallScore != null
+    ? overallScore >= 80 ? 'Strong' : overallScore >= 60 ? 'Moderate' : 'Needs work'
+    : null;
+
   return (
     <div>
       <OverviewTabs />
-      <Header label={selectedLabel} />
 
-      {/* ── Run brand DNA audit CTA ──────────────────────── */}
-      {!audit && !auditLoading && hasFiles && (
-        <div
-          className="rounded-xl p-4 mb-4 flex items-center justify-between gap-4"
-          style={{ background: 'color-mix(in srgb, var(--signal) 6%, transparent)', border: '1px solid color-mix(in srgb, var(--signal) 14%, transparent)' }}
-        >
-          <div className="min-w-0">
-            <p className="text-[13px] font-semibold" style={{ color: 'var(--ink)' }}>Run a brand DNA audit</p>
-            <p className="text-[12px] mt-0.5" style={{ color: 'var(--m-muted)' }}>
-              Analyze your brand files across 6 categories and score consistency, voice, and professionalism.
-            </p>
-          </div>
+      {/* ── Page header with action buttons ── */}
+      <PageHeader
+        icon={<Fingerprint size={18} strokeWidth={1.6} />}
+        title="Brand DNA"
+        subtitle={selectedLabel ? `Brand identity for ${selectedLabel}` : 'Capture your brand identity so audits can score consistency.'}
+      >
+        {isAuditCompleted && report && (
+          <>
+            <button
+              onClick={handleShare}
+              disabled={shareLoading}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-[12px] font-semibold transition-all"
+              style={{ color: 'var(--ink)', border: '1px solid var(--rule)' }}
+            >
+              {shareCopied ? <><Check size={11} style={{ color: 'var(--ok)' }} /> Copied</> : shareLoading ? <><Loader2 size={11} className="animate-spin" /> Sharing...</> : <><Share2 size={11} /> Share</>}
+            </button>
+            <button
+              onClick={handleDeleteAudit}
+              disabled={deletingAudit}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-[12px] font-semibold transition-all"
+              style={{ color: 'var(--m-muted)', border: '1px solid var(--rule)' }}
+            >
+              {deletingAudit ? <Loader2 size={11} className="animate-spin" /> : <Trash2 size={11} />} Delete
+            </button>
+            <button
+              onClick={triggerAudit}
+              disabled={triggeringAudit}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-[12px] font-semibold transition-all"
+              style={{ background: 'var(--ink)', color: 'var(--paper)' }}
+            >
+              <RefreshCw size={11} /> Re-audit
+            </button>
+          </>
+        )}
+        {!isAuditCompleted && !isAuditInProgress && hasFiles && (
           <button
             onClick={triggerAudit}
             disabled={triggeringAudit}
-            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg text-[13px] font-semibold transition-all hover:opacity-90 flex-shrink-0"
+            className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg text-[12px] font-semibold transition-all hover:opacity-90"
             style={{ background: 'var(--ink)', color: 'var(--paper)', opacity: triggeringAudit ? 0.6 : 1 }}
           >
-            {triggeringAudit ? <><Loader2 size={13} className="animate-spin" /> Starting...</> : <><Play size={13} /> Run brand audit</>}
+            {triggeringAudit ? <><Loader2 size={12} className="animate-spin" /> Starting...</> : <><Play size={12} /> Run brand audit</>}
           </button>
-        </div>
-      )}
-
-      {!audit && !auditLoading && !hasFiles && (
-        <div
-          className="rounded-xl p-4 mb-4 flex items-center justify-between gap-4"
-          style={{ background: 'color-mix(in srgb, var(--signal) 6%, transparent)', border: '1px solid color-mix(in srgb, var(--signal) 14%, transparent)' }}
-        >
-          <div className="min-w-0">
-            <p className="text-[13px] font-semibold" style={{ color: 'var(--ink)' }}>Run a brand DNA audit</p>
-            <p className="text-[12px] mt-0.5" style={{ color: 'var(--m-muted)' }}>
-              Upload brand guidelines or assets first, then run an audit to score your brand identity.
-            </p>
-          </div>
-          <button
-            disabled
-            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg text-[13px] font-semibold flex-shrink-0"
-            style={{ background: 'var(--paper-2)', color: 'var(--m-muted)', cursor: 'not-allowed' }}
-          >
-            <Play size={13} /> Run brand audit
-          </button>
-        </div>
-      )}
+        )}
+      </PageHeader>
 
       {error && (
         <div className="rounded-xl p-3 mb-4 flex items-center gap-2" style={{ background: 'color-mix(in srgb, var(--severe) 6%, transparent)', border: '1px solid color-mix(in srgb, var(--severe) 14%, transparent)' }}>
@@ -693,93 +711,208 @@ export default function BrandDnaPage() {
         </div>
       )}
 
-      {/* ── 1. DNA Card ───────────────────────────────────── */}
+      <div className="space-y-4">
+
+      {/* ── 1. Hero score (when audit completed) ─────────── */}
+      {isAuditCompleted && report && (
+        <section
+          className="rounded-xl p-5"
+          style={{ background: 'var(--card)', border: '1px solid var(--rule)' }}
+        >
+          <div className="flex items-center gap-6">
+            <ScoreCircle score={overallScore || 0} size="big" />
+            <div className="flex-1 min-w-0">
+              <p className="text-[15px] font-semibold" style={{ color: 'var(--ink)' }}>Brand identity score</p>
+              {brandScoreLabel && (
+                <span
+                  className="inline-block mt-1 px-2 py-0.5 rounded-full text-[11px] font-semibold"
+                  style={{
+                    background: `color-mix(in srgb, ${overallScore != null ? scoreColor(overallScore) : 'var(--m-muted)'} 10%, transparent)`,
+                    color: overallScore != null ? scoreColor(overallScore) : 'var(--m-muted)',
+                  }}
+                >
+                  {brandScoreLabel}
+                </span>
+              )}
+              {report.total_issues > 0 && (
+                <div className="flex items-center gap-3 mt-2">
+                  {report.critical_count > 0 && <span className="text-[11px] font-semibold" style={{ color: 'var(--severe)' }}>{report.critical_count} critical</span>}
+                  {report.high_count > 0 && <span className="text-[11px] font-semibold" style={{ color: 'var(--warn)' }}>{report.high_count} high</span>}
+                  {(report.medium_count + report.low_count) > 0 && <span className="text-[11px]" style={{ color: 'var(--m-muted)' }}>{report.medium_count + report.low_count} more</span>}
+                </div>
+              )}
+              {report.executive_summary && (
+                <p className="text-[12px] leading-relaxed mt-2 line-clamp-2" style={{ color: 'var(--m-muted)' }}>{report.executive_summary}</p>
+              )}
+            </div>
+          </div>
+        </section>
+      )}
+
+      {/* In progress — progressive skeleton */}
+      {isAuditInProgress && audit && (
+        <BrandAuditInProgress audit={audit} />
+      )}
+
+      {/* Failed */}
+      {isAuditFailed && audit && (
+        <section
+          className="rounded-xl p-5 flex items-center justify-between gap-4"
+          style={{ background: 'var(--card)', border: '1px solid var(--rule)' }}
+        >
+          <div className="flex items-center gap-3">
+            <AlertTriangle size={16} style={{ color: 'var(--severe)' }} />
+            <div>
+              <p className="text-[13px] font-semibold" style={{ color: 'var(--ink)' }}>Audit failed</p>
+              <p className="text-[12px]" style={{ color: 'var(--m-muted)' }}>{(audit as any).crawl_error || 'Something went wrong.'}</p>
+            </div>
+          </div>
+          <button onClick={triggerAudit} disabled={triggeringAudit} className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg text-[12px] font-semibold" style={{ background: 'var(--ink)', color: 'var(--paper)' }}>
+            <RefreshCw size={12} /> Retry
+          </button>
+        </section>
+      )}
+
+      {/* ── 2. Category scores (when audit completed) ────── */}
+      {isAuditCompleted && report && categoryScores.length > 0 && (
+        <section>
+          <div className="mb-2 flex items-center gap-2">
+            <Layers size={14} style={{ color: 'var(--m-muted)' }} />
+            <h4 className="text-[13px] font-semibold" style={{ color: 'var(--ink)' }}>Category scores</h4>
+          </div>
+          <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-6 gap-3">
+            {categoryScores.map(cat => {
+              const tint = CATEGORY_TINTS[cat.slug] || CATEGORY_TINTS.visual_consistency;
+              const CatIcon = CATEGORY_ICONS[cat.slug] || Target;
+              return (
+                <div
+                  key={cat.slug}
+                  className="rounded-xl overflow-hidden flex flex-col"
+                  style={{ background: tint.bg, border: `1px solid ${tint.border}` }}
+                >
+                  <div className="flex items-start gap-2 px-3 pt-3 pb-2">
+                    <div
+                      className="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0"
+                      style={{ background: `${tint.dot}15` }}
+                    >
+                      <CatIcon size={14} style={{ color: tint.dot }} />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <h3 className="font-sans font-semibold text-[12px] leading-tight truncate" style={{ color: 'var(--ink)' }}>
+                        {cat.name}
+                      </h3>
+                      <p className="text-[10px] leading-tight mt-0.5 line-clamp-1" style={{ color: 'var(--m-muted)' }}>
+                        {cat.summary?.slice(0, 40) || 'Scored'}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="px-3 pb-3 pt-1">
+                    <span className="text-[28px] font-bold tabular-nums leading-none" style={{ color: scoreColor(cat.score) }}>{cat.score}</span>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </section>
+      )}
+
+      {/* ── 3. DNA Card (collapsible) ────────────────────── */}
       <section
-        className="rounded-xl p-5 mb-4"
+        className="rounded-xl overflow-hidden"
         style={{ background: 'var(--card)', border: '1px solid var(--rule)' }}
       >
-        {/* Top bar */}
-        <div className="flex items-center justify-between gap-3 mb-4">
+        <button
+          onClick={() => { if (!editing) setDnaOpen(!dnaOpen); }}
+          className="w-full flex items-center justify-between p-5 text-left transition-colors hover:opacity-80"
+        >
           <div className="flex items-center gap-2.5 min-w-0">
             <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0" style={{ background: 'color-mix(in srgb, #8B5CF6 10%, transparent)' }}>
               <Fingerprint size={15} strokeWidth={1.6} style={{ color: '#8B5CF6' }} />
             </div>
             <div className="min-w-0">
-              <h2 className="text-[15px] font-semibold truncate" style={{ color: 'var(--ink)' }}>{identity.name}</h2>
+              <h2 className="text-[14px] font-semibold truncate" style={{ color: 'var(--ink)' }}>{identity.name}</h2>
               <p className="text-[11px]" style={{ color: 'var(--m-muted)' }}>
                 DNA captured: <span style={{ color: completion >= 70 ? 'var(--ok)' : completion >= 40 ? 'var(--warn)' : 'var(--severe)' }} className="font-semibold">{completion}%</span>
               </p>
             </div>
           </div>
           <div className="flex items-center gap-2 flex-shrink-0">
-            {editing ? (
-              <>
-                <button onClick={cancelEdit} disabled={saving} className="inline-flex items-center gap-1 text-[12px] font-semibold px-2 py-1 rounded-md" style={{ color: 'var(--m-muted)', border: '1px solid var(--rule)' }}>
-                  <X size={11} /> Cancel
-                </button>
-                <button onClick={saveEdit} disabled={saving} className="inline-flex items-center gap-1 text-[12px] font-semibold px-2.5 py-1 rounded-md" style={{ background: 'var(--ink)', color: 'var(--paper)', opacity: saving ? 0.6 : 1 }}>
-                  <Save size={11} /> {saving ? 'Saving...' : 'Save'}
-                </button>
-              </>
-            ) : (
-              <button onClick={beginEdit} className="inline-flex items-center gap-1 text-[12px] font-semibold px-2.5 py-1 rounded-md" style={{ background: 'var(--paper-2)', color: 'var(--ink)', border: '1px solid var(--rule)' }}>
-                <Edit2 size={11} /> Edit DNA
+            {!editing && (
+              <button
+                onClick={e => { e.stopPropagation(); beginEdit(); if (!dnaOpen) setDnaOpen(true); }}
+                className="inline-flex items-center gap-1 text-[12px] font-semibold px-2.5 py-1 rounded-md"
+                style={{ background: 'var(--paper-2)', color: 'var(--ink)', border: '1px solid var(--rule)' }}
+              >
+                <Edit2 size={11} /> Edit
               </button>
             )}
+            <ChevronDown size={14} className="flex-shrink-0 transition-transform" style={{ color: 'var(--m-muted)', transform: dnaOpen ? 'rotate(180deg)' : 'none' }} />
           </div>
-        </div>
+        </button>
 
-        {/* Edit form — simple stacked layout */}
-        {editing && editState ? (
-          <div className="space-y-3">
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <Field label="Brand name" required>
-                <input value={editState.name} onChange={e => setEditState({ ...editState, name: e.target.value })} className="w-full px-3 py-2 rounded-lg text-[13px] outline-none" style={{ background: 'var(--paper-2)', border: '1px solid var(--rule)', color: 'var(--ink)' }} maxLength={120} />
-              </Field>
-              <Field label="Website URL">
-                <input value={editState.website_url} onChange={e => setEditState({ ...editState, website_url: e.target.value })} placeholder="https://example.com" className="w-full px-3 py-2 rounded-lg text-[13px] outline-none" style={{ background: 'var(--paper-2)', border: '1px solid var(--rule)', color: 'var(--ink)' }} maxLength={2048} />
-              </Field>
-            </div>
-            <Field label="Brand promise" full>
-              <textarea value={editState.description} onChange={e => setEditState({ ...editState, description: e.target.value })} placeholder="Who you serve and the change you create." rows={2} className="w-full px-3 py-2 rounded-lg text-[13px] resize-y outline-none" style={{ background: 'var(--paper-2)', border: '1px solid var(--rule)', color: 'var(--ink)' }} maxLength={600} />
-            </Field>
-            <Field label="Brand voice" full>
-              <textarea value={editState.brand_voice} onChange={e => setEditState({ ...editState, brand_voice: e.target.value })} placeholder="How does your brand sound? Confident but not corporate." rows={2} className="w-full px-3 py-2 rounded-lg text-[13px] resize-y outline-none" style={{ background: 'var(--paper-2)', border: '1px solid var(--rule)', color: 'var(--ink)' }} maxLength={4000} />
-            </Field>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <Field label="Tone keywords">
-                <input value={editState.tone_keywords} onChange={e => setEditState({ ...editState, tone_keywords: e.target.value })} placeholder="confident, warm, direct" className="w-full px-3 py-2 rounded-lg text-[13px] outline-none" style={{ background: 'var(--paper-2)', border: '1px solid var(--rule)', color: 'var(--ink)' }} />
-              </Field>
-              <Field label="Brand colours">
-                <input value={editState.primary_colors} onChange={e => setEditState({ ...editState, primary_colors: e.target.value })} placeholder="#0A84FF, #111111" className="w-full px-3 py-2 rounded-lg text-[13px] outline-none" style={{ background: 'var(--paper-2)', border: '1px solid var(--rule)', color: 'var(--ink)' }} />
-              </Field>
-            </div>
-            <Field label="Logo URL" full>
-              <input value={editState.logo_url} onChange={e => setEditState({ ...editState, logo_url: e.target.value })} placeholder="https://cdn.example.com/logo.svg" className="w-full px-3 py-2 rounded-lg text-[13px] outline-none" style={{ background: 'var(--paper-2)', border: '1px solid var(--rule)', color: 'var(--ink)' }} maxLength={2048} />
-            </Field>
-            {saveError && (
-              <div className="rounded-lg px-3 py-2 text-[12px]" style={{ background: 'color-mix(in srgb, var(--severe) 8%, transparent)', color: 'var(--severe)' }}>{saveError}</div>
+        {dnaOpen && (
+          <div className="px-5 pb-5">
+            {/* Edit form */}
+            {editing && editState ? (
+              <div className="space-y-3">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <Field label="Brand name" required>
+                    <input value={editState.name} onChange={e => setEditState({ ...editState, name: e.target.value })} className="w-full px-3 py-2 rounded-lg text-[13px] outline-none" style={{ background: 'var(--paper-2)', border: '1px solid var(--rule)', color: 'var(--ink)' }} maxLength={120} />
+                  </Field>
+                  <Field label="Website URL">
+                    <input value={editState.website_url} onChange={e => setEditState({ ...editState, website_url: e.target.value })} placeholder="https://example.com" className="w-full px-3 py-2 rounded-lg text-[13px] outline-none" style={{ background: 'var(--paper-2)', border: '1px solid var(--rule)', color: 'var(--ink)' }} maxLength={2048} />
+                  </Field>
+                </div>
+                <Field label="Brand promise" full>
+                  <textarea value={editState.description} onChange={e => setEditState({ ...editState, description: e.target.value })} placeholder="Who you serve and the change you create." rows={2} className="w-full px-3 py-2 rounded-lg text-[13px] resize-y outline-none" style={{ background: 'var(--paper-2)', border: '1px solid var(--rule)', color: 'var(--ink)' }} maxLength={600} />
+                </Field>
+                <Field label="Brand voice" full>
+                  <textarea value={editState.brand_voice} onChange={e => setEditState({ ...editState, brand_voice: e.target.value })} placeholder="How does your brand sound? Confident but not corporate." rows={2} className="w-full px-3 py-2 rounded-lg text-[13px] resize-y outline-none" style={{ background: 'var(--paper-2)', border: '1px solid var(--rule)', color: 'var(--ink)' }} maxLength={4000} />
+                </Field>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <Field label="Tone keywords">
+                    <input value={editState.tone_keywords} onChange={e => setEditState({ ...editState, tone_keywords: e.target.value })} placeholder="confident, warm, direct" className="w-full px-3 py-2 rounded-lg text-[13px] outline-none" style={{ background: 'var(--paper-2)', border: '1px solid var(--rule)', color: 'var(--ink)' }} />
+                  </Field>
+                  <Field label="Brand colours">
+                    <input value={editState.primary_colors} onChange={e => setEditState({ ...editState, primary_colors: e.target.value })} placeholder="#0A84FF, #111111" className="w-full px-3 py-2 rounded-lg text-[13px] outline-none" style={{ background: 'var(--paper-2)', border: '1px solid var(--rule)', color: 'var(--ink)' }} />
+                  </Field>
+                </div>
+                <Field label="Logo URL" full>
+                  <input value={editState.logo_url} onChange={e => setEditState({ ...editState, logo_url: e.target.value })} placeholder="https://cdn.example.com/logo.svg" className="w-full px-3 py-2 rounded-lg text-[13px] outline-none" style={{ background: 'var(--paper-2)', border: '1px solid var(--rule)', color: 'var(--ink)' }} maxLength={2048} />
+                </Field>
+                {saveError && (
+                  <div className="rounded-lg px-3 py-2 text-[12px]" style={{ background: 'color-mix(in srgb, var(--severe) 8%, transparent)', color: 'var(--severe)' }}>{saveError}</div>
+                )}
+                <div className="flex items-center gap-2 pt-1">
+                  <button onClick={cancelEdit} disabled={saving} className="inline-flex items-center gap-1 text-[12px] font-semibold px-2.5 py-1.5 rounded-md" style={{ color: 'var(--m-muted)', border: '1px solid var(--rule)' }}>
+                    <X size={11} /> Cancel
+                  </button>
+                  <button onClick={saveEdit} disabled={saving} className="inline-flex items-center gap-1 text-[12px] font-semibold px-3 py-1.5 rounded-md" style={{ background: 'var(--ink)', color: 'var(--paper)', opacity: saving ? 0.6 : 1 }}>
+                    <Save size={11} /> {saving ? 'Saving...' : 'Save'}
+                  </button>
+                </div>
+              </div>
+            ) : (
+              /* View mode — compact grid */
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2">
+                <Slot icon={Fingerprint} label="Name" value={identity.name} filled />
+                <Slot icon={GlobeIcon} label="Website" value={identity.website_url || 'Not set'} filled={!!identity.website_url} />
+                <Slot icon={Volume2} label="Voice" value={(identity.tone_keywords || []).length > 0 ? (identity.tone_keywords || []).slice(0, 3).join(', ') : (identity.brand_voice ? 'On file' : 'Not set')} filled={!!(identity.brand_voice || (identity.tone_keywords || []).length)} />
+                <Slot icon={Palette} label="Colours" value={(identity.primary_colors || []).length > 0 ? `${(identity.primary_colors || []).length} colour${(identity.primary_colors || []).length === 1 ? '' : 's'}` : 'Not set'} filled={(identity.primary_colors || []).length > 0} colors={identity.primary_colors || undefined} />
+                <Slot icon={ImageIcon} label="Logo" value={identity.logo_url ? 'On file' : 'Not set'} filled={!!identity.logo_url} />
+                <Slot icon={FileText} label="Promise" value={identity.description ? (identity.description.length > 32 ? identity.description.slice(0, 30) + '...' : identity.description) : 'Not set'} filled={!!identity.description} />
+                <Slot icon={FileText} label="Documents" value={`${docs.length} file${docs.length === 1 ? '' : 's'}`} filled={docs.length > 0} />
+                <Slot icon={ImageIcon} label="Assets" value={`${visuals.length} file${visuals.length === 1 ? '' : 's'}`} filled={visuals.length > 0} />
+              </div>
             )}
-          </div>
-        ) : (
-          /* View mode — compact grid */
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2">
-            <Slot icon={Fingerprint} label="Name" value={identity.name} filled />
-            <Slot icon={GlobeIcon} label="Website" value={identity.website_url || 'Not set'} filled={!!identity.website_url} />
-            <Slot icon={Volume2} label="Voice" value={(identity.tone_keywords || []).length > 0 ? (identity.tone_keywords || []).slice(0, 3).join(', ') : (identity.brand_voice ? 'On file' : 'Not set')} filled={!!(identity.brand_voice || (identity.tone_keywords || []).length)} />
-            <Slot icon={Palette} label="Colours" value={(identity.primary_colors || []).length > 0 ? `${(identity.primary_colors || []).length} colour${(identity.primary_colors || []).length === 1 ? '' : 's'}` : 'Not set'} filled={(identity.primary_colors || []).length > 0} colors={identity.primary_colors || undefined} />
-            <Slot icon={ImageIcon} label="Logo" value={identity.logo_url ? 'On file' : 'Not set'} filled={!!identity.logo_url} />
-            <Slot icon={FileText} label="Promise" value={identity.description ? (identity.description.length > 32 ? identity.description.slice(0, 30) + '...' : identity.description) : 'Not set'} filled={!!identity.description} />
-            <Slot icon={FileText} label="Documents" value={`${docs.length} file${docs.length === 1 ? '' : 's'}`} filled={docs.length > 0} />
-            <Slot icon={ImageIcon} label="Assets" value={`${visuals.length} file${visuals.length === 1 ? '' : 's'}`} filled={visuals.length > 0} />
           </div>
         )}
       </section>
 
-      {/* ── 2. File Upload ────────────────────────────────── */}
+      {/* ── 4. Brand files (collapsible) ─────────────────── */}
       {!editing && (
         <section
-          className="rounded-xl mb-4 overflow-hidden"
+          className="rounded-xl overflow-hidden"
           style={{ background: 'var(--card)', border: '1px solid var(--rule)' }}
         >
           <button
@@ -803,7 +936,7 @@ export default function BrandDnaPage() {
           {filesOpen && (
           <div className="px-5 pb-5">
 
-          {/* Drop zone — large and prominent */}
+          {/* Drop zone */}
           <div
             onDragOver={e => { e.preventDefault(); setDragOver(true); }}
             onDragLeave={() => setDragOver(false)}
@@ -876,187 +1009,62 @@ export default function BrandDnaPage() {
         </section>
       )}
 
-      {/* ── 3. Brand Audit ────────────────────────────────── */}
-      <section>
-        {/* No audit yet — trigger CTA */}
-        {!audit && !auditLoading && (
-          <div
-            className="rounded-xl p-5 text-center"
-            style={{ background: 'var(--card)', border: '1px solid var(--rule)' }}
-          >
-            <div className="w-10 h-10 rounded-lg flex items-center justify-center mx-auto mb-3" style={{ background: 'color-mix(in srgb, var(--signal) 8%, transparent)' }}>
-              <Sparkles size={18} style={{ color: 'var(--signal)' }} />
-            </div>
-            <p className="text-[14px] font-semibold mb-1" style={{ color: 'var(--ink)' }}>Audit your brand identity</p>
-            <p className="text-[12px] mb-4 max-w-sm mx-auto" style={{ color: 'var(--m-muted)' }}>
-              {hasFiles
-                ? 'We will analyze your brand files across 6 categories and score consistency, voice, and professionalism.'
-                : 'Upload brand guidelines or assets first, then run an audit to score your brand identity.'}
+      {/* ── 5. Findings (when audit completed) ───────────── */}
+      {isAuditCompleted && report && findings.length > 0 && (
+        <section>
+          <div className="mb-2 flex items-center gap-2">
+            <AlertTriangle size={14} style={{ color: 'var(--m-muted)' }} />
+            <h4 className="text-[13px] font-semibold" style={{ color: 'var(--ink)' }}>Findings</h4>
+            <span className="text-[11px]" style={{ color: 'var(--m-muted)' }}>{findings.filter(f => !f.dismissed).length} total</span>
+          </div>
+          <div className="rounded-xl overflow-hidden" style={{ background: 'var(--card)', border: '1px solid var(--rule)' }}>
+            {findings.filter(f => !f.dismissed).map(f => (
+              <FindingRow key={f.id} finding={f} categoryScores={categoryScores} />
+            ))}
+          </div>
+          {findings.filter(f => f.dismissed).length > 0 && (
+            <p className="text-[11px] mt-2 px-1" style={{ color: 'var(--m-muted)' }}>
+              {findings.filter(f => f.dismissed).length} dismissed
             </p>
-            <button
-              onClick={triggerAudit}
-              disabled={triggeringAudit || !hasFiles}
-              className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg text-[13px] font-semibold transition-all"
-              style={{
-                background: hasFiles ? 'var(--ink)' : 'var(--paper-2)',
-                color: hasFiles ? 'var(--paper)' : 'var(--m-muted)',
-                opacity: triggeringAudit ? 0.6 : 1,
-                cursor: hasFiles ? 'pointer' : 'not-allowed',
-              }}
-            >
-              {triggeringAudit ? <><Loader2 size={13} className="animate-spin" /> Starting...</> : <><Play size={13} /> Run brand audit</>}
-            </button>
-            {!hasFiles && (
-              <p className="text-[11px] mt-2" style={{ color: 'var(--m-muted)' }}>Upload at least one brand file to enable auditing.</p>
-            )}
+          )}
+        </section>
+      )}
+
+      {/* No audit yet — trigger CTA (only when no audit at all) */}
+      {!audit && !auditLoading && !isAuditInProgress && (
+        <section
+          className="rounded-xl p-5 text-center"
+          style={{ background: 'var(--card)', border: '1px solid var(--rule)' }}
+        >
+          <div className="w-10 h-10 rounded-lg flex items-center justify-center mx-auto mb-3" style={{ background: 'color-mix(in srgb, var(--signal) 8%, transparent)' }}>
+            <Sparkles size={18} style={{ color: 'var(--signal)' }} />
           </div>
-        )}
-
-        {/* In progress — progressive skeleton */}
-        {isAuditInProgress && audit && (
-          <BrandAuditInProgress audit={audit} />
-        )}
-
-        {/* Failed */}
-        {isAuditFailed && audit && (
-          <div
-            className="rounded-xl p-5 flex items-center justify-between gap-4"
-            style={{ background: 'var(--card)', border: '1px solid var(--rule)' }}
+          <p className="text-[14px] font-semibold mb-1" style={{ color: 'var(--ink)' }}>Audit your brand identity</p>
+          <p className="text-[12px] mb-4 max-w-sm mx-auto" style={{ color: 'var(--m-muted)' }}>
+            {hasFiles
+              ? 'We will analyze your brand files across 6 categories and score consistency, voice, and professionalism.'
+              : 'Upload brand guidelines or assets first, then run an audit to score your brand identity.'}
+          </p>
+          <button
+            onClick={triggerAudit}
+            disabled={triggeringAudit || !hasFiles}
+            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg text-[13px] font-semibold transition-all"
+            style={{
+              background: hasFiles ? 'var(--ink)' : 'var(--paper-2)',
+              color: hasFiles ? 'var(--paper)' : 'var(--m-muted)',
+              opacity: triggeringAudit ? 0.6 : 1,
+              cursor: hasFiles ? 'pointer' : 'not-allowed',
+            }}
           >
-            <div className="flex items-center gap-3">
-              <AlertTriangle size={16} style={{ color: 'var(--severe)' }} />
-              <div>
-                <p className="text-[13px] font-semibold" style={{ color: 'var(--ink)' }}>Audit failed</p>
-                <p className="text-[12px]" style={{ color: 'var(--m-muted)' }}>{(audit as any).crawl_error || 'Something went wrong.'}</p>
-              </div>
-            </div>
-            <button onClick={triggerAudit} disabled={triggeringAudit} className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg text-[12px] font-semibold" style={{ background: 'var(--ink)', color: 'var(--paper)' }}>
-              <RefreshCw size={12} /> Retry
-            </button>
-          </div>
-        )}
+            {triggeringAudit ? <><Loader2 size={13} className="animate-spin" /> Starting...</> : <><Play size={13} /> Run brand audit</>}
+          </button>
+          {!hasFiles && (
+            <p className="text-[11px] mt-2" style={{ color: 'var(--m-muted)' }}>Upload at least one brand file to enable auditing.</p>
+          )}
+        </section>
+      )}
 
-        {/* ── Completed: Full results dashboard ──────── */}
-        {isAuditCompleted && report && (
-          <div className="space-y-4 progressive-card-reveal">
-            {/* Hero score + action strip */}
-            <div
-              className="rounded-xl overflow-hidden"
-              style={{ background: 'var(--card)', border: '1px solid var(--rule)' }}
-            >
-              <div className="p-5 flex items-center gap-5">
-                <ScoreCircle score={overallScore || 0} size="big" />
-                <div className="flex-1 min-w-0">
-                  <h3 className="text-[16px] font-semibold mb-1" style={{ color: 'var(--ink)' }}>Brand Identity Score</h3>
-                  {report.total_issues > 0 && (
-                    <div className="flex items-center gap-3 mt-1">
-                      {report.critical_count > 0 && <span className="text-[11px] font-semibold" style={{ color: 'var(--severe)' }}>{report.critical_count} critical</span>}
-                      {report.high_count > 0 && <span className="text-[11px] font-semibold" style={{ color: 'var(--warn)' }}>{report.high_count} high</span>}
-                      {(report.medium_count + report.low_count) > 0 && <span className="text-[11px]" style={{ color: 'var(--m-muted)' }}>{report.medium_count + report.low_count} more</span>}
-                    </div>
-                  )}
-                  {report.executive_summary && (
-                    <p className="text-[12px] leading-relaxed mt-2 line-clamp-2" style={{ color: 'var(--m-muted)' }}>{report.executive_summary}</p>
-                  )}
-                </div>
-              </div>
-
-              {/* Action strip */}
-              <div className="flex items-center gap-2 px-5 py-3" style={{ borderTop: '1px solid var(--rule)' }}>
-                <button
-                  onClick={handleShare}
-                  disabled={shareLoading}
-                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-[11px] font-semibold transition-all"
-                  style={{ color: 'var(--ink)', border: '1px solid var(--rule)' }}
-                >
-                  {shareCopied ? <><Check size={11} style={{ color: 'var(--ok)' }} /> Link copied</> : shareLoading ? <><Loader2 size={11} className="animate-spin" /> Sharing...</> : <><Share2 size={11} /> Share</>}
-                </button>
-                <button
-                  onClick={handleDeleteAudit}
-                  disabled={deletingAudit}
-                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-[11px] font-semibold transition-all"
-                  style={{ color: 'var(--m-muted)', border: '1px solid var(--rule)' }}
-                >
-                  {deletingAudit ? <Loader2 size={11} className="animate-spin" /> : <Trash2 size={11} />} Delete
-                </button>
-                <div className="flex-1" />
-                <button
-                  onClick={triggerAudit}
-                  disabled={triggeringAudit}
-                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-[11px] font-semibold transition-all"
-                  style={{ background: 'var(--ink)', color: 'var(--paper)' }}
-                >
-                  <RefreshCw size={11} /> Re-audit brand DNA
-                </button>
-              </div>
-            </div>
-
-            {/* Category score cards — 2×3 grid */}
-            {categoryScores.length > 0 && (
-              <div>
-                <div className="mb-2 flex items-center gap-2">
-                  <Layers size={14} style={{ color: 'var(--m-muted)' }} />
-                  <h4 className="text-[13px] font-semibold" style={{ color: 'var(--ink)' }}>Category scores</h4>
-                </div>
-                <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-6 gap-3">
-                  {categoryScores.map(cat => {
-                    const tint = CATEGORY_TINTS[cat.slug] || CATEGORY_TINTS.visual_consistency;
-                    const CatIcon = CATEGORY_ICONS[cat.slug] || Target;
-                    return (
-                      <div
-                        key={cat.slug}
-                        className="rounded-xl overflow-hidden flex flex-col progressive-card-reveal"
-                        style={{ background: tint.bg, border: `1px solid ${tint.border}` }}
-                      >
-                        <div className="flex items-start gap-2 px-3 pt-3 pb-2">
-                          <div
-                            className="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0"
-                            style={{ background: `${tint.dot}15` }}
-                          >
-                            <CatIcon size={14} style={{ color: tint.dot }} />
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <h3 className="font-sans font-semibold text-[12px] leading-tight truncate" style={{ color: 'var(--ink)' }}>
-                              {cat.name}
-                            </h3>
-                            <p className="text-[10px] leading-tight mt-0.5 line-clamp-1" style={{ color: 'var(--m-muted)' }}>
-                              {cat.summary?.slice(0, 40) || 'Scored'}
-                            </p>
-                          </div>
-                        </div>
-                        <div className="px-3 pb-3 pt-1">
-                          <span className={`text-[28px] font-bold tabular-nums leading-none ${scoreColor(cat.score)}`}>{cat.score}</span>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-            )}
-
-            {/* Findings — flat list grouped by category */}
-            {findings.length > 0 && (
-              <div>
-                <div className="mb-2 flex items-center gap-2">
-                  <AlertTriangle size={14} style={{ color: 'var(--m-muted)' }} />
-                  <h4 className="text-[13px] font-semibold" style={{ color: 'var(--ink)' }}>Findings</h4>
-                  <span className="text-[11px]" style={{ color: 'var(--m-muted)' }}>{findings.filter(f => !f.dismissed).length} total</span>
-                </div>
-                <div className="rounded-xl overflow-hidden" style={{ background: 'var(--card)', border: '1px solid var(--rule)' }}>
-                  {findings.filter(f => !f.dismissed).map(f => (
-                    <FindingRow key={f.id} finding={f} categoryScores={categoryScores} />
-                  ))}
-                </div>
-                {findings.filter(f => f.dismissed).length > 0 && (
-                  <p className="text-[11px] mt-2 px-1" style={{ color: 'var(--m-muted)' }}>
-                    {findings.filter(f => f.dismissed).length} dismissed
-                  </p>
-                )}
-              </div>
-            )}
-          </div>
-        )}
-      </section>
+      </div>
     </div>
   );
 }
@@ -1065,19 +1073,7 @@ export default function BrandDnaPage() {
    Sub-components
    ══════════════════════════════════════════════════════════ */
 
-function Header({ label }: { label: string | null }) {
-  return (
-    <div className="mb-5">
-      <OverviewBreadcrumb current="Brand DNA" />
-      <h1 className="text-[20px] font-semibold tracking-[-0.01em]" style={{ color: 'var(--ink)' }}>Brand DNA</h1>
-      <p className="text-[13px] mt-0.5 max-w-[600px]" style={{ color: 'var(--m-muted)' }}>
-        {label
-          ? <>Your brand identity for <strong style={{ color: 'var(--ink)' }}>{label}</strong>. Upload guidelines, edit DNA fields, and audit brand consistency.</>
-          : 'Capture your brand identity so audits can score consistency.'}
-      </p>
-    </div>
-  );
-}
+/* Header component removed — now using PageHeader */
 
 function EmptyState({ title, body, ctaHref, ctaLabel }: { title: string; body: string; ctaHref: string; ctaLabel: string }) {
   return (
