@@ -128,6 +128,25 @@ function SectionDesc({ children }: { children: React.ReactNode }) {
   return <p className="text-[12px] mb-4" style={{ color: 'var(--m-muted)' }}>{children}</p>;
 }
 
+/* ── Pillar computation (mirrors overview page logic) ── */
+
+const PILLAR_NAMES = ['Foundation', 'Human Experience', 'Inclusive Design', 'Future Readiness', 'SEO Structure & Rules', 'Brand Consistency'];
+const PILLAR_RANGES: [number, number][] = [[0, 4], [4, 8], [8, 12], [12, 16], [16, 20], [20, 24]];
+
+function computePillarScores(report: any): Array<{ name: string; score: number }> {
+  const rawJson = report?.raw_json || report?.rawJson;
+  const catScores: Array<{ name: string; score: number }> = rawJson?.categoryScores || [];
+  if (catScores.length === 0) return [];
+  return PILLAR_NAMES.map((name, i) => {
+    const [start, end] = PILLAR_RANGES[i];
+    const cats = catScores.filter((_c, idx) => idx >= start && idx < end && _c.score >= 0);
+    return {
+      name,
+      score: cats.length > 0 ? Math.round(cats.reduce((s, c) => s + c.score, 0) / cats.length) : -1,
+    };
+  }).filter(p => p.score >= 0);
+}
+
 /* ── Main Page ─────────────────────────────────────── */
 
 export default function CompetitorsPage() {
@@ -268,10 +287,12 @@ export default function CompetitorsPage() {
 
   /* ── Derived values ──────────────────────────────── */
 
-  const userScore = benchmarkPosition?.userScore
-    ?? biSummary?.score
-    ?? (bundle?.report as any)?.overall_score
-    ?? null;
+  // Use the audit report as the single source of truth for the brand's score
+  const report = bundle?.report;
+  const userScore: number | null = (report as any)?.overall_score ?? null;
+
+  // Compute real pillar scores from the same categoryScores the overview page uses
+  const userPillarScores = useMemo(() => computePillarScores(report), [report]);
 
   const avgCompetitorScore = useMemo(() => {
     const scored = drafts.filter(c => c.score != null);
@@ -285,11 +306,11 @@ export default function CompetitorsPage() {
   // Sort competitors by score descending for ranking
   const rankedCompetitors = useMemo(() => {
     const all = [
-      { domain: domain || '', name: brandName, score: userScore, isUser: true, pillarScores: undefined as any },
+      { domain: domain || '', name: brandName, score: userScore, isUser: true, pillarScores: userPillarScores },
       ...drafts.map(d => ({ domain: d.domain, name: d.name || d.domain, score: d.score, isUser: false, pillarScores: d.pillarScores })),
     ].filter(c => c.score != null);
     return all.sort((a, b) => (b.score || 0) - (a.score || 0));
-  }, [drafts, userScore, brandName, domain]);
+  }, [drafts, userScore, userPillarScores, brandName, domain]);
 
   const userRank = rankedCompetitors.findIndex(c => c.isUser) + 1;
 
@@ -512,11 +533,15 @@ export default function CompetitorsPage() {
                   <td className="text-center py-3 px-3 text-[14px] font-bold tabular-nums" style={{ color: userScore != null ? getScoreColor(userScore) : 'var(--m-muted)' }}>
                     {userScore ?? '--'}
                   </td>
-                  {pillarNames.map(p => (
-                    <td key={p} className="text-center py-3 px-3 tabular-nums font-semibold" style={{ color: userScore != null ? getScoreColor(userScore) : 'var(--m-muted)' }}>
-                      {userScore ?? '--'}
-                    </td>
-                  ))}
+                  {pillarNames.map(p => {
+                    const pillar = userPillarScores.find(ps => ps.name === p);
+                    const pScore = pillar?.score ?? null;
+                    return (
+                      <td key={p} className="text-center py-3 px-3 tabular-nums font-semibold" style={{ color: pScore != null ? getScoreColor(pScore) : 'var(--m-muted)' }}>
+                        {pScore ?? '--'}
+                      </td>
+                    );
+                  })}
                   <td className="hidden sm:table-cell text-center py-3 px-2">
                     <span className="inline-flex items-center gap-1 text-[10px] font-medium px-1.5 py-0.5 rounded" style={{ background: 'color-mix(in srgb, var(--ok) 10%, transparent)', color: 'var(--ok)' }}>
                       Audited
