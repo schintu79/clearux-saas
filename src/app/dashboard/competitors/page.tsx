@@ -417,18 +417,15 @@ export default function CompetitorsPage() {
           {/* Right side — brand name + stat grid */}
           <div className="flex-1 min-w-0">
             {/* Brand identity */}
-            <div className="flex items-center gap-2.5 mb-4">
+            <div className="flex items-center gap-2.5 mb-1">
               <SiteFavicon hostname={domain || ''} size={18} />
               <h2 className="text-[18px] font-semibold" style={{ color: 'var(--ink)' }}>{brandName}</h2>
-              {industry && (
-                <span
-                  className="px-2 py-0.5 rounded-full text-[11px] font-medium"
-                  style={{ background: 'color-mix(in srgb, var(--ink) 6%, transparent)', color: 'var(--m-muted)' }}
-                >
-                  {industry}
-                </span>
-              )}
             </div>
+            {industry && (
+              <p className="text-[13px] font-medium mb-4" style={{ color: 'var(--ink)' }}>
+                {industry}
+              </p>
+            )}
 
             {/* Stat cards grid */}
             <div className="flex flex-wrap gap-3">
@@ -580,40 +577,103 @@ export default function CompetitorsPage() {
                 </tr>
               </thead>
               <tbody>
-                {/* User's brand row — highlighted */}
-                <tr style={{ background: 'color-mix(in srgb, var(--ink) 3%, transparent)' }}>
-                  <td className="py-3 pr-4">
-                    <div className="flex items-center gap-2.5">
-                      <SiteFavicon hostname={domain || ''} size={16} />
-                      <span className="text-[13px] font-semibold truncate" style={{ color: 'var(--ink)' }}>{brandName}</span>
-                    </div>
-                  </td>
-                  <td className="hidden sm:table-cell py-3 px-3 text-[12px] truncate" style={{ color: 'var(--m-muted)' }}>{domain}</td>
-                  <td className="text-center py-3 px-3 text-[14px] font-bold tabular-nums" style={{ color: userScore != null ? getScoreColor(userScore) : 'var(--m-muted)' }}>
-                    {userScore ?? '--'}
-                  </td>
-                  {pillarNames.map(p => {
-                    const pillar = userPillarScores.find(ps => ps.name === p);
-                    const pScore = pillar?.score ?? null;
+                {/* Ranked rows — brand shown at its actual rank position */}
+                {rankedCompetitors.map((entry, idx) => {
+                  if (entry.isUser) {
+                    // User's brand row — highlighted
                     return (
-                      <td key={p} className="text-center py-3 px-3 tabular-nums font-semibold" style={{ color: pScore != null ? getScoreColor(pScore) : 'var(--m-muted)' }}>
-                        {pScore ?? '--'}
-                      </td>
+                      <tr key="user-brand" style={{ background: 'color-mix(in srgb, var(--ink) 4%, transparent)', borderBottom: '1px solid var(--rule)' }}>
+                        <td className="py-3 pr-4">
+                          <div className="flex items-center gap-2.5">
+                            <span className="text-[11px] font-bold tabular-nums w-5 text-center flex-shrink-0" style={{ color: 'var(--m-muted)' }}>{idx + 1}</span>
+                            <SiteFavicon hostname={domain || ''} size={16} />
+                            <span className="text-[13px] font-semibold truncate" style={{ color: 'var(--ink)' }}>{brandName}</span>
+                          </div>
+                        </td>
+                        <td className="hidden sm:table-cell py-3 px-3 text-[12px] truncate" style={{ color: 'var(--m-muted)' }}>{domain}</td>
+                        <td className="text-center py-3 px-3 text-[14px] font-bold tabular-nums" style={{ color: userScore != null ? getScoreColor(userScore) : 'var(--m-muted)' }}>
+                          {userScore ?? '--'}
+                        </td>
+                        {pillarNames.map(p => {
+                          const pillar = userPillarScores.find(ps => ps.name === p);
+                          const pScore = pillar?.score ?? null;
+                          return (
+                            <td key={p} className="text-center py-3 px-3 tabular-nums font-semibold" style={{ color: pScore != null ? getScoreColor(pScore) : 'var(--m-muted)' }}>
+                              {pScore ?? '--'}
+                            </td>
+                          );
+                        })}
+                        <td className="hidden sm:table-cell text-center py-3 px-2">
+                          <span className="inline-flex items-center gap-1 text-[10px] font-medium px-1.5 py-0.5 rounded" style={{ background: 'color-mix(in srgb, var(--ok) 10%, transparent)', color: 'var(--ok)' }}>
+                            Audited
+                          </span>
+                        </td>
+                        <td />
+                      </tr>
                     );
-                  })}
-                  <td className="hidden sm:table-cell text-center py-3 px-2">
-                    <span className="inline-flex items-center gap-1 text-[10px] font-medium px-1.5 py-0.5 rounded" style={{ background: 'color-mix(in srgb, var(--ok) 10%, transparent)', color: 'var(--ok)' }}>
-                      Audited
-                    </span>
-                  </td>
-                  <td />
-                </tr>
+                  }
 
-                {/* Competitor rows */}
-                {drafts.map((c) => (
+                  // Competitor row
+                  const c = drafts.find(d => d.domain === entry.domain);
+                  if (!c) return null;
+                  return (
+                    <tr key={c.id} className="hover:bg-black/[0.02] transition-colors" style={{ borderBottom: '1px solid var(--rule)' }}>
+                      <td className="py-2.5 pr-4">
+                        <div className="flex items-center gap-2.5">
+                          <span className="text-[11px] font-bold tabular-nums w-5 text-center flex-shrink-0" style={{ color: 'var(--m-muted)' }}>{idx + 1}</span>
+                          <SiteFavicon hostname={c.domain} size={16} />
+                          {showEditor ? (
+                            <input
+                              type="text"
+                              value={c.domain}
+                              onChange={e => updateDraft(c.id, 'domain', e.target.value)}
+                              placeholder="competitor.com"
+                              className="w-full text-[13px] bg-transparent outline-none font-medium"
+                              style={{ color: 'var(--ink)' }}
+                            />
+                          ) : (
+                            <span className="text-[13px] font-medium truncate" style={{ color: 'var(--ink)' }}>{c.name || c.domain}</span>
+                          )}
+                        </div>
+                      </td>
+                      <td className="hidden sm:table-cell py-2.5 px-3 text-[12px] truncate" style={{ color: 'var(--m-muted)' }}>{c.domain}</td>
+                      <td className="text-center py-2.5 px-3 text-[13px] font-bold tabular-nums" style={{ color: c.score != null ? getScoreColor(c.score) : 'var(--m-muted)' }}>
+                        {c.score != null ? c.score : '--'}
+                      </td>
+                      {pillarNames.length > 0 && (c.pillarScores && c.pillarScores.length > 0) ? (
+                        c.pillarScores.map(p => (
+                          <td key={p.name} className="text-center py-2.5 px-3 tabular-nums" style={{ color: getScoreColor(p.score) }}>
+                            {p.score}
+                          </td>
+                        ))
+                      ) : pillarNames.length > 0 ? (
+                        pillarNames.map(p => (
+                          <td key={p} className="text-center py-2.5 px-3 text-[12px]" style={{ color: 'var(--m-muted)' }}>--</td>
+                        ))
+                      ) : null}
+                      <td className="hidden sm:table-cell text-center py-2.5 px-2">
+                        <span className="text-[10px] font-medium px-1.5 py-0.5 rounded capitalize" style={{
+                          background: c.source === 'auto' ? 'color-mix(in srgb, var(--warn) 10%, transparent)' : 'color-mix(in srgb, var(--ink) 6%, transparent)',
+                          color: c.source === 'auto' ? 'var(--warn)' : 'var(--m-muted)',
+                        }}>
+                          {c.source === 'auto' ? 'Estimated' : 'Manual'}
+                        </span>
+                      </td>
+                      <td className="py-2.5">
+                        <button onClick={() => removeDraft(c.id)} className="p-1 rounded hover:bg-black/[0.04] transition-colors" title="Remove">
+                          <Trash2 size={13} style={{ color: 'var(--m-muted)' }} />
+                        </button>
+                      </td>
+                    </tr>
+                  );
+                })}
+
+                {/* Unscored competitors (not in rankedCompetitors) */}
+                {drafts.filter(c => c.score == null).map((c) => (
                   <tr key={c.id} className="hover:bg-black/[0.02] transition-colors" style={{ borderBottom: '1px solid var(--rule)' }}>
                     <td className="py-2.5 pr-4">
                       <div className="flex items-center gap-2.5">
+                        <span className="text-[11px] tabular-nums w-5 text-center flex-shrink-0" style={{ color: 'var(--m-muted)' }}>--</span>
                         <SiteFavicon hostname={c.domain} size={16} />
                         {showEditor ? (
                           <input
@@ -630,20 +690,10 @@ export default function CompetitorsPage() {
                       </div>
                     </td>
                     <td className="hidden sm:table-cell py-2.5 px-3 text-[12px] truncate" style={{ color: 'var(--m-muted)' }}>{c.domain}</td>
-                    <td className="text-center py-2.5 px-3 text-[13px] font-bold tabular-nums" style={{ color: c.score != null ? getScoreColor(c.score) : 'var(--m-muted)' }}>
-                      {c.score != null ? c.score : '--'}
-                    </td>
-                    {pillarNames.length > 0 && (c.pillarScores && c.pillarScores.length > 0) ? (
-                      c.pillarScores.map(p => (
-                        <td key={p.name} className="text-center py-2.5 px-3 tabular-nums" style={{ color: getScoreColor(p.score) }}>
-                          {p.score}
-                        </td>
-                      ))
-                    ) : pillarNames.length > 0 ? (
-                      pillarNames.map(p => (
-                        <td key={p} className="text-center py-2.5 px-3 text-[12px]" style={{ color: 'var(--m-muted)' }}>--</td>
-                      ))
-                    ) : null}
+                    <td className="text-center py-2.5 px-3 text-[13px] font-bold tabular-nums" style={{ color: 'var(--m-muted)' }}>--</td>
+                    {pillarNames.map(p => (
+                      <td key={p} className="text-center py-2.5 px-3 text-[12px]" style={{ color: 'var(--m-muted)' }}>--</td>
+                    ))}
                     <td className="hidden sm:table-cell text-center py-2.5 px-2">
                       <span className="text-[10px] font-medium px-1.5 py-0.5 rounded capitalize" style={{
                         background: c.source === 'auto' ? 'color-mix(in srgb, var(--warn) 10%, transparent)' : 'color-mix(in srgb, var(--ink) 6%, transparent)',
