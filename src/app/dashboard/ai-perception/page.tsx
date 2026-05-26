@@ -80,11 +80,24 @@ function scoreColorVar(s: number | null | undefined): string {
   return 'var(--severe)';
 }
 
+/** Normalise raw accuracy labels from the probe engine into user-friendly terms.
+ *  "Fabricated", "Hallucinated", etc. → "Inaccurate"
+ *  "Partially Accurate" → "Partial"
+ */
+function normalizeAccuracy(raw: string | null | undefined): string | null {
+  if (!raw) return null;
+  const a = raw.toLowerCase().trim();
+  if (a.includes('accurate') && !a.includes('partial') && !a.includes('in')) return 'Accurate';
+  if (a.includes('partial')) return 'Partial';
+  // Everything else (inaccurate, fabricated, hallucinated, wrong, etc.)
+  return 'Inaccurate';
+}
+
 function accuracyColor(accuracy: string | null | undefined): { bg: string; color: string } {
-  if (!accuracy) return { bg: 'var(--paper-2)', color: 'var(--m-muted)' };
-  const a = accuracy.toLowerCase();
-  if (a.includes('accurate') && !a.includes('partial')) return { bg: 'rgba(34,197,94,0.1)', color: 'var(--ok)' };
-  if (a.includes('partial')) return { bg: 'rgba(234,179,8,0.1)', color: 'var(--warn)' };
+  const norm = normalizeAccuracy(accuracy);
+  if (!norm) return { bg: 'var(--paper-2)', color: 'var(--m-muted)' };
+  if (norm === 'Accurate') return { bg: 'rgba(34,197,94,0.1)', color: 'var(--ok)' };
+  if (norm === 'Partial') return { bg: 'rgba(234,179,8,0.1)', color: 'var(--warn)' };
   return { bg: 'rgba(239,68,68,0.1)', color: 'var(--severe)' };
 }
 
@@ -237,7 +250,7 @@ export default function AIPerceptionPage() {
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <DashCard>
           <div className="flex items-center gap-4">
-            <ScoreCircle score={overallAccuracy} size="large" px={72} />
+            <ScoreCircle score={overallAccuracy} size="small" px={56} />
             <div>
               <p className="text-[11px] font-semibold uppercase tracking-wider" style={{ color: 'var(--m-muted)' }}>Accuracy</p>
               <p className="text-[15px] font-semibold mt-0.5" style={{ color: 'var(--ink)' }}>
@@ -251,7 +264,7 @@ export default function AIPerceptionPage() {
         </DashCard>
         <DashCard>
           <div className="flex items-center gap-4">
-            <ScoreCircle score={avgSentiment} size="large" px={72} />
+            <ScoreCircle score={avgSentiment} size="small" px={56} />
             <div>
               <p className="text-[11px] font-semibold uppercase tracking-wider" style={{ color: 'var(--m-muted)' }}>Sentiment</p>
               <p className="text-[15px] font-semibold mt-0.5" style={{ color: 'var(--ink)' }}>
@@ -305,14 +318,16 @@ export default function AIPerceptionPage() {
                   <div className="min-w-0 flex-1">
                     <p className="text-[12px] font-medium truncate" style={{ color: 'var(--ink)' }}>{probe.model_label}</p>
                     <div className="flex items-center gap-1.5 mt-0.5">
-                      <span
-                        className="text-[11px] font-semibold px-1.5 py-0.5 rounded"
-                        style={{ background: badge.bg, color: badge.color }}
-                      >
-                        {probe.accuracy_score}%
+                      <span className="text-[11px] font-semibold tabular-nums" style={{ color: 'var(--ink)' }}>
+                        {probe.accuracy_score}% accuracy
                       </span>
-                      <span className="text-[10px]" style={{ color: badge.color }}>{badge.label}</span>
                     </div>
+                    <span
+                      className="inline-block text-[10px] font-semibold px-1.5 py-0.5 rounded mt-1"
+                      style={{ background: badge.bg, color: badge.color }}
+                    >
+                      {badge.label}
+                    </span>
                   </div>
                 </div>
               );
@@ -336,8 +351,8 @@ export default function AIPerceptionPage() {
             {questionGroups.map((group, i) => {
               const expanded = expandedQuestion === i;
               // Count accuracy stats for this question
-              const accurate = group.answers.filter(a => a.accuracy?.toLowerCase().includes('accurate') && !a.accuracy?.toLowerCase().includes('partial')).length;
-              const partial = group.answers.filter(a => a.accuracy?.toLowerCase().includes('partial')).length;
+              const accurate = group.answers.filter(a => normalizeAccuracy(a.accuracy) === 'Accurate').length;
+              const partial = group.answers.filter(a => normalizeAccuracy(a.accuracy) === 'Partial').length;
               const wrong = group.answers.length - accurate - partial;
 
               return (
@@ -392,7 +407,7 @@ export default function AIPerceptionPage() {
                                     className="text-[10px] font-semibold px-2 py-0.5 rounded-full"
                                     style={{ background: ac.bg, color: ac.color }}
                                   >
-                                    {a.accuracy}
+                                    {normalizeAccuracy(a.accuracy)}
                                   </span>
                                 )}
                               </div>
