@@ -50,13 +50,14 @@ export async function POST(
     return NextResponse.json({ error: 'Invalid product URL on audit' }, { status: 400 })
   }
 
-  // ── Cooldown: return cached results if last scan was < 6 hours ago ──
-  // LLM probes are inherently non-deterministic (search-augmented models
-  // like Perplexity fetch live results, grading has natural variance).
-  // Re-probing the same site within hours produces noisy score swings
-  // that look like bugs. Instead, return the stored data and tell the
-  // user when the next scan will be available.
-  const COOLDOWN_HOURS = 6
+  // ── Cooldown: return cached results if last scan was < 7 days ago ──
+  // AI models update their knowledge slowly: static models retrain every
+  // few months, while search-augmented ones (Perplexity, browsing ChatGPT)
+  // can reflect changes within days. A 7-day window balances giving search
+  // indexes time to propagate new content while still being useful. Users
+  // see a clear countdown and explanation of why re-scanning too soon
+  // won't produce meaningfully different results.
+  const COOLDOWN_HOURS = 168 // 7 days
   const { data: existingProbes } = await db
     .from('multi_model_probes')
     .select('model_id, model_label, accuracy_score, status, error_message, created_at')

@@ -27,6 +27,8 @@ import {
   FileText,
   Code,
   MessageSquare,
+  RefreshCw,
+  Clock,
 } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { useAuditBundle } from '@/context/AuditBundleContext';
@@ -148,6 +150,11 @@ export default function AIPerceptionPage() {
   const [expandedQuestion, setExpandedQuestion] = useState<number | null>(null);
   const [expandedPage, setExpandedPage] = useState<string | null>(null);
 
+  // Re-scan state
+  const [rescanning, setRescanning] = useState(false);
+  const [rescanMessage, setRescanMessage] = useState<string | null>(null);
+  const [lastScannedAt, setLastScannedAt] = useState<string | null>(null);
+
   useEffect(() => {
     const audit = bundle?.audit;
     if (!audit) {
@@ -226,6 +233,53 @@ export default function AIPerceptionPage() {
     return Array.from(groups.entries()).map(([question, answers]) => ({ question, answers }));
   }, [modelProbes]);
 
+  // Extract last scan timestamp from probes
+  useEffect(() => {
+    if (modelProbes.length > 0) {
+      // probes come from DB, each has a created_at if returned by API
+      // Fall back to the audit created_at
+      const auditDate = bundle?.audit?.created_at;
+      setLastScannedAt(auditDate || null);
+    }
+  }, [modelProbes, bundle]);
+
+  const handleRescan = async () => {
+    const auditId = bundle?.audit?.id;
+    if (!auditId || rescanning) return;
+    setRescanning(true);
+    setRescanMessage(null);
+    try {
+      const res = await fetch(`/api/audits/${auditId}/rescan-xray`, { method: 'POST' });
+      const data = await res.json();
+      if (!res.ok) {
+        setRescanMessage(data.error || 'Re-scan failed');
+        return;
+      }
+      if (data.cached) {
+        const next = new Date(data.nextScanAvailableAt);
+        const msLeft = Math.max(0, next.getTime() - Date.now());
+        const daysLeft = Math.ceil(msLeft / (1000 * 60 * 60 * 24));
+        setRescanMessage(
+          daysLeft > 1
+            ? `Results are still fresh. Next re-scan available in ${daysLeft} days. AI models need time to process new web content.`
+            : `Results are still fresh. Next re-scan available tomorrow.`
+        );
+        return;
+      }
+      // Refresh probes from API
+      setRescanMessage('Re-scan complete. Results updated.');
+      const probesRes = await fetch(`/api/audits/intelligence?audit_id=${auditId}`);
+      if (probesRes.ok) {
+        const d = await probesRes.json();
+        if (d?.modelProbes) setModelProbes(d.modelProbes);
+      }
+    } catch {
+      setRescanMessage('Re-scan failed. Please try again later.');
+    } finally {
+      setRescanning(false);
+    }
+  };
+
   /* ── Render ─────────────────────────────────────── */
 
   if (loading) {
@@ -240,11 +294,31 @@ export default function AIPerceptionPage() {
 
   return (
     <div className="space-y-6">
-      <PageHeader
-        icon={<Bot size={18} strokeWidth={1.75} />}
-        title="AI Perception"
-        subtitle="How AI models see, describe, and rank your brand"
-      />
+      <div className="flex items-start justify-between gap-4">
+        <PageHeader
+          icon={<Bot size={18} strokeWidth={1.75} />}
+          title="AI Perception"
+          subtitle="How AI models see, describe, and rank your brand"
+        />
+        {modelProbes.length > 0 && (
+          <div className="flex flex-col items-end gap-1.5 flex-shrink-0 pt-1">
+            <button
+              onClick={handleRescan}
+              disabled={rescanning}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-[12px] font-medium transition-colors hover:bg-black/[0.04] disabled:opacity-50"
+              style={{ border: '1px solid var(--rule)', color: 'var(--ink)' }}
+            >
+              <RefreshCw size={13} strokeWidth={1.75} className={rescanning ? 'animate-spin' : ''} />
+              {rescanning ? 'Scanning...' : 'Re-scan'}
+            </button>
+            {rescanMessage && (
+              <p className="text-[11px] max-w-[240px] text-right" style={{ color: 'var(--m-muted)' }}>
+                {rescanMessage}
+              </p>
+            )}
+          </div>
+        )}
+      </div>
 
       {/* ── New brand / low-history notice ── */}
       <div

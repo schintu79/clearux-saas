@@ -267,53 +267,34 @@ const DashboardShell: React.FC<DashboardShellProps> = ({ children }) => {
 
     const all = [...siteEntries, ...brandEntries];
     const allIds = new Set(all.map(s => s.id));
-    // Clear placeholder tracking for IDs that are now in the real list,
-    // so the placeholder logic can re-fire if the user switches away and back.
-    for (const id of placeholderAddedRef.current) {
-      if (allIds.has(id)) placeholderAddedRef.current.delete(id);
-    }
-    // Merge: keep placeholder entries ONLY for very recent selections
-    // (e.g. brand just created mid-audit, not yet returned by loadSites).
-    // Stale placeholders for deleted items are purged: if loadSites completed
-    // and an ID isn't in the real data, the entry is gone.
-    setSites(prev => {
-      const kept = prev.filter(s => !allIds.has(s.id) && placeholderAddedRef.current.has(s.id));
-      // Purge stale placeholders — if a placeholder ID isn't in the real
-      // list after a full loadSites, it was likely deleted. Remove from ref
-      // so it won't be re-added, and clear selection if it pointed there.
-      for (const s of kept) {
-        // Give newly-created items a grace period: only purge if the
-        // placeholder has survived at least one full loadSites cycle.
-        // We detect this by checking if the ID was already in prev
-        // before this loadSites ran — i.e. it persisted across a refresh.
-        const wasInPrev = prev.some(p => p.id === s.id);
-        if (wasInPrev) {
-          // This placeholder survived a refresh but still isn't in real data — purge it
-          placeholderAddedRef.current.delete(s.id);
-        }
-      }
-      const finalKept = kept.filter(s => placeholderAddedRef.current.has(s.id));
-      return finalKept.length > 0 ? [...all, ...finalKept] : all;
-    });
+
+    // Purge ALL placeholders — loadSites just fetched the authoritative list.
+    // Any id NOT in `allIds` is either deleted or doesn't exist yet.
+    // For brand-new items the placeholder effect will re-add if needed.
+    placeholderAddedRef.current.clear();
+
+    setSites(all);
     setSitesLoaded(true);
+
     // Default selection: prefer current route context, else most-recent site.
     // Also auto-migrate stale site:host → brand:id when a brand now covers that host.
-    //
-    // CRITICAL: We check localStorage directly because React state `prev` may
-    // be stale — e.g. when the new-audit page called writeSelection() and the
-    // subscription event hasn't flushed into React state yet. Without this,
-    // loadSites would read the OLD selection from `prev` and clobber the new one.
+    // CRITICAL: If the persisted selection points to a deleted item (no longer
+    // in `allIds`), clear it so ghost entries don't resurface.
     setSelectedSiteId((prev) => {
-      // Read the authoritative selection from localStorage
       const persisted = readSelection();
       const persistedId = sidebarIdFromSelection(persisted);
       const effective = persistedId || prev;
+
+      // Clear stale selection pointing to a deleted item
+      if (effective && !allIds.has(effective)) {
+        writeSelection(null);
+        return all[0]?.id || null;
+      }
 
       if (effective?.startsWith('site:')) {
         const host = effective.slice(5);
         const brandEntryId = hostToBrandEntryId.get(host);
         if (brandEntryId) {
-          // Persist the migration so localStorage is updated too
           internalChangeRef.current = true;
           return brandEntryId;
         }
@@ -661,11 +642,13 @@ const DashboardShell: React.FC<DashboardShellProps> = ({ children }) => {
                           role="option"
                           aria-selected={selected}
                           onClick={() => {
+                            // Write to localStorage SYNCHRONOUSLY before
+                            // navigation so the target page reads the correct
+                            // selection immediately on mount.
+                            const sel = selectionFromSidebarId(s.id);
+                            writeSelection(sel);
                             selectSiteInternal(s.id);
                             setBrandMenuOpen(false);
-                            // Always navigate so the page content updates —
-                            // fixes Bug 4 where switching brands during an
-                            // active audit would flash and revert.
                             router.push('/dashboard/overview');
                           }}
                           className="w-full flex items-center gap-2 px-3 py-2 text-left transition-colors hover:bg-black/[0.04]"
