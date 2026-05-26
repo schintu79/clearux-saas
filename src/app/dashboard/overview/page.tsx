@@ -195,28 +195,32 @@ function OverviewInner() {
     return () => clearTimeout(t);
   }, [searchParams]);
 
-  // Strip post-Stripe-redirect params once seen. The running-audit
-  // banner driven by bundle.inProgressAudit conveys the actual state;
-  // we just clean the URL so a reload doesn't re-trigger anything.
+  // Handle URL params on arrival: force-set brand/site selection from
+  // ?site= or ?brand= (new-audit redirect), and strip one-shot params
+  // (?payment, ?audit from Stripe redirect). Merged into a single
+  // effect so replaceState only fires once and searchParams changes
+  // are handled atomically.
+  const paramsHandledRef = useRef(false);
   useEffect(() => {
-    if (!searchParams.get('payment') && !searchParams.get('audit')) return;
-    window.history.replaceState({}, '', '/dashboard/overview');
-  }, [searchParams]);
-
-  // Force-set brand/site selection when arriving from new-audit redirect.
-  // The URL carries ?site=hostname or ?brand=brandId so the overview
-  // always opens scoped to the newly created audit target, even if the
-  // previous localStorage selection hasn't propagated yet.
-  useEffect(() => {
+    // Only process URL params once per mount — after replaceState
+    // clears them, searchParams updates and re-fires this effect.
+    // The guard prevents the second (empty) run from being a no-op
+    // that still costs a render cycle.
     const siteParam = searchParams.get('site');
     const brandParam = searchParams.get('brand');
+    const paymentParam = searchParams.get('payment');
+    const auditParam = searchParams.get('audit');
+    const hasActionableParams = siteParam || brandParam || paymentParam || auditParam;
+    if (!hasActionableParams) { paramsHandledRef.current = false; return; }
+    if (paramsHandledRef.current) return;
+    paramsHandledRef.current = true;
+
     if (siteParam) {
       writeSelection({ kind: 'site', host: siteParam });
-      window.history.replaceState({}, '', '/dashboard/overview');
     } else if (brandParam) {
       writeSelection({ kind: 'brand', brandId: brandParam });
-      window.history.replaceState({}, '', '/dashboard/overview');
     }
+    window.history.replaceState({}, '', '/dashboard/overview');
   }, [searchParams]);
 
   // Reset derived data when selection changes (bundle itself is managed by context).
@@ -306,8 +310,15 @@ function OverviewInner() {
   // which then made the sidebar visibly switch to the site even though
   // the user had just picked the brand. Guard against that by only
   // syncing when the selection is null.
+  // Track whether we've already written a defensive sync for this
+  // null-selection episode. Without this guard, every bundle update
+  // (e.g. from polling) re-fires writeSelection, creating a cascade:
+  // writeSelection → subscription → selectedSiteId → placeholder
+  // effect → loadSites → stale selection cleared → null again → loop.
+  const defensiveSyncDone = useRef(false);
   useEffect(() => {
-    if (selection) return;
+    if (selection) { defensiveSyncDone.current = false; return; }
+    if (defensiveSyncDone.current) return;
     const resolved = bundle?.audit;
     if (!resolved) return;
     let resolvedSel: { kind: 'brand'; brandId: string } | { kind: 'site'; host: string } | null = null;
@@ -319,7 +330,10 @@ function OverviewInner() {
         if (host) resolvedSel = { kind: 'site', host };
       } catch {}
     }
-    if (resolvedSel) writeSelection(resolvedSel);
+    if (resolvedSel) {
+      defensiveSyncDone.current = true;
+      writeSelection(resolvedSel);
+    }
   }, [bundle, selection]);
 
   const latestCompleted = bundle?.audit && bundle.report ? bundle.audit : null;

@@ -268,10 +268,14 @@ const DashboardShell: React.FC<DashboardShellProps> = ({ children }) => {
     const all = [...siteEntries, ...brandEntries];
     const allIds = new Set(all.map(s => s.id));
 
-    // Purge ALL placeholders — loadSites just fetched the authoritative list.
-    // Any id NOT in `allIds` is either deleted or doesn't exist yet.
-    // For brand-new items the placeholder effect will re-add if needed.
-    placeholderAddedRef.current.clear();
+    // Only purge placeholders that are NOW in the authoritative list
+    // (i.e. they're no longer placeholders). DO NOT clear() the whole
+    // set — that removes the "already handled" guard in the placeholder
+    // effect, which re-adds the placeholder and calls loadSites() again,
+    // creating an infinite loop.
+    for (const id of Array.from(placeholderAddedRef.current)) {
+      if (allIds.has(id)) placeholderAddedRef.current.delete(id);
+    }
 
     setSites(all);
     setSitesLoaded(true);
@@ -285,9 +289,15 @@ const DashboardShell: React.FC<DashboardShellProps> = ({ children }) => {
       const persistedId = sidebarIdFromSelection(persisted);
       const effective = persistedId || prev;
 
-      // Clear stale selection pointing to a deleted item
+      // Clear stale selection pointing to a deleted item.
+      // IMPORTANT: Do NOT call writeSelection(null) here — it fires
+      // a subscription that cascades through the system (overview
+      // defensive sync detects null → writes back resolved selection →
+      // triggers placeholder effect → calls loadSites → infinite loop).
+      // Just update the local state; the write-back effect (#5) will
+      // persist it once via the internalChangeRef guard.
       if (effective && !allIds.has(effective)) {
-        writeSelection(null);
+        internalChangeRef.current = true;
         return all[0]?.id || null;
       }
 
@@ -361,9 +371,12 @@ const DashboardShell: React.FC<DashboardShellProps> = ({ children }) => {
       return prev;
     });
 
-    // Refresh the full list so the entry gets proper metadata
-    loadSites();
-  }, [selectedSiteId, loadSites]);
+    // NOTE: Do NOT call loadSites() here. It clears/merges placeholders
+    // and updates selectedSiteId, which re-triggers this effect and
+    // creates an infinite loop. The placeholder + async brand-name fetch
+    // above is sufficient for display; the authoritative list refreshes
+    // naturally via the [loadSites] effect when user/auth changes.
+  }, [selectedSiteId]);
 
   // Sync the selected site/brand with the current route so the selector
   // reflects what the user is looking at. Specifically: when the user is on
@@ -642,12 +655,22 @@ const DashboardShell: React.FC<DashboardShellProps> = ({ children }) => {
                           role="option"
                           aria-selected={selected}
                           onClick={() => {
+                            if (s.id === selectedSiteId) {
+                              // Already selected — just close the menu
+                              setBrandMenuOpen(false);
+                              return;
+                            }
                             // Write to localStorage SYNCHRONOUSLY before
                             // navigation so the target page reads the correct
                             // selection immediately on mount.
                             const sel = selectionFromSidebarId(s.id);
                             writeSelection(sel);
-                            selectSiteInternal(s.id);
+                            // Set local state without the internal flag — the
+                            // writeSelection above already persisted. Setting
+                            // internalChangeRef would cause effect #5 to
+                            // re-write the same value, firing the subscription
+                            // a second time.
+                            setSelectedSiteId(s.id);
                             setBrandMenuOpen(false);
                             router.push('/dashboard/overview');
                           }}
