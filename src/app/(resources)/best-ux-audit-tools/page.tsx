@@ -199,7 +199,7 @@ export default function BestUxAuditToolsPage() {
               Lighthouse and axe as part of their development workflow. But
               they cover only one of the{' '}
               <Link href="/ux-audit-checklist" className="text-text font-medium underline decoration-brand decoration-2 underline-offset-2 hover:opacity-70 transition-opacity">
-                four pillars of a complete UX audit
+                six modules of a complete UX audit
               </Link>
               . Treating them as a full audit solution leaves usability
               problems, conversion issues, and ethical concerns completely
@@ -222,7 +222,7 @@ export default function BestUxAuditToolsPage() {
             </p>
             <p className="text-text/80 leading-relaxed mb-4">
               Fixpath falls into this category. It evaluates 24 categories
-              across all four pillars, produces scored reports with specific
+              across all six modules, produces scored reports with specific
               recommendations, and lets teams track improvements over time.
               The audit takes minutes instead of weeks and costs a fraction of
               a consultancy engagement.
@@ -275,7 +275,7 @@ export default function BestUxAuditToolsPage() {
             <p className="text-text/80 leading-relaxed">
               The ideal workflow for most teams combines all three approaches:
               automated accessibility scanners in CI/CD, a comprehensive
-              platform like Fixpath for regular multi-pillar audits, and
+              platform like Fixpath for regular multi-module audits, and
               occasional manual deep-dives for high-stakes flows.
             </p>
           </section>

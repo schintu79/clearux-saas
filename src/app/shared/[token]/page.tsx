@@ -305,7 +305,7 @@ export default function SharedAuditPage({ params }: { params: Promise<{ token: s
           <div className="text-center py-16">
             <div className="w-8 h-8 border-2 border-t-transparent rounded-full animate-spin mx-auto mb-4" style={{ borderColor: 'var(--signal)', borderTopColor: 'transparent' }} />
             <p className="text-sm" style={{ color: 'var(--m-muted)' }}>This audit is still being analysed.</p>
-            <p className="text-xs mt-1" style={{ color: 'var(--m-muted)' }}>Fixpath runs 96 checkpoints across 6 pillars - most audits finish in a few minutes.</p>
+            <p className="text-xs mt-1" style={{ color: 'var(--m-muted)' }}>Fixpath runs 96 checkpoints across 6 modules - most audits finish in a few minutes.</p>
           </div>
         </main>
         <Footer />
@@ -686,7 +686,7 @@ export default function SharedAuditPage({ params }: { params: Promise<{ token: s
           <div className="text-center mt-10 mb-6 px-4 print:hidden">
             <p className="text-sm font-medium mb-1" style={{ color: 'var(--ink)' }}>Audit your own site with the same engine</p>
             <p className="text-xs mb-1" style={{ color: 'var(--m-muted)' }}>Human experience + AI readability + brand consistency + conversion evidence - in one pass.</p>
-            <p className="text-xs mb-5" style={{ color: 'var(--m-muted)' }}>96 checkpoints, 6 pillars, client-ready PDF. First audit is free.</p>
+            <p className="text-xs mb-5" style={{ color: 'var(--m-muted)' }}>96 checkpoints, 6 modules, client-ready PDF. First audit is free.</p>
             <Link href="/register" className="inline-flex items-center gap-2 text-[15px] font-medium px-6 py-3 min-h-[48px] rounded-xl transition-all hover:brightness-110 hover:-translate-y-0.5" style={{ background: 'var(--ink)', color: '#FFFFFF' }}>
               <Sparkles size={16} />
               Get your free audit

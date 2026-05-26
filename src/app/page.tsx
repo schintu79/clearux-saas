@@ -15,7 +15,7 @@ import { HomeJsonLd } from '@/components/seo/JsonLd'
 export const metadata: Metadata = {
   title: 'Fixpath — Find the issues hurting your site. Follow the path to fix them.',
   description:
-    'Fixpath.ai audits your website across 96 checkpoints, turns every issue into a clear fix path, and tracks improvement over time. First audit free.',
+    'Fixpath is an AI-powered website audit tool that scans your site across 96 checkpoints in 6 modules, identifies UX, accessibility, and SEO issues with severity-ranked findings, and gives you a step-by-step fix path. First audit free, no credit card required.',
 }
 
 export default function HomePage() {

@@ -1,6 +1,6 @@
 import type { Metadata } from 'next'
 
-const siteUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'https://fixpath.ai'
+const siteUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'https://www.fixpath.ai'
 
 export const metadata: Metadata = {
   title: 'Create Your Free Account',

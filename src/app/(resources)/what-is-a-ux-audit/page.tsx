@@ -134,7 +134,7 @@ export default function WhatIsAUxAuditPage() {
               What a UX Audit Evaluates
             </h2>
             <p className="text-text/80 leading-relaxed mb-6">
-              A thorough UX audit process covers four pillars. Each pillar
+              A thorough UX audit process covers six modules. Each module
               addresses a different dimension of the user experience, and
               skipping any one of them leaves blind spots.
             </p>
@@ -169,7 +169,7 @@ export default function WhatIsAUxAuditPage() {
                 </h3>
                 <p className="text-text/80 leading-relaxed">
                   Is the product designed to guide users toward meaningful
-                  actions? This pillar examines call-to-action clarity, page load
+                  actions? This module examines call-to-action clarity, page load
                   performance, trust signals, onboarding flows, and overall
                   content strategy. Small improvements here often drive outsized
                   revenue gains.
@@ -183,7 +183,7 @@ export default function WhatIsAUxAuditPage() {
                   Does the interface respect the user? Ethical audits flag dark
                   patterns, manipulative language, hidden costs, forced
                   continuity, privacy-hostile defaults, and consent mechanisms
-                  that don&apos;t meet GDPR or similar regulations. This pillar is
+                  that don&apos;t meet GDPR or similar regulations. This module is
                   increasingly important as regulators tighten rules around
                   deceptive design.
                 </p>
@@ -232,7 +232,7 @@ export default function WhatIsAUxAuditPage() {
             </h2>
             <p className="text-text/80 leading-relaxed mb-4">
               Fixpath replaces the manual audit workflow with an AI-powered
-              platform that evaluates your product across all four pillars — 16
+              platform that evaluates your product across all six modules — 24
               categories in total — in minutes, not weeks. You submit a URL, and
               Fixpath returns a comprehensive report with scores, issue
               descriptions, severity ratings, and actionable recommendations.

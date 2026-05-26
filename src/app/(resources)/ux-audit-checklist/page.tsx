@@ -7,7 +7,7 @@ import { Sparkles, ArrowRight, CheckCircle } from 'lucide-react'
 const BASE_URL = 'https://www.fixpath.ai'
 
 export const metadata: Metadata = {
-  title: 'UX Audit Checklist: 16 Categories Across 4 Pillars | Fixpath',
+  title: 'UX Audit Checklist: 24 Categories Across 6 Modules | Fixpath',
   description:
     'A comprehensive UX audit checklist organized by 6 modules and 24 categories. Use this template to evaluate accessibility, usability, conversion, and ethical design — or let Fixpath automate it.',
   keywords: [
@@ -20,7 +20,7 @@ export const metadata: Metadata = {
   ],
   alternates: { canonical: `${BASE_URL}/ux-audit-checklist` },
   openGraph: {
-    title: 'UX Audit Checklist: 16 Categories Across 4 Pillars',
+    title: 'UX Audit Checklist: 24 Categories Across 6 Modules',
     description:
       'The complete UX audit checklist used by Fixpath, covering accessibility, usability, conversion, and ethical design.',
     url: `${BASE_URL}/ux-audit-checklist`,
@@ -32,7 +32,7 @@ export const metadata: Metadata = {
 const jsonLd = {
   '@context': 'https://schema.org',
   '@type': 'Article',
-  headline: 'UX Audit Checklist: 16 Categories Across 4 Pillars',
+  headline: 'UX Audit Checklist: 24 Categories Across 6 Modules',
   description:
     'The complete UX audit checklist used by Fixpath, covering accessibility, usability, conversion, and ethical design.',
   url: `${BASE_URL}/ux-audit-checklist`,
@@ -54,9 +54,63 @@ type Category = { name: string; description: string }
 
 const pillars: { title: string; intro: string; categories: Category[] }[] = [
   {
-    title: 'Pillar 1: Accessibility',
+    title: 'Module 1: Foundation',
     intro:
-      "Accessibility isn't optional — it's a baseline requirement. These four categories ensure your product works for every user, including those who rely on assistive technology.",
+      'Foundation covers the structural and technical bedrock of your product. These four categories ensure your site is performant, well-structured, and built on solid engineering practices.',
+    categories: [
+      {
+        name: 'Performance & Page Speed',
+        description:
+          'Measure Core Web Vitals (LCP, INP, CLS), check image optimisation, evaluate JavaScript bundle sizes, and test loading states. A one-second delay in load time can reduce conversions by 7%.',
+      },
+      {
+        name: 'Navigation & Information Architecture',
+        description:
+          'Is the navigation intuitive? Can users find what they need within three clicks? Evaluate menu structure, breadcrumbs, search functionality, and the overall sitemap for logical grouping.',
+      },
+      {
+        name: 'Layout, Hierarchy & Visual Design',
+        description:
+          'Assess whether the visual hierarchy guides the eye correctly. Typography should be legible, spacing consistent, and the most important actions visually prominent. White space is a feature, not waste.',
+      },
+      {
+        name: 'Mobile & Responsive Design',
+        description:
+          "Test on real devices, not resized browser windows. Touch targets should be at least 44px, horizontal scrolling shouldn't occur, and interactive elements shouldn't overlap or become unreachable on smaller screens.",
+      },
+    ],
+  },
+  {
+    title: 'Module 2: Human Experience',
+    intro:
+      'Human Experience determines whether users can accomplish their goals efficiently and without frustration. These categories map to established heuristics and real-world interaction patterns.',
+    categories: [
+      {
+        name: 'Forms & Input Design',
+        description:
+          'Forms are where conversions happen — and where users most often give up. Check for clear labels, inline validation, helpful error messages, autofill support, and appropriate input types for mobile.',
+      },
+      {
+        name: 'Calls to Action & User Flows',
+        description:
+          'Primary CTAs should be visually distinct, use action-oriented language, and appear at decision points. Audit the number of steps in key flows — every extra step is a potential drop-off point.',
+      },
+      {
+        name: 'Trust & Credibility Signals',
+        description:
+          'Users make snap judgements about trustworthiness. Check for social proof, clear pricing, visible contact information, professional design quality, and security indicators on payment pages.',
+      },
+      {
+        name: 'Content Strategy & Messaging',
+        description:
+          "Does the copy speak to user needs or only list features? Evaluate headline clarity, value proposition placement, reading level, and whether microcopy (button labels, tooltips, empty states) guides users effectively.",
+      },
+    ],
+  },
+  {
+    title: 'Module 3: Inclusive Design',
+    intro:
+      "Inclusive Design ensures your product works for every user, regardless of ability. These four categories cover accessibility requirements and ethical considerations that protect your users and your reputation.",
     categories: [
       {
         name: 'Visual & Colour Accessibility',
@@ -81,63 +135,9 @@ const pillars: { title: string; intro: string; categories: Category[] }[] = [
     ],
   },
   {
-    title: 'Pillar 2: Usability',
+    title: 'Module 4: Future Readiness',
     intro:
-      'Usability determines whether users can accomplish their goals efficiently and without frustration. These categories map to established heuristics and real-world interaction patterns.',
-    categories: [
-      {
-        name: 'Navigation & Information Architecture',
-        description:
-          'Is the navigation intuitive? Can users find what they need within three clicks? Evaluate menu structure, breadcrumbs, search functionality, and the overall sitemap for logical grouping.',
-      },
-      {
-        name: 'Forms & Input Design',
-        description:
-          'Forms are where conversions happen — and where users most often give up. Check for clear labels, inline validation, helpful error messages, autofill support, and appropriate input types for mobile.',
-      },
-      {
-        name: 'Layout, Hierarchy & Visual Design',
-        description:
-          'Assess whether the visual hierarchy guides the eye correctly. Typography should be legible, spacing consistent, and the most important actions visually prominent. White space is a feature, not waste.',
-      },
-      {
-        name: 'Mobile & Responsive Design',
-        description:
-          "Test on real devices, not resized browser windows. Touch targets should be at least 44px, horizontal scrolling shouldn't occur, and interactive elements shouldn't overlap or become unreachable on smaller screens.",
-      },
-    ],
-  },
-  {
-    title: 'Pillar 3: Conversion & Engagement',
-    intro:
-      'A product can be usable and accessible but still fail to convert. This pillar examines whether the design actively supports business goals without sacrificing user experience.',
-    categories: [
-      {
-        name: 'Calls to Action & User Flows',
-        description:
-          'Primary CTAs should be visually distinct, use action-oriented language, and appear at decision points. Audit the number of steps in key flows — every extra step is a potential drop-off point.',
-      },
-      {
-        name: 'Trust & Credibility Signals',
-        description:
-          'Users make snap judgements about trustworthiness. Check for social proof, clear pricing, visible contact information, professional design quality, and security indicators on payment pages.',
-      },
-      {
-        name: 'Content Strategy & Messaging',
-        description:
-          "Does the copy speak to user needs or only list features? Evaluate headline clarity, value proposition placement, reading level, and whether microcopy (button labels, tooltips, empty states) guides users effectively.",
-      },
-      {
-        name: 'Performance & Page Speed',
-        description:
-          'Slow pages kill conversion. Measure Core Web Vitals (LCP, FID, CLS), check image optimisation, evaluate JavaScript bundle sizes, and test loading states. A one-second delay in load time can reduce conversions by 7%.',
-      },
-    ],
-  },
-  {
-    title: 'Pillar 4: Ethical Design',
-    intro:
-      'Ethical design protects the user. As regulations like the EU Digital Services Act and FTC enforcement actions increase, products that employ dark patterns face real legal and reputational risk.',
+      'Future Readiness evaluates whether your product is prepared for evolving standards, technologies, and user expectations. These categories ensure long-term resilience.',
     categories: [
       {
         name: 'Dark Patterns & Manipulative UI',
@@ -155,9 +155,63 @@ const pillars: { title: string; intro: string; categories: Category[] }[] = [
           'Pricing should be clear, cancellation should be as easy as sign-up, terms should be in plain language, and AI-generated content should be disclosed. Transparency builds long-term trust.',
       },
       {
+        name: 'Progressive Enhancement & Resilience',
+        description:
+          'Ensure the product degrades gracefully when JavaScript fails, third-party services are unavailable, or users are on slow connections. Core functionality should work under constrained conditions.',
+      },
+    ],
+  },
+  {
+    title: 'Module 5: Brand Consistency',
+    intro:
+      'Brand Consistency examines whether every touchpoint reinforces a cohesive identity. Inconsistent design erodes trust and makes products feel unfinished.',
+    categories: [
+      {
+        name: 'Visual Identity & Design Tokens',
+        description:
+          'Check that colours, typography, spacing, and iconography follow a unified design system. Deviations between pages or components signal a lack of design governance.',
+      },
+      {
+        name: 'Tone of Voice & Microcopy',
+        description:
+          'Every label, tooltip, error message, and empty state should sound like it comes from the same brand. Audit for tonal shifts, jargon inconsistencies, and mismatched formality levels.',
+      },
+      {
+        name: 'Component & Pattern Consistency',
+        description:
+          'Buttons, cards, modals, and form elements should behave identically across the product. Inconsistent interaction patterns increase cognitive load and undermine usability.',
+      },
+      {
         name: 'Inclusive & Respectful Content',
         description:
           'Language and imagery should represent diverse audiences. Avoid gendered defaults, cultural assumptions, and exclusionary terminology. Inclusive design extends beyond code — it lives in every word and image.',
+      },
+    ],
+  },
+  {
+    title: 'Module 6: SEO Structure',
+    intro:
+      'SEO Structure ensures your product is discoverable and correctly interpreted by search engines. Technical SEO and content structure directly impact organic visibility.',
+    categories: [
+      {
+        name: 'Metadata & Structured Data',
+        description:
+          'Verify that every page has unique, descriptive title tags and meta descriptions. Check for valid schema.org markup, Open Graph tags, and canonical URLs to avoid duplicate content issues.',
+      },
+      {
+        name: 'Heading Hierarchy & Content Structure',
+        description:
+          'Pages should use a single H1, logically nested subheadings, and clear content sections. Proper heading hierarchy helps both screen readers and search engine crawlers understand page structure.',
+      },
+      {
+        name: 'Link Health & Internal Linking',
+        description:
+          'Audit for broken links, orphan pages, and shallow link depth. A strong internal linking strategy distributes authority and helps users and crawlers navigate the site efficiently.',
+      },
+      {
+        name: 'Crawlability & Indexation',
+        description:
+          'Ensure robots.txt and meta robots directives are correctly configured. Check XML sitemaps, canonical tags, and rendering behaviour to confirm search engines can access and index all important content.',
       },
     ],
   },
@@ -175,7 +229,7 @@ export default function UxAuditChecklistPage() {
         <article className="max-w-3xl mx-auto px-4 py-16 sm:py-24">
           {/* ── H1 ── */}
           <h1 className="font-heading font-medium text-3xl sm:text-4xl text-text mb-6">
-            The Complete UX Audit Checklist: 16 Categories, 4 Pillars
+            The Complete UX Audit Checklist: 24 Categories, 6 Modules
           </h1>
           <p className="text-lg text-muted mb-12 leading-relaxed">
             Running a{' '}
@@ -185,9 +239,10 @@ export default function UxAuditChecklistPage() {
             without a checklist is like performing a code review without
             linting rules — you will catch some issues, but you will miss far
             more. This UX audit checklist covers the 24 categories that
-            Fixpath evaluates, organized into four pillars: Accessibility,
-            Usability, Conversion, and Ethical Design. Use it as a template
-            for manual reviews, or let Fixpath automate the entire process.
+            Fixpath evaluates, organized into six modules: Foundation, Human
+            Experience, Inclusive Design, Future Readiness, Brand Consistency,
+            and SEO Structure. Use it as a template for manual reviews, or
+            let Fixpath automate the entire process.
           </p>
 
           {/* ── How to use ── */}
@@ -196,7 +251,7 @@ export default function UxAuditChecklistPage() {
               How to Use This Website Audit Checklist
             </h2>
             <p className="text-text/80 leading-relaxed mb-4">
-              Each pillar below contains four categories. For a manual audit,
+              Each module below contains four categories. For a manual audit,
               work through every category and document your findings with
               screenshots, severity ratings (critical, major, minor,
               informational), and recommended fixes. Aim to evaluate at least

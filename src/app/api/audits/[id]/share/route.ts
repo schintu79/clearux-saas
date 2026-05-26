@@ -33,7 +33,7 @@ export async function POST(
       updated_at: new Date().toISOString(),
     } as any).eq('id', auditId)
 
-    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://fixpath.ai'
+    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://www.fixpath.ai'
     return NextResponse.json({
       share_url: `${siteUrl}/shared/${token}`,
       token,

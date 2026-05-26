@@ -19,7 +19,7 @@ function getResend(): Resend | null {
   return _resend
 }
 
-const APP_URL = process.env.NEXT_PUBLIC_APP_URL || 'https://fixpath.ai'
+const APP_URL = process.env.NEXT_PUBLIC_APP_URL || 'https://www.fixpath.ai'
 
 /* ── Shared template wrapper ─────────────────────────────────── */
 

@@ -231,7 +231,7 @@ export default function AdminAuditDetailPage({ params }: { params: Promise<{ id:
                 )}
                 {isPartialAudit && (
                   <span className="text-[11px] bg-[var(--paper-2)] dark:bg-white/[0.06] px-2 py-0.5 rounded-full">
-                    {selectedPillars!.length} of 4 modules
+                    {selectedPillars!.length} of 6 modules
                   </span>
                 )}
               </div>

@@ -314,6 +314,18 @@ export default function PricingContent() {
         </div>
       </section>
 
+      {/* Enterprise / custom needs */}
+      <section className="py-10">
+        <div className="max-w-mkt mx-auto px-8 max-sm:px-5 text-center">
+          <p className="text-[15px] text-m-muted font-sans">
+            Need a custom plan, volume pricing, or white-label reports?{' '}
+            <Link href="/contact" className="text-signal underline underline-offset-2 hover:text-ink transition-colors font-medium">
+              Get in touch
+            </Link>
+          </p>
+        </div>
+      </section>
+
       {/* CTA */}
       <HomeCta />
     </main>
