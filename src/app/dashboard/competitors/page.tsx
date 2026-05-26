@@ -376,12 +376,43 @@ export default function CompetitorsPage() {
   if (!bundle?.audit) return <EmptyAudit />;
 
   return (
-    <div className="space-y-5 max-w-5xl">
+    <div className="space-y-5">
       <PageHeader
         icon={<Target size={18} strokeWidth={1.75} />}
         title="Competitors"
         subtitle={`Competitive positioning for ${brandName}`}
-      />
+      >
+        {drafts.length > 0 && (
+          <button
+            onClick={rescan}
+            disabled={detecting}
+            className="flex items-center gap-1.5 px-3 py-1.5 text-[12px] font-medium rounded-md transition-colors hover:bg-black/[0.04]"
+            style={{ color: 'var(--ink)', border: '1px solid var(--rule)' }}
+          >
+            <RefreshCw size={12} className={detecting ? 'animate-spin' : ''} />
+            Rescan
+          </button>
+        )}
+        {drafts.length === 0 && (
+          <button
+            onClick={autoDetect}
+            disabled={detecting}
+            className="flex items-center gap-1.5 px-3 py-1.5 text-[12px] font-medium rounded-md transition-all hover:opacity-90"
+            style={{ background: 'var(--ink)', color: 'var(--paper)' }}
+          >
+            <Search size={12} />
+            {detecting ? 'Detecting...' : 'Auto-detect'}
+          </button>
+        )}
+        <button
+          onClick={addBlank}
+          className="flex items-center gap-1 px-3 py-1.5 text-[12px] font-medium rounded-md transition-colors hover:bg-black/[0.04]"
+          style={{ color: 'var(--ink)', border: '1px solid var(--rule)' }}
+        >
+          <Plus size={12} />
+          Add
+        </button>
+      </PageHeader>
 
       {/* ══════════════════════════════════════════════════
           1. HERO — Score ranking with position
@@ -426,49 +457,21 @@ export default function CompetitorsPage() {
       </DashCard>
 
       {/* ══════════════════════════════════════════════════
-          2. SIDE-BY-SIDE — Competitor ranking table
+          2. COMPETITOR COMPARISON — Unified ranking + pillar breakdown
          ══════════════════════════════════════════════════ */}
       <DashCard>
-        <div className="flex items-center justify-between mb-4">
-          <div>
-            <SectionTitle>Competitor side-by-side</SectionTitle>
-            <p className="text-[12px]" style={{ color: 'var(--m-muted)' }}>
-              Compare {brandName} against competitors across all metrics.
-            </p>
-          </div>
-          <div className="flex items-center gap-2">
-            {drafts.length > 0 && (
-              <button
-                onClick={rescan}
-                disabled={detecting}
-                className="flex items-center gap-1.5 px-3 py-1.5 text-[12px] font-medium rounded-md transition-colors hover:bg-black/[0.04]"
-                style={{ color: 'var(--ink)', border: '1px solid var(--rule)' }}
-              >
-                <RefreshCw size={12} className={detecting ? 'animate-spin' : ''} />
-                Rescan
-              </button>
-            )}
-            {drafts.length === 0 && (
-              <button
-                onClick={autoDetect}
-                disabled={detecting}
-                className="flex items-center gap-1.5 px-3 py-1.5 text-[12px] font-medium rounded-md transition-all hover:opacity-90"
-                style={{ background: 'var(--ink)', color: 'var(--paper)' }}
-              >
-                <Search size={12} />
-                {detecting ? 'Detecting...' : 'Auto-detect'}
-              </button>
-            )}
-            <button
-              onClick={addBlank}
-              className="flex items-center gap-1 px-3 py-1.5 text-[12px] font-medium rounded-md transition-colors hover:bg-black/[0.04]"
-              style={{ color: 'var(--ink)', border: '1px solid var(--rule)' }}
-            >
-              <Plus size={12} />
-              Add
-            </button>
-          </div>
+        <div className="flex items-center justify-between mb-1">
+          <SectionTitle>Competitor comparison</SectionTitle>
         </div>
+        <SectionDesc>
+          {brandName} vs. competitors — overall and category scores.
+          {drafts.some(c => c.source === 'auto') && (
+            <span className="inline-flex items-center gap-1 ml-2 px-1.5 py-0.5 rounded text-[10px] font-medium" style={{ background: 'color-mix(in srgb, var(--warn) 12%, transparent)', color: 'var(--warn)' }}>
+              <Info size={10} />
+              Competitor scores are estimated from site analysis
+            </span>
+          )}
+        </SectionDesc>
 
         {error && (
           <div className="flex items-center gap-2 px-3 py-2 rounded-md mb-3" style={{ background: 'rgba(239,68,68,0.08)', color: 'var(--severe)' }}>
@@ -492,73 +495,103 @@ export default function CompetitorsPage() {
             <p className="text-[12px] mt-1 mb-4" style={{ color: 'var(--m-muted)' }}>Use auto-detect to find competitors in your industry, or add them manually.</p>
           </div>
         ) : (
-          <div className="space-y-0">
-            {/* Table header */}
-            <div className="grid grid-cols-[1fr_60px_60px_36px] sm:grid-cols-[1fr_200px_80px_80px_36px] gap-3 px-3 py-2 text-[11px] font-semibold uppercase tracking-wider" style={{ color: 'var(--m-muted)', borderBottom: '1px solid var(--rule)' }}>
-              <span>Brand</span>
-              <span className="hidden sm:block">Domain</span>
-              <span className="text-right">Score</span>
-              <span className="text-right hidden sm:block">Status</span>
-              <span />
-            </div>
-
-            {/* User's brand row — always first, highlighted */}
-            <div
-              className="grid grid-cols-[1fr_60px_60px_36px] sm:grid-cols-[1fr_200px_80px_80px_36px] gap-3 items-center px-3 py-3 rounded-md"
-              style={{ background: 'color-mix(in srgb, var(--ink) 3%, transparent)', borderBottom: '1px solid var(--rule)' }}
-            >
-              <div className="flex items-center gap-2.5 min-w-0">
-                <SiteFavicon hostname={domain || ''} size={18} />
-                <div className="min-w-0">
-                  <p className="text-[13px] font-semibold truncate" style={{ color: 'var(--ink)' }}>{brandName}</p>
-                  <p className="text-[11px] sm:hidden truncate" style={{ color: 'var(--m-muted)' }}>{domain}</p>
-                </div>
-              </div>
-              <span className="hidden sm:block text-[12px] truncate" style={{ color: 'var(--m-muted)' }}>{domain}</span>
-              <span className="text-right text-[14px] font-bold tabular-nums" style={{ color: userScore != null ? getScoreColor(userScore) : 'var(--m-muted)' }}>
-                {userScore ?? '--'}
-              </span>
-              <span className="text-right hidden sm:flex items-center justify-end">
-                <span className="inline-flex items-center gap-1 text-[11px] font-medium px-1.5 py-0.5 rounded" style={{ background: 'color-mix(in srgb, var(--ink) 8%, transparent)', color: 'var(--ink)' }}>
-                  <Eye size={10} /> Active
-                </span>
-              </span>
-              <span />
-            </div>
-
-            {/* Competitor rows */}
-            {drafts.map((c) => (
-              <div key={c.id} className="grid grid-cols-[1fr_60px_60px_36px] sm:grid-cols-[1fr_200px_80px_80px_36px] gap-3 items-center px-3 py-2.5 rounded-md hover:bg-black/[0.02] transition-colors" style={{ borderBottom: '1px solid var(--rule)' }}>
-                <div className="flex items-center gap-2.5 min-w-0">
-                  <SiteFavicon hostname={c.domain} size={18} />
-                  {showEditor ? (
-                    <input
-                      type="text"
-                      value={c.domain}
-                      onChange={e => updateDraft(c.id, 'domain', e.target.value)}
-                      placeholder="competitor.com"
-                      className="w-full text-[13px] bg-transparent outline-none font-medium"
-                      style={{ color: 'var(--ink)' }}
-                    />
-                  ) : (
-                    <div className="min-w-0">
-                      <p className="text-[13px] font-medium truncate" style={{ color: 'var(--ink)' }}>{c.name || c.domain}</p>
-                      {c.name && <p className="text-[11px] sm:hidden truncate" style={{ color: 'var(--m-muted)' }}>{c.domain}</p>}
+          <div className="overflow-x-auto -mx-5 px-5">
+            <table className="w-full text-[12px]" style={{ minWidth: 600 }}>
+              <thead>
+                <tr style={{ borderBottom: '1px solid var(--rule)' }}>
+                  <th className="text-left py-2 pr-4 font-semibold text-[11px] uppercase tracking-wider" style={{ color: 'var(--m-muted)' }}>Brand</th>
+                  <th className="hidden sm:table-cell text-left py-2 px-3 font-semibold text-[11px] uppercase tracking-wider" style={{ color: 'var(--m-muted)' }}>Domain</th>
+                  <th className="text-center py-2 px-3 font-semibold text-[11px] uppercase tracking-wider" style={{ color: 'var(--m-muted)' }}>Overall</th>
+                  {pillarNames.map(p => (
+                    <th key={p} className="text-center py-2 px-3 font-semibold text-[11px] uppercase tracking-wider" style={{ color: 'var(--m-muted)' }}>
+                      <div className="flex items-center justify-center gap-1">
+                        {PILLAR_ICONS[p] || null}
+                        {p}
+                      </div>
+                    </th>
+                  ))}
+                  <th className="hidden sm:table-cell text-center py-2 px-2 font-semibold text-[11px] uppercase tracking-wider" style={{ color: 'var(--m-muted)' }}>Source</th>
+                  <th className="w-8" />
+                </tr>
+              </thead>
+              <tbody>
+                {/* User's brand row — highlighted */}
+                <tr style={{ background: 'color-mix(in srgb, var(--ink) 3%, transparent)' }}>
+                  <td className="py-3 pr-4">
+                    <div className="flex items-center gap-2.5">
+                      <SiteFavicon hostname={domain || ''} size={16} />
+                      <span className="text-[13px] font-semibold truncate" style={{ color: 'var(--ink)' }}>{brandName}</span>
                     </div>
-                  )}
-                </div>
-                <span className="hidden sm:block text-[12px] truncate" style={{ color: 'var(--m-muted)' }}>{c.domain}</span>
-                <span className="text-right text-[13px] font-semibold tabular-nums" style={{ color: c.score != null ? getScoreColor(c.score) : 'var(--m-muted)' }}>
-                  {c.score != null ? c.score : '--'}
-                </span>
-                <span className="text-right hidden sm:block text-[11px] capitalize" style={{ color: 'var(--m-muted)' }}>
-                  {c.source}
-                </span>
-                <button onClick={() => removeDraft(c.id)} className="p-1 rounded hover:bg-black/[0.04] transition-colors" title="Remove">
-                  <Trash2 size={13} style={{ color: 'var(--m-muted)' }} />
-                </button>
-              </div>
-            ))}
+                  </td>
+                  <td className="hidden sm:table-cell py-3 px-3 text-[12px] truncate" style={{ color: 'var(--m-muted)' }}>{domain}</td>
+                  <td className="text-center py-3 px-3 text-[14px] font-bold tabular-nums" style={{ color: userScore != null ? getScoreColor(userScore) : 'var(--m-muted)' }}>
+                    {userScore ?? '--'}
+                  </td>
+                  {pillarNames.map(p => (
+                    <td key={p} className="text-center py-3 px-3 tabular-nums font-semibold" style={{ color: userScore != null ? getScoreColor(userScore) : 'var(--m-muted)' }}>
+                      {userScore ?? '--'}
+                    </td>
+                  ))}
+                  <td className="hidden sm:table-cell text-center py-3 px-2">
+                    <span className="inline-flex items-center gap-1 text-[10px] font-medium px-1.5 py-0.5 rounded" style={{ background: 'color-mix(in srgb, var(--ok) 10%, transparent)', color: 'var(--ok)' }}>
+                      Audited
+                    </span>
+                  </td>
+                  <td />
+                </tr>
+
+                {/* Competitor rows */}
+                {drafts.map((c) => (
+                  <tr key={c.id} className="hover:bg-black/[0.02] transition-colors" style={{ borderBottom: '1px solid var(--rule)' }}>
+                    <td className="py-2.5 pr-4">
+                      <div className="flex items-center gap-2.5">
+                        <SiteFavicon hostname={c.domain} size={16} />
+                        {showEditor ? (
+                          <input
+                            type="text"
+                            value={c.domain}
+                            onChange={e => updateDraft(c.id, 'domain', e.target.value)}
+                            placeholder="competitor.com"
+                            className="w-full text-[13px] bg-transparent outline-none font-medium"
+                            style={{ color: 'var(--ink)' }}
+                          />
+                        ) : (
+                          <span className="text-[13px] font-medium truncate" style={{ color: 'var(--ink)' }}>{c.name || c.domain}</span>
+                        )}
+                      </div>
+                    </td>
+                    <td className="hidden sm:table-cell py-2.5 px-3 text-[12px] truncate" style={{ color: 'var(--m-muted)' }}>{c.domain}</td>
+                    <td className="text-center py-2.5 px-3 text-[13px] font-bold tabular-nums" style={{ color: c.score != null ? getScoreColor(c.score) : 'var(--m-muted)' }}>
+                      {c.score != null ? c.score : '--'}
+                    </td>
+                    {pillarNames.length > 0 ? (
+                      (c.pillarScores || []).map(p => (
+                        <td key={p.name} className="text-center py-2.5 px-3 tabular-nums" style={{ color: getScoreColor(p.score) }}>
+                          {p.score}
+                        </td>
+                      ))
+                    ) : null}
+                    {/* Fill empty pillar cells if this competitor has no pillar data */}
+                    {pillarNames.length > 0 && (!c.pillarScores || c.pillarScores.length === 0) && pillarNames.map(p => (
+                      <td key={p} className="text-center py-2.5 px-3 text-[12px]" style={{ color: 'var(--m-muted)' }}>--</td>
+                    ))}
+                    <td className="hidden sm:table-cell text-center py-2.5 px-2">
+                      <span className="text-[10px] font-medium px-1.5 py-0.5 rounded capitalize" style={{
+                        background: c.source === 'auto' ? 'color-mix(in srgb, var(--warn) 10%, transparent)' : 'color-mix(in srgb, var(--ink) 6%, transparent)',
+                        color: c.source === 'auto' ? 'var(--warn)' : 'var(--m-muted)',
+                      }}>
+                        {c.source === 'auto' ? 'Estimated' : 'Manual'}
+                      </span>
+                    </td>
+                    <td className="py-2.5">
+                      <button onClick={() => removeDraft(c.id)} className="p-1 rounded hover:bg-black/[0.04] transition-colors" title="Remove">
+                        <Trash2 size={13} style={{ color: 'var(--m-muted)' }} />
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
         )}
 
@@ -587,72 +620,6 @@ export default function CompetitorsPage() {
           </div>
         )}
       </DashCard>
-
-      {/* ══════════════════════════════════════════════════
-          3. PILLAR BREAKDOWN — Score comparison by category
-         ══════════════════════════════════════════════════ */}
-      {pillarNames.length > 0 && (
-        <DashCard>
-          <SectionTitle>Score breakdown</SectionTitle>
-          <SectionDesc>Category-level comparison across all tracked competitors.</SectionDesc>
-
-          <div className="overflow-x-auto -mx-5 px-5">
-            <table className="w-full text-[12px]" style={{ minWidth: 500 }}>
-              <thead>
-                <tr style={{ borderBottom: '1px solid var(--rule)' }}>
-                  <th className="text-left py-2 pr-4 font-semibold" style={{ color: 'var(--m-muted)' }}>Brand</th>
-                  <th className="text-center py-2 px-3 font-semibold" style={{ color: 'var(--m-muted)' }}>Overall</th>
-                  {pillarNames.map(p => (
-                    <th key={p} className="text-center py-2 px-3 font-semibold" style={{ color: 'var(--m-muted)' }}>
-                      <div className="flex items-center justify-center gap-1">
-                        {PILLAR_ICONS[p] || null}
-                        {p}
-                      </div>
-                    </th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {/* Brand row */}
-                <tr style={{ background: 'color-mix(in srgb, var(--ink) 3%, transparent)' }}>
-                  <td className="py-3 pr-4">
-                    <div className="flex items-center gap-2">
-                      <SiteFavicon hostname={domain || ''} size={14} />
-                      <span className="font-semibold" style={{ color: 'var(--ink)' }}>{brandName}</span>
-                    </div>
-                  </td>
-                  <td className="text-center py-3 px-3 font-bold tabular-nums" style={{ color: userScore != null ? getScoreColor(userScore) : 'var(--m-muted)' }}>
-                    {userScore ?? '--'}
-                  </td>
-                  {pillarNames.map(p => (
-                    <td key={p} className="text-center py-3 px-3 tabular-nums font-semibold" style={{ color: userScore != null ? getScoreColor(userScore) : 'var(--m-muted)' }}>
-                      {userScore ?? '--'}
-                    </td>
-                  ))}
-                </tr>
-                {drafts.filter(c => c.pillarScores?.length).map(c => (
-                  <tr key={c.id} style={{ borderBottom: '1px solid var(--rule)' }}>
-                    <td className="py-3 pr-4">
-                      <div className="flex items-center gap-2">
-                        <SiteFavicon hostname={c.domain} size={14} />
-                        <span className="font-medium" style={{ color: 'var(--ink)' }}>{c.name || c.domain}</span>
-                      </div>
-                    </td>
-                    <td className="text-center py-3 px-3 font-bold tabular-nums" style={{ color: c.score != null ? getScoreColor(c.score) : 'var(--m-muted)' }}>
-                      {c.score ?? '--'}
-                    </td>
-                    {(c.pillarScores || []).map(p => (
-                      <td key={p.name} className="text-center py-3 px-3 tabular-nums" style={{ color: getScoreColor(p.score) }}>
-                        {p.score}
-                      </td>
-                    ))}
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </DashCard>
-      )}
 
       {/* ══════════════════════════════════════════════════
           4. AI VISIBILITY — Per-model performance
@@ -824,7 +791,10 @@ export default function CompetitorsPage() {
       {trendSnapshots.length >= 2 && (
         <DashCard>
           <SectionTitle>Visibility trend</SectionTitle>
-          <SectionDesc>Track how {brandName} AI visibility changes over time.</SectionDesc>
+          <SectionDesc>
+            Track how {brandName} AI visibility changes over time.
+            <span className="ml-1 text-[11px]" style={{ color: 'var(--m-muted)' }}>Based on {trendSnapshots.length} audit snapshots.</span>
+          </SectionDesc>
 
           {/* Simple sparkline-style trend visualization */}
           <div className="relative h-32 mt-2">
