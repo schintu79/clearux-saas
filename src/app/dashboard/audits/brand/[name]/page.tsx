@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useState, useCallback, use } from 'react';
+import React, { Suspense, useEffect, useState, useCallback, use } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import {
@@ -60,7 +60,7 @@ const PILLAR_NAMES = ['Foundation', 'Human Experience', 'Inclusive Design', 'Fut
 
 /* ── Main Component ───────────────────────────────────────── */
 
-export default function BrandAuditsPage({ params }: { params: Promise<{ name: string }> }) {
+function BrandAuditsInner({ params }: { params: Promise<{ name: string }> }) {
   const { name: rawName } = use(params);
   const brandName = decodeURIComponent(rawName);
   const router = useRouter();
@@ -369,3 +369,11 @@ export default function BrandAuditsPage({ params }: { params: Promise<{ name: st
     </div>
   );
 }
+
+const BrandAuditsPage = (props: { params: Promise<{ name: string }> }) => (
+  <Suspense fallback={<div className="flex items-center justify-center min-h-[60vh]"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-current" /></div>}>
+    <BrandAuditsInner {...props} />
+  </Suspense>
+);
+
+export default BrandAuditsPage;

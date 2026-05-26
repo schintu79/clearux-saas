@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useState, useCallback, use } from 'react';
+import React, { Suspense, useEffect, useState, useCallback, use } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import {
@@ -65,7 +65,7 @@ const PILLAR_RANGES: [number, number][] = [[0, 4], [4, 8], [8, 12], [12, 16], [1
 
 /* ── Main Component ───────────────────────────────────────── */
 
-export default function DomainAuditsPage({ params }: { params: Promise<{ domain: string }> }) {
+function DomainAuditsInner({ params }: { params: Promise<{ domain: string }> }) {
   const { domain: rawDomain } = use(params);
   const domain = decodeURIComponent(rawDomain);
   const router = useRouter();
@@ -381,3 +381,11 @@ export default function DomainAuditsPage({ params }: { params: Promise<{ domain:
     </div>
   );
 }
+
+const DomainAuditsPage = (props: { params: Promise<{ domain: string }> }) => (
+  <Suspense fallback={<div className="flex items-center justify-center min-h-[60vh]"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-current" /></div>}>
+    <DomainAuditsInner {...props} />
+  </Suspense>
+);
+
+export default DomainAuditsPage;

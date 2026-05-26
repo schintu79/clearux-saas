@@ -431,7 +431,7 @@ const NewAuditInner: React.FC = () => {
             const creditRes = await fetch('/api/credits', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ audit_id: audit.id, is_free_first: firstAuditFree }) });
             if (!creditRes.ok) throw new Error('Failed to apply credit');
             writeSelection({ kind: 'brand', brandId: newId });
-            router.push(`/dashboard/competitors?brand=${encodeURIComponent(newId)}`);
+            router.push(`/dashboard/overview?brand=${encodeURIComponent(newId)}`);
             return;
           }
           const checkoutRes = await fetch('/api/stripe/checkout', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ audit_id: audit.id }) });
@@ -476,7 +476,7 @@ const NewAuditInner: React.FC = () => {
       if (auditType === 'website') {
         const productUrl = url.startsWith('http') ? url : `https://${url}`;
         insertPayload.product_url = productUrl;
-        insertPayload.depth_mode = depthMode;
+        insertPayload.depth_mode = (isReAuditMode || isDigDeeperMode) ? depthMode : 'standard';
         insertPayload.selected_modules = selectedModules;
         // Auto-create (or reuse) a brand for this domain so the sidebar
         // always has a proper brand tab for the user to navigate to.
@@ -533,17 +533,17 @@ const NewAuditInner: React.FC = () => {
         // correct brand even if localStorage hasn't propagated yet.
         const redirectBrandId = resolvedBrandIdRef.current || selectedBrandId;
         if (redirectBrandId) {
-          router.push(`/dashboard/competitors?brand=${encodeURIComponent(redirectBrandId)}`);
+          router.push(`/dashboard/overview?brand=${encodeURIComponent(redirectBrandId)}`);
         } else if (auditType === 'website') {
           try {
             const productUrl = url.startsWith('http') ? url : `https://${url}`;
             const host = new URL(productUrl).hostname.replace(/^www\./, '');
-            router.push(`/dashboard/competitors?site=${encodeURIComponent(host)}`);
+            router.push(`/dashboard/overview?site=${encodeURIComponent(host)}`);
           } catch {
-            router.push('/dashboard/competitors');
+            router.push('/dashboard/overview');
           }
         } else {
-          router.push('/dashboard/competitors');
+          router.push('/dashboard/overview');
         }
         return;
       }
@@ -707,8 +707,8 @@ const NewAuditInner: React.FC = () => {
           </div>
           )}
 
-          {/* Deep mode switcher — only shown for re-audits */}
-          {isReAudit && (
+          {/* Deep mode switcher — only shown for explicit re-audits / dig-deeper, never for new brands */}
+          {(isReAuditMode || isDigDeeperMode) && (
             <div className="mb-6">
               <label className="flex items-center gap-2 text-sm font-medium text-text mb-2">
                 <Sparkles size={15} style={{ color: 'var(--ink)' }} />
