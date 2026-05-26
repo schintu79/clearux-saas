@@ -77,6 +77,13 @@ function scoreColor(score: number): string {
   return 'var(--severe)';
 }
 
+function scoreLabel(score: number): string {
+  if (score >= 90) return 'Excellent';
+  if (score >= 80) return 'Good';
+  if (score >= 50) return 'Needs work';
+  return 'Poor';
+}
+
 function severityColor(s: string): string {
   if (s === 'critical') return 'var(--severe)';
   if (s === 'major') return 'var(--warn)';
@@ -422,110 +429,125 @@ export default function WebsiteSpeedPage() {
             })}
           </div>
 
-          {/* ── Hero: Category scores + screenshot ── */}
-          {result && (
-            <div
-              className="rounded-xl border overflow-hidden"
-              style={{ background: 'var(--card)', borderColor: 'var(--rule)' }}
-            >
-              {/* Scores row: Performance (big) + secondary scores + screenshot */}
-              <div className="flex flex-col sm:flex-row items-center">
-                {/* Scores */}
-                <div className="flex-1 px-6 sm:px-10 py-8">
-                  <div className="flex items-end justify-center gap-8 sm:gap-12">
-                    {/* Performance — big primary circle */}
-                    <div className="flex flex-col items-center gap-2.5">
-                      <ScoreCircle score={result.score} size="big" />
-                      <span className="text-[12px] font-semibold" style={{ color: 'var(--ink)' }}>
-                        Performance
-                      </span>
-                    </div>
+          {/* ── Hero: Performance | 3 circles + note | Screenshot ── */}
+          {result && (() => {
+            const perfColor = scoreColor(result.score);
+            const perfLabel = scoreLabel(result.score);
+            return (
+              <div
+                className="rounded-xl border overflow-hidden"
+                style={{ background: 'var(--card)', borderColor: 'var(--rule)' }}
+              >
+                {/* Main row — 3 columns separated by rule lines */}
+                <div className="flex flex-col sm:flex-row items-stretch">
 
-                    {/* Accessibility, Best Practices, SEO */}
-                    {hasCategories && ([
-                      { key: 'accessibility' as const, label: 'Accessibility' },
-                      { key: 'bestPractices' as const, label: 'Best Practices' },
-                      { key: 'seo' as const, label: 'SEO' },
-                    ]).map(cat => (
-                      <div key={cat.key} className="flex flex-col items-center gap-2.5">
-                        <ScoreCircle
-                          score={categories![cat.key]}
-                          size="small"
-                        />
-                        <span className="text-[12px] font-medium" style={{ color: 'var(--m-muted)' }}>
-                          {cat.label}
-                        </span>
-                      </div>
-                    ))}
+                  {/* LEFT: Performance score — big circle + title + severity badge */}
+                  <div className="flex flex-col items-center justify-center px-8 sm:px-10 py-8 flex-shrink-0">
+                    <ScoreCircle score={result.score} size="big" />
+                    <h3 className="text-[15px] font-semibold mt-3" style={{ color: 'var(--ink)' }}>
+                      Performance
+                    </h3>
+                    <span
+                      className="inline-flex items-center px-2.5 py-1 rounded-full text-[11px] font-semibold mt-2"
+                      style={{
+                        background: `color-mix(in srgb, ${perfColor} 10%, transparent)`,
+                        color: perfColor,
+                      }}
+                    >
+                      {perfLabel}
+                    </span>
                   </div>
 
-                  {/* Note below scores */}
-                  <p className="text-[11px] leading-relaxed text-center mt-5 max-w-[380px] mx-auto" style={{ color: 'var(--m-muted)' }}>
-                    Values are estimated and may vary. The performance score is calculated directly from the metrics below.
+                  {/* Divider */}
+                  <div className="hidden sm:block w-px flex-shrink-0" style={{ background: 'var(--rule)' }} />
+                  <div className="sm:hidden h-px w-full" style={{ background: 'var(--rule)' }} />
+
+                  {/* CENTER: Accessibility, Best Practices, SEO + note */}
+                  <div className="flex-1 flex flex-col items-center justify-center px-6 sm:px-10 py-8">
+                    <div className="flex items-end justify-center gap-8 sm:gap-10">
+                      {hasCategories && ([
+                        { key: 'accessibility' as const, label: 'Accessibility' },
+                        { key: 'bestPractices' as const, label: 'Best Practices' },
+                        { key: 'seo' as const, label: 'SEO' },
+                      ]).map(cat => (
+                        <div key={cat.key} className="flex flex-col items-center gap-2.5">
+                          <ScoreCircle
+                            score={categories![cat.key]}
+                            size="small"
+                          />
+                          <span className="text-[12px] font-medium" style={{ color: 'var(--m-muted)' }}>
+                            {cat.label}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                    <p className="text-[11px] leading-relaxed text-center mt-5 max-w-[340px]" style={{ color: 'var(--m-muted)' }}>
+                      Values are estimated and may vary. The performance score is calculated directly from the metrics below.
+                    </p>
+                  </div>
+
+                  {/* Divider */}
+                  {result.screenshotUrl && (
+                    <>
+                      <div className="hidden sm:block w-px flex-shrink-0" style={{ background: 'var(--rule)' }} />
+                      <div className="sm:hidden h-px w-full" style={{ background: 'var(--rule)' }} />
+                    </>
+                  )}
+
+                  {/* RIGHT: Screenshot */}
+                  {result.screenshotUrl && (
+                    <div className="w-full sm:w-[200px] flex-shrink-0 p-4 sm:p-5 flex items-center justify-center">
+                      <div
+                        className="rounded-lg overflow-hidden border"
+                        style={{ borderColor: 'var(--rule)' }}
+                      >
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img
+                          src={result.screenshotUrl}
+                          alt="Page screenshot"
+                          className="w-full h-auto max-h-[200px] object-contain"
+                          style={{ background: 'var(--paper)' }}
+                        />
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* Bottom row: URL | Legend | Tested date */}
+                <div
+                  className="px-5 sm:px-8 py-3 flex items-center justify-between gap-4"
+                  style={{ borderTop: '1px solid var(--rule)' }}
+                >
+                  <p
+                    className="text-[11px] truncate min-w-0 flex-1"
+                    style={{ color: 'var(--m-muted)' }}
+                    title={result.finalUrl || ''}
+                  >
+                    {result.finalUrl || ''}
+                  </p>
+                  <div className="flex items-center gap-4 flex-shrink-0">
+                    <span className="flex items-center gap-1.5">
+                      <span className="inline-block w-0 h-0" style={{ borderLeft: '5px solid transparent', borderRight: '5px solid transparent', borderBottom: '8px solid var(--severe)' }} />
+                      <span className="text-[11px]" style={{ color: 'var(--m-muted)' }}>0&ndash;49</span>
+                    </span>
+                    <span className="flex items-center gap-1.5">
+                      <span className="inline-block w-[8px] h-[8px] rounded-[1px]" style={{ background: 'var(--warn)' }} />
+                      <span className="text-[11px]" style={{ color: 'var(--m-muted)' }}>50&ndash;89</span>
+                    </span>
+                    <span className="flex items-center gap-1.5">
+                      <span className="inline-block w-[8px] h-[8px] rounded-full" style={{ background: 'var(--ok)' }} />
+                      <span className="text-[11px]" style={{ color: 'var(--m-muted)' }}>90&ndash;100</span>
+                    </span>
+                  </div>
+                  <p className="text-[11px] flex-shrink-0 flex-1 text-right" style={{ color: 'var(--m-muted)' }}>
+                    {speedData?.testedAt
+                      ? `Tested ${new Date(speedData.testedAt).toLocaleDateString()} at ${new Date(speedData.testedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`
+                      : ''}
                   </p>
                 </div>
-
-                {/* Screenshot — right side */}
-                {result.screenshotUrl && (
-                  <div
-                    className="w-full sm:w-[220px] flex-shrink-0 p-4 sm:p-5 flex items-center justify-center"
-                    style={{ borderLeft: '1px solid var(--rule)' }}
-                  >
-                    <div
-                      className="rounded-lg overflow-hidden border"
-                      style={{ borderColor: 'var(--rule)' }}
-                    >
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img
-                        src={result.screenshotUrl}
-                        alt="Page screenshot"
-                        className="w-full h-auto max-h-[220px] object-contain"
-                        style={{ background: 'var(--paper)' }}
-                      />
-                    </div>
-                  </div>
-                )}
               </div>
-
-              {/* Bottom row: URL | Legend | Tested date */}
-              <div
-                className="px-5 sm:px-8 py-3 flex items-center justify-between gap-4"
-                style={{ borderTop: '1px solid var(--rule)' }}
-              >
-                {/* Left: URL */}
-                <p
-                  className="text-[11px] truncate min-w-0 flex-1"
-                  style={{ color: 'var(--m-muted)' }}
-                  title={result.finalUrl || ''}
-                >
-                  {result.finalUrl || ''}
-                </p>
-
-                {/* Center: Legend */}
-                <div className="flex items-center gap-4 flex-shrink-0">
-                  <span className="flex items-center gap-1.5">
-                    <span className="inline-block w-0 h-0" style={{ borderLeft: '5px solid transparent', borderRight: '5px solid transparent', borderBottom: '8px solid var(--severe)' }} />
-                    <span className="text-[11px]" style={{ color: 'var(--m-muted)' }}>0&ndash;49</span>
-                  </span>
-                  <span className="flex items-center gap-1.5">
-                    <span className="inline-block w-[8px] h-[8px] rounded-[1px]" style={{ background: 'var(--warn)' }} />
-                    <span className="text-[11px]" style={{ color: 'var(--m-muted)' }}>50&ndash;89</span>
-                  </span>
-                  <span className="flex items-center gap-1.5">
-                    <span className="inline-block w-[8px] h-[8px] rounded-full" style={{ background: 'var(--ok)' }} />
-                    <span className="text-[11px]" style={{ color: 'var(--m-muted)' }}>90&ndash;100</span>
-                  </span>
-                </div>
-
-                {/* Right: Tested date */}
-                <p className="text-[11px] flex-shrink-0 flex-1 text-right" style={{ color: 'var(--m-muted)' }}>
-                  {speedData?.testedAt
-                    ? `Tested ${new Date(speedData.testedAt).toLocaleDateString()} at ${new Date(speedData.testedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`
-                    : ''}
-                </p>
-              </div>
-            </div>
-          )}
+            );
+          })()}
 
           {/* ── Metrics Section ── */}
           {result && (
