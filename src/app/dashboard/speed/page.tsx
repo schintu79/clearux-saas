@@ -158,51 +158,19 @@ const METRIC_CONFIG: Array<{
   { key: 'tbt', label: 'TBT', fullLabel: 'Total Blocking Time', friendlyLabel: 'Thread blocking', description: 'Total time the main thread was blocked, preventing input responsiveness.', Icon: Timer, goodThreshold: '< 200ms', poorThreshold: '> 600ms', goodLimit: 200, poorLimit: 600, barMax: 900, coreVital: false },
 ];
 
-/* ── MetricBar — PSI-style range bar with position marker ── */
+/* ── StatusBadge — simple colored status label ── */
 
-function MetricBar({
-  value,
-  goodLimit,
-  poorLimit,
-  barMax,
-  status,
-}: {
-  value: number;
-  goodLimit: number;
-  poorLimit: number;
-  barMax: number;
-  status: SpeedMetric['status'];
-}) {
-  const clampedMax = Math.max(barMax, value * 1.2);
-  const goodPct = (goodLimit / clampedMax) * 100;
-  const warnPct = ((poorLimit - goodLimit) / clampedMax) * 100;
-  const poorPct = 100 - goodPct - warnPct;
-  const markerPct = Math.min((value / clampedMax) * 100, 99);
-
+function StatusBadge({ status }: { status: SpeedMetric['status'] }) {
   return (
-    <div className="relative w-full h-2 mt-1.5 mb-0.5">
-      {/* Three-section bar */}
-      <div className="flex w-full h-full rounded-full overflow-hidden">
-        <div style={{ width: `${goodPct}%`, background: 'var(--ok)' }} />
-        <div style={{ width: `${warnPct}%`, background: 'var(--warn)' }} />
-        <div style={{ width: `${poorPct}%`, background: 'var(--severe)' }} />
-      </div>
-      {/* Marker */}
-      <div
-        className="absolute top-1/2 -translate-y-1/2"
-        style={{ left: `${markerPct}%` }}
-      >
-        <div
-          className="w-3 h-3 rounded-full border-2"
-          style={{
-            background: 'var(--card)',
-            borderColor: statusColor(status),
-            marginLeft: '-6px',
-            boxShadow: '0 1px 3px rgba(0,0,0,0.15)',
-          }}
-        />
-      </div>
-    </div>
+    <span
+      className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-semibold"
+      style={{
+        background: `color-mix(in srgb, ${statusColor(status)} 10%, transparent)`,
+        color: statusColor(status),
+      }}
+    >
+      {statusLabel(status)}
+    </span>
   );
 }
 
@@ -454,18 +422,18 @@ export default function WebsiteSpeedPage() {
             })}
           </div>
 
-          {/* ── Unified hero: Score circle + categories + screenshot ── */}
+          {/* ── Hero: Category scores + screenshot ── */}
           {result && (
             <div
               className="rounded-xl border overflow-hidden"
               style={{ background: 'var(--card)', borderColor: 'var(--rule)' }}
             >
-              {/* Top: Category score circles row */}
-              <div className="px-5 sm:px-8 pt-6 pb-5">
-                <div className="flex flex-wrap items-end justify-center gap-6 sm:gap-10">
-                  {/* Performance */}
-                  <div className="flex flex-col items-center gap-2">
-                    <ScoreCircle score={result.score} size="small" />
+              {/* Category score circles — centered full width */}
+              <div className="px-6 sm:px-12 py-8">
+                <div className="flex items-end justify-center gap-8 sm:gap-14">
+                  {/* Performance — slightly larger as primary */}
+                  <div className="flex flex-col items-center gap-2.5">
+                    <ScoreCircle score={result.score} size="normal" />
                     <span className="text-[12px] font-semibold" style={{ color: 'var(--ink)' }}>
                       Performance
                     </span>
@@ -477,7 +445,7 @@ export default function WebsiteSpeedPage() {
                     { key: 'bestPractices' as const, label: 'Best Practices' },
                     { key: 'seo' as const, label: 'SEO' },
                   ]).map(cat => (
-                    <div key={cat.key} className="flex flex-col items-center gap-2">
+                    <div key={cat.key} className="flex flex-col items-center gap-2.5">
                       <ScoreCircle
                         score={categories![cat.key]}
                         size="small"
@@ -490,24 +458,17 @@ export default function WebsiteSpeedPage() {
                 </div>
               </div>
 
-              {/* Divider */}
-              <div style={{ borderTop: '1px solid var(--rule)' }} />
-
-              {/* Bottom: Performance hero + screenshot side by side */}
-              <div className="flex flex-col sm:flex-row items-center">
-                {/* Performance score hero — left side */}
-                <div className="flex-1 flex flex-col items-center justify-center py-6 sm:py-8 px-6">
-                  <ScoreCircle score={result.score} size="medium" />
-                  <div className="text-center mt-3">
-                    <p className="text-[15px] font-semibold" style={{ color: 'var(--ink)' }}>
-                      Performance
-                    </p>
-                    <p className="text-[13px] mt-1 leading-relaxed max-w-[300px]" style={{ color: 'var(--m-muted)' }}>
-                      Values are estimated and may vary. The performance score is calculated directly from these metrics.
-                    </p>
-                  </div>
-                  {/* Legend */}
-                  <div className="flex items-center gap-4 mt-4">
+              {/* Note + screenshot */}
+              <div
+                className="flex flex-col sm:flex-row items-center"
+                style={{ borderTop: '1px solid var(--rule)' }}
+              >
+                {/* Left: explanation + legend */}
+                <div className="flex-1 flex flex-col items-center justify-center py-5 px-6 text-center">
+                  <p className="text-[12px] leading-relaxed max-w-[340px]" style={{ color: 'var(--m-muted)' }}>
+                    Values are estimated and may vary. The performance score is calculated directly from the metrics below.
+                  </p>
+                  <div className="flex items-center gap-4 mt-3">
                     <span className="flex items-center gap-1.5">
                       <span className="inline-block w-0 h-0" style={{ borderLeft: '5px solid transparent', borderRight: '5px solid transparent', borderBottom: '8px solid var(--severe)' }} />
                       <span className="text-[11px]" style={{ color: 'var(--m-muted)' }}>0&ndash;49</span>
@@ -523,10 +484,10 @@ export default function WebsiteSpeedPage() {
                   </div>
                 </div>
 
-                {/* Screenshot thumbnail — right side */}
+                {/* Right: screenshot */}
                 {result.screenshotUrl && (
                   <div
-                    className="w-full sm:w-[320px] flex-shrink-0 p-5 sm:p-6 flex items-center justify-center"
+                    className="w-full sm:w-[280px] flex-shrink-0 p-4 sm:p-5 flex items-center justify-center"
                     style={{ borderLeft: '1px solid var(--rule)' }}
                   >
                     <div
@@ -537,7 +498,7 @@ export default function WebsiteSpeedPage() {
                       <img
                         src={result.screenshotUrl}
                         alt="Page screenshot"
-                        className="w-full h-auto max-h-[240px] object-contain"
+                        className="w-full h-auto max-h-[200px] object-contain"
                         style={{ background: 'var(--paper)' }}
                       />
                     </div>
@@ -626,7 +587,7 @@ export default function WebsiteSpeedPage() {
                 const coreVitals = sortedMetrics.filter(m => m.coreVital && result.metrics[m.key]);
                 const otherMetrics = sortedMetrics.filter(m => !m.coreVital && result.metrics[m.key]);
 
-                const renderMetricCard = (m: typeof METRIC_CONFIG[number], idx: number, total: number) => {
+                const renderMetricRow = (m: typeof METRIC_CONFIG[number]) => {
                   const metric = result.metrics[m.key];
                   if (!metric) return null;
 
@@ -639,51 +600,44 @@ export default function WebsiteSpeedPage() {
                     <div
                       key={m.key}
                       className="px-4 sm:px-5 py-4"
-                      style={{
-                        borderBottom: '1px solid color-mix(in srgb, var(--rule) 50%, transparent)',
-                        borderRight: idx % 2 === 0 && idx < total - 1 ? '1px solid color-mix(in srgb, var(--rule) 50%, transparent)' : 'none',
-                      }}
+                      style={{ borderBottom: '1px solid color-mix(in srgb, var(--rule) 50%, transparent)' }}
                     >
-                      {/* Metric label + abbreviation */}
-                      <div className="flex items-center gap-2 mb-1">
-                        <span
-                          className="w-2 h-2 rounded-full flex-shrink-0"
-                          style={{ background: color }}
-                        />
-                        <span className="text-[13px] font-semibold" style={{ color: 'var(--ink)' }}>
-                          {m.fullLabel}
-                        </span>
-                        <span
-                          className="px-1.5 py-0.5 rounded text-[9px] font-bold tracking-[0.02em] flex-shrink-0"
-                          style={{ background: `color-mix(in srgb, ${color} 10%, transparent)`, color }}
-                        >
-                          {m.label}
-                        </span>
+                      <div className="flex items-start justify-between gap-4">
+                        {/* Left: metric info */}
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2 mb-1.5">
+                            <span
+                              className="w-2 h-2 rounded-full flex-shrink-0"
+                              style={{ background: color }}
+                            />
+                            <span className="text-[13px] font-semibold" style={{ color: 'var(--ink)' }}>
+                              {m.fullLabel}
+                            </span>
+                            <span
+                              className="px-1.5 py-0.5 rounded text-[9px] font-bold tracking-[0.02em] flex-shrink-0"
+                              style={{ background: `color-mix(in srgb, ${color} 10%, transparent)`, color }}
+                            >
+                              {m.label}
+                            </span>
+                          </div>
+                          <p className="text-[11px] leading-relaxed" style={{ color: 'var(--m-muted)' }}>
+                            {m.description}
+                          </p>
+                        </div>
+
+                        {/* Right: value + status */}
+                        <div className="flex flex-col items-end gap-1 flex-shrink-0">
+                          <p className="text-[20px] font-semibold tabular-nums leading-none" style={{ color }}>
+                            {metric.displayValue}
+                          </p>
+                          <StatusBadge status={metric.status} />
+                        </div>
                       </div>
 
-                      {/* Value display */}
-                      <p className="text-[22px] font-semibold tabular-nums leading-none mt-2 mb-0.5" style={{ color }}>
-                        {metric.displayValue}
-                      </p>
-
-                      {/* Range bar */}
-                      <MetricBar
-                        value={metric.value}
-                        goodLimit={m.goodLimit}
-                        poorLimit={m.poorLimit}
-                        barMax={m.barMax}
-                        status={metric.status}
-                      />
-
-                      {/* Description */}
-                      <p className="text-[11px] leading-relaxed mt-2" style={{ color: 'var(--m-muted)' }}>
-                        {m.description}
-                      </p>
-
-                      {/* Inline recommendation */}
+                      {/* Inline recommendation for non-good */}
                       {rec && (
                         <div
-                          className="mt-2.5 rounded-lg p-2.5"
+                          className="mt-3 rounded-lg p-2.5"
                           style={{ background: `color-mix(in srgb, ${color} 5%, transparent)` }}
                         >
                           <div className="flex items-center gap-1.5 mb-1">
@@ -703,8 +657,8 @@ export default function WebsiteSpeedPage() {
                   <>
                     {/* Core Web Vitals */}
                     {coreVitals.length > 0 && (
-                      <div className="grid grid-cols-1 sm:grid-cols-3">
-                        {coreVitals.map((m, i) => renderMetricCard(m, i, coreVitals.length))}
+                      <div>
+                        {coreVitals.map(m => renderMetricRow(m))}
                       </div>
                     )}
 
@@ -719,8 +673,8 @@ export default function WebsiteSpeedPage() {
                             Other notable metrics
                           </span>
                         </div>
-                        <div className="grid grid-cols-1 sm:grid-cols-2">
-                          {otherMetrics.map((m, i) => renderMetricCard(m, i, otherMetrics.length))}
+                        <div>
+                          {otherMetrics.map(m => renderMetricRow(m))}
                         </div>
                       </>
                     )}
