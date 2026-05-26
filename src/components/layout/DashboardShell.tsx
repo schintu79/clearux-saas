@@ -469,7 +469,7 @@ const DashboardShell: React.FC<DashboardShellProps> = ({ children }) => {
     {
       label: '',
       items: [
-        { label: 'Overview', href: '/dashboard', icon: LayoutDashboard },
+        { label: 'Overview', href: '/dashboard/overview', icon: LayoutDashboard },
       ],
     },
     {
@@ -493,8 +493,6 @@ const DashboardShell: React.FC<DashboardShellProps> = ({ children }) => {
   ];
 
   const isActive = (item: NavItem) => {
-    // Exact match for root dashboard to avoid highlighting on all sub-pages
-    if (item.href === '/dashboard') return pathname === '/dashboard';
     if (pathname === item.href || pathname?.startsWith(item.href + '/')) return true;
     if (item.matchPaths?.some(p => pathname === p || pathname?.startsWith(p + '/'))) return true;
     return false;
@@ -513,7 +511,7 @@ const DashboardShell: React.FC<DashboardShellProps> = ({ children }) => {
       className={clsx('h-12 flex items-center', collapsed ? 'px-2 justify-between' : 'px-3.5 justify-between')}
       style={{ borderBottom: '1px solid var(--rule)' }}
     >
-      <Link href="/dashboard" className="flex items-center min-w-0" aria-label="Fixpath home">
+      <Link href="/dashboard/overview" className="flex items-center min-w-0" aria-label="Fixpath home">
         {collapsed ? (
           <Iconmark size={36} />
         ) : (
@@ -614,7 +612,7 @@ const DashboardShell: React.FC<DashboardShellProps> = ({ children }) => {
                             // Always navigate so the page content updates —
                             // fixes Bug 4 where switching brands during an
                             // active audit would flash and revert.
-                            router.push('/dashboard');
+                            router.push('/dashboard/overview');
                           }}
                           className="w-full flex items-center gap-2 px-3 py-2 text-left transition-colors hover:bg-black/[0.04]"
                         >
