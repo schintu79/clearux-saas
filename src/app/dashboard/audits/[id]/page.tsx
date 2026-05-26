@@ -291,15 +291,45 @@ function AuditProgressLoader({
   status,
   percent,
   auditId,
+  onRestart,
 }: {
   status: string;
   percent: number | null | undefined;
   auditId: string;
+  onRestart?: () => void;
 }) {
   const { data: progressData } = useAuditProgress(auditId, {
     enabled: ['payment_received', 'crawling', 'analysing', 'generating_report'].includes(status),
     interval: 2500,
   });
+
+  // ── Stuck audit detection ──
+  // Track the last time progress actually changed. If it hasn't changed for
+  // STUCK_THRESHOLD_MS, show a restart button so the user isn't trapped.
+  const STUCK_THRESHOLD_MS = 3 * 60 * 1000 // 3 minutes
+  const [lastProgressChange, setLastProgressChange] = useState(Date.now())
+  const [isStuck, setIsStuck] = useState(false)
+  const prevProgressRef = useRef<number | null>(null)
+
+  // Update the "last changed" timestamp whenever progress actually moves
+  useEffect(() => {
+    const currentProgress = progressData?.progress ?? percent ?? null
+    if (currentProgress !== null && currentProgress !== prevProgressRef.current) {
+      prevProgressRef.current = currentProgress
+      setLastProgressChange(Date.now())
+      setIsStuck(false)
+    }
+  }, [progressData?.progress, percent])
+
+  // Check every 10s if we've exceeded the stuck threshold
+  useEffect(() => {
+    const check = setInterval(() => {
+      if (Date.now() - lastProgressChange > STUCK_THRESHOLD_MS) {
+        setIsStuck(true)
+      }
+    }, 10_000)
+    return () => clearInterval(check)
+  }, [lastProgressChange])
 
   const stageFallback: Record<string, number> = {
     payment_received: 5,
@@ -447,6 +477,23 @@ function AuditProgressLoader({
         Go to Overview
         <ArrowRight size={11} />
       </Link>
+
+      {/* Stuck audit escape hatch */}
+      {isStuck && onRestart && (
+        <div className="mt-4 px-4 py-3 rounded-lg text-center" style={{ background: 'color-mix(in srgb, var(--warn) 8%, transparent)', border: '1px solid color-mix(in srgb, var(--warn) 20%, transparent)' }}>
+          <p className="text-[12px] font-medium mb-2" style={{ color: 'var(--ink)' }}>
+            This audit appears to be stuck. No progress in the last 3 minutes.
+          </p>
+          <button
+            onClick={onRestart}
+            className="inline-flex items-center gap-1.5 text-[12px] font-semibold px-4 py-2 rounded-md transition-colors"
+            style={{ background: 'var(--ink)', color: 'var(--paper)' }}
+          >
+            <RefreshCw size={12} />
+            Restart audit
+          </button>
+        </div>
+      )}
     </div>
   );
 }
@@ -2202,6 +2249,7 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
             status={audit.status}
             percent={(audit as any).progress_percent}
             auditId={audit.id}
+            onRestart={handleRestart}
           />
 
           <div className="px-5 pb-5 text-center">

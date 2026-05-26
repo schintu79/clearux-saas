@@ -56,17 +56,25 @@ import type { AuditFinding } from '@/types/database'
 import { resolveCapability, inferDeployableType } from '@/lib/fix-action-model'
 
 /* ── Timeout helper — prevents enrichment promises from hanging forever ── */
+/* CRITICAL: This rejects on timeout rather than resolving to null.
+   Promise.allSettled() in the caller handles rejections gracefully.
+   The underlying promise may still run, but we don't wait for it. */
 
 function withTimeout<T>(promise: Promise<T>, ms: number, label: string): Promise<T | null> {
+  let timer: ReturnType<typeof setTimeout>
   return Promise.race([
-    promise,
-    new Promise<null>((resolve) =>
-      setTimeout(() => {
+    promise.then(v => { clearTimeout(timer); return v }),
+    new Promise<never>((_, reject) => {
+      timer = setTimeout(() => {
         console.warn(`[inngest] ${label} timed out after ${ms}ms — skipping`)
-        resolve(null)
-      }, ms),
-    ),
-  ])
+        reject(new Error(`${label} timed out after ${ms}ms`))
+      }, ms)
+    }),
+  ]).catch(err => {
+    // Swallow timeout errors — enrichment is non-fatal
+    console.warn(`[inngest] ${label} failed: ${err?.message || err}`)
+    return null
+  })
 }
 
 /* ── DB helpers (duplicated from index.ts to keep self-contained) ── */
@@ -2648,6 +2656,11 @@ RULES FOR RE-AUDIT:
     await step.run('post-report-enrichment', async () => {
       await setProgress(auditId, 90, 'enriching')
 
+      // Master deadline for the entire enrichment step.
+      // If all enrichments together exceed this, we bail and complete the audit.
+      const ENRICHMENT_DEADLINE_MS = 90_000 // 90s hard limit
+      const enrichmentBody = async () => {
+
       // ── 1. Snapshot industry benchmark ──
       const benchmarkPromise = (async () => {
         try {
@@ -3035,12 +3048,12 @@ RULES FOR RE-AUDIT:
       // Run enrichment in two waves so progress updates mid-step.
       // Wave 1 (fast, data-only): benchmark, minimum findings, pipeline learn, predictive recs
       // Wave 2 (slower, external calls): brand intel, human perception, screenshots
-      const FAST_TIMEOUT  = 45_000  // 45s for fast tasks
-      const SLOW_TIMEOUT  = 60_000  // 60s for external API tasks
-      const SCREENSHOT_TIMEOUT = 30_000 // 30s — screenshots are nice-to-have
+      const FAST_TIMEOUT  = 30_000  // 30s for fast tasks
+      const SLOW_TIMEOUT  = 45_000  // 45s for external API tasks
+      const SCREENSHOT_TIMEOUT = 20_000 // 20s — screenshots are nice-to-have
 
-      // Wave 1 — fast enrichments
-      await Promise.all([
+      // Wave 1 — fast enrichments (use allSettled so one failure doesn't block the rest)
+      await Promise.allSettled([
         withTimeout(benchmarkPromise, FAST_TIMEOUT, 'benchmark'),
         withTimeout(minimumFindingsPromise, FAST_TIMEOUT, 'minimum-findings'),
         withTimeout(pipelineLearnPromise, FAST_TIMEOUT, 'pipeline-learn'),
@@ -3049,12 +3062,17 @@ RULES FOR RE-AUDIT:
       await setProgress(auditId, 94)
 
       // Wave 2 — external API calls (brand intel, human perception, screenshots)
-      await Promise.all([
+      await Promise.allSettled([
         withTimeout(brandIntelPromise, SLOW_TIMEOUT, 'brand-intelligence'),
         withTimeout(humanPerceptionPromise, SLOW_TIMEOUT, 'human-perception'),
         withTimeout(screenshotPromise, SCREENSHOT_TIMEOUT, 'screenshots'),
       ])
       await setProgress(auditId, 98)
+
+      } // end enrichmentBody
+
+      // Run under master deadline — if enrichment takes too long, skip it entirely
+      await withTimeout(enrichmentBody(), ENRICHMENT_DEADLINE_MS, 'enrichment-all')
     })
 
     // ──────────────────────────────────────────────────────────
