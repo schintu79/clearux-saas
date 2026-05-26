@@ -882,12 +882,15 @@ Return 2-6 findings. Be specific and evidence-based. Reference specific files/co
           await auditLog(auditId, 'pagespeed_started', 'info', `Running PageSpeed test for ${auditDetails.productUrl}`)
           const speedData = await runFullSpeedTest(auditDetails.productUrl)
 
+          // Generate findings first so issueCount matches actual findings, not raw diagnostics
+          const speedFindings = generateSpeedFindings(speedData)
+
           const mapSpeedResult = (r: typeof speedData.mobile) => r ? {
             score: r.score,
             categories: r.categories,
             strategy: r.strategy,
             metrics: r.metrics,
-            issueCount: r.diagnostics.length,
+            issueCount: speedFindings.length,
             finalUrl: r.finalUrl,
             screenshotUrl: r.screenshotUrl,
             testedAt: r.testedAt,
@@ -904,8 +907,6 @@ Return 2-6 findings. Be specific and evidence-based. Reference specific files/co
             .from('audits')
             .update({ speed_data: speedSummary, speed_tested_at: speedData.testedAt } as any)
             .eq('id', auditId)
-
-          const speedFindings = generateSpeedFindings(speedData)
           if (speedFindings.length > 0) {
             const findingRows = speedFindings.map((f, i) => ({
               audit_id: auditId,

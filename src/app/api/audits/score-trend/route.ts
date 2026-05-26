@@ -21,16 +21,21 @@ export async function GET(request: NextRequest) {
 
     const db = createServiceSupabase()
 
-    // Get all completed audits for this domain by this user
+    // Get all completed, non-deleted website audits for this domain by this user
     const { data: audits } = await db
       .from('audits')
-      .select('id, product_url, status, completed_at, created_at')
+      .select('id, product_url, status, completed_at, created_at, audit_type, deleted_at')
       .eq('user_id', user.id)
       .eq('status', 'completed')
+      .is('deleted_at', null)
       .order('completed_at', { ascending: true })
 
-    // Filter to matching domain
+    // Filter to matching domain — site audits only (no brand identity audits)
     const domainAudits = (audits || []).filter((a: any) => {
+      // Exclude brand identity audits
+      const auditType = a.audit_type || (a.brand_identity_id && !a.product_url ? 'brand_identity' : 'website')
+      if (auditType === 'brand_identity') return false
+      if (!a.product_url) return false
       try {
         return new URL(a.product_url).hostname.replace(/^www\./, '') === domain
       } catch { return false }

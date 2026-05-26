@@ -68,13 +68,17 @@ export async function POST(req: NextRequest) {
       )
     }
 
+    // Generate findings first so we can use the accurate count for issueCount
+    const speedFindings = generateSpeedFindings(speedData)
+
     // Convert to DB summary — includes all 4 category scores, FCP, and screenshot
+    // issueCount must match the actual findings count, not raw diagnostics
     const mapResult = (r: typeof speedData.mobile) => r ? {
       score: r.score,
       categories: r.categories,
       strategy: r.strategy,
       metrics: r.metrics,
-      issueCount: r.diagnostics.length,
+      issueCount: speedFindings.length,
       finalUrl: r.finalUrl,
       screenshotUrl: r.screenshotUrl,
       testedAt: r.testedAt,
@@ -91,9 +95,6 @@ export async function POST(req: NextRequest) {
       .from('audits')
       .update({ speed_data: speedSummary, speed_tested_at: speedData.testedAt } as any)
       .eq('id', auditId)
-
-    // Generate and store findings
-    const speedFindings = generateSpeedFindings(speedData)
     let sortOrder = 100
     for (const sf of speedFindings) {
       await db.from('audit_findings').insert({
