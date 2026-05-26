@@ -27,6 +27,7 @@ import {
   Server,
   Target,
   Bot,
+  Gauge,
   LayoutDashboard,
 } from 'lucide-react';
 import clsx from 'clsx';
@@ -526,6 +527,7 @@ const DashboardShell: React.FC<DashboardShellProps> = ({ children }) => {
         { label: 'Competitors', href: '/dashboard/competitors', icon: Target },
         { label: 'Brand intelligence', href: '/dashboard/intelligence', icon: BarChart3 },
         { label: 'AI Perception', href: '/dashboard/ai-perception', icon: Bot, matchPaths: ['/dashboard/ai-readability'] },
+        { label: 'Website speed', href: '/dashboard/speed', icon: Gauge },
         { label: 'Brand DNA', href: '/dashboard/brand-dna', icon: Fingerprint, matchPaths: ['/dashboard/brand-identity'] },
       ],
     },
