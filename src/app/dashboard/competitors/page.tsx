@@ -417,15 +417,18 @@ export default function CompetitorsPage() {
           {/* Right side — brand name + stat grid */}
           <div className="flex-1 min-w-0">
             {/* Brand identity */}
-            <div className="flex items-center gap-2.5 mb-1">
+            <div className="flex items-center gap-2.5 mb-4">
               <SiteFavicon hostname={domain || ''} size={18} />
               <h2 className="text-[18px] font-semibold" style={{ color: 'var(--ink)' }}>{brandName}</h2>
+              {industry && (
+                <span
+                  className="px-2.5 py-0.5 rounded-full text-[12px] font-medium"
+                  style={{ background: 'color-mix(in srgb, var(--ink) 8%, transparent)', color: 'var(--ink)' }}
+                >
+                  {industry}
+                </span>
+              )}
             </div>
-            {industry && (
-              <p className="text-[13px] font-medium mb-4" style={{ color: 'var(--ink)' }}>
-                {industry}
-              </p>
-            )}
 
             {/* Stat cards grid */}
             <div className="flex flex-wrap gap-3">
@@ -508,22 +511,38 @@ export default function CompetitorsPage() {
       <DashCard>
         <div className="flex items-center justify-between mb-1">
           <SectionTitle>Competitor comparison</SectionTitle>
-          {/* Add button — inside the card, muted at 5 */}
-          <button
-            onClick={addBlank}
-            disabled={!canAddMore}
-            className="flex items-center gap-1 px-2.5 py-1 text-[12px] font-medium rounded-md transition-colors"
-            style={{
-              color: canAddMore ? 'var(--ink)' : 'var(--m-muted)',
-              border: '1px solid var(--rule)',
-              opacity: canAddMore ? 1 : 0.5,
-              cursor: canAddMore ? 'pointer' : 'default',
-            }}
-          >
-            <Plus size={12} />
-            Add
-            {!canAddMore && <span className="text-[10px] ml-0.5">(5/5)</span>}
-          </button>
+          <div className="flex items-center gap-2">
+            {/* Edit button */}
+            {drafts.length > 0 && (
+              <button
+                onClick={() => setShowEditor(!showEditor)}
+                className="flex items-center gap-1 px-2.5 py-1 text-[12px] font-medium rounded-md transition-colors"
+                style={{
+                  color: 'var(--ink)',
+                  border: '1px solid var(--rule)',
+                }}
+              >
+                <Pencil size={12} />
+                {showEditor ? 'Done editing' : 'Edit'}
+              </button>
+            )}
+            {/* Add button */}
+            <button
+              onClick={addBlank}
+              disabled={!canAddMore}
+              className="flex items-center gap-1 px-2.5 py-1 text-[12px] font-medium rounded-md transition-colors"
+              style={{
+                color: canAddMore ? 'var(--ink)' : 'var(--m-muted)',
+                border: '1px solid var(--rule)',
+                opacity: canAddMore ? 1 : 0.5,
+                cursor: canAddMore ? 'pointer' : 'default',
+              }}
+            >
+              <Plus size={12} />
+              Add
+              {!canAddMore && <span className="text-[10px] ml-0.5">(5/5)</span>}
+            </button>
+          </div>
         </div>
         <SectionDesc>
           {brandName} vs. competitors — overall and category scores.
@@ -714,28 +733,18 @@ export default function CompetitorsPage() {
           </div>
         )}
 
-        {/* Action bar */}
-        {(isDirty || showEditor || drafts.length > 0) && (
-          <div className="flex items-center justify-end gap-2 mt-4 pt-3" style={{ borderTop: '1px solid var(--rule)' }}>
+        {/* Save bar — only when there are unsaved changes */}
+        {isDirty && (
+          <div className="flex items-center justify-end gap-2 mt-4">
             <button
-              onClick={() => setShowEditor(!showEditor)}
-              className="flex items-center gap-1.5 px-3 py-1.5 text-[12px] font-medium rounded-md transition-colors hover:bg-black/[0.04]"
-              style={{ color: 'var(--m-muted)' }}
+              onClick={saveCompetitors}
+              disabled={saving}
+              className="flex items-center gap-1.5 px-3 py-1.5 text-[12px] font-medium rounded-md transition-all hover:opacity-90"
+              style={{ background: 'var(--ink)', color: 'var(--paper)' }}
             >
-              <Pencil size={12} />
-              {showEditor ? 'Done editing' : 'Edit'}
+              <Save size={12} />
+              {saving ? 'Saving...' : 'Save'}
             </button>
-            {isDirty && (
-              <button
-                onClick={saveCompetitors}
-                disabled={saving}
-                className="flex items-center gap-1.5 px-3 py-1.5 text-[12px] font-medium rounded-md transition-all hover:opacity-90"
-                style={{ background: 'var(--ink)', color: 'var(--paper)' }}
-              >
-                <Save size={12} />
-                {saving ? 'Saving...' : 'Save'}
-              </button>
-            )}
           </div>
         )}
       </DashCard>
