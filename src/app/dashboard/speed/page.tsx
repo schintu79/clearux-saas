@@ -1,17 +1,17 @@
 'use client';
 
 /**
- * Website Speed — Core Web Vitals and performance diagnostics.
+ * Website Speed — PageSpeed Insights-style dashboard.
  *
  * Surfaces:
- *  1) Performance scores for mobile and desktop (PageSpeed Insights).
- *  2) Three key summary metrics matching overview card (Loading, Stability, Responsiveness).
- *  3) Six Core Web Vitals with thresholds, status colors, and inline recommendations.
- *  4) Actionable speed findings grouped by fixable vs advisory.
+ *  1) Mobile/Desktop toggle with category score circles (Performance, Accessibility, Best Practices, SEO).
+ *  2) Screenshot + hero performance score.
+ *  3) Expandable metrics section with inline recommendations.
+ *  4) Fixable issues and advisory findings in card grids.
  *  5) On-demand re-test and link to Google PageSpeed Insights.
  */
 
-import React, { useEffect, useState, useMemo } from 'react';
+import React, { useEffect, useState, useMemo, useCallback } from 'react';
 import {
   Gauge,
   Loader2,
@@ -28,6 +28,13 @@ import {
   Wrench,
   Lightbulb,
   ExternalLink,
+  ChevronDown,
+  ChevronUp,
+  Monitor,
+  Smartphone,
+  AlertTriangle,
+  CircleDot,
+  Square,
 } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { useAuditBundle } from '@/context/AuditBundleContext';
@@ -66,12 +73,6 @@ function statusLabel(status: SpeedMetric['status']): string {
   return 'Poor';
 }
 
-function scoreLabel(score: number): string {
-  if (score >= 90) return 'Fast';
-  if (score >= 50) return 'Moderate';
-  return 'Slow';
-}
-
 function scoreColor(score: number): string {
   if (score >= 90) return 'var(--ok)';
   if (score >= 50) return 'var(--warn)';
@@ -91,37 +92,50 @@ function severityLabel(s: string): string {
   return 'Info';
 }
 
-/* ── Metric recommendations for poor/needs-work ──── */
+/** Sort order for metric status: poor first, then needs_improvement, then good */
+function statusSortOrder(status: SpeedMetric['status']): number {
+  if (status === 'poor') return 0;
+  if (status === 'needs_improvement') return 1;
+  return 2;
+}
+
+/* ── Metric recommendations ──────────────────────── */
 
 const METRIC_RECOMMENDATIONS: Record<string, { needs_improvement: string; poor: string }> = {
+  fcp: {
+    needs_improvement: 'Reduce server response time and eliminate render-blocking resources to paint content faster.',
+    poor: 'Your first content appears very late. Inline critical CSS, defer non-essential JS, and optimize server response time.',
+  },
   lcp: {
-    needs_improvement: 'Optimize images, preload critical assets, and reduce server response time to speed up your largest content element.',
-    poor: 'Your main content takes too long to appear. Prioritize image compression, lazy-load below-fold content, use a CDN, and reduce render-blocking resources.',
+    needs_improvement: 'Optimize images, preload critical assets, and reduce server response time.',
+    poor: 'Your main content takes too long to appear. Prioritize image compression, use a CDN, and reduce render-blocking resources.',
   },
   cls: {
-    needs_improvement: 'Set explicit width/height on images and embeds, and avoid inserting content above existing elements after load.',
-    poor: 'Your layout shifts significantly during load. Add size attributes to all media, reserve space for ads/embeds, and avoid dynamically injected content that pushes elements around.',
+    needs_improvement: 'Set explicit width/height on images and embeds, and avoid inserting content above existing elements.',
+    poor: 'Your layout shifts significantly. Add size attributes to all media and avoid dynamically injected content.',
   },
   inp: {
-    needs_improvement: 'Reduce JavaScript execution time and break up long tasks to improve interaction responsiveness.',
-    poor: 'Interactions feel sluggish. Split heavy JavaScript into smaller chunks, defer non-critical scripts, and minimize DOM size to reduce input delay.',
+    needs_improvement: 'Reduce JavaScript execution time and break up long tasks.',
+    poor: 'Interactions feel sluggish. Split heavy JS into smaller chunks, defer non-critical scripts, and minimize DOM size.',
   },
   ttfb: {
-    needs_improvement: 'Optimize server configuration, enable caching, or consider a CDN to reduce initial response time.',
-    poor: 'Your server is very slow to respond. Investigate server-side bottlenecks, enable edge caching, upgrade hosting, or use a CDN for static assets.',
+    needs_improvement: 'Optimize server configuration, enable caching, or use a CDN.',
+    poor: 'Your server is very slow to respond. Investigate server-side bottlenecks, enable edge caching, or upgrade hosting.',
   },
   speedIndex: {
-    needs_improvement: 'Reduce render-blocking CSS/JS and prioritize visible content loading to paint the screen faster.',
-    poor: 'Visible content loads very slowly. Eliminate render-blocking resources, inline critical CSS, defer non-essential scripts, and optimize font loading.',
+    needs_improvement: 'Reduce render-blocking CSS/JS and prioritize visible content loading.',
+    poor: 'Visible content loads very slowly. Eliminate render-blocking resources, inline critical CSS, defer non-essential scripts.',
   },
   tbt: {
-    needs_improvement: 'Break up long JavaScript tasks and defer non-essential scripts to free the main thread.',
-    poor: 'The main thread is heavily blocked. Audit and remove unused JavaScript, code-split large bundles, and defer third-party scripts that block interactivity.',
+    needs_improvement: 'Break up long JavaScript tasks and defer non-essential scripts.',
+    poor: 'The main thread is heavily blocked. Remove unused JS, code-split large bundles, and defer third-party scripts.',
   },
 };
 
+/* ── Metric configuration ────────────────────────── */
+
 const METRIC_CONFIG: Array<{
-  key: 'lcp' | 'cls' | 'inp' | 'ttfb' | 'speedIndex' | 'tbt';
+  key: 'fcp' | 'lcp' | 'cls' | 'inp' | 'ttfb' | 'speedIndex' | 'tbt';
   label: string;
   fullLabel: string;
   friendlyLabel: string;
@@ -129,18 +143,15 @@ const METRIC_CONFIG: Array<{
   Icon: any;
   goodThreshold: string;
   poorThreshold: string;
-  unit: string;
 }> = [
-  { key: 'lcp', label: 'LCP', fullLabel: 'Largest Contentful Paint', friendlyLabel: 'Loading time', description: 'How long the largest visible element takes to render. This is the primary loading metric users notice.', Icon: Zap, goodThreshold: '< 2.5s', poorThreshold: '> 4.0s', unit: 'seconds' },
-  { key: 'cls', label: 'CLS', fullLabel: 'Cumulative Layout Shift', friendlyLabel: 'Visual stability', description: 'How much the page layout shifts unexpectedly while loading. High values mean elements jump around.', Icon: Move, goodThreshold: '< 0.1', poorThreshold: '> 0.25', unit: 'score' },
-  { key: 'inp', label: 'INP', fullLabel: 'Interaction to Next Paint', friendlyLabel: 'Responsiveness', description: 'How quickly the page responds to user interactions like clicks and taps.', Icon: MousePointerClick, goodThreshold: '< 200ms', poorThreshold: '> 500ms', unit: 'milliseconds' },
-  { key: 'ttfb', label: 'TTFB', fullLabel: 'Time to First Byte', friendlyLabel: 'Server speed', description: 'How long the server takes to start sending a response. Reflects server and network performance.', Icon: Clock, goodThreshold: '< 800ms', poorThreshold: '> 1800ms', unit: 'milliseconds' },
-  { key: 'speedIndex', label: 'SI', fullLabel: 'Speed Index', friendlyLabel: 'Render speed', description: 'How quickly visible content is progressively rendered on screen.', Icon: BarChart3, goodThreshold: '< 3.4s', poorThreshold: '> 5.8s', unit: 'seconds' },
-  { key: 'tbt', label: 'TBT', fullLabel: 'Total Blocking Time', friendlyLabel: 'Thread blocking', description: 'Total time the main thread was blocked, preventing input responsiveness.', Icon: Timer, goodThreshold: '< 200ms', poorThreshold: '> 600ms', unit: 'milliseconds' },
+  { key: 'fcp', label: 'FCP', fullLabel: 'First Contentful Paint', friendlyLabel: 'First paint', description: 'How quickly the first text or image is painted on screen.', Icon: Zap, goodThreshold: '< 1.8s', poorThreshold: '> 3.0s' },
+  { key: 'lcp', label: 'LCP', fullLabel: 'Largest Contentful Paint', friendlyLabel: 'Loading time', description: 'How long the largest visible element takes to render. The primary loading metric users notice.', Icon: Zap, goodThreshold: '< 2.5s', poorThreshold: '> 4.0s' },
+  { key: 'cls', label: 'CLS', fullLabel: 'Cumulative Layout Shift', friendlyLabel: 'Visual stability', description: 'How much the page layout shifts unexpectedly while loading.', Icon: Move, goodThreshold: '< 0.1', poorThreshold: '> 0.25' },
+  { key: 'inp', label: 'INP', fullLabel: 'Interaction to Next Paint', friendlyLabel: 'Responsiveness', description: 'How quickly the page responds to user interactions like clicks and taps.', Icon: MousePointerClick, goodThreshold: '< 200ms', poorThreshold: '> 500ms' },
+  { key: 'ttfb', label: 'TTFB', fullLabel: 'Time to First Byte', friendlyLabel: 'Server speed', description: 'How long the server takes to start sending a response.', Icon: Clock, goodThreshold: '< 800ms', poorThreshold: '> 1800ms' },
+  { key: 'speedIndex', label: 'SI', fullLabel: 'Speed Index', friendlyLabel: 'Render speed', description: 'How quickly visible content is progressively rendered on screen.', Icon: BarChart3, goodThreshold: '< 3.4s', poorThreshold: '> 5.8s' },
+  { key: 'tbt', label: 'TBT', fullLabel: 'Total Blocking Time', friendlyLabel: 'Thread blocking', description: 'Total time the main thread was blocked, preventing input responsiveness.', Icon: Timer, goodThreshold: '< 200ms', poorThreshold: '> 600ms' },
 ];
-
-/* Summary metrics shown at top — matches overview card */
-const SUMMARY_METRICS = METRIC_CONFIG.filter(m => ['lcp', 'cls', 'inp'].includes(m.key));
 
 /* ── Main Page ─────────────────────────────────────── */
 
@@ -155,6 +166,7 @@ export default function WebsiteSpeedPage() {
   const [strategy, setStrategy] = useState<'mobile' | 'desktop'>('mobile');
   const [testing, setTesting] = useState(false);
   const [testError, setTestError] = useState<string | null>(null);
+  const [metricsExpanded, setMetricsExpanded] = useState(true);
 
   // Load speed data from audit
   useEffect(() => {
@@ -181,7 +193,7 @@ export default function WebsiteSpeedPage() {
   }, [bundle]);
 
   // Run speed test on demand
-  const handleRunTest = async () => {
+  const handleRunTest = useCallback(async () => {
     const auditId = bundle?.audit?.id;
     if (!auditId || testing) return;
     setTesting(true);
@@ -212,12 +224,15 @@ export default function WebsiteSpeedPage() {
     } finally {
       setTesting(false);
     }
-  };
+  }, [bundle?.audit?.id, testing]);
 
   // Derived data
   const result: SpeedStrategyResult | null = speedData
     ? (strategy === 'mobile' ? speedData.mobile : speedData.desktop)
     : null;
+
+  const categories = result?.categories ?? null;
+  const hasCategories = categories != null;
 
   const fixableFindings = useMemo(
     () => findings.filter(f => f.finding_type === 'specific'),
@@ -230,6 +245,20 @@ export default function WebsiteSpeedPage() {
 
   const productUrl = (bundle?.audit as any)?.product_url as string | undefined;
 
+  // Sort metrics: problematic first
+  const sortedMetrics = useMemo(() => {
+    if (!result) return METRIC_CONFIG;
+    return [...METRIC_CONFIG].sort((a, b) => {
+      const metricA = result.metrics[a.key];
+      const metricB = result.metrics[b.key];
+      if (!metricA && !metricB) return 0;
+      if (!metricA) return 1;
+      if (!metricB) return -1;
+      return statusSortOrder(metricA.status) - statusSortOrder(metricB.status);
+    });
+  }, [result]);
+
+  // Count of metrics needing attention
   const problemCount = useMemo(() => {
     if (!result) return 0;
     return METRIC_CONFIG.reduce((count, m) => {
@@ -243,7 +272,10 @@ export default function WebsiteSpeedPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center py-32">
-        <div className="w-5 h-5 border-2 border-t-transparent rounded-full animate-spin" style={{ borderColor: 'var(--m-muted)', borderTopColor: 'transparent' }} />
+        <div
+          className="w-5 h-5 border-2 border-t-transparent rounded-full animate-spin"
+          style={{ borderColor: 'var(--m-muted)', borderTopColor: 'transparent' }}
+        />
       </div>
     );
   }
@@ -253,13 +285,13 @@ export default function WebsiteSpeedPage() {
   const hasData = speedData != null && (speedData.mobile != null || speedData.desktop != null);
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-6">
       {/* ── Header ── */}
       <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3">
         <PageHeader
           icon={<Gauge size={18} strokeWidth={1.75} />}
           title="Website speed"
-          subtitle="Core Web Vitals and performance diagnostics from Google PageSpeed Insights"
+          subtitle="Performance diagnostics powered by Google PageSpeed Insights"
         />
         {hasData && (
           <div className="flex flex-col items-end gap-1.5 flex-shrink-0">
@@ -285,6 +317,16 @@ export default function WebsiteSpeedPage() {
         )}
       </div>
 
+      {testError && (
+        <div
+          className="rounded-lg px-4 py-3 flex items-center gap-2 text-[12px]"
+          style={{ background: 'color-mix(in srgb, var(--severe) 6%, transparent)', color: 'var(--severe)' }}
+        >
+          <AlertTriangle size={14} strokeWidth={1.75} />
+          {testError}
+        </div>
+      )}
+
       {/* ── No data state ── */}
       {!hasData && (
         <div
@@ -302,13 +344,10 @@ export default function WebsiteSpeedPage() {
               No speed data yet
             </h3>
             <p className="text-[13px] leading-relaxed" style={{ color: 'var(--m-muted)' }}>
-              Run a PageSpeed test to see real Core Web Vitals for your website. The test checks loading
-              performance, visual stability, and responsiveness on both mobile and desktop.
+              Run a PageSpeed test to see real Core Web Vitals for your website. The test checks
+              loading performance, visual stability, and responsiveness on both mobile and desktop.
             </p>
           </div>
-          {testError && (
-            <p className="text-[12px] text-center max-w-sm" style={{ color: 'var(--severe)' }}>{testError}</p>
-          )}
           <button
             onClick={handleRunTest}
             disabled={testing}
@@ -324,223 +363,290 @@ export default function WebsiteSpeedPage() {
       {/* ── Data present ── */}
       {hasData && (
         <>
-          {/* ── Score cards with opacity-based active state ── */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            {([
-              { label: 'Mobile', data: speedData.mobile },
-              { label: 'Desktop', data: speedData.desktop },
-            ] as const).map(({ label, data: strategyData }) => {
-              const isActive = label.toLowerCase() === strategy;
+          {/* ── Mobile / Desktop tab toggle ── */}
+          <div
+            className="inline-flex items-center rounded-lg p-1 gap-0.5"
+            style={{ background: 'color-mix(in srgb, var(--ink) 5%, transparent)' }}
+          >
+            {(['mobile', 'desktop'] as const).map(s => {
+              const isActive = strategy === s;
+              const data = s === 'mobile' ? speedData?.mobile : speedData?.desktop;
+              const Icon = s === 'mobile' ? Smartphone : Monitor;
               return (
                 <button
-                  key={label}
-                  onClick={() => setStrategy(label.toLowerCase() as 'mobile' | 'desktop')}
-                  className="rounded-xl border p-4 sm:p-5 flex items-center gap-4 text-left transition-all"
+                  key={s}
+                  onClick={() => setStrategy(s)}
+                  className="relative flex items-center gap-1.5 px-3.5 py-1.5 rounded-md text-[13px] font-medium transition-all"
                   style={{
-                    background: 'var(--card)',
-                    borderColor: 'var(--rule)',
-                    opacity: isActive ? 1 : 0.45,
+                    background: isActive ? 'var(--card)' : 'transparent',
+                    color: isActive ? 'var(--ink)' : 'var(--m-muted)',
+                    boxShadow: isActive ? '0 1px 3px rgba(0,0,0,0.08)' : 'none',
                   }}
                 >
-                  {strategyData ? (
-                    <>
-                      <ScoreCircle score={strategyData.score} size="small" px={68} strokeWidth={7} />
-                      <div className="min-w-0 flex-1">
-                        <p className="text-[11px] font-semibold tracking-[0.04em] uppercase mb-0.5" style={{ color: 'var(--m-muted)' }}>
-                          {label}
-                        </p>
-                        <p className="text-[20px] font-semibold tabular-nums leading-tight" style={{ color: 'var(--ink)' }}>
-                          {strategyData.score}<span className="text-[13px] font-normal" style={{ color: 'var(--m-muted)' }}>/100</span>
-                        </p>
-                        <p className="text-[12px] mt-0.5 font-medium" style={{ color: scoreColor(strategyData.score) }}>
-                          {scoreLabel(strategyData.score)}
-                        </p>
-                      </div>
-                    </>
-                  ) : (
-                    <div className="flex-1 py-2 text-center">
-                      <p className="text-[11px] font-semibold tracking-[0.04em] uppercase mb-1" style={{ color: 'var(--m-muted)' }}>
-                        {label}
-                      </p>
-                      <p className="text-[13px]" style={{ color: 'var(--m-muted)' }}>Not tested</p>
-                    </div>
+                  <Icon size={14} strokeWidth={1.75} />
+                  <span className="capitalize">{s}</span>
+                  {data && (
+                    <span
+                      className="text-[11px] font-semibold tabular-nums ml-0.5"
+                      style={{ color: isActive ? scoreColor(data.score) : 'var(--m-muted)' }}
+                    >
+                      {data.score}
+                    </span>
+                  )}
+                  {!data && (
+                    <span className="text-[11px]" style={{ color: 'var(--m-muted)' }}>--</span>
+                  )}
+                  {isActive && (
+                    <span
+                      className="absolute bottom-0 left-3 right-3 h-[2px] rounded-full"
+                      style={{ background: 'var(--ink)' }}
+                    />
                   )}
                 </button>
               );
             })}
           </div>
 
-          {/* ── Summary metrics (Loading, Stability, Responsiveness) — matches overview card ── */}
+          {/* ── Category Score Circles (PSI style) ── */}
           {result && (
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-              {SUMMARY_METRICS.map(m => {
-                const metric = result.metrics[m.key];
-                const color = statusColor(metric.status);
-                const otherStrategy = strategy === 'mobile' ? 'desktop' : 'mobile';
-                const otherResult = strategy === 'mobile' ? speedData!.desktop : speedData!.mobile;
-                const otherMetric = otherResult?.metrics[m.key];
-                return (
-                  <div
-                    key={m.key}
-                    className="rounded-xl border p-4 flex items-center gap-3"
-                    style={{ background: 'var(--card)', borderColor: 'var(--rule)' }}
-                  >
-                    <span
-                      className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0"
-                      style={{ background: `color-mix(in srgb, ${color} 10%, transparent)` }}
-                    >
-                      <m.Icon size={15} strokeWidth={1.75} style={{ color }} />
-                    </span>
-                    <div className="min-w-0 flex-1">
-                      <p className="text-[11px] font-medium" style={{ color: 'var(--m-muted)' }}>
-                        {m.friendlyLabel}
-                      </p>
-                      <p className="text-[16px] font-semibold tabular-nums leading-tight" style={{ color }}>
-                        {metric.displayValue}
-                      </p>
-                    </div>
-                    {otherMetric && (
-                      <div className="text-right flex-shrink-0">
-                        <p className="text-[10px]" style={{ color: 'var(--m-muted)' }}>{otherStrategy}</p>
-                        <p className="text-[12px] font-semibold tabular-nums" style={{ color: statusColor(otherMetric.status) }}>
-                          {otherMetric.displayValue}
-                        </p>
-                      </div>
-                    )}
-                  </div>
-                );
-              })}
-            </div>
-          )}
-
-          {/* ── What this means ── */}
-          {result && result.score < 90 && (
             <div
-              className="rounded-xl border p-4"
-              style={{
-                background: `color-mix(in srgb, ${scoreColor(result.score)} 4%, var(--card))`,
-                borderColor: 'var(--rule)',
-              }}
+              className="rounded-xl border p-5 sm:p-6"
+              style={{ background: 'var(--card)', borderColor: 'var(--rule)' }}
             >
-              <div className="flex items-start gap-3">
-                <Info size={14} strokeWidth={1.75} className="mt-0.5 flex-shrink-0" style={{ color: scoreColor(result.score) }} />
-                <div>
-                  <h3 className="text-[13px] font-semibold mb-1" style={{ color: 'var(--ink)' }}>
-                    What this means for your visitors
-                  </h3>
-                  <p className="text-[12px] leading-relaxed" style={{ color: 'var(--m-muted)' }}>
-                    {result.score >= 50
-                      ? 'Your website has moderate performance. Some visitors, especially on mobile or slower connections, may experience delays. Improving the flagged metrics below can reduce bounce rates and improve satisfaction.'
-                      : 'Your website has significant performance issues. Visitors are likely experiencing slow loads, unresponsive interactions, or visual instability. These directly hurt engagement, conversions, and SEO. The recommendations below are prioritized by impact.'}
-                  </p>
+              <div className="flex flex-wrap items-end justify-center gap-6 sm:gap-10">
+                {/* Performance — always shown, slightly larger */}
+                <div className="flex flex-col items-center gap-2">
+                  <ScoreCircle score={result.score} size="small" px={72} strokeWidth={7} />
+                  <span className="text-[12px] font-semibold" style={{ color: 'var(--ink)' }}>
+                    Performance
+                  </span>
+                </div>
+
+                {/* Accessibility, Best Practices, SEO — only if categories exist */}
+                {hasCategories && (
+                  <>
+                    {([
+                      { key: 'accessibility' as const, label: 'Accessibility' },
+                      { key: 'bestPractices' as const, label: 'Best Practices' },
+                      { key: 'seo' as const, label: 'SEO' },
+                    ]).map(cat => (
+                      <div key={cat.key} className="flex flex-col items-center gap-2">
+                        <ScoreCircle
+                          score={categories[cat.key]}
+                          size="small"
+                          px={56}
+                          strokeWidth={6}
+                        />
+                        <span className="text-[12px] font-medium" style={{ color: 'var(--m-muted)' }}>
+                          {cat.label}
+                        </span>
+                      </div>
+                    ))}
+                  </>
+                )}
+              </div>
+
+              {/* Legend */}
+              <div className="flex items-center justify-center gap-5 mt-5 pt-4" style={{ borderTop: '1px solid var(--rule)' }}>
+                <p className="text-[11px]" style={{ color: 'var(--m-muted)' }}>
+                  Values are estimated and may vary.
+                </p>
+                <div className="flex items-center gap-3">
+                  <span className="flex items-center gap-1">
+                    <span className="inline-block w-0 h-0" style={{ borderLeft: '5px solid transparent', borderRight: '5px solid transparent', borderBottom: '8px solid var(--severe)' }} />
+                    <span className="text-[10px]" style={{ color: 'var(--m-muted)' }}>0-49</span>
+                  </span>
+                  <span className="flex items-center gap-1">
+                    <span className="inline-block w-[8px] h-[8px] rounded-[1px]" style={{ background: 'var(--warn)' }} />
+                    <span className="text-[10px]" style={{ color: 'var(--m-muted)' }}>50-89</span>
+                  </span>
+                  <span className="flex items-center gap-1">
+                    <span className="inline-block w-[8px] h-[8px] rounded-full" style={{ background: 'var(--ok)' }} />
+                    <span className="text-[10px]" style={{ color: 'var(--m-muted)' }}>90-100</span>
+                  </span>
                 </div>
               </div>
             </div>
           )}
 
-          {/* ── Core Web Vitals breakdown ── */}
+          {/* ── Screenshot + Performance Score Hero ── */}
           {result && (
             <div
               className="rounded-xl border overflow-hidden"
               style={{ background: 'var(--card)', borderColor: 'var(--rule)' }}
             >
-              <div className="px-4 sm:px-5 py-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-2" style={{ borderBottom: '1px solid var(--rule)' }}>
-                <h2 className="text-[14px] font-semibold" style={{ color: 'var(--ink)' }}>Core Web Vitals</h2>
-                <div className="flex items-center gap-4">
-                  {(['good', 'needs_improvement', 'poor'] as const).map(s => (
-                    <div key={s} className="flex items-center gap-1.5">
-                      <span className="w-2 h-2 rounded-full" style={{ background: statusColor(s) }} />
-                      <span className="text-[10px]" style={{ color: 'var(--m-muted)' }}>{statusLabel(s)}</span>
+              <div className="flex flex-col sm:flex-row items-center">
+                {/* Screenshot thumbnail */}
+                {result.screenshotUrl && (
+                  <div className="w-full sm:w-[280px] flex-shrink-0 p-4 sm:p-5 flex items-center justify-center" style={{ borderRight: '1px solid var(--rule)' }}>
+                    <div
+                      className="rounded-lg overflow-hidden border"
+                      style={{ borderColor: 'var(--rule)' }}
+                    >
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img
+                        src={result.screenshotUrl}
+                        alt="Page screenshot"
+                        className="w-full h-auto max-h-[200px] object-contain"
+                        style={{ background: 'var(--paper)' }}
+                      />
                     </div>
-                  ))}
-                  <span className="text-[10px] hidden sm:inline" style={{ color: 'var(--m-muted)' }}>
-                    {problemCount === 0
-                      ? 'All passing'
-                      : `${problemCount} need${problemCount === 1 ? 's' : ''} attention`}
-                  </span>
+                  </div>
+                )}
+
+                {/* Performance score hero */}
+                <div className={`flex-1 flex flex-col items-center justify-center py-6 sm:py-8 px-4 ${!result.screenshotUrl ? 'w-full' : ''}`}>
+                  <ScoreCircle score={result.score} size="large" px={120} strokeWidth={9} />
+                  <div className="text-center mt-3">
+                    <p className="text-[11px] font-semibold tracking-[0.04em] uppercase" style={{ color: 'var(--m-muted)' }}>
+                      Performance
+                    </p>
+                    <p className="text-[14px] font-semibold mt-0.5" style={{ color: scoreColor(result.score) }}>
+                      {result.score >= 90 ? 'Fast' : result.score >= 50 ? 'Moderate' : 'Slow'}
+                    </p>
+                  </div>
+                  {result.finalUrl && (
+                    <p
+                      className="text-[11px] mt-3 max-w-[300px] truncate text-center"
+                      style={{ color: 'var(--m-muted)' }}
+                      title={result.finalUrl}
+                    >
+                      {result.finalUrl}
+                    </p>
+                  )}
                 </div>
               </div>
+            </div>
+          )}
 
-              <div className="divide-y" style={{ borderColor: 'color-mix(in srgb, var(--rule) 50%, transparent)' }}>
-                {METRIC_CONFIG.map(m => {
-                  const metric = result.metrics[m.key];
-                  const otherStrategy = strategy === 'mobile' ? 'desktop' : 'mobile';
-                  const otherResult = strategy === 'mobile' ? speedData!.desktop : speedData!.mobile;
-                  const otherMetric = otherResult?.metrics[m.key];
-                  const color = statusColor(metric.status);
-                  const rec = metric.status !== 'good'
-                    ? METRIC_RECOMMENDATIONS[m.key]?.[metric.status]
-                    : null;
+          {/* ── Metrics Section ── */}
+          {result && (
+            <div
+              className="rounded-xl border overflow-hidden"
+              style={{ background: 'var(--card)', borderColor: 'var(--rule)' }}
+            >
+              {/* Metrics header */}
+              <button
+                onClick={() => setMetricsExpanded(prev => !prev)}
+                className="w-full px-4 sm:px-5 py-3.5 flex items-center justify-between gap-2 transition-colors"
+                style={{ borderBottom: metricsExpanded ? '1px solid var(--rule)' : 'none' }}
+              >
+                <div className="flex items-center gap-3">
+                  <h2 className="text-[11px] font-semibold tracking-[0.06em] uppercase" style={{ color: 'var(--m-muted)' }}>
+                    Metrics
+                  </h2>
+                  {problemCount > 0 && (
+                    <span
+                      className="px-1.5 py-0.5 rounded text-[10px] font-semibold tabular-nums"
+                      style={{ background: 'color-mix(in srgb, var(--warn) 12%, transparent)', color: 'var(--warn)' }}
+                    >
+                      {problemCount} need{problemCount === 1 ? 's' : ''} attention
+                    </span>
+                  )}
+                  {problemCount === 0 && (
+                    <span
+                      className="px-1.5 py-0.5 rounded text-[10px] font-semibold"
+                      style={{ background: 'color-mix(in srgb, var(--ok) 12%, transparent)', color: 'var(--ok)' }}
+                    >
+                      All passing
+                    </span>
+                  )}
+                </div>
+                <div className="flex items-center gap-3">
+                  {/* Status legend */}
+                  <div className="hidden sm:flex items-center gap-3">
+                    {(['good', 'needs_improvement', 'poor'] as const).map(s => (
+                      <div key={s} className="flex items-center gap-1.5">
+                        <span className="w-2 h-2 rounded-full" style={{ background: statusColor(s) }} />
+                        <span className="text-[10px]" style={{ color: 'var(--m-muted)' }}>{statusLabel(s)}</span>
+                      </div>
+                    ))}
+                  </div>
+                  {metricsExpanded
+                    ? <ChevronUp size={16} strokeWidth={1.75} style={{ color: 'var(--m-muted)' }} />
+                    : <ChevronDown size={16} strokeWidth={1.75} style={{ color: 'var(--m-muted)' }} />
+                  }
+                </div>
+              </button>
 
-                  return (
-                    <div key={m.key} className="px-4 sm:px-5 py-4">
-                      <div className="flex flex-col sm:flex-row sm:items-start gap-3 sm:gap-4">
-                        {/* Left: metric info */}
-                        <div className="min-w-0 flex-1">
-                          <div className="flex items-center gap-2.5 mb-1 flex-wrap">
+              {/* Metrics grid */}
+              {metricsExpanded && (
+                <div className="grid grid-cols-1 sm:grid-cols-2 divide-y sm:divide-y-0" style={{ borderColor: 'color-mix(in srgb, var(--rule) 50%, transparent)' }}>
+                  {sortedMetrics.map((m, idx) => {
+                    const metric = result.metrics[m.key];
+                    if (!metric) return null;
+
+                    const color = statusColor(metric.status);
+                    const rec = metric.status !== 'good'
+                      ? METRIC_RECOMMENDATIONS[m.key]?.[metric.status]
+                      : null;
+
+                    return (
+                      <div
+                        key={m.key}
+                        className="px-4 sm:px-5 py-4"
+                        style={{
+                          borderBottom: '1px solid color-mix(in srgb, var(--rule) 50%, transparent)',
+                          borderRight: idx % 2 === 0 ? '1px solid color-mix(in srgb, var(--rule) 50%, transparent)' : 'none',
+                        }}
+                      >
+                        {/* Metric header row */}
+                        <div className="flex items-start justify-between gap-3 mb-1.5">
+                          <div className="flex items-center gap-2.5 min-w-0">
                             <span
-                              className="w-6 h-6 rounded-md flex items-center justify-center flex-shrink-0"
-                              style={{ background: `color-mix(in srgb, ${color} 10%, transparent)` }}
-                            >
-                              <m.Icon size={13} strokeWidth={1.75} style={{ color }} />
-                            </span>
-                            <span className="text-[13px] font-semibold" style={{ color: 'var(--ink)' }}>
+                              className="w-2.5 h-2.5 rounded-full flex-shrink-0"
+                              style={{ background: color }}
+                            />
+                            <span className="text-[13px] font-semibold truncate" style={{ color: 'var(--ink)' }}>
                               {m.fullLabel}
                             </span>
                             <span
-                              className="px-1.5 py-0.5 rounded text-[10px] font-semibold"
-                              style={{ background: `color-mix(in srgb, ${color} 12%, transparent)`, color }}
+                              className="px-1.5 py-0.5 rounded text-[9px] font-bold tracking-[0.02em] flex-shrink-0"
+                              style={{ background: `color-mix(in srgb, ${color} 10%, transparent)`, color }}
                             >
                               {m.label}
                             </span>
                           </div>
-                          <p className="text-[12px] leading-relaxed ml-0 sm:ml-[34px]" style={{ color: 'var(--m-muted)' }}>
-                            {m.description}
-                          </p>
-                          <div className="flex items-center gap-4 mt-1.5 ml-0 sm:ml-[34px] flex-wrap">
-                            <span className="text-[11px]" style={{ color: 'var(--m-muted)' }}>
-                              Good: <span style={{ color: 'var(--ok)' }}>{m.goodThreshold}</span>
-                            </span>
-                            <span className="text-[11px]" style={{ color: 'var(--m-muted)' }}>
-                              Poor: <span style={{ color: 'var(--severe)' }}>{m.poorThreshold}</span>
-                            </span>
-                            {otherMetric && (
-                              <span className="text-[11px]" style={{ color: 'var(--m-muted)' }}>
-                                {otherStrategy}: <span className="font-semibold tabular-nums" style={{ color: statusColor(otherMetric.status) }}>{otherMetric.displayValue}</span>
-                              </span>
-                            )}
-                          </div>
-                        </div>
-                        {/* Right: value */}
-                        <div className="text-left sm:text-right flex-shrink-0 flex sm:flex-col items-center sm:items-end gap-2 sm:gap-0 sm:pt-1">
-                          <p className="text-[22px] font-semibold tabular-nums leading-none" style={{ color }}>
+                          <p className="text-[20px] font-semibold tabular-nums leading-none flex-shrink-0" style={{ color }}>
                             {metric.displayValue}
                           </p>
-                          <p className="text-[11px] sm:mt-1 font-medium" style={{ color }}>
-                            {statusLabel(metric.status)}
-                          </p>
                         </div>
-                      </div>
 
-                      {/* Inline recommendation for poor/needs-work metrics */}
-                      {rec && (
-                        <div
-                          className="mt-3 ml-0 sm:ml-[34px] rounded-lg p-3"
-                          style={{ background: `color-mix(in srgb, ${color} 5%, transparent)` }}
-                        >
-                          <div className="flex items-center gap-1.5 mb-1">
-                            <Lightbulb size={11} strokeWidth={1.75} style={{ color }} />
-                            <span className="text-[11px] font-semibold" style={{ color }}>How to improve</span>
-                          </div>
-                          <p className="text-[12px] leading-relaxed" style={{ color: 'var(--ink)' }}>
-                            {rec}
-                          </p>
+                        {/* Description */}
+                        <p className="text-[11px] leading-relaxed ml-[18px] mb-2" style={{ color: 'var(--m-muted)' }}>
+                          {m.description}
+                        </p>
+
+                        {/* Thresholds */}
+                        <div className="flex items-center gap-3 ml-[18px] mb-1">
+                          <span className="text-[10px]" style={{ color: 'var(--m-muted)' }}>
+                            Good: <span style={{ color: 'var(--ok)' }}>{m.goodThreshold}</span>
+                          </span>
+                          <span className="text-[10px]" style={{ color: 'var(--m-muted)' }}>
+                            Poor: <span style={{ color: 'var(--severe)' }}>{m.poorThreshold}</span>
+                          </span>
                         </div>
-                      )}
-                    </div>
-                  );
-                })}
-              </div>
+
+                        {/* Inline recommendation */}
+                        {rec && (
+                          <div
+                            className="mt-2.5 ml-[18px] rounded-lg p-2.5"
+                            style={{ background: `color-mix(in srgb, ${color} 5%, transparent)` }}
+                          >
+                            <div className="flex items-center gap-1.5 mb-1">
+                              <Lightbulb size={11} strokeWidth={1.75} style={{ color }} />
+                              <span className="text-[10px] font-semibold" style={{ color }}>How to improve</span>
+                            </div>
+                            <p className="text-[11px] leading-relaxed" style={{ color: 'var(--ink)' }}>
+                              {rec}
+                            </p>
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
             </div>
           )}
 
@@ -573,11 +679,13 @@ export default function WebsiteSpeedPage() {
                       className="rounded-xl border p-4 flex flex-col"
                       style={{ background: 'var(--card)', borderColor: 'var(--rule)' }}
                     >
-                      {/* Top: severity + affected metric */}
                       <div className="flex items-center justify-between gap-2 mb-2">
                         <span
                           className="px-1.5 py-0.5 rounded text-[10px] font-medium"
-                          style={{ background: `color-mix(in srgb, ${severityColor(f.severity)} 10%, transparent)`, color: severityColor(f.severity) }}
+                          style={{
+                            background: `color-mix(in srgb, ${severityColor(f.severity)} 10%, transparent)`,
+                            color: severityColor(f.severity),
+                          }}
                         >
                           {severityLabel(f.severity)}
                         </span>
@@ -587,17 +695,14 @@ export default function WebsiteSpeedPage() {
                           </span>
                         )}
                       </div>
-                      {/* Title */}
                       <h3 className="text-[13px] font-semibold leading-snug mb-1.5" style={{ color: 'var(--ink)' }}>
                         {f.title}
                       </h3>
-                      {/* Description */}
                       {f.description && (
                         <p className="text-[11px] leading-relaxed mb-3 line-clamp-2 flex-1" style={{ color: 'var(--m-muted)' }}>
                           {f.description}
                         </p>
                       )}
-                      {/* Recommendation */}
                       {f.recommendation && (
                         <div
                           className="rounded-lg p-2.5 mt-auto"
@@ -612,7 +717,6 @@ export default function WebsiteSpeedPage() {
                           </p>
                         </div>
                       )}
-                      {/* Owner */}
                       {f.owner_team && (
                         <p className="text-[10px] mt-2" style={{ color: 'var(--m-muted)' }}>
                           Owner: {f.owner_team}
@@ -696,7 +800,7 @@ export default function WebsiteSpeedPage() {
 
           {/* ── Footer: PageSpeed Insights link ── */}
           {productUrl && (
-            <div className="flex items-center justify-end">
+            <div className="flex items-center justify-end pt-2">
               <a
                 href={`https://pagespeed.web.dev/analysis?url=${encodeURIComponent(productUrl.startsWith('http') ? productUrl : `https://${productUrl}`)}`}
                 target="_blank"

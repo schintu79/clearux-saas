@@ -882,23 +882,20 @@ Return 2-6 findings. Be specific and evidence-based. Reference specific files/co
           await auditLog(auditId, 'pagespeed_started', 'info', `Running PageSpeed test for ${auditDetails.productUrl}`)
           const speedData = await runFullSpeedTest(auditDetails.productUrl)
 
+          const mapSpeedResult = (r: typeof speedData.mobile) => r ? {
+            score: r.score,
+            categories: r.categories,
+            strategy: r.strategy,
+            metrics: r.metrics,
+            issueCount: r.diagnostics.length,
+            finalUrl: r.finalUrl,
+            screenshotUrl: r.screenshotUrl,
+            testedAt: r.testedAt,
+          } : null
+
           const speedSummary = {
-            mobile: speedData.mobile ? {
-              score: speedData.mobile.score,
-              strategy: 'mobile' as const,
-              metrics: speedData.mobile.metrics,
-              issueCount: speedData.mobile.diagnostics.length,
-              finalUrl: speedData.mobile.finalUrl,
-              testedAt: speedData.mobile.testedAt,
-            } : null,
-            desktop: speedData.desktop ? {
-              score: speedData.desktop.score,
-              strategy: 'desktop' as const,
-              metrics: speedData.desktop.metrics,
-              issueCount: speedData.desktop.diagnostics.length,
-              finalUrl: speedData.desktop.finalUrl,
-              testedAt: speedData.desktop.testedAt,
-            } : null,
+            mobile: mapSpeedResult(speedData.mobile),
+            desktop: mapSpeedResult(speedData.desktop),
             testedAt: speedData.testedAt,
           }
 

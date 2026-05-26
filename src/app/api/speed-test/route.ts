@@ -68,24 +68,21 @@ export async function POST(req: NextRequest) {
       )
     }
 
-    // Convert to DB summary
+    // Convert to DB summary — includes all 4 category scores, FCP, and screenshot
+    const mapResult = (r: typeof speedData.mobile) => r ? {
+      score: r.score,
+      categories: r.categories,
+      strategy: r.strategy,
+      metrics: r.metrics,
+      issueCount: r.diagnostics.length,
+      finalUrl: r.finalUrl,
+      screenshotUrl: r.screenshotUrl,
+      testedAt: r.testedAt,
+    } : null
+
     const speedSummary: SpeedDataSummary = {
-      mobile: speedData.mobile ? {
-        score: speedData.mobile.score,
-        strategy: 'mobile',
-        metrics: speedData.mobile.metrics,
-        issueCount: speedData.mobile.diagnostics.length,
-        finalUrl: speedData.mobile.finalUrl,
-        testedAt: speedData.mobile.testedAt,
-      } : null,
-      desktop: speedData.desktop ? {
-        score: speedData.desktop.score,
-        strategy: 'desktop',
-        metrics: speedData.desktop.metrics,
-        issueCount: speedData.desktop.diagnostics.length,
-        finalUrl: speedData.desktop.finalUrl,
-        testedAt: speedData.desktop.testedAt,
-      } : null,
+      mobile: mapResult(speedData.mobile),
+      desktop: mapResult(speedData.desktop),
       testedAt: speedData.testedAt,
     }
 

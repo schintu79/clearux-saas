@@ -1,8 +1,11 @@
 /**
  * Google PageSpeed Insights API client
  *
- * Fetches real Core Web Vitals and performance scores for a URL
+ * Fetches real Core Web Vitals, Lighthouse scores, and diagnostics for a URL
  * using the PageSpeed Insights API (free tier, key-based).
+ *
+ * Now captures ALL four Lighthouse categories:
+ *   Performance · Accessibility · Best Practices · SEO
  *
  * PROPRIETARY — do not distribute outside the Fixpath codebase.
  */
@@ -30,13 +33,27 @@ export interface PageSpeedDiagnostic {
   score: number | null
 }
 
-export interface PageSpeedResult {
+export interface LighthouseCategories {
   /** Overall performance score 0-100 */
+  performance: number
+  /** Accessibility score 0-100 */
+  accessibility: number
+  /** Best practices score 0-100 */
+  bestPractices: number
+  /** SEO score 0-100 */
+  seo: number
+}
+
+export interface PageSpeedResult {
+  /** Overall performance score 0-100 (backward compat) */
   score: number
+  /** All four Lighthouse category scores */
+  categories: LighthouseCategories
   /** Strategy used for this test */
   strategy: 'mobile' | 'desktop'
-  /** Core Web Vitals */
+  /** Core Web Vitals + key metrics */
   metrics: {
+    fcp: PageSpeedMetric
     lcp: PageSpeedMetric
     cls: PageSpeedMetric
     inp: PageSpeedMetric
@@ -48,6 +65,8 @@ export interface PageSpeedResult {
   diagnostics: PageSpeedDiagnostic[]
   /** URL that was actually tested (after redirects) */
   finalUrl: string
+  /** Base64-encoded screenshot thumbnail (data URI) */
+  screenshotUrl: string | null
   /** ISO timestamp of when the test was run */
   testedAt: string
 }
@@ -78,12 +97,13 @@ function classifyMetric(
   value: number,
 ): 'good' | 'needs_improvement' | 'poor' {
   const thresholds: Record<string, [number, number]> = {
-    lcp: [2500, 4000],           // ms
-    cls: [0.1, 0.25],            // unitless
-    inp: [200, 500],             // ms
-    ttfb: [800, 1800],           // ms
-    speedIndex: [3400, 5800],    // ms
-    tbt: [200, 600],             // ms
+    fcp: [1800, 3000],            // ms
+    lcp: [2500, 4000],            // ms
+    cls: [0.1, 0.25],             // unitless
+    inp: [200, 500],              // ms
+    ttfb: [800, 1800],            // ms
+    speedIndex: [3400, 5800],     // ms
+    tbt: [200, 600],              // ms
   }
   const [good, poor] = thresholds[id] || [Infinity, Infinity]
   if (value <= good) return 'good'
@@ -109,9 +129,16 @@ function parseResponse(data: any, strategy: 'mobile' | 'desktop'): PageSpeedResu
     throw new Error('No lighthouse result in PageSpeed response')
   }
 
-  const categories = lighthouse.categories || {}
+  const cats = lighthouse.categories || {}
   const audits = lighthouse.audits || {}
-  const score = Math.round((categories?.performance?.score ?? 0) * 100)
+
+  // Parse all four category scores
+  const categories: LighthouseCategories = {
+    performance: Math.round((cats?.performance?.score ?? 0) * 100),
+    accessibility: Math.round((cats?.accessibility?.score ?? 0) * 100),
+    bestPractices: Math.round((cats?.['best-practices']?.score ?? 0) * 100),
+    seo: Math.round((cats?.seo?.score ?? 0) * 100),
+  }
 
   // Extract metrics
   const extractMetric = (auditId: string, metricKey: string): PageSpeedMetric => {
@@ -125,6 +152,7 @@ function parseResponse(data: any, strategy: 'mobile' | 'desktop'): PageSpeedResu
   }
 
   const metrics = {
+    fcp: extractMetric('first-contentful-paint', 'fcp'),
     lcp: extractMetric('largest-contentful-paint', 'lcp'),
     cls: extractMetric('cumulative-layout-shift', 'cls'),
     inp: extractMetric('interaction-to-next-paint', 'inp'),
@@ -177,12 +205,21 @@ function parseResponse(data: any, strategy: 'mobile' | 'desktop'): PageSpeedResu
   // Sort by potential savings (biggest impact first)
   diagnostics.sort((a, b) => (b.savingsMs ?? 0) - (a.savingsMs ?? 0))
 
+  // Extract screenshot (Lighthouse includes a final-screenshot audit)
+  let screenshotUrl: string | null = null
+  const screenshotAudit = audits['final-screenshot']
+  if (screenshotAudit?.details?.data) {
+    screenshotUrl = screenshotAudit.details.data // base64 data URI
+  }
+
   return {
-    score,
+    score: categories.performance,
+    categories,
     strategy,
     metrics,
     diagnostics,
     finalUrl: data?.id || '',
+    screenshotUrl,
     testedAt: new Date().toISOString(),
   }
 }
@@ -191,6 +228,7 @@ function parseResponse(data: any, strategy: 'mobile' | 'desktop'): PageSpeedResu
 
 /**
  * Run a PageSpeed test for a single strategy (mobile or desktop).
+ * Requests ALL Lighthouse categories for comprehensive results.
  * Returns null if the API call fails (network error, rate limit, etc.)
  */
 export async function runPageSpeedTest(
@@ -201,15 +239,19 @@ export async function runPageSpeedTest(
   const params = new URLSearchParams({
     url,
     strategy,
-    category: 'performance',
   })
+  // Request all four categories
+  params.append('category', 'performance')
+  params.append('category', 'accessibility')
+  params.append('category', 'best-practices')
+  params.append('category', 'seo')
   if (apiKey) params.set('key', apiKey)
 
   try {
     const fullUrl = `${PSI_ENDPOINT}?${params.toString()}`
-    console.log(`[pagespeed] Fetching ${strategy} for ${url}...`)
+    console.log(`[pagespeed] Fetching ${strategy} for ${url} (all categories)...`)
     const res = await fetch(fullUrl, {
-      signal: AbortSignal.timeout(60000), // 60s timeout — PSI can be slow
+      signal: AbortSignal.timeout(90000), // 90s timeout — requesting 4 categories takes longer
     })
     if (!res.ok) {
       const body = await res.text().catch(() => '')

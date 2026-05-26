@@ -217,11 +217,25 @@ export interface SpeedDataSummary {
   testedAt: string
 }
 
+export interface SpeedCategoryScores {
+  /** Performance score 0-100 */
+  performance: number
+  /** Accessibility score 0-100 */
+  accessibility: number
+  /** Best Practices score 0-100 */
+  bestPractices: number
+  /** SEO score 0-100 */
+  seo: number
+}
+
 export interface SpeedStrategyResult {
-  /** Overall performance score 0-100 */
+  /** Overall performance score 0-100 (backward compat) */
   score: number
+  /** All four Lighthouse category scores */
+  categories?: SpeedCategoryScores
   strategy: 'mobile' | 'desktop'
   metrics: {
+    fcp?: SpeedMetric
     lcp: SpeedMetric
     cls: SpeedMetric
     inp: SpeedMetric
@@ -232,6 +246,8 @@ export interface SpeedStrategyResult {
   /** Count of failing diagnostics */
   issueCount: number
   finalUrl: string
+  /** Base64-encoded screenshot thumbnail (data URI) */
+  screenshotUrl?: string | null
   testedAt: string
 }
 
