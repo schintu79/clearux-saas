@@ -266,13 +266,20 @@ const DashboardShell: React.FC<DashboardShellProps> = ({ children }) => {
     }
 
     const all = [...siteEntries, ...brandEntries];
+    const allIds = new Set(all.map(s => s.id));
     // Clear placeholder tracking for IDs that are now in the real list,
     // so the placeholder logic can re-fire if the user switches away and back.
-    const allIds = new Set(all.map(s => s.id));
     for (const id of placeholderAddedRef.current) {
       if (allIds.has(id)) placeholderAddedRef.current.delete(id);
     }
-    setSites(all);
+    // Merge: keep placeholder entries for selections not yet in the real
+    // data (e.g. brand just created, not yet returned by loadSites).
+    // Without this, loadSites drops the placeholder and the ref blocks
+    // re-adding, leaving the selector empty.
+    setSites(prev => {
+      const kept = prev.filter(s => !allIds.has(s.id) && placeholderAddedRef.current.has(s.id));
+      return kept.length > 0 ? [...all, ...kept] : all;
+    });
     setSitesLoaded(true);
     // Default selection: prefer current route context, else most-recent site.
     // Also auto-migrate stale site:host → brand:id when a brand now covers that host.

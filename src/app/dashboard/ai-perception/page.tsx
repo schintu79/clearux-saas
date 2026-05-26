@@ -26,6 +26,7 @@ import {
   Eye,
   FileText,
   Code,
+  MessageSquare,
 } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { useAuditBundle } from '@/context/AuditBundleContext';
@@ -79,6 +80,14 @@ function scoreColorVar(s: number | null | undefined): string {
   return 'var(--severe)';
 }
 
+function accuracyColor(accuracy: string | null | undefined): { bg: string; color: string } {
+  if (!accuracy) return { bg: 'var(--paper-2)', color: 'var(--m-muted)' };
+  const a = accuracy.toLowerCase();
+  if (a.includes('accurate') && !a.includes('partial')) return { bg: 'rgba(34,197,94,0.1)', color: 'var(--ok)' };
+  if (a.includes('partial')) return { bg: 'rgba(234,179,8,0.1)', color: 'var(--warn)' };
+  return { bg: 'rgba(239,68,68,0.1)', color: 'var(--severe)' };
+}
+
 function accuracyBadge(score: number): { label: string; bg: string; color: string } {
   if (score >= 80) return { label: 'Accurate', bg: 'rgba(34,197,94,0.1)', color: 'var(--ok)' };
   if (score >= 50) return { label: 'Partial', bg: 'rgba(234,179,8,0.1)', color: 'var(--warn)' };
@@ -123,7 +132,7 @@ export default function AIPerceptionPage() {
   const [modelProbes, setModelProbes] = useState<ModelProbe[]>([]);
   const [biSummary, setBiSummary] = useState<BrandIntelligenceSummary | null>(null);
   const [pages, setPages] = useState<AuditPageRow[]>([]);
-  const [expandedModel, setExpandedModel] = useState<string | null>(null);
+  const [expandedQuestion, setExpandedQuestion] = useState<number | null>(null);
   const [expandedPage, setExpandedPage] = useState<string | null>(null);
 
   useEffect(() => {
@@ -185,6 +194,25 @@ export default function AIPerceptionPage() {
     return +(valid.reduce((s, p) => s + (p.placement_score || 0), 0) / valid.length).toFixed(1);
   }, [modelProbes]);
 
+  // Group questions across models — each question shows all model answers side by side
+  const questionGroups = useMemo(() => {
+    const groups = new Map<string, Array<{ model_id: string; model_label: string; answer: string; accuracy: string | null }>>();
+    for (const probe of modelProbes) {
+      if (!probe.results_json) continue;
+      for (const r of probe.results_json) {
+        const key = r.question;
+        if (!groups.has(key)) groups.set(key, []);
+        groups.get(key)!.push({
+          model_id: probe.model_id,
+          model_label: probe.model_label,
+          answer: r.answer,
+          accuracy: r.accuracy,
+        });
+      }
+    }
+    return Array.from(groups.entries()).map(([question, answers]) => ({ question, answers }));
+  }, [modelProbes]);
+
   /* ── Render ─────────────────────────────────────── */
 
   if (loading) {
@@ -198,125 +226,193 @@ export default function AIPerceptionPage() {
   if (!bundle?.audit) return <EmptyAudit />;
 
   return (
-    <div className="space-y-6 max-w-5xl">
+    <div className="space-y-6">
       <PageHeader
         icon={<Bot size={18} strokeWidth={1.75} />}
         title="AI Perception"
         subtitle="How AI models see, describe, and rank your brand"
       />
 
-      {/* Summary metrics */}
+      {/* ── Summary metrics ── */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <DashCard>
-          <div className="flex items-center gap-3">
-            <ScoreCircle score={overallAccuracy} size="small" />
+          <div className="flex items-center gap-4">
+            <ScoreCircle score={overallAccuracy} size="large" px={72} />
             <div>
               <p className="text-[11px] font-semibold uppercase tracking-wider" style={{ color: 'var(--m-muted)' }}>Accuracy</p>
-              <p className="text-[13px] font-medium mt-0.5" style={{ color: 'var(--ink)' }}>
-                {overallAccuracy != null ? `${overallAccuracy}% correct` : 'Not yet measured'}
+              <p className="text-[15px] font-semibold mt-0.5" style={{ color: 'var(--ink)' }}>
+                {overallAccuracy != null ? `${overallAccuracy}%` : 'Not measured'}
+              </p>
+              <p className="text-[11px] mt-0.5" style={{ color: 'var(--m-muted)' }}>
+                {overallAccuracy != null ? 'of AI answers are correct' : 'Run an audit to measure'}
               </p>
             </div>
           </div>
         </DashCard>
         <DashCard>
-          <div className="flex items-center gap-3">
-            <div className="w-[52px] h-[52px] rounded-full flex items-center justify-center" style={{ background: 'var(--paper-2)', border: '2px solid var(--rule)' }}>
-              <span className="text-[16px] font-bold tabular-nums" style={{ color: scoreColorVar(avgSentiment) }}>{avgSentiment ?? '--'}</span>
-            </div>
+          <div className="flex items-center gap-4">
+            <ScoreCircle score={avgSentiment} size="large" px={72} />
             <div>
               <p className="text-[11px] font-semibold uppercase tracking-wider" style={{ color: 'var(--m-muted)' }}>Sentiment</p>
-              <p className="text-[13px] font-medium mt-0.5" style={{ color: 'var(--ink)' }}>
+              <p className="text-[15px] font-semibold mt-0.5" style={{ color: 'var(--ink)' }}>
                 {avgSentiment != null
                   ? avgSentiment >= 70 ? 'Positive' : avgSentiment >= 40 ? 'Neutral' : 'Negative'
                   : 'Not measured'}
               </p>
+              <p className="text-[11px] mt-0.5" style={{ color: 'var(--m-muted)' }}>
+                {avgSentiment != null ? 'overall tone across models' : 'Run an audit to measure'}
+              </p>
             </div>
           </div>
         </DashCard>
         <DashCard>
-          <div className="flex items-center gap-3">
-            <div className="w-[52px] h-[52px] rounded-full flex items-center justify-center" style={{ background: 'var(--paper-2)', border: '2px solid var(--rule)' }}>
+          <div className="flex items-center gap-4">
+            <div
+              className="w-[56px] h-[56px] rounded-full flex items-center justify-center flex-shrink-0"
+              style={{ background: 'var(--paper-2)', border: '3px solid var(--rule)' }}
+            >
               <span className="text-[16px] font-bold tabular-nums" style={{ color: scoreColorVar(avgPlacement ? (100 - avgPlacement * 10) : null) }}>
                 {avgPlacement != null ? `#${avgPlacement}` : '--'}
               </span>
             </div>
             <div>
               <p className="text-[11px] font-semibold uppercase tracking-wider" style={{ color: 'var(--m-muted)' }}>Avg placement</p>
-              <p className="text-[13px] font-medium mt-0.5" style={{ color: 'var(--ink)' }}>
+              <p className="text-[15px] font-semibold mt-0.5" style={{ color: 'var(--ink)' }}>
                 {avgPlacement != null ? placementLabel(avgPlacement) : 'Not measured'}
+              </p>
+              <p className="text-[11px] mt-0.5" style={{ color: 'var(--m-muted)' }}>
+                {avgPlacement != null ? 'rank in AI model responses' : 'Run an audit to measure'}
               </p>
             </div>
           </div>
         </DashCard>
       </div>
 
-      {/* Per-model probes */}
-      <DashCard>
-        <h2 className="text-[15px] font-semibold mb-1" style={{ color: 'var(--ink)' }}>AI model responses</h2>
-        <p className="text-[12px] mb-4" style={{ color: 'var(--m-muted)' }}>What each AI model says about your brand when asked directly</p>
-
-        {modelProbes.length === 0 ? (
-          <div className="text-center py-8">
-            <Bot size={28} strokeWidth={1.5} style={{ color: 'var(--m-muted)' }} className="mx-auto mb-3" />
-            <p className="text-[13px]" style={{ color: 'var(--m-muted)' }}>No AI model probes available yet. Run an audit to generate them.</p>
-          </div>
-        ) : (
-          <div className="space-y-2">
+      {/* ── Per-model summary row ── */}
+      {modelProbes.length > 0 && (
+        <DashCard>
+          <h2 className="text-[15px] font-semibold mb-3" style={{ color: 'var(--ink)' }}>Model overview</h2>
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
             {modelProbes.map(probe => {
               const badge = accuracyBadge(probe.accuracy_score);
-              const expanded = expandedModel === probe.model_id;
               return (
-                <div key={probe.model_id} className="rounded-lg" style={{ border: '1px solid var(--rule)' }}>
-                  <button
-                    onClick={() => setExpandedModel(expanded ? null : probe.model_id)}
-                    className="w-full flex items-center gap-3 px-4 py-3 text-left transition-colors hover:bg-black/[0.02]"
-                  >
-                    <AIProviderIcon provider={providerKeyToIcon(probe.model_id) ?? 'chatgpt'} size={20} />
-                    <span className="flex-1 min-w-0">
-                      <span className="text-[13px] font-medium" style={{ color: 'var(--ink)' }}>{probe.model_label}</span>
-                    </span>
-                    <span className="text-[12px] px-2 py-0.5 rounded-full font-medium" style={{ background: badge.bg, color: badge.color }}>
-                      {probe.accuracy_score}% {badge.label}
-                    </span>
-                    {probe.sentiment_score != null && (
-                      <span className="text-[12px] font-medium tabular-nums" style={{ color: scoreColorVar(probe.sentiment_score) }}>
-                        {probe.sentiment_score}% sent.
+                <div
+                  key={probe.model_id}
+                  className="flex items-center gap-3 rounded-lg px-3 py-3"
+                  style={{ background: 'var(--paper-2)', border: '1px solid var(--rule)' }}
+                >
+                  <AIProviderIcon provider={providerKeyToIcon(probe.model_id) ?? 'chatgpt'} size={22} />
+                  <div className="min-w-0 flex-1">
+                    <p className="text-[12px] font-medium truncate" style={{ color: 'var(--ink)' }}>{probe.model_label}</p>
+                    <div className="flex items-center gap-1.5 mt-0.5">
+                      <span
+                        className="text-[11px] font-semibold px-1.5 py-0.5 rounded"
+                        style={{ background: badge.bg, color: badge.color }}
+                      >
+                        {probe.accuracy_score}%
                       </span>
-                    )}
-                    <ChevronDown
-                      size={14}
-                      style={{ color: 'var(--m-muted)', transform: expanded ? 'rotate(180deg)' : 'none', transition: 'transform 150ms' }}
-                    />
+                      <span className="text-[10px]" style={{ color: badge.color }}>{badge.label}</span>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </DashCard>
+      )}
+
+      {/* ── Question-grouped responses ── */}
+      {questionGroups.length > 0 && (
+        <DashCard>
+          <div className="flex items-center gap-2 mb-1">
+            <MessageSquare size={15} strokeWidth={1.75} style={{ color: 'var(--ink)' }} />
+            <h2 className="text-[15px] font-semibold" style={{ color: 'var(--ink)' }}>Questions and responses</h2>
+          </div>
+          <p className="text-[12px] mb-4" style={{ color: 'var(--m-muted)' }}>
+            Each question was asked to every AI model. Compare their answers side by side.
+          </p>
+
+          <div className="space-y-2">
+            {questionGroups.map((group, i) => {
+              const expanded = expandedQuestion === i;
+              // Count accuracy stats for this question
+              const accurate = group.answers.filter(a => a.accuracy?.toLowerCase().includes('accurate') && !a.accuracy?.toLowerCase().includes('partial')).length;
+              const partial = group.answers.filter(a => a.accuracy?.toLowerCase().includes('partial')).length;
+              const wrong = group.answers.length - accurate - partial;
+
+              return (
+                <div key={i} className="rounded-lg overflow-hidden" style={{ border: '1px solid var(--rule)' }}>
+                  <button
+                    onClick={() => setExpandedQuestion(expanded ? null : i)}
+                    className="w-full flex items-center gap-3 px-4 py-3.5 text-left transition-colors hover:bg-black/[0.02]"
+                  >
+                    <div className="flex-1 min-w-0">
+                      <p className="text-[13px] font-medium" style={{ color: 'var(--ink)' }}>{group.question}</p>
+                    </div>
+                    <div className="flex items-center gap-2 flex-shrink-0">
+                      {accurate > 0 && (
+                        <span className="text-[11px] font-medium px-1.5 py-0.5 rounded" style={{ background: 'rgba(34,197,94,0.1)', color: 'var(--ok)' }}>
+                          {accurate} accurate
+                        </span>
+                      )}
+                      {partial > 0 && (
+                        <span className="text-[11px] font-medium px-1.5 py-0.5 rounded" style={{ background: 'rgba(234,179,8,0.1)', color: 'var(--warn)' }}>
+                          {partial} partial
+                        </span>
+                      )}
+                      {wrong > 0 && (
+                        <span className="text-[11px] font-medium px-1.5 py-0.5 rounded" style={{ background: 'rgba(239,68,68,0.1)', color: 'var(--severe)' }}>
+                          {wrong} wrong
+                        </span>
+                      )}
+                      <ChevronDown
+                        size={14}
+                        style={{ color: 'var(--m-muted)', transform: expanded ? 'rotate(180deg)' : 'none', transition: 'transform 150ms' }}
+                      />
+                    </div>
                   </button>
-                  {expanded && probe.results_json && (
-                    <div className="px-4 pb-4 space-y-2">
-                      {probe.results_json.map((r, i) => (
-                        <div key={i} className="rounded-md p-3" style={{ background: 'var(--paper-2)', border: '1px solid var(--rule)' }}>
-                          <p className="text-[12px] font-semibold mb-1" style={{ color: 'var(--ink)' }}>{r.question}</p>
-                          <p className="text-[12px] leading-relaxed" style={{ color: 'var(--m-muted)' }}>{r.answer}</p>
-                          {r.accuracy && (
-                            <span
-                              className="inline-block mt-1.5 text-[10px] font-medium px-1.5 py-0.5 rounded"
-                              style={{
-                                background: r.accuracy === 'Accurate' ? 'rgba(34,197,94,0.1)' : r.accuracy === 'Partially Accurate' ? 'rgba(234,179,8,0.1)' : 'rgba(239,68,68,0.1)',
-                                color: r.accuracy === 'Accurate' ? 'var(--ok)' : r.accuracy === 'Partially Accurate' ? 'var(--warn)' : 'var(--severe)',
-                              }}
+                  {expanded && (
+                    <div className="px-4 pb-4">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                        {group.answers.map((a) => {
+                          const ac = accuracyColor(a.accuracy);
+                          return (
+                            <div
+                              key={a.model_id}
+                              className="rounded-lg p-4"
+                              style={{ background: 'var(--paper-2)', border: '1px solid var(--rule)' }}
                             >
-                              {r.accuracy}
-                            </span>
-                          )}
-                        </div>
-                      ))}
+                              <div className="flex items-center justify-between mb-2">
+                                <div className="flex items-center gap-2">
+                                  <AIProviderIcon provider={providerKeyToIcon(a.model_id) ?? 'chatgpt'} size={16} />
+                                  <span className="text-[12px] font-semibold" style={{ color: 'var(--ink)' }}>{a.model_label}</span>
+                                </div>
+                                {a.accuracy && (
+                                  <span
+                                    className="text-[10px] font-semibold px-2 py-0.5 rounded-full"
+                                    style={{ background: ac.bg, color: ac.color }}
+                                  >
+                                    {a.accuracy}
+                                  </span>
+                                )}
+                              </div>
+                              <p className="text-[12px] leading-relaxed" style={{ color: 'var(--m-muted)' }}>
+                                {a.answer}
+                              </p>
+                            </div>
+                          );
+                        })}
+                      </div>
                     </div>
                   )}
                 </div>
               );
             })}
           </div>
-        )}
-      </DashCard>
+        </DashCard>
+      )}
 
-      {/* Per-page AI readability */}
+      {/* ── Per-page AI readability ── */}
       {pages.length > 0 && (
         <DashCard>
           <h2 className="text-[15px] font-semibold mb-1" style={{ color: 'var(--ink)' }}>Page-level AI readability</h2>

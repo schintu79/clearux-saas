@@ -1840,9 +1840,9 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
   if (error || !audit) {
     return (
       <div className="max-w-4xl mx-auto py-8 px-4 space-y-4">
-        <Link href="/dashboard/audits" className="inline-flex items-center gap-1.5 text-sm text-m-muted hover:text-ink transition-colors">
+        <Link href="/dashboard/overview" className="inline-flex items-center gap-1.5 text-sm text-m-muted hover:text-ink transition-colors">
           <ArrowLeft size={16} />
-          Back to Audits
+          Back to overview
         </Link>
         <div className="p-6 rounded-xl bg-red-50 border border-red-200">
           <p className="text-red-800 text-sm">{error || 'Audit not found'}</p>
