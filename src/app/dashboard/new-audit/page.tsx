@@ -431,7 +431,7 @@ const NewAuditInner: React.FC = () => {
             const creditRes = await fetch('/api/credits', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ audit_id: audit.id, is_free_first: firstAuditFree }) });
             if (!creditRes.ok) throw new Error('Failed to apply credit');
             writeSelection({ kind: 'brand', brandId: newId });
-            router.push(`/dashboard/overview?brand=${encodeURIComponent(newId)}`);
+            router.push(`/dashboard/competitors?brand=${encodeURIComponent(newId)}`);
             return;
           }
           const checkoutRes = await fetch('/api/stripe/checkout', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ audit_id: audit.id }) });
@@ -533,17 +533,17 @@ const NewAuditInner: React.FC = () => {
         // correct brand even if localStorage hasn't propagated yet.
         const redirectBrandId = resolvedBrandIdRef.current || selectedBrandId;
         if (redirectBrandId) {
-          router.push(`/dashboard/overview?brand=${encodeURIComponent(redirectBrandId)}`);
+          router.push(`/dashboard/competitors?brand=${encodeURIComponent(redirectBrandId)}`);
         } else if (auditType === 'website') {
           try {
             const productUrl = url.startsWith('http') ? url : `https://${url}`;
             const host = new URL(productUrl).hostname.replace(/^www\./, '');
-            router.push(`/dashboard/overview?site=${encodeURIComponent(host)}`);
+            router.push(`/dashboard/competitors?site=${encodeURIComponent(host)}`);
           } catch {
-            router.push('/dashboard/overview');
+            router.push('/dashboard/competitors');
           }
         } else {
-          router.push('/dashboard/overview');
+          router.push('/dashboard/competitors');
         }
         return;
       }

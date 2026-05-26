@@ -4,7 +4,6 @@ import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react'
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import {
-  LayoutDashboard,
   PlusCircle,
   Settings,
   LogOut,
@@ -26,7 +25,8 @@ import {
   Wrench,
   LineChart,
   Server,
-  RefreshCw,
+  Target,
+  Bot,
 } from 'lucide-react';
 import clsx from 'clsx';
 import { AuditBundleProvider } from '@/context/AuditBundleContext';
@@ -466,19 +466,21 @@ const DashboardShell: React.FC<DashboardShellProps> = ({ children }) => {
   // created competing nav and made the audit area feel like a feature gallery.
   const navGroups: NavGroup[] = [
     {
-      label: 'Website',
+      label: 'Analysis',
       items: [
-        { label: 'Overview', href: '/dashboard/overview', icon: BarChart3 },
+        { label: 'Competitors', href: '/dashboard/competitors', icon: Target },
+        { label: 'Brand intelligence', href: '/dashboard/intelligence', icon: BarChart3 },
+        { label: 'AI Perception', href: '/dashboard/ai-perception', icon: Bot, matchPaths: ['/dashboard/ai-readability'] },
+        { label: 'Brand DNA', href: '/dashboard/brand-dna', icon: Fingerprint, matchPaths: ['/dashboard/brand-identity'] },
+      ],
+    },
+    {
+      label: 'Actions',
+      items: [
         { label: 'Find', href: '/dashboard/find', icon: Search, matchPaths: ['/dashboard/audits'] },
         { label: 'Fix', href: '/dashboard/fix', icon: Wrench },
         { label: 'Track', href: '/dashboard/track', icon: LineChart },
         { label: 'Connect site', href: '/dashboard/connect', icon: Server },
-      ],
-    },
-    {
-      label: 'Brand DNA',
-      items: [
-        { label: 'Brand DNA', href: '/dashboard/brand-dna', icon: Fingerprint, matchPaths: ['/dashboard/brand-identity'] },
       ],
     },
   ];
@@ -502,7 +504,7 @@ const DashboardShell: React.FC<DashboardShellProps> = ({ children }) => {
       className={clsx('h-12 flex items-center', collapsed ? 'px-2 justify-between' : 'px-3.5 justify-between')}
       style={{ borderBottom: '1px solid var(--rule)' }}
     >
-      <Link href="/dashboard" className="flex items-center min-w-0" aria-label="Fixpath home">
+      <Link href="/dashboard/competitors" className="flex items-center min-w-0" aria-label="Fixpath home">
         {collapsed ? (
           <Iconmark size={36} />
         ) : (
@@ -544,35 +546,8 @@ const DashboardShell: React.FC<DashboardShellProps> = ({ children }) => {
       >
         {SidebarLogo}
 
-        {/* Dashboard link — always first, prominent */}
-        <div className={clsx('pt-3', collapsed ? 'px-1.5' : 'px-2')}>
-          <Link
-            href="/dashboard"
-            onClick={() => setSidebarOpen(false)}
-            title={collapsed ? 'Dashboard' : undefined}
-            aria-current={pathname === '/dashboard' ? 'page' : undefined}
-            className={clsx(
-              'flex items-center rounded-lg transition-colors text-[13px] font-semibold outline-none',
-              collapsed ? 'justify-center px-0 py-2' : 'gap-2.5 px-3 py-2',
-              pathname === '/dashboard' ? '' : 'hover:bg-black/[0.04]',
-            )}
-            style={{
-              color: 'var(--ink)',
-              background: pathname === '/dashboard' ? 'var(--paper-2)' : undefined,
-              border: pathname === '/dashboard' ? '1px solid var(--rule)' : '1px solid transparent',
-            }}
-          >
-            <LayoutDashboard
-              size={collapsed ? 17 : 16}
-              strokeWidth={2}
-              style={{ color: 'var(--ink)' }}
-            />
-            {!collapsed && <span className="truncate">Dashboard</span>}
-          </Link>
-        </div>
-
-        {/* 40px spacer before workspace section */}
-        <div style={{ minHeight: 40 }} />
+        {/* Spacer before brand selector */}
+        <div style={{ minHeight: 12 }} />
 
         {/* Brand/site selector */}
         {!collapsed && (
@@ -630,7 +605,7 @@ const DashboardShell: React.FC<DashboardShellProps> = ({ children }) => {
                             // Always navigate so the page content updates —
                             // fixes Bug 4 where switching brands during an
                             // active audit would flash and revert.
-                            router.push('/dashboard/overview');
+                            router.push('/dashboard/competitors');
                           }}
                           className="w-full flex items-center gap-2 px-3 py-2 text-left transition-colors hover:bg-black/[0.04]"
                         >
@@ -686,40 +661,9 @@ const DashboardShell: React.FC<DashboardShellProps> = ({ children }) => {
           </div>
         )}
 
-        {/* Context-aware audit actions */}
-        <div className={clsx('pb-2', collapsed ? 'px-2' : 'px-3')}>
-          {selectedSite && !collapsed ? (
-            <div className="flex items-center gap-1.5">
-              <button
-                onClick={() => {
-                  setSidebarOpen(false);
-                  const brandParam = selectedSite.id.startsWith('brand:') ? selectedSite.id.slice(6) : '';
-                  const host = selectedSite.kind === 'site' ? selectedSite.label : '';
-                  router.push(`/dashboard/new-audit?mode=re-audit${brandParam ? `&brand=${brandParam}` : ''}${host ? `&url=${encodeURIComponent(host)}` : ''}`);
-                }}
-                className="flex-1 flex items-center justify-center gap-1.5 px-2 py-[7px] text-[12px] font-medium rounded-md transition-all hover:opacity-90"
-                style={{ background: 'var(--ink)', color: 'var(--paper)' }}
-                title="Re-run website audit for this brand"
-              >
-                <RefreshCw size={12} strokeWidth={1.75} />
-                Re-run audit
-              </button>
-              <button
-                onClick={() => {
-                  setSidebarOpen(false);
-                  const brandParam = selectedSite.id.startsWith('brand:') ? selectedSite.id.slice(6) : '';
-                  const host = selectedSite.kind === 'site' ? selectedSite.label : '';
-                  router.push(`/dashboard/new-audit?mode=dig-deeper${brandParam ? `&brand=${brandParam}` : ''}${host ? `&url=${encodeURIComponent(host)}` : ''}&depth=deep`);
-                }}
-                className="flex-1 flex items-center justify-center gap-1.5 px-2 py-[7px] text-[12px] font-medium rounded-md transition-all hover:opacity-90"
-                style={{ background: 'var(--paper-2)', color: 'var(--ink)', border: '1px solid var(--rule)' }}
-                title="Run a deeper audit"
-              >
-                <Search size={12} strokeWidth={1.75} />
-                Dig deeper
-              </button>
-            </div>
-          ) : (
+        {/* Add new site/brand — only when nothing is selected */}
+        {!selectedSite && (
+          <div className={clsx('pb-2', collapsed ? 'px-2' : 'px-3')}>
             <Link
               href="/dashboard/new-audit"
               onClick={() => setSidebarOpen(false)}
@@ -733,8 +677,8 @@ const DashboardShell: React.FC<DashboardShellProps> = ({ children }) => {
               <PlusCircle size={collapsed ? 16 : 14} strokeWidth={1.75} />
               {!collapsed && 'Add new site or brand'}
             </Link>
-          )}
-        </div>
+          </div>
+        )}
 
         {/* Navigation — Brand workspace nav */}
         <nav aria-label="Dashboard navigation" className={clsx('flex-1 overflow-y-auto pb-2', collapsed ? 'px-1.5' : 'px-2')}>

@@ -88,7 +88,7 @@ function DashboardInner() {
   // which is where that banner has always lived.
   useEffect(() => {
     if (searchParams.get('credits') === 'purchased') {
-      router.replace(`/dashboard/overview?${searchParams.toString()}`);
+      router.replace(`/dashboard/competitors?${searchParams.toString()}`);
     }
   }, [searchParams, router]);
 
@@ -213,7 +213,7 @@ function DashboardInner() {
 
   const handleOpenWorkspace = (row: BrandRow) => {
     writeSelection(selectionFromSidebarId(row.sidebarId));
-    router.push('/dashboard/overview');
+    router.push('/dashboard/competitors');
   };
 
   /* ── Delete state ──────────────────────────────────────── */
