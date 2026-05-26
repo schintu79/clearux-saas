@@ -296,6 +296,25 @@ export default function AIPerceptionPage() {
   // Re-scan state
   const [rescanning, setRescanning] = useState(false);
   const [rescanMessage, setRescanMessage] = useState<string | null>(null);
+  const [rescanAvailable, setRescanAvailable] = useState(true);
+  const [cooldownMessage, setCooldownMessage] = useState<string | null>(null);
+
+  /** Format a cooldown remaining duration into a human-readable string. */
+  const formatCooldown = (nextAtMs: number): string => {
+    const msLeft = Math.max(0, nextAtMs - Date.now());
+    const minutesLeft = Math.ceil(msLeft / (1000 * 60));
+    const hoursLeft = Math.ceil(msLeft / (1000 * 60 * 60));
+    const daysLeft = Math.ceil(msLeft / (1000 * 60 * 60 * 24));
+    let timeStr: string;
+    if (minutesLeft < 60) {
+      timeStr = minutesLeft === 1 ? '1 minute' : `${minutesLeft} minutes`;
+    } else if (hoursLeft < 48) {
+      timeStr = hoursLeft === 1 ? '1 hour' : `${hoursLeft} hours`;
+    } else {
+      timeStr = `${daysLeft} days`;
+    }
+    return `Cooldown resets in ${timeStr}. AI models need time to process new web content.`;
+  };
 
   useEffect(() => {
     const audit = bundle?.audit;
@@ -313,7 +332,26 @@ export default function AIPerceptionPage() {
       .then(r => r.ok ? r.json() : null)
       .then(d => {
         if (!d) return;
-        if (d?.modelProbes) setModelProbes(d.modelProbes);
+        if (d?.modelProbes) {
+          setModelProbes(d.modelProbes);
+          // Compute cooldown from latest probe created_at (168-hour / 7-day window)
+          const COOLDOWN_HOURS = 168;
+          const probes = d.modelProbes as any[];
+          if (probes.length > 0) {
+            const latestCreated = probes
+              .map((p: any) => new Date(p.created_at).getTime())
+              .reduce((a: number, b: number) => Math.max(a, b), 0);
+            const hoursSince = (Date.now() - latestCreated) / (1000 * 60 * 60);
+            if (hoursSince < COOLDOWN_HOURS) {
+              setRescanAvailable(false);
+              const nextAtMs = latestCreated + COOLDOWN_HOURS * 60 * 60 * 1000;
+              setCooldownMessage(formatCooldown(nextAtMs));
+            } else {
+              setRescanAvailable(true);
+              setCooldownMessage(null);
+            }
+          }
+        }
         if (d?.promptResults) setPromptResults(d.promptResults);
         // Also pull brand intelligence from report if available
         if (d?.brandIntelligence) setBiSummary(d.brandIntelligence as BrandIntelligenceSummary);
@@ -449,17 +487,18 @@ export default function AIPerceptionPage() {
         return;
       }
       if (data.cached) {
-        const next = new Date(data.nextScanAvailableAt);
-        const msLeft = Math.max(0, next.getTime() - Date.now());
-        const daysLeft = Math.ceil(msLeft / (1000 * 60 * 60 * 24));
-        setRescanMessage(
-          daysLeft > 1
-            ? `Results are still fresh. Next re-scan available in ${daysLeft} days. AI models need time to process new web content.`
-            : `Results are still fresh. Next re-scan available tomorrow.`
-        );
+        const nextAtMs = new Date(data.nextScanAvailableAt).getTime();
+        const msg = formatCooldown(nextAtMs);
+        setRescanMessage(msg);
+        setRescanAvailable(false);
+        setCooldownMessage(msg);
         return;
       }
       setRescanMessage('Re-scan complete. Results updated.');
+      // After a fresh scan, cooldown starts now (168 hours from now)
+      const freshCooldownMs = Date.now() + 168 * 60 * 60 * 1000;
+      setRescanAvailable(false);
+      setCooldownMessage(formatCooldown(freshCooldownMs));
       const probesRes = await fetch(`/api/audits/intelligence?audit_id=${auditId}`);
       if (probesRes.ok) {
         const d = await probesRes.json();
@@ -504,17 +543,30 @@ export default function AIPerceptionPage() {
           <div className="flex flex-col items-end gap-1.5 flex-shrink-0 pt-1">
             <button
               onClick={handleRescan}
-              disabled={rescanning}
-              className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-[12px] font-medium transition-all disabled:opacity-50"
-              style={{
+              disabled={rescanning || !rescanAvailable}
+              className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-[12px] font-medium transition-all disabled:opacity-60"
+              style={rescanAvailable ? {
                 background: 'var(--ink)',
                 color: 'var(--paper)',
                 border: '1px solid var(--ink)',
+              } : {
+                background: 'var(--rule)',
+                color: 'var(--m-muted)',
+                border: '1px solid var(--rule)',
+                cursor: 'default',
               }}
             >
               <RefreshCw size={13} strokeWidth={1.75} className={rescanning ? 'animate-spin' : ''} />
               {rescanning ? 'Scanning...' : 'Re-scan AI models'}
             </button>
+            {!rescanAvailable && cooldownMessage && !rescanMessage && (
+              <div className="flex items-start gap-1.5 max-w-[280px]">
+                <Info size={12} strokeWidth={1.75} className="mt-0.5 flex-shrink-0" style={{ color: 'var(--m-muted)' }} />
+                <p className="text-[11px] text-right leading-snug" style={{ color: 'var(--m-muted)' }}>
+                  {cooldownMessage}
+                </p>
+              </div>
+            )}
             {rescanMessage && (
               <p className="text-[11px] max-w-[280px] text-right" style={{ color: 'var(--m-muted)' }}>
                 {rescanMessage}
