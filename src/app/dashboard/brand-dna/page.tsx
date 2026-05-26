@@ -46,6 +46,7 @@ import {
   MoreVertical,
   File,
   Image as ImageIcon,
+  Link2,
 } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { createBrowserSupabase } from '@/lib/supabase-ssr';
@@ -267,10 +268,27 @@ export default function BrandDnaPage() {
   const [shareCopied, setShareCopied] = useState(false);
   const [shareLoading, setShareLoading] = useState(false);
   const [deletingAudit, setDeletingAudit] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
+  const menuRef = useRef<HTMLDivElement>(null);
 
   /* ── Collapsible sections ── */
   const [dnaOpen, setDnaOpen] = useState(true);
   const [filesOpen, setFilesOpen] = useState(true);
+
+  /* ── Close menu on outside click / Escape ── */
+  useEffect(() => {
+    if (!menuOpen) return;
+    const onClick = (e: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) setMenuOpen(false);
+    };
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') setMenuOpen(false); };
+    document.addEventListener('mousedown', onClick);
+    document.addEventListener('keydown', onKey);
+    return () => {
+      document.removeEventListener('mousedown', onClick);
+      document.removeEventListener('keydown', onKey);
+    };
+  }, [menuOpen]);
 
   /* ── Load brand identity ── */
   const loadIdentity = useCallback(async () => {
@@ -541,6 +559,16 @@ export default function BrandDnaPage() {
     } finally { setShareLoading(false); }
   };
 
+  /* ── Revoke share link ── */
+  const handleRevokeShare = async () => {
+    if (!audit) return;
+    if (!confirm('Revoke the share link? Anyone with the link will no longer be able to view this audit.')) return;
+    try {
+      await fetch(`/api/audits/${audit.id}/share`, { method: 'DELETE' });
+      setShareUrl(null);
+    } catch {}
+  };
+
   /* ── Delete audit (soft) ── */
   const handleDeleteAudit = async () => {
     if (!audit) return;
@@ -665,23 +693,7 @@ export default function BrandDnaPage() {
         subtitle={selectedLabel ? `Brand identity for ${selectedLabel}` : 'Capture your brand identity so audits can score consistency.'}
       >
         {isAuditCompleted && report && (
-          <>
-            <button
-              onClick={handleShare}
-              disabled={shareLoading}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-[12px] font-semibold transition-all"
-              style={{ color: 'var(--ink)', border: '1px solid var(--rule)' }}
-            >
-              {shareCopied ? <><Check size={11} style={{ color: 'var(--ok)' }} /> Copied</> : shareLoading ? <><Loader2 size={11} className="animate-spin" /> Sharing...</> : <><Share2 size={11} /> Share</>}
-            </button>
-            <button
-              onClick={handleDeleteAudit}
-              disabled={deletingAudit}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-[12px] font-semibold transition-all"
-              style={{ color: 'var(--m-muted)', border: '1px solid var(--rule)' }}
-            >
-              {deletingAudit ? <Loader2 size={11} className="animate-spin" /> : <Trash2 size={11} />} Delete
-            </button>
+          <div className="flex items-center gap-2" ref={menuRef}>
             <button
               onClick={triggerAudit}
               disabled={triggeringAudit}
@@ -690,7 +702,57 @@ export default function BrandDnaPage() {
             >
               <RefreshCw size={11} /> Re-audit
             </button>
-          </>
+            <div className="relative">
+              <button
+                type="button"
+                onClick={() => setMenuOpen((v) => !v)}
+                className="w-8 h-8 inline-flex items-center justify-center rounded-lg bg-card border border-border text-text hover:bg-surface-alt transition-colors"
+                aria-label="More actions"
+                aria-haspopup="menu"
+                aria-expanded={menuOpen}
+              >
+                <MoreVertical size={14} />
+              </button>
+              {menuOpen && (
+                <div
+                  role="menu"
+                  className="absolute right-0 top-10 z-50 w-60 rounded-xl py-1.5 shadow-lg"
+                  style={{ background: 'var(--card)', border: '1px solid var(--rule)' }}
+                >
+                  <button
+                    type="button"
+                    onClick={() => { handleShare(); setMenuOpen(false); }}
+                    className="w-full flex items-center gap-2.5 px-3.5 py-2 text-xs hover:bg-black/[0.04] transition-colors text-left"
+                    style={{ color: 'var(--ink)' }}
+                  >
+                    <Share2 size={13} className="text-m-muted" />
+                    {shareUrl ? 'Copy share link' : 'Create share link'}
+                  </button>
+                  {shareUrl && (
+                    <button
+                      type="button"
+                      onClick={() => { handleRevokeShare(); setMenuOpen(false); }}
+                      className="w-full flex items-center gap-2.5 px-3.5 py-2 text-xs hover:bg-red-50 transition-colors text-left"
+                      style={{ color: 'var(--severe)' }}
+                    >
+                      <Link2 size={13} />
+                      Revoke share link
+                    </button>
+                  )}
+                  <div className="my-1 h-px" style={{ background: 'var(--rule)' }} />
+                  <button
+                    type="button"
+                    onClick={() => { setMenuOpen(false); handleDeleteAudit(); }}
+                    className="w-full flex items-center gap-2.5 px-3.5 py-2 text-xs hover:bg-red-50 transition-colors text-left"
+                    style={{ color: 'var(--severe)' }}
+                  >
+                    <Trash2 size={13} />
+                    Delete this audit
+                  </button>
+                </div>
+              )}
+            </div>
+          </div>
         )}
         {!isAuditCompleted && !isAuditInProgress && hasFiles && (
           <button
