@@ -34,6 +34,7 @@ import {
 import { useAuth } from '@/context/AuthContext';
 import { createBrowserSupabase } from '@/lib/supabase-ssr';
 import {
+  readSelection,
   writeSelection,
   selectionFromSidebarId,
 } from '@/lib/dashboard/brand-selection';
@@ -121,10 +122,32 @@ function DashboardInner() {
         const completed = auditRows.filter((a) => a.status === 'completed');
         const websiteAudits = completed.filter((a) => !a.audit_type || a.audit_type === 'website');
 
+        // Track which brand_identity IDs have actual brand_identity-type audits
+        const brandIdsWithBrandAudits = new Set<string>();
+        for (const a of auditRows) {
+          if (a.brand_identity_id && a.audit_type === 'brand_identity') {
+            brandIdsWithBrandAudits.add(a.brand_identity_id);
+          }
+        }
+
+        // Build set of hostnames covered by brands with brand audits (for dedup)
+        const brandList = ((brandsRes?.identities || []) as any[]);
+        const brandHostnames = new Set<string>();
+        for (const b of brandList) {
+          if (b.website_url && brandIdsWithBrandAudits.has(b.id)) {
+            try {
+              const bHost = new URL(b.website_url).hostname.replace(/^www\./, '');
+              if (bHost) brandHostnames.add(bHost);
+            } catch {}
+          }
+        }
+
         const byDomain = new Map<string, any[]>();
         for (const a of websiteAudits) {
           const host = hostOf(a.product_url);
           if (!host) continue;
+          // Skip site entry if a brand already covers this hostname
+          if (brandHostnames.has(host)) continue;
           if (!byDomain.has(host)) byDomain.set(host, []);
           byDomain.get(host)!.push(a);
         }
@@ -161,8 +184,16 @@ function DashboardInner() {
           });
         }
 
-        const brandList = ((brandsRes?.identities || []) as any[]);
-        const brandRows: BrandRow[] = brandList.map((b) => {
+        // Only show brands that have brand_identity audits OR no website_url
+        // (pure brands). Auto-created brands without brand audits already
+        // appear as site entries above.
+        const brandRows: BrandRow[] = brandList
+          .filter((b: any) => {
+            if (brandIdsWithBrandAudits.has(b.id)) return true;
+            if (!b.website_url) return true;
+            return false;
+          })
+          .map((b: any) => {
           const brandAudits = completed.filter((a) => a.brand_identity_id === b.id);
           const latest = brandAudits[0];
           const prior = brandAudits[1];
@@ -241,6 +272,16 @@ function DashboardInner() {
         if (!res.ok) throw new Error('Failed to delete site');
       }
       setRows((prev) => prev.filter((r) => r.sidebarId !== deleteTarget.sidebarId));
+      // Clear the sidebar selection if it was pointing to the deleted item,
+      // so the dropdown doesn't resurrect it via the placeholder mechanism.
+      const currentSel = readSelection();
+      const deletedSid = deleteTarget.sidebarId;
+      if (currentSel) {
+        const selSid = currentSel.kind === 'site'
+          ? `site:${currentSel.host}`
+          : `brand:${currentSel.brandId}`;
+        if (selSid === deletedSid) writeSelection(null);
+      }
       setDeleteTarget(null);
       setConfirmText('');
     } catch (err) {

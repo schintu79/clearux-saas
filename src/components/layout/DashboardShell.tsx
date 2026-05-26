@@ -272,13 +272,28 @@ const DashboardShell: React.FC<DashboardShellProps> = ({ children }) => {
     for (const id of placeholderAddedRef.current) {
       if (allIds.has(id)) placeholderAddedRef.current.delete(id);
     }
-    // Merge: keep placeholder entries for selections not yet in the real
-    // data (e.g. brand just created, not yet returned by loadSites).
-    // Without this, loadSites drops the placeholder and the ref blocks
-    // re-adding, leaving the selector empty.
+    // Merge: keep placeholder entries ONLY for very recent selections
+    // (e.g. brand just created mid-audit, not yet returned by loadSites).
+    // Stale placeholders for deleted items are purged: if loadSites completed
+    // and an ID isn't in the real data, the entry is gone.
     setSites(prev => {
       const kept = prev.filter(s => !allIds.has(s.id) && placeholderAddedRef.current.has(s.id));
-      return kept.length > 0 ? [...all, ...kept] : all;
+      // Purge stale placeholders — if a placeholder ID isn't in the real
+      // list after a full loadSites, it was likely deleted. Remove from ref
+      // so it won't be re-added, and clear selection if it pointed there.
+      for (const s of kept) {
+        // Give newly-created items a grace period: only purge if the
+        // placeholder has survived at least one full loadSites cycle.
+        // We detect this by checking if the ID was already in prev
+        // before this loadSites ran — i.e. it persisted across a refresh.
+        const wasInPrev = prev.some(p => p.id === s.id);
+        if (wasInPrev) {
+          // This placeholder survived a refresh but still isn't in real data — purge it
+          placeholderAddedRef.current.delete(s.id);
+        }
+      }
+      const finalKept = kept.filter(s => placeholderAddedRef.current.has(s.id));
+      return finalKept.length > 0 ? [...all, ...finalKept] : all;
     });
     setSitesLoaded(true);
     // Default selection: prefer current route context, else most-recent site.
@@ -352,6 +367,11 @@ const DashboardShell: React.FC<DashboardShellProps> = ({ children }) => {
                   ? { ...s, label: brand.name || brandHost || brandId, sub: brandHost ? 'Website' : 'Brand identity', hostname: brandHost || undefined }
                   : s
               ));
+            } else {
+              // Brand not found (deleted) — remove the placeholder and clear selection
+              setSites(p => p.filter(s => s.id !== `brand:${brandId}`));
+              placeholderAddedRef.current.delete(`brand:${brandId}`);
+              writeSelection(null);
             }
           })
           .catch(() => {});
