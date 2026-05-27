@@ -584,11 +584,15 @@ function OverviewInner() {
   const productUrl = audit.product_url || (domain ? `https://${domain}` : '');
 
   const openFindings = findings.filter((f) => f.status !== 'fixed' && !f.dismissed && (f as any).verification_status !== 'verified_fixed');
+  // Exclude strategic findings from severity counts — the Fix page filters
+  // them out, so the alert banner count must match what the user sees after
+  // clicking "Triage now".
+  const fixableOpen = openFindings.filter((f) => (f as any).finding_type !== 'strategic');
   const severityCounts = {
-    critical: openFindings.filter((f) => f.severity === 'critical').length,
-    high: openFindings.filter((f) => f.severity === 'high').length,
-    medium: openFindings.filter((f) => f.severity === 'medium').length,
-    low: openFindings.filter((f) => f.severity === 'low').length,
+    critical: fixableOpen.filter((f) => f.severity === 'critical').length,
+    high: fixableOpen.filter((f) => f.severity === 'high').length,
+    medium: fixableOpen.filter((f) => f.severity === 'medium').length,
+    low: fixableOpen.filter((f) => f.severity === 'low').length,
   };
 
   // Pillar/module scores for radar + Brand Health module dots.
