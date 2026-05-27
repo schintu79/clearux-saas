@@ -30,7 +30,9 @@ import {
   Users,
   Crown,
   BarChart3,
+  ArrowRight,
 } from 'lucide-react';
+import Link from 'next/link';
 import { useAuth } from '@/context/AuthContext';
 import { useAuditBundle } from '@/context/AuditBundleContext';
 import { useBrandSelection } from '@/lib/dashboard/useBrandSelection';
@@ -174,6 +176,7 @@ function AIVisibilityPerceptionCard({
   brandName,
   brandDomain,
   brandAiVisibility,
+  brandOverallScore,
   competitorMentions,
   drafts,
   trendSnapshots,
@@ -182,6 +185,8 @@ function AIVisibilityPerceptionCard({
   brandName: string;
   brandDomain: string | null;
   brandAiVisibility: number | null;
+  /** Fallback score when no AI-specific visibility exists (overall report score). */
+  brandOverallScore: number | null;
   competitorMentions: {
     brand: { mentions: number; avgPlacement: number };
     competitors: Array<{ name: string; mentions: number; avgPlacement: number; placements: number[] }>;
@@ -195,25 +200,36 @@ function AIVisibilityPerceptionCard({
 
   // Build ranked entries: brand + competitors by AI visibility %
   // Primary source: LLM probe mention data. Fallback: competitor_benchmarks scores.
+  // The audited brand is ALWAYS included so the user can see their position.
   const rankedEntries = useMemo<VisRankedEntry[]>(() => {
     const entries: VisRankedEntry[] = [];
 
-    // Brand entry — use real AI visibility score
-    if (brandAiVisibility != null) {
-      entries.push({
-        name: brandName,
-        domain: brandDomain || '',
-        visibility: brandAiVisibility,
-        isBrand: true,
-        color: CHART_COLORS[0],
-      });
+    // Resolve brand visibility: prefer explicit AI visibility score,
+    // then compute from probe mention rate, finally fall back to overall score.
+    // Mention rate is capped at 99 — 100% implies perfect AI coverage which is
+    // unrealistic and confuses users ("no one can actually be 100%").
+    let effectiveBrandVis: number | null = brandAiVisibility;
+    if (effectiveBrandVis == null && competitorMentions.totalPrompts > 0) {
+      effectiveBrandVis = Math.min(
+        99,
+        Math.round((competitorMentions.brand.mentions / competitorMentions.totalPrompts) * 100),
+      );
     }
 
     // Primary: competitor entries from LLM probe mention rates
     if (competitorMentions.totalPrompts > 0) {
+      // Always include the brand when probe data exists
+      entries.push({
+        name: brandName,
+        domain: brandDomain || '',
+        visibility: effectiveBrandVis ?? 0,
+        isBrand: true,
+        color: CHART_COLORS[0],
+      });
+
       competitorMentions.competitors.forEach((cm, idx) => {
         const matchedDraft = drafts.find(d => d.domain.includes(cm.name) || (d.name || '').toLowerCase().includes(cm.name));
-        const mentionRate = Math.round((cm.mentions / competitorMentions.totalPrompts) * 100);
+        const mentionRate = Math.min(99, Math.round((cm.mentions / competitorMentions.totalPrompts) * 100));
         entries.push({
           name: matchedDraft?.name || cm.name,
           domain: matchedDraft?.domain || cm.name,
@@ -224,7 +240,16 @@ function AIVisibilityPerceptionCard({
       });
     } else if (drafts.length > 0) {
       // Fallback: use competitor_benchmarks scores when no probe data exists yet.
-      // This ensures the card renders a comparison even before LLM probes run.
+      // Include the brand with its overall score for a fair comparison.
+      if (brandOverallScore != null) {
+        entries.push({
+          name: brandName,
+          domain: brandDomain || '',
+          visibility: Math.min(brandOverallScore, 100),
+          isBrand: true,
+          color: CHART_COLORS[0],
+        });
+      }
       drafts.forEach((d, idx) => {
         entries.push({
           name: d.name || d.domain,
@@ -234,10 +259,19 @@ function AIVisibilityPerceptionCard({
           color: CHART_COLORS[(idx + 1) % CHART_COLORS.length],
         });
       });
+    } else if (effectiveBrandVis != null) {
+      // No competitors at all but brand has AI visibility data — still show it
+      entries.push({
+        name: brandName,
+        domain: brandDomain || '',
+        visibility: effectiveBrandVis,
+        isBrand: true,
+        color: CHART_COLORS[0],
+      });
     }
 
     return entries.sort((a, b) => b.visibility - a.visibility);
-  }, [brandName, brandDomain, brandAiVisibility, competitorMentions, drafts]);
+  }, [brandName, brandDomain, brandAiVisibility, brandOverallScore, competitorMentions, drafts]);
 
   // Historical trend data for the brand
   const brandTrend = useMemo(() => {
@@ -257,12 +291,17 @@ function AIVisibilityPerceptionCard({
     const brandEntry = rankedEntries.find(e => e.isBrand);
     if (!brandEntry) return null;
     const brandIdx = rankedEntries.indexOf(brandEntry);
-    const leader = rankedEntries[0];
-    const gap = leader.visibility - brandEntry.visibility;
 
     if (brandIdx === 0) {
-      return `${brandName} leads with ${brandEntry.visibility}% AI visibility, ${gap === 0 && rankedEntries.length > 1 ? 'tied with ' + rankedEntries[1].name : gap + ' points ahead of ' + (rankedEntries[1]?.name || 'competitors')}.`;
+      const secondPlace = rankedEntries[1];
+      const leadGap = brandEntry.visibility - secondPlace.visibility;
+      if (leadGap === 0) {
+        return `${brandName} leads with ${brandEntry.visibility}% AI visibility, tied with ${secondPlace.name}.`;
+      }
+      return `${brandName} leads with ${brandEntry.visibility}% AI visibility, ${leadGap} points ahead of ${secondPlace.name}.`;
     }
+    const leader = rankedEntries[0];
+    const gap = leader.visibility - brandEntry.visibility;
     return `${brandName} ranks #${brandIdx + 1} at ${brandEntry.visibility}% — ${gap} points behind ${leader.name}.`;
   }, [rankedEntries, brandName]);
 
@@ -285,13 +324,14 @@ function AIVisibilityPerceptionCard({
     );
   }
 
-  // Empty state — differentiate between "no competitors at all" vs "data not yet computed"
-  if (rankedEntries.length < 2) {
+  // Empty state — show when there are no entries at all, or only the brand with no competitors
+  const hasCompetitorEntries = rankedEntries.some(e => !e.isBrand);
+  if (rankedEntries.length === 0 || (!hasCompetitorEntries && rankedEntries.length < 2)) {
     const hasCompetitors = drafts.length > 0;
     return (
       <DashCard>
         <SectionTitle>AI visibility perception</SectionTitle>
-        <SectionDesc>Ranking of the added brands based on AI visibility</SectionDesc>
+        <SectionDesc>How your brand ranks against competitors in AI responses</SectionDesc>
         <div className="text-center py-10">
           <BarChart3 size={28} strokeWidth={1.5} style={{ color: 'var(--m-muted)' }} className="mx-auto mb-3" />
           <p className="text-[13px] font-medium" style={{ color: 'var(--ink)' }}>
@@ -300,7 +340,7 @@ function AIVisibilityPerceptionCard({
           <p className="text-[12px] mt-1" style={{ color: 'var(--m-muted)' }}>
             {hasCompetitors
               ? 'Competitor data has been uploaded. Run an audit with AI probes enabled to generate visibility scores.'
-              : drafts.length === 0 && rankedEntries.length === 0
+              : drafts.length === 0
                 ? 'Run an audit with AI probes enabled, then add competitors to compare AI visibility.'
                 : 'Add at least one competitor to see how your brand compares in AI visibility.'}
           </p>
@@ -316,7 +356,7 @@ function AIVisibilityPerceptionCard({
       <div className="flex items-start justify-between mb-1">
         <div>
           <SectionTitle>AI visibility perception</SectionTitle>
-          <SectionDesc>Ranking of the added brands based on AI visibility</SectionDesc>
+          <SectionDesc>How your brand ranks against competitors in AI responses</SectionDesc>
         </div>
         {rankedEntries.find(e => e.isBrand) && (
           <div
@@ -422,6 +462,18 @@ function AIVisibilityPerceptionCard({
           {insightText}
         </div>
       )}
+
+      {/* ── Link to AI Perception tab ────────────────── */}
+      <div className="mt-4 pt-3" style={{ borderTop: '1px solid var(--rule)' }}>
+        <Link
+          href="/dashboard/ai-perception"
+          className="inline-flex items-center gap-1.5 text-[12px] font-medium transition-opacity hover:opacity-70"
+          style={{ color: 'var(--m-muted)' }}
+        >
+          Want to improve AI visibility? Go to AI Perception
+          <ArrowRight size={12} />
+        </Link>
+      </div>
     </DashCard>
   );
 }
@@ -855,12 +907,12 @@ export default function CompetitorsPage() {
               <button
                 onClick={() => setShowEditor(!showEditor)}
                 className="flex items-center gap-1 px-2.5 py-1 text-[12px] font-medium rounded-md transition-colors"
-                style={{
-                  color: 'var(--ink)',
-                  border: '1px solid var(--rule)',
-                }}
+                style={showEditor
+                  ? { background: 'var(--signal)', color: '#fff', border: '1px solid var(--signal)' }
+                  : { color: 'var(--ink)', border: '1px solid var(--rule)' }
+                }
               >
-                <Pencil size={12} />
+                {showEditor ? <X size={12} /> : <Pencil size={12} />}
                 {showEditor ? 'Done editing' : 'Edit'}
               </button>
             )}
@@ -907,6 +959,17 @@ export default function CompetitorsPage() {
           </div>
         )}
 
+        {/* Edit mode banner */}
+        {showEditor && (
+          <div
+            className="flex items-center gap-2 px-3 py-2 rounded-md mb-3 text-[12px] font-medium"
+            style={{ background: 'color-mix(in srgb, var(--signal) 8%, transparent)', color: 'var(--signal)', border: '1px solid color-mix(in srgb, var(--signal) 20%, transparent)' }}
+          >
+            <Pencil size={12} />
+            Editing competitors — change domains, remove entries, then press Save.
+          </div>
+        )}
+
         {drafts.length === 0 && !showEditor ? (
           <div className="text-center py-10">
             <Target size={28} strokeWidth={1.5} style={{ color: 'var(--m-muted)' }} className="mx-auto mb-3" />
@@ -914,7 +977,7 @@ export default function CompetitorsPage() {
             <p className="text-[12px] mt-1 mb-4" style={{ color: 'var(--m-muted)' }}>Use auto-detect to find competitors in your industry, or add them manually.</p>
           </div>
         ) : (
-          <div className="overflow-x-auto -mx-5 px-5">
+          <div className="overflow-x-auto -mx-5 px-5" style={showEditor ? { borderLeft: '3px solid var(--signal)', paddingLeft: '17px' } : undefined}>
             <table className="w-full text-[12px]" style={{ minWidth: 600 }}>
               <thead>
                 <tr style={{ borderBottom: '1px solid var(--rule)' }}>
@@ -985,8 +1048,8 @@ export default function CompetitorsPage() {
                               value={c.domain}
                               onChange={e => updateDraft(c.id, 'domain', e.target.value)}
                               placeholder="competitor.com"
-                              className="w-full text-[13px] bg-transparent outline-none font-medium"
-                              style={{ color: 'var(--ink)' }}
+                              className="w-full text-[13px] outline-none font-medium px-2 py-0.5 rounded"
+                              style={{ color: 'var(--ink)', background: 'color-mix(in srgb, var(--signal) 6%, transparent)', border: '1px solid color-mix(in srgb, var(--signal) 25%, transparent)' }}
                             />
                           ) : (
                             <span className="text-[13px] font-medium truncate" style={{ color: 'var(--ink)' }}>{c.name || c.domain}</span>
@@ -1094,6 +1157,7 @@ export default function CompetitorsPage() {
         brandName={brandName}
         brandDomain={domain}
         brandAiVisibility={biSummary?.aiVisibility ?? null}
+        brandOverallScore={userScore}
         competitorMentions={competitorMentions}
         drafts={drafts}
         trendSnapshots={trendSnapshots}

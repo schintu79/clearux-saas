@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Globe } from 'lucide-react';
 
 interface SiteFaviconProps {
@@ -11,6 +11,15 @@ interface SiteFaviconProps {
 
 export default function SiteFavicon({ hostname, size = 16, className }: SiteFaviconProps) {
   const [error, setError] = useState(false);
+  const prevHostRef = useRef(hostname);
+
+  // Reset error state when hostname changes so a new favicon can load
+  useEffect(() => {
+    if (prevHostRef.current !== hostname) {
+      setError(false);
+      prevHostRef.current = hostname;
+    }
+  }, [hostname]);
 
   if (error || !hostname) {
     return <Globe size={size} strokeWidth={1.75} className={className} />;
