@@ -473,7 +473,13 @@ function OverviewInner() {
   }, [latestCompleted, invalidate]);
 
   /* ── Loading skeleton ─────────────────────────────────── */
-  if (authLoading || bundleLoading || !ready) {
+  // Show skeleton only during the very first load (no bundle yet) or
+  // before auth/selection have hydrated. Once a bundle has been loaded
+  // at least once (even if a background refetch is in progress), skip
+  // the skeleton so the user sees real content. This prevents a stall
+  // where invalidate() bumps the fetch counter, causing the primary
+  // load's .finally() to never set loading=false.
+  if (authLoading || !ready || (bundleLoading && !bundle)) {
     return (
       <div className="w-full">
         <OverviewTabs />
