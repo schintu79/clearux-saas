@@ -633,9 +633,13 @@ async function jinaFetch(url: string, timeoutMs: number = 10000): Promise<Crawle
 
 /* ── Multi-strategy fetch (parallel direct + Jina) ────────── */
 
+const PAGE_FETCH_TIMEOUT_MS = 30_000 // 30s hard budget per page fetch
+
 async function fetchPageRobust(url: string): Promise<CrawledPage | null> {
   // Run direct fetch and Jina in PARALLEL — use whichever succeeds first.
   // Google Cache was removed (Google discontinued it in 2024).
+  // Wrapped in a hard timeout to prevent any single page from blocking the crawl.
+  const fetchBody = async (): Promise<CrawledPage | null> => {
   const directPromise = directFetch(url).catch(() => null)
   const jinaPromise = jinaFetch(url).catch(() => null)
 
@@ -674,6 +678,23 @@ async function fetchPageRobust(url: string): Promise<CrawledPage | null> {
     statusCode: null,
     loadTimeMs: null,
     crawledAt: new Date().toISOString(),
+  }
+  } // end fetchBody
+
+  // Hard timeout wrapper — prevents any single page from blocking the crawl
+  let timer: ReturnType<typeof setTimeout>
+  try {
+    return await Promise.race([
+      fetchBody(),
+      new Promise<null>((_, reject) => {
+        timer = setTimeout(() => reject(new Error(`Page fetch timed out after ${PAGE_FETCH_TIMEOUT_MS}ms`)), PAGE_FETCH_TIMEOUT_MS)
+      }),
+    ])
+  } catch (err) {
+    console.warn(`[crawler] ${url} timed out after ${PAGE_FETCH_TIMEOUT_MS}ms — skipping`)
+    return null
+  } finally {
+    clearTimeout(timer!)
   }
 }
 

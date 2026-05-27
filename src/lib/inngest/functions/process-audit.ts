@@ -625,11 +625,9 @@ Return 2-6 findings. Be specific and evidence-based. Reference specific files/co
         )
       }
 
-      // ── Soft-block detection ──────────────────────────────────
-      // Some sites pass preflight (return 200 with real HTML) but serve
-      // challenge pages, JS-only shells, or heavily restricted content to
-      // automated crawlers. If the homepage content is too thin to produce
-      // a meaningful audit, treat it as effectively blocked.
+      // ── Fail-fast detection ──────────────────────────────────
+      // Detect blocked, challenge, thin, rate-limited, or geo-blocked
+      // pages BEFORE spending time on downstream analysis.
       const homeContentText = (crawledPages[0]?.contentText || '').replace(/\s+/g, ' ').trim()
       const SOFT_BLOCK_MARKERS = [
         /just a moment/i, /checking your browser/i, /enable javascript/i,
@@ -637,6 +635,11 @@ Return 2-6 findings. Be specific and evidence-based. Reference specific files/co
         /access denied/i, /captcha/i, /verify you are human/i,
         /cloudflare/i, /ray id/i, /challenge-platform/i,
         /datadome/i, /perimeterx/i, /incapsula/i,
+        // Geo-blocking and rate-limiting patterns
+        /not available in your (?:region|country)/i,
+        /this content is not available/i,
+        /rate limit(?:ed|ing)?\b/i, /too many requests/i,
+        /automated (?:access|requests?) (?:not|is not) allowed/i,
       ]
       const matchedSoftBlock = SOFT_BLOCK_MARKERS.find(p => p.test(homeContentText))
       if (matchedSoftBlock) {
@@ -657,33 +660,44 @@ Return 2-6 findings. Be specific and evidence-based. Reference specific files/co
         )
       }
 
-      // Store pages in DB
+      // Fail-fast: if >80% of crawled pages returned no content, the crawl is degraded
+      const goodPages = crawledPages.filter(p => p.contentText && p.contentText.length >= 200)
+      if (crawledPages.length > 3 && goodPages.length <= 1) {
+        console.warn(`[inngest] Fail-fast: only ${goodPages.length}/${crawledPages.length} pages had usable content`)
+        auditLimitations.push({
+          id: 'degraded_crawl',
+          title: 'Limited content access',
+          description: `Only ${goodPages.length} of ${crawledPages.length} pages returned usable content. The site may have rate limiting, bot protection on inner pages, or require JavaScript rendering. Scores are based on the accessible pages only.`,
+        })
+      }
+
+      // Store pages in DB — batch insert for speed (was individual inserts)
       const db = getDb()
-      for (const page of crawledPages) {
-        await db.from('audit_pages').insert({
-          audit_id: auditId,
-          url: page.url,
-          title: page.title,
-          h1: page.h1,
-          meta_description: page.metaDescription,
-          content_text: page.contentText,
-          links_found: page.linksFound,
-          broken_links: [],
-          has_structured_data: false,
-          structured_data: null,
-          status_code: page.statusCode,
-          load_time_ms: null,
-          is_mobile_friendly: null,
-          viewport_meta: null,
-          crawled_at: page.crawledAt,
-          // Crawl metadata (Fix 4)
-          crawl_status: page.contentText && page.contentText.length > 50 ? 'success' : (page.blockedByBot ? 'blocked' : 'failed'),
-          skip_reason: page.blockedByBot ? (page.blockReason || 'Bot protection') : null,
-          canonical_url: page.headTags?.canonical || null,
-          is_duplicate: false,
-          page_type: 'content',
-          fetch_strategy: page.fetchStrategy || null,
-        } as any)
+      const pageInserts = crawledPages.map(page => ({
+        audit_id: auditId,
+        url: page.url,
+        title: page.title,
+        h1: page.h1,
+        meta_description: page.metaDescription,
+        content_text: page.contentText,
+        links_found: page.linksFound,
+        broken_links: [],
+        has_structured_data: false,
+        structured_data: null,
+        status_code: page.statusCode,
+        load_time_ms: null,
+        is_mobile_friendly: null,
+        viewport_meta: null,
+        crawled_at: page.crawledAt,
+        crawl_status: page.contentText && page.contentText.length > 50 ? 'success' : (page.blockedByBot ? 'blocked' : 'failed'),
+        skip_reason: page.blockedByBot ? (page.blockReason || 'Bot protection') : null,
+        canonical_url: page.headTags?.canonical || null,
+        is_duplicate: false,
+        page_type: 'content',
+        fetch_strategy: page.fetchStrategy || null,
+      }))
+      if (pageInserts.length > 0) {
+        await db.from('audit_pages').insert(pageInserts as any)
       }
 
       // Build crawl summary payload
@@ -740,15 +754,61 @@ Return 2-6 findings. Be specific and evidence-based. Reference specific files/co
       ]
       const AUTH_PATH_SEGMENTS = ['/dashboard', '/app', '/admin', '/account', '/settings', '/profile', '/billing']
 
-      const filteredPages = crawledPages.filter((p) => {
+      const authFiltered = crawledPages.filter((p) => {
         const url = p.url || ''
         const isAuthPath = AUTH_PATH_SEGMENTS.some((seg) => url.includes(seg))
         if (!isAuthPath) return true
-        // Page is behind a known auth path — check if content looks like a login form
         const content = (p.contentText || '').toLowerCase()
         const hitCount = AUTH_PAGE_SIGNALS.filter((pat) => pat.test(content)).length
-        return hitCount < 2 // Need 2+ signals to consider it an auth wall
+        return hitCount < 2
       })
+
+      // ── Pre-analysis content quality filter ──
+      // Skip thin content, error pages, and near-duplicates before
+      // expensive AI analysis to avoid wasting tokens on low-value pages.
+      // Homepage is always kept regardless of content quality.
+      const ERROR_PAGE_SIGNALS = [
+        /^404\b|page\s+not\s+found|doesn.t\s+exist/i,
+        /^403\b|access\s+denied|forbidden/i,
+        /^500\b|internal\s+server\s+error/i,
+        /under\s+(?:construction|maintenance)/i,
+        /coming\s+soon/i,
+      ]
+      const MIN_CONTENT_LENGTH = 200 // characters — below this, content is too thin for useful AI analysis
+      const seenContentHashes = new Set<string>()
+
+      const filteredPages = authFiltered.filter((p, idx) => {
+        // Always keep homepage (first page)
+        if (idx === 0) {
+          const hash = (p.contentText || '').substring(0, 500).toLowerCase().replace(/\s+/g, ' ')
+          seenContentHashes.add(hash)
+          return true
+        }
+        const content = p.contentText || ''
+        // Skip thin content pages
+        if (content.length < MIN_CONTENT_LENGTH) {
+          console.log(`[inngest] Pre-filter: skipping thin page ${p.url} (${content.length} chars)`)
+          return false
+        }
+        // Skip error pages
+        if (ERROR_PAGE_SIGNALS.some(pat => pat.test(content.substring(0, 500)))) {
+          console.log(`[inngest] Pre-filter: skipping error page ${p.url}`)
+          return false
+        }
+        // Skip near-duplicate pages (first 500 chars match)
+        const hash = content.substring(0, 500).toLowerCase().replace(/\s+/g, ' ')
+        if (seenContentHashes.has(hash)) {
+          console.log(`[inngest] Pre-filter: skipping near-duplicate page ${p.url}`)
+          return false
+        }
+        seenContentHashes.add(hash)
+        return true
+      })
+
+      if (filteredPages.length < authFiltered.length) {
+        const skipped = authFiltered.length - filteredPages.length
+        console.log(`[inngest] Pre-analysis filter: ${skipped} page(s) skipped (thin/error/duplicate), ${filteredPages.length} kept for AI analysis`)
+      }
 
       const pageContent = filteredPages
         .map((p) => {
@@ -774,12 +834,19 @@ Return 2-6 findings. Be specific and evidence-based. Reference specific files/co
         .filter((p) => p.headTags)
         .map((p) => ({ url: p.url, headTags: p.headTags! }))
 
+      // Crawl quality flag: 'full' (3+ good pages), 'limited' (1-2), 'homepage-only' (1)
+      const crawlQuality = filteredPages.length >= 3 ? 'full' : filteredPages.length >= 2 ? 'limited' : 'homepage-only'
+      if (crawlQuality !== 'full') {
+        console.log(`[inngest] Crawl quality: ${crawlQuality} (${filteredPages.length} usable pages from ${crawledPages.length} crawled)`)
+      }
+
       return {
         pageCount: crawledPages.length,
         pageContent, // Passed to analysis steps
         firstPageUrl: crawledPages[0]?.url || '',
         crawledUrls: crawledPages.map((p) => p.url).filter(Boolean) as string[],
         headTags: allHeadTags,
+        crawlQuality, // Used by downstream steps to adjust scope
       }
     })
 
@@ -1123,44 +1190,32 @@ Return 2-6 findings. Be specific and evidence-based. Reference specific files/co
               .order('sort_order', { ascending: false })
               .limit(1)
             let sortOrder = ((existingFindings?.[0] as any)?.sort_order ?? -1) + 1
-            for (const finding of result.findings) {
-              // Structured data findings are always fixable (schema type)
+            // Batch insert all structured data findings at once
+            const sdInserts = result.findings.map(finding => {
               const classification = classifyFinding({
-                title: finding.title,
-                description: finding.description,
-                recommendation: finding.recommendation,
-                severity: finding.severity,
+                title: finding.title, description: finding.description,
+                recommendation: finding.recommendation, severity: finding.severity,
                 categoryIndex: finding.categoryIndex ?? 17,
               })
               const validated = validateFixableRecommendation({
                 ...finding, ...classification,
-                title: finding.title,
-                description: finding.description,
-                recommendation: finding.recommendation,
-                severity: finding.severity,
+                title: finding.title, description: finding.description,
+                recommendation: finding.recommendation, severity: finding.severity,
               })
-              await db.from('audit_findings').insert({
-                audit_id: auditId,
-                checklist_item_id: null,
-                category_index: finding.categoryIndex ?? 17,
-                severity: finding.severity,
-                title: finding.title,
-                description: finding.description,
-                evidence: null,
+              return {
+                audit_id: auditId, checklist_item_id: null,
+                category_index: finding.categoryIndex ?? 17, severity: finding.severity,
+                title: finding.title, description: finding.description, evidence: null,
                 page_url: finding.pageUrl || crawlResult.firstPageUrl,
                 recommendation: finding.recommendation,
-                estimated_impact: finding.estimatedImpact || null,
-                target_element: null,
-                sort_order: sortOrder++,
-                status: 'open',
-                dismissed: false,
-                finding_type: validated.findingType,
-                fix_type: validated.fixType,
-                confidence_level: 'deterministic',
-                detection_source: 'structured_data',
+                estimated_impact: finding.estimatedImpact || null, target_element: null,
+                sort_order: sortOrder++, status: 'open', dismissed: false,
+                finding_type: validated.findingType, fix_type: validated.fixType,
+                confidence_level: 'deterministic', detection_source: 'structured_data',
                 ...computeActionModelFields({ title: finding.title, description: finding.description, recommendation: finding.recommendation, fix_type: validated.fixType, finding_type: validated.findingType }),
-              } as any)
-            }
+              }
+            })
+            await db.from('audit_findings').insert(sdInserts as any)
           }
           return { summary, findingsCount: result.findings.length, typesFound: result.typesFound }
         } catch (err) {
@@ -1236,16 +1291,14 @@ Return 2-6 findings. Be specific and evidence-based. Reference specific files/co
           const session = await runLlmProbe(domain, groundTruth)
           const summary = formatLlmProbeForAnalysis(session)
           const db = getDb()
-          for (const r of session.results) {
-            await db.from('llm_probe_results').insert({
-              audit_id: auditId,
-              question: r.question,
-              answer: r.answer,
-              accuracy: r.accuracy,
-              accuracy_note: r.accuracyNote,
-              cited_url: r.citedUrl,
-              model_used: r.modelUsed,
-            } as any)
+          // Batch insert all LLM probe results at once
+          if (session.results.length > 0) {
+            const probeInserts = session.results.map(r => ({
+              audit_id: auditId, question: r.question, answer: r.answer,
+              accuracy: r.accuracy, accuracy_note: r.accuracyNote,
+              cited_url: r.citedUrl, model_used: r.modelUsed,
+            }))
+            await db.from('llm_probe_results').insert(probeInserts as any)
           }
           await auditLog(auditId, 'llm_probe_completed', 'success',
             `LLM probe: ${session.accuracySummary.scorePercent}% accuracy`)
@@ -1323,22 +1376,17 @@ Return 2-6 findings. Be specific and evidence-based. Reference specific files/co
             }).filter((p: { url: string }) => p.url),
           }
           const comparison = await runMultiModelBenchmark(domain, groundTruth)
-          for (const b of comparison.benchmarks) {
-            await db.from('multi_model_probes').insert({
-              audit_id: auditId,
-              model_id: b.modelId,
-              model_label: b.modelLabel,
-              accuracy_score: b.accuracyScore,
-              accurate_count: b.accurateCount,
-              partial_count: b.partialCount,
-              inaccurate_count: b.inaccurateCount,
-              hallucinated_count: b.hallucinatedCount,
-              no_data_count: b.noDataCount,
-              total_questions: b.totalQuestions,
-              results_json: b.results as any,
-              status: b.status,
-              error_message: b.errorMessage,
-            } as any)
+          // Batch insert all multi-model benchmark results at once
+          if (comparison.benchmarks.length > 0) {
+            const benchInserts = comparison.benchmarks.map(b => ({
+              audit_id: auditId, model_id: b.modelId, model_label: b.modelLabel,
+              accuracy_score: b.accuracyScore, accurate_count: b.accurateCount,
+              partial_count: b.partialCount, inaccurate_count: b.inaccurateCount,
+              hallucinated_count: b.hallucinatedCount, no_data_count: b.noDataCount,
+              total_questions: b.totalQuestions, results_json: b.results as any,
+              status: b.status, error_message: b.errorMessage,
+            }))
+            await db.from('multi_model_probes').insert(benchInserts as any)
           }
           const industry = detectIndustry(
             auditDetails.productType,
@@ -1696,26 +1744,17 @@ RULES FOR RE-AUDIT:
         const db = getDb()
         const prevFindings = siteContext.previousRawFindings
         let sortOrder = 0
-        let copiedCount = 0
         let droppedFixed = 0
         let droppedDismissed = 0
 
+        // Build batch insert array — was individual INSERT loop
+        const batchInserts: any[] = []
         for (const pf of prevFindings) {
-          // Skip dismissed findings
-          if (pf.dismissed) {
-            droppedDismissed++
-            continue
-          }
-          // Skip fixed findings
-          if (pf.status === 'fixed') {
-            droppedFixed++
-            continue
-          }
-          // Copy [OPEN], [IN PROGRESS], [BACKLOG] findings as-is
-          // Preserve finding_type/fix_type from previous audit if available
+          if (pf.dismissed) { droppedDismissed++; continue }
+          if (pf.status === 'fixed') { droppedFixed++; continue }
           const pfFindingType = (pf as any).finding_type || 'fixable'
           const pfFixType = (pf as any).fix_type || null
-          await db.from('audit_findings').insert({
+          batchInserts.push({
             audit_id: auditId,
             checklist_item_id: null,
             category_index: (pf as any).category_index ?? null,
@@ -1734,10 +1773,14 @@ RULES FOR RE-AUDIT:
             confidence_level: (pf as any).confidence_level || 'heuristic',
             detection_source: 'gap_fill',
             ...computeActionModelFields({ title: pf.title, description: pf.description, recommendation: pf.recommendation, fix_type: pfFixType, finding_type: pfFindingType }),
-          } as any)
-          copiedCount++
+          })
         }
 
+        if (batchInserts.length > 0) {
+          await db.from('audit_findings').insert(batchInserts as any)
+        }
+
+        const copiedCount = batchInserts.length
         await auditLog(auditId, 'baseline_findings_copied', 'success',
           `Baseline: ${copiedCount} findings carried forward, ${droppedFixed} fixed, ${droppedDismissed} dismissed`, {
             copied: copiedCount,
@@ -1783,24 +1826,23 @@ RULES FOR RE-AUDIT:
           auditDetails.language,
         )
 
-        // Try to update findings in DB (columns may not exist yet — graceful fallback)
+        // Update findings in DB in parallel (columns may not exist yet — graceful fallback)
         let likelyFixedCount = 0
         let poorlyFixedCount = 0
         for (const result of verificationResults) {
-          try {
-            await db
-              .from('audit_findings')
-              .update({
-                verification_status: result.status,
-                verification_note: result.note,
-              } as any)
-              .eq('id', result.findingId)
-          } catch (e) {
-            // Columns may not exist yet — that's OK, results are carried in memory
-          }
-
           if (result.status === 'likely_fixed') likelyFixedCount++
           if (result.status === 'poorly_fixed') poorlyFixedCount++
+        }
+        try {
+          await Promise.all(
+            verificationResults.map(result =>
+              db.from('audit_findings')
+                .update({ verification_status: result.status, verification_note: result.note } as any)
+                .eq('id', result.findingId)
+            )
+          )
+        } catch (e) {
+          // Columns may not exist yet — that's OK, results are carried in memory
         }
 
         await auditLog(auditId, 'verification_completed', 'success',
@@ -2103,20 +2145,23 @@ RULES FOR RE-AUDIT:
           let findingsInBatch = 0
 
           console.log(`[inngest] Batch ${batchIdx + 1}: ${batch.join(', ')}`)
+          const CATEGORY_TIMEOUT_MS = 45_000 // 45s hard budget per category
           const batchResults = await Promise.all(
-            batch.map((categoryName) => {
-              // Use brand-enriched content for brand consistency categories
+            batch.map(async (categoryName) => {
               const content = brandCategoryNames.has(categoryName)
                 ? brandContentWithContext
                 : contentWithContext
-              return analyzeCategory(
-                content,
-                categoryName,
-                [],
-                auditDetails.userFocus,
-                auditDetails.language,
-                'deep', // Always 'deep' here — baseline path doesn't call analyzeCategory
-              )
+              try {
+                const result = await withTimeout(
+                  analyzeCategory(content, categoryName, [], auditDetails.userFocus, auditDetails.language, 'deep'),
+                  CATEGORY_TIMEOUT_MS,
+                  `analyze-${categoryName}`,
+                )
+                return result || [] // withTimeout returns null on timeout
+              } catch (err) {
+                console.error(`[inngest] Category ${categoryName} failed:`, err)
+                return []
+              }
             }),
           )
 
@@ -2211,77 +2256,74 @@ RULES FOR RE-AUDIT:
       await setProgress(auditId, 65)
       const db = getDb()
 
-      // ── 1. Deduplicate findings (confidence-aware) ───
-      const { data: dedupFindings } = await db
+      // ══════════════════════════════════════════════════════════
+      // SINGLE FETCH: Load all findings once, operate in-memory
+      // (Was 6 separate DB fetches — now 1 fetch + batch writes)
+      // ══════════════════════════════════════════════════════════
+      const { data: allQGFindings } = await db
         .from('audit_findings')
-        .select('id, title, description, severity, page_url, sort_order, confidence_level, detection_source')
+        .select('id, title, description, recommendation, severity, page_url, sort_order, confidence_level, detection_source, finding_type, fix_type, fix_payload, target_element')
         .eq('audit_id', auditId)
         .order('sort_order', { ascending: true })
 
-      if (dedupFindings && dedupFindings.length >= 2) {
-        const mappedFindings = dedupFindings.map((f: any) => ({
-          id: f.id,
-          title: f.title || '',
-          description: f.description || '',
-          severity: f.severity || 'medium',
-          page_url: f.page_url || null,
-          sort_order: f.sort_order ?? 0,
-          confidence_level: f.confidence_level || 'heuristic',
-          detection_source: f.detection_source || 'analyzer',
-        }))
+      if (!allQGFindings || allQGFindings.length === 0) {
+        console.warn(`[inngest] Audit ${auditId}: zero findings — continuing`)
+        await auditLog(auditId, 'findings_warning', 'warning', 'Zero findings — site may be clean or all issues resolved')
+        await setProgress(auditId, 75)
+        return
+      }
 
-        const duplicateIds = identifyDuplicates(mappedFindings)
+      // Working set — mutable array we filter in-place
+      type ConfidenceLevel = 'heuristic' | 'deterministic' | 'interpretive'
+      type DetectionSource = 'analyzer' | 'structured_data' | 'gap_fill' | 'responsive' | 'pagespeed' | 'wcag'
+      let findings = allQGFindings.map((f: any) => ({
+        id: f.id as string,
+        title: (f.title || '') as string,
+        description: (f.description || '') as string,
+        recommendation: (f.recommendation || '') as string,
+        severity: (f.severity || 'medium') as string,
+        page_url: (f.page_url || null) as string | null,
+        sort_order: (f.sort_order ?? 0) as number,
+        confidence_level: (f.confidence_level || 'heuristic') as ConfidenceLevel,
+        detection_source: (f.detection_source || 'analyzer') as DetectionSource,
+        finding_type: (f.finding_type || 'fixable') as string,
+        fix_type: (f.fix_type || null) as string | null,
+        fix_payload: f.fix_payload,
+        target_element: (f.target_element || null) as string | null,
+      }))
+
+      const idsToDelete = new Set<string>()
+      const batchUpdates: Array<{ id: string; updates: Record<string, any> }> = []
+
+      // ── 1. Deduplicate findings (confidence-aware) ───
+      if (findings.length >= 2) {
+        const duplicateIds = identifyDuplicates(findings)
         if (duplicateIds.length > 0) {
-          await db.from('audit_findings').delete().in('id', duplicateIds)
+          for (const id of duplicateIds) idsToDelete.add(id)
           await auditLog(auditId, 'findings_deduped', 'info',
             `Removed ${duplicateIds.length} duplicate finding${duplicateIds.length > 1 ? 's' : ''}`)
-          console.log(`[inngest] Dedup: removed ${duplicateIds.length} duplicates from ${dedupFindings.length} findings`)
+          console.log(`[inngest] Dedup: removed ${duplicateIds.length} duplicates from ${findings.length} findings`)
+          findings = findings.filter(f => !idsToDelete.has(f.id))
         }
 
         // ── 1b. Group template-based issues across pages ───
-        // Re-fetch after dedup to get clean list
-        const { data: postDedupFindings } = await db
-          .from('audit_findings')
-          .select('id, title, description, severity, page_url, sort_order, confidence_level, detection_source')
-          .eq('audit_id', auditId)
-          .order('sort_order', { ascending: true })
-
-        if (postDedupFindings && postDedupFindings.length >= 3) {
-          const templateGroups = identifyTemplateGroups(
-            postDedupFindings.map((f: any) => ({
-              id: f.id,
-              title: f.title || '',
-              description: f.description || '',
-              severity: f.severity || 'medium',
-              page_url: f.page_url || null,
-              sort_order: f.sort_order ?? 0,
-              confidence_level: f.confidence_level || 'heuristic',
-              detection_source: f.detection_source || 'analyzer',
-            }))
-          )
-
+        if (findings.length >= 3) {
+          const templateGroups = identifyTemplateGroups(findings)
           if (templateGroups.length > 0) {
             let totalAbsorbed = 0
             for (const group of templateGroups) {
-              // Update primary finding description to mention grouped pages
               const pageList = group.pageUrls.slice(0, 5).join(', ')
               const suffix = group.pageCount > 5 ? ` and ${group.pageCount - 5} more` : ''
               const groupNote = `\n\nThis issue affects ${group.pageCount} pages: ${pageList}${suffix}.`
-
-              const primary = postDedupFindings.find((f: any) => f.id === group.primaryId)
+              const primary = findings.find(f => f.id === group.primaryId)
               if (primary) {
-                await db.from('audit_findings').update({
-                  description: ((primary as any).description || '') + groupNote,
-                } as any).eq('id', group.primaryId)
+                primary.description += groupNote
+                batchUpdates.push({ id: group.primaryId, updates: { description: primary.description } })
               }
-
-              // Remove absorbed findings
-              for (const id of group.absorbedIds) {
-                await db.from('audit_findings').delete().eq('id', id)
-              }
+              for (const id of group.absorbedIds) idsToDelete.add(id)
               totalAbsorbed += group.absorbedIds.length
             }
-
+            findings = findings.filter(f => !idsToDelete.has(f.id))
             if (totalAbsorbed > 0) {
               await auditLog(auditId, 'template_grouped', 'info',
                 `Grouped ${totalAbsorbed} repeated finding${totalAbsorbed > 1 ? 's' : ''} into ${templateGroups.length} template group${templateGroups.length > 1 ? 's' : ''}`)
@@ -2292,29 +2334,19 @@ RULES FOR RE-AUDIT:
       }
 
       // ── 2. Filter speculative findings ───
-      const { data: specFindings } = await db
-        .from('audit_findings')
-        .select('id, title, description')
-        .eq('audit_id', auditId)
-
-      if (specFindings && specFindings.length > 0) {
+      if (findings.length > 0) {
         const hasHeadTags = crawlResult.pageContent.includes('Head Tags:')
         const speculativeIds = identifySpeculativeFindings(
-          specFindings.map((f: any) => ({
-            id: f.id,
-            title: f.title || '',
-            description: f.description || '',
-          })),
+          findings.map(f => ({ id: f.id, title: f.title, description: f.description })),
           hasHeadTags,
         )
         if (speculativeIds.length > 0) {
-          for (const id of speculativeIds) {
-            await db.from('audit_findings').delete().eq('id', id)
-          }
+          for (const id of speculativeIds) idsToDelete.add(id)
+          const totalBefore = findings.length
+          findings = findings.filter(f => !idsToDelete.has(f.id))
           await auditLog(auditId, 'speculative_filtered', 'info',
             `Removed ${speculativeIds.length} speculative/unverifiable finding${speculativeIds.length > 1 ? 's' : ''}`)
           console.log(`[inngest] Speculative filter: removed ${speculativeIds.length} findings`)
-          const totalBefore = (specFindings?.length ?? 0)
           const removedRatio = totalBefore > 0 ? speculativeIds.length / totalBefore : 0
           if (speculativeIds.length >= 3 || removedRatio > 0.3) {
             auditLimitations.push({
@@ -2326,142 +2358,85 @@ RULES FOR RE-AUDIT:
         }
       }
 
-      // ── 3. Soften interpretive language ───
-      // Prevent interpretive findings from sounding deterministic
-      const { data: confFindings } = await db
-        .from('audit_findings')
-        .select('id, title, description, recommendation, confidence_level, detection_source, page_url')
-        .eq('audit_id', auditId)
-
-      if (confFindings && confFindings.length > 0) {
-        const languageFixes = softenInterpretiveLanguage(
-          confFindings.map((f: any) => ({
-            id: f.id,
-            title: f.title || '',
-            description: f.description || '',
-            recommendation: f.recommendation || '',
-            confidence_level: f.confidence_level || 'heuristic',
-            detection_source: f.detection_source || 'analyzer',
-            page_url: f.page_url || null,
-          }))
-        )
-
+      // ── 3. Soften interpretive language (in-memory) ───
+      if (findings.length > 0) {
+        const languageFixes = softenInterpretiveLanguage(findings)
         if (languageFixes.length > 0) {
-          // Group fixes by finding ID to batch updates
           const fixesByFinding = new Map<string, Record<string, string>>()
           for (const fix of languageFixes) {
             if (!fixesByFinding.has(fix.id)) fixesByFinding.set(fix.id, {})
             fixesByFinding.get(fix.id)![fix.field] = fix.fixed
           }
-
           for (const [findingId, updates] of fixesByFinding) {
-            await db.from('audit_findings').update(updates as any).eq('id', findingId)
+            // Apply to in-memory finding too
+            const f = findings.find(ff => ff.id === findingId)
+            if (f) {
+              if (updates.title) f.title = updates.title
+              if (updates.description) f.description = updates.description
+              if (updates.recommendation) f.recommendation = updates.recommendation
+            }
+            batchUpdates.push({ id: findingId, updates })
           }
-
           console.log(`[inngest] Language softener: updated ${fixesByFinding.size} interpretive finding${fixesByFinding.size > 1 ? 's' : ''}`)
         }
 
         // ── 4. Stale-result check for gap_fill findings ───
-        const staleResults = identifyStaleFindings(
-          confFindings.map((f: any) => ({
-            id: f.id,
-            title: f.title || '',
-            description: f.description || '',
-            recommendation: f.recommendation || '',
-            confidence_level: f.confidence_level || 'heuristic',
-            detection_source: f.detection_source || 'analyzer',
-            page_url: f.page_url || null,
-          })),
-          crawlResult.pageContent,
-        )
-
+        const staleResults = identifyStaleFindings(findings, crawlResult.pageContent)
         if (staleResults.length > 0) {
-          for (const stale of staleResults) {
-            await db.from('audit_findings').delete().eq('id', stale.id)
-          }
+          for (const stale of staleResults) idsToDelete.add(stale.id)
+          findings = findings.filter(f => !idsToDelete.has(f.id))
           await auditLog(auditId, 'stale_findings_removed', 'info',
             `Removed ${staleResults.length} stale finding${staleResults.length > 1 ? 's' : ''} that reference content no longer present`)
           console.log(`[inngest] Stale check: removed ${staleResults.length} stale gap_fill findings`)
         }
       }
 
-      // ── 5. Enrich proposed_value and affected_selector ───
-      // Derive proposed_value from recommendation for fixable findings,
-      // and affected_selector from target_element when it looks like a selector.
-      const { data: enrichFindings } = await db
-        .from('audit_findings')
-        .select('id, finding_type, recommendation, target_element, fix_type, fix_payload')
-        .eq('audit_id', auditId)
-
-      if (enrichFindings && enrichFindings.length > 0) {
+      // ── 5. Enrich proposed_value and affected_selector (in-memory) ───
+      if (findings.length > 0) {
         let enriched = 0
-        for (const f of enrichFindings as any[]) {
+        for (const f of findings) {
           const updates: Record<string, any> = {}
-
-          // Derive proposed_value: for fixable findings, use recommendation as
-          // the proposed value when it contains a concrete fix (code, markup, or
-          // a short actionable replacement). Skip long prose recommendations.
           if (f.finding_type === 'fixable' && f.recommendation) {
-            const rec = (f.recommendation as string).trim()
-            // Use recommendation as proposed_value if it's concrete:
-            // - contains HTML/code markers, or
-            // - is under 500 chars (likely a specific fix, not a long explanation)
+            const rec = f.recommendation.trim()
             const looksLikeCode = /<[a-z]|{"|@type|"@context|<meta|<title|<link|<script/i.test(rec)
             if (looksLikeCode || rec.length <= 500) {
               updates.proposed_value = rec
             }
           }
-
-          // Derive affected_selector from target_element when it looks like
-          // a CSS selector or HTML element reference
           if (f.target_element) {
-            const te = (f.target_element as string).trim()
+            const te = f.target_element.trim()
             const looksLikeSelector = /^[.#\[]|^[a-z]+(\.|#|\[|>|\s+[a-z])|^<[a-z]/i.test(te)
             if (looksLikeSelector && te.length <= 200) {
               updates.affected_selector = te
             }
           }
-
           if (Object.keys(updates).length > 0) {
-            await db.from('audit_findings').update(updates as any).eq('id', f.id)
+            batchUpdates.push({ id: f.id, updates })
             enriched++
           }
         }
-
         if (enriched > 0) {
           console.log(`[inngest] Evidence enrichment: populated proposed_value/affected_selector on ${enriched} finding${enriched > 1 ? 's' : ''}`)
         }
       }
 
       // ── 6. Score findings by historical relevance ───
-      // (Merged into quality-gates to eliminate Inngest step cold-start overhead)
       try {
-        const { data: relFindings } = await db
-          .from('audit_findings')
-          .select('id, title, description, severity, confidence_level')
-          .eq('audit_id', auditId)
-
-        if (relFindings && relFindings.length > 0) {
+        if (findings.length > 0) {
           const { scored, removedIds } = await scoreFindings(
-            relFindings.map((f: any) => ({
-              id: f.id,
-              title: f.title || '',
-              description: f.description || '',
-              severity: f.severity || 'medium',
-              confidence_level: f.confidence_level || 'heuristic',
+            findings.map(f => ({
+              id: f.id, title: f.title, description: f.description,
+              severity: f.severity, confidence_level: f.confidence_level,
             })),
             db,
           )
-
           if (removedIds.length > 0) {
-            for (const id of removedIds) {
-              await db.from('audit_findings').delete().eq('id', id)
-            }
+            for (const id of removedIds) idsToDelete.add(id)
+            findings = findings.filter(f => !idsToDelete.has(f.id))
             await auditLog(auditId, 'relevance_filtered', 'info',
               `Removed ${removedIds.length} low-relevance finding${removedIds.length > 1 ? 's' : ''} (historically dismissed >85% of the time)`)
             console.log(`[inngest] Relevance scorer: removed ${removedIds.length} findings`)
           }
-
           const lowCount = scored.filter(s => s.flag === 'low').length
           const medCount = scored.filter(s => s.flag === 'medium').length
           const noData = scored.filter(s => s.flag === 'no_data').length
@@ -2475,17 +2450,35 @@ RULES FOR RE-AUDIT:
           `Relevance scoring failed: ${err instanceof Error ? err.message : String(err)}`)
       }
 
-      // ── 7. Verify findings count ───
-      const { count: verifiedCount } = await db
-        .from('audit_findings')
-        .select('id', { count: 'exact', head: true })
-        .eq('audit_id', auditId)
+      // ══════════════════════════════════════════════════════════
+      // BATCH WRITE: Apply all accumulated deletes + updates in bulk
+      // ══════════════════════════════════════════════════════════
+      const deleteIds = [...idsToDelete]
+      if (deleteIds.length > 0) {
+        await db.from('audit_findings').delete().in('id', deleteIds)
+      }
 
-      if ((verifiedCount ?? 0) === 0) {
+      // Batch updates — group by finding ID to merge overlapping updates
+      const mergedUpdates = new Map<string, Record<string, any>>()
+      for (const { id, updates } of batchUpdates) {
+        if (idsToDelete.has(id)) continue // skip updates for deleted findings
+        const existing = mergedUpdates.get(id) || {}
+        mergedUpdates.set(id, { ...existing, ...updates })
+      }
+      // Execute updates in parallel (Supabase handles individual rows)
+      const updatePromises = [...mergedUpdates.entries()].map(([id, updates]) =>
+        db.from('audit_findings').update(updates as any).eq('id', id)
+      )
+      if (updatePromises.length > 0) {
+        await Promise.all(updatePromises)
+      }
+
+      // ── 7. Verify findings count ───
+      if (findings.length === 0) {
         console.warn(`[inngest] Audit ${auditId}: zero findings — continuing`)
         await auditLog(auditId, 'findings_warning', 'warning', 'Zero findings — site may be clean or all issues resolved')
       } else {
-        await auditLog(auditId, 'findings_verified', 'success', `${verifiedCount} findings verified`)
+        await auditLog(auditId, 'findings_verified', 'success', `${findings.length} findings verified`)
       }
       await setProgress(auditId, 75)
     })
@@ -2861,6 +2854,8 @@ RULES FOR RE-AUDIT:
           let sortOrder = ((existingFindings?.[0] as any)?.sort_order ?? -1) + 1
           let totalInserted = 0
 
+          // Batch insert all minimum findings at once
+          const minFindingInserts: any[] = []
           for (const [categoryIndex, findings] of generated) {
             for (const finding of findings) {
               const classification = classifyFinding({
@@ -2871,7 +2866,7 @@ RULES FOR RE-AUDIT:
                 title: finding.title, description: finding.description,
                 recommendation: finding.recommendation, severity: finding.severity, ...classification,
               })
-              await db.from('audit_findings').insert({
+              minFindingInserts.push({
                 audit_id: auditId, checklist_item_id: null, category_index: categoryIndex,
                 severity: finding.severity, title: finding.title, description: finding.description,
                 evidence: null, page_url: finding.pageUrl || auditDetails.productUrl,
@@ -2879,9 +2874,12 @@ RULES FOR RE-AUDIT:
                 target_element: finding.targetElement || null, screenshot_url: null,
                 sort_order: sortOrder++, finding_type: validated.findingType, fix_type: validated.fixType,
                 confidence_level: 'interpretive', detection_source: 'analyzer',
-              } as any)
+              })
               totalInserted++
             }
+          }
+          if (minFindingInserts.length > 0) {
+            await db.from('audit_findings').insert(minFindingInserts as any)
           }
 
           if (totalInserted > 0) {
@@ -2931,9 +2929,10 @@ RULES FOR RE-AUDIT:
 
           if (!finalFindings || finalFindings.length === 0) return
 
-          for (const f of finalFindings as any[]) {
-            await recordFindingShown(db, f.title, f.severity)
-          }
+          // Record finding patterns in parallel instead of sequentially
+          await Promise.all(
+            (finalFindings as any[]).map((f: any) => recordFindingShown(db, f.title, f.severity))
+          )
           await recordAuditStats(db, auditId)
           const titles = (finalFindings as any[]).map((f: any) => f.title)
           const learningResult = await postAuditLearn(db, titles)
@@ -3014,7 +3013,8 @@ RULES FOR RE-AUDIT:
             5,
           )
 
-          for (const [url, screenshotUrl] of pageScreenshots) {
+          // Batch update page screenshots in parallel
+          const pageScreenshotPromises = [...pageScreenshots.entries()].map(async ([url, screenshotUrl]) => {
             const { data: pages } = await db
               .from('audit_pages')
               .select('id')
@@ -3026,15 +3026,17 @@ RULES FOR RE-AUDIT:
                 .update({ screenshot_url: screenshotUrl } as any)
                 .eq('id', (pages[0] as any).id)
             }
-          }
+          })
+          await Promise.all(pageScreenshotPromises)
 
-          let uploadedCount = 0
-          for (const [findingId, screenshotUrl] of findingScreenshots) {
-            await db.from('audit_findings')
+          // Batch update finding screenshots in parallel
+          const findingScreenshotPromises = [...findingScreenshots.entries()].map(([findingId, screenshotUrl]) =>
+            db.from('audit_findings')
               .update({ screenshot_url: screenshotUrl } as any)
               .eq('id', findingId)
-            uploadedCount++
-          }
+          )
+          await Promise.all(findingScreenshotPromises)
+          const uploadedCount = findingScreenshots.size
 
           await auditLog(auditId, 'screenshots_completed', 'success',
             `Captured ${pageScreenshots.size} page + ${uploadedCount} finding screenshots`)
