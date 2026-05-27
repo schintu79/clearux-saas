@@ -159,7 +159,7 @@ export default function IntelligencePage() {
   const { user, loading: authLoading } = useAuth();
   const { selection, ready } = useBrandSelection();
   const { bundle, loading: bundleLoading } = useAuditBundle();
-  const loading = authLoading || bundleLoading || !ready;
+  const loading = authLoading || !ready || bundleLoading || !bundle;
 
   // Brand Intelligence data
   const [biSummary, setBiSummary] = useState<BrandIntelligenceSummary | null>(null);

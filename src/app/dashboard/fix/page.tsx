@@ -487,7 +487,7 @@ function FixPageInner() {
   const { selection, ready } = useBrandSelection();
   const { bundle, loading: bundleLoading, updateFindingLocally, updateReportScore, invalidate } = useAuditBundle();
   const searchParams = useSearchParams();
-  const loading = authLoading || bundleLoading || !ready;
+  const loading = authLoading || !ready || bundleLoading || !bundle;
   const [pending, setPending] = useState<Record<string, boolean>>({});
   const [activeFindingId, setActiveFindingId] = useState<string | null>(null);
 

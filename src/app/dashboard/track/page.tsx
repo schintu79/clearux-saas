@@ -64,7 +64,7 @@ export default function TrackPage() {
   const { user, loading: authLoading } = useAuth();
   const { selection, ready } = useBrandSelection();
   const { bundle, loading: bundleLoading } = useAuditBundle();
-  const loading = authLoading || bundleLoading || !ready;
+  const loading = authLoading || !ready || bundleLoading || !bundle;
   const [priorFindings, setPriorFindings] = useState<import('@/types/database').AuditFinding[]>([]);
 
   // Fetch prior audit findings for diff validation

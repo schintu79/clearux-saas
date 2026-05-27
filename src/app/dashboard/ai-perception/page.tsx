@@ -284,7 +284,7 @@ export default function AIPerceptionPage() {
   const { user, loading: authLoading } = useAuth();
   const { selection, ready } = useBrandSelection();
   const { bundle, loading: bundleLoading } = useAuditBundle();
-  const loading = authLoading || bundleLoading || !ready;
+  const loading = authLoading || !ready || bundleLoading || !bundle;
 
   const [modelProbes, setModelProbes] = useState<ModelProbe[]>([]);
   const [promptResults, setPromptResults] = useState<PromptResult[]>([]);

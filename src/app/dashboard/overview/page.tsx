@@ -234,21 +234,30 @@ function OverviewInner() {
       writeSelection({ kind: 'brand', brandId: brandParam });
     }
     window.history.replaceState({}, '', '/dashboard/overview');
-    // Force context refetch after writing the new selection so the
-    // bundle reflects the just-created audit (re-audit same brand
-    // wouldn't change the selection reference, leaving stale data).
-    // Small delay ensures the selection state has propagated to the
-    // context before invalidate reads it.
-    setTimeout(() => invalidate(), 50);
-  }, [searchParams, invalidate]);
+    // The main load effect in AuditBundleContext fires automatically
+    // when the selection changes (writeSelection dispatches CustomEvent
+    // → useBrandSelection updates → effect re-runs). For re-audits of
+    // the same brand (where selection reference doesn't change), the
+    // mount invalidation at line 180-186 handles the refetch.
+    // NOTE: We intentionally do NOT call invalidate() here. The
+    // previous setTimeout(invalidate, 50) was a race condition that
+    // could orphan fetchIdRef and cause stale data or infinite loading.
+  }, [searchParams]);
 
-  // Reset derived data when selection changes (bundle itself is managed by context).
+  // Reset ALL derived data when selection changes so no stale data
+  // from the previous site is ever visible. The bundle itself is managed
+  // by AuditBundleContext (which now clears to null on selection change).
   useEffect(() => {
     setScoreTrend([]);
     setCompetitors([]);
     setCategoryScores([]);
     setFindings([]);
     setAuditPages([]);
+    setBrandIntelligence(null);
+    setModelProbes([]);
+    setBrandName(null);
+    setShareUrl(null);
+    setShareEnabled(false);
   }, [selection]);
 
   /* ── In-progress audit tracking ──

@@ -79,13 +79,18 @@ export function AuditBundleProvider({ children }: { children: React.ReactNode })
   const selectionRef = useRef(selection);
   selectionRef.current = selection;
 
-  // Load bundle when auth or selection changes
+  // Load bundle when auth or selection changes.
+  // CRITICAL: clear the old bundle immediately so no page shows stale
+  // data from the previous site during the fetch window. Without this,
+  // switching from site A → site B keeps site A's data visible until
+  // site B's fetch completes.
   useEffect(() => {
     if (authLoading || !user || !ready) {
       if (!authLoading) setLoading(false);
       return;
     }
     const id = ++fetchIdRef.current;
+    setBundle(null);
     setLoading(true);
     loadLatestAuditBundle(user.id, selection)
       .then((b) => {
@@ -119,9 +124,12 @@ export function AuditBundleProvider({ children }: { children: React.ReactNode })
       return;
     }
 
-    // Fetch immediately so we don't wait for the first interval tick
+    // Fetch immediately so we don't wait for the first interval tick.
+    // Use selectionRef.current (not the closure-captured `selection`) so
+    // the poll always fetches for the latest selection, even if the user
+    // switches sites while polling is active.
     const immediateId = ++fetchIdRef.current;
-    loadLatestAuditBundle(user.id, selection)
+    loadLatestAuditBundle(user.id, selectionRef.current)
       .then((b) => {
         if (immediateId === fetchIdRef.current) setBundle(b);
       })
@@ -130,7 +138,7 @@ export function AuditBundleProvider({ children }: { children: React.ReactNode })
     // Then continue polling
     pollingRef.current = setInterval(() => {
       const id = ++fetchIdRef.current;
-      loadLatestAuditBundle(user.id, selection)
+      loadLatestAuditBundle(user.id, selectionRef.current)
         .then((b) => {
           if (id === fetchIdRef.current) setBundle(b);
         })

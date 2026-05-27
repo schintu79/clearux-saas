@@ -538,7 +538,23 @@ export default function CompetitorsPage() {
   const { user, loading: authLoading } = useAuth();
   const { selection, ready } = useBrandSelection();
   const { bundle, loading: bundleLoading } = useAuditBundle();
-  const loading = authLoading || bundleLoading || !ready;
+  // Show loading during initial load, bundle fetch, or site transition.
+  // When bundle is null (site switch in progress), always show loading
+  // to prevent any stale data flash from the previous site.
+  const loading = authLoading || !ready || bundleLoading || !bundle;
+
+  // Clear all local state when selection changes so no stale data from
+  // a previous site is visible (AuditBundleContext now clears bundle to
+  // null on selection change; this clears the page-level derived state).
+  useEffect(() => {
+    setBiSummary(null);
+    setPromptResults([]);
+    setIndustry(null);
+    setBenchmarkPosition(null);
+    setTrendSnapshots([]);
+    setDrafts([]);
+    setServerSnapshot([]);
+  }, [selection]);
 
   // Intelligence data
   const [biSummary, setBiSummary] = useState<BrandIntelligenceSummary | null>(null);

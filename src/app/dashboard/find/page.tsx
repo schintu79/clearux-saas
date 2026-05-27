@@ -106,7 +106,7 @@ function FindPageInner() {
   const { selection, ready } = useBrandSelection();
   const { bundle, loading: bundleLoading } = useAuditBundle();
   const searchParams = useSearchParams();
-  const loading = authLoading || bundleLoading || !ready;
+  const loading = authLoading || !ready || bundleLoading || !bundle;
   const [collapsed, setCollapsed] = useState<Record<number, boolean>>({});
   const [expanded, setExpanded] = useState<Record<string, boolean>>({});
   const [activeTab, setActiveTab] = useState<'priority' | 'strategic'>('priority');

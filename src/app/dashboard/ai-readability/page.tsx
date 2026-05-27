@@ -89,7 +89,7 @@ export default function AIReadabilityPage() {
   const { bundle, loading: bundleLoading } = useAuditBundle();
   const [pages, setPages] = useState<AuditPageRow[]>([]);
   const [probes, setProbes] = useState<ModelProbe[]>([]);
-  const loading = authLoading || bundleLoading || !ready;
+  const loading = authLoading || !ready || bundleLoading || !bundle;
 
   const refreshProbes = React.useCallback(async (auditId: string) => {
     try {

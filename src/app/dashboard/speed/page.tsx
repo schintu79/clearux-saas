@@ -187,7 +187,7 @@ export default function WebsiteSpeedPage() {
   const { user, loading: authLoading } = useAuth();
   const { selection, ready } = useBrandSelection();
   const { bundle, loading: bundleLoading } = useAuditBundle();
-  const loading = authLoading || bundleLoading || !ready;
+  const loading = authLoading || !ready || bundleLoading || !bundle;
 
   const [speedData, setSpeedData] = useState<SpeedDataSummary | null>(null);
   const [findings, setFindings] = useState<SpeedFinding[]>([]);
