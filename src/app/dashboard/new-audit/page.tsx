@@ -3,7 +3,7 @@
 import React, { useState, useRef, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
-import { ArrowLeft, ArrowRight, Globe, Sparkles, Coins, Zap, Languages, Building2, Check, Fingerprint, ChevronDown, FileText, Palette, Lock, AlertCircle, Upload, X, Plus, Loader2, RefreshCw } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Globe, Sparkles, Coins, Zap, Languages, Check, Fingerprint, ChevronDown, FileText, Palette, Lock, AlertCircle, Upload, X, Plus, Loader2, RefreshCw } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { createBrowserSupabase } from '@/lib/supabase-ssr';
 import { SUPPORTED_LANGUAGES, DEFAULT_LANGUAGE } from '@/lib/languages';
@@ -71,8 +71,6 @@ const NewAuditInner: React.FC = () => {
   const [selectedModules, setSelectedModules] = useState<string[]>([...COMPLETE_AUDIT_SLUGS]);
   const [scopeOpen, setScopeOpen] = useState(false);
   const isCompleteAudit = COMPLETE_AUDIT_SLUGS.every((s) => selectedModules.includes(s));
-
-  const isWhiteLabelEligible = packageTier === 'pro' || packageTier === 'agency' || packageTier === 'scale';
 
   // Brand identity selection (shared between website + brand identity audit)
   const [brandIdentities, setBrandIdentities] = useState<{ id: string; name: string; fileCount: number }[]>([]);
@@ -1091,19 +1089,6 @@ const NewAuditInner: React.FC = () => {
           </p>
         )}
       </div>
-
-      {/* White-label info */}
-      {isWhiteLabelEligible && (
-        <div className="mb-6 flex items-center gap-2.5 px-4 py-3 rounded-xl" style={{ border: '1px solid color-mix(in srgb, var(--ink) 12%, transparent)', background: 'color-mix(in srgb, var(--ink) 4%, transparent)' }}>
-          <Building2 size={15} className="flex-shrink-0" style={{ color: 'var(--ink)' }} />
-          <p className="text-xs text-muted flex-1">
-            White-label branding is applied automatically from your{' '}
-            <Link href="/dashboard/white-label" className="text-brand hover:underline font-medium">
-              White Label settings
-            </Link>.
-          </p>
-        </div>
-      )}
 
       {/* What's included — website audits only */}
       {auditType === 'website' && <AllAuditsInclude compact className="mb-6" />}

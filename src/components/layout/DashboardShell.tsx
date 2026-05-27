@@ -843,18 +843,18 @@ const DashboardShell: React.FC<DashboardShellProps> = ({ children }) => {
             href="/dashboard/settings"
             onClick={() => setSidebarOpen(false)}
             title={collapsed ? 'Settings' : undefined}
-            aria-current={pathname?.startsWith('/dashboard/settings') || pathname?.startsWith('/dashboard/white-label') ? 'page' : undefined}
+            aria-current={pathname?.startsWith('/dashboard/settings') ? 'page' : undefined}
             className={clsx(
               'w-full flex items-center rounded-md text-[13px] transition-all hover:bg-black/[0.04]',
               collapsed ? 'justify-center px-0 py-1.5' : 'gap-2 px-2 py-[6px]',
-              (pathname?.startsWith('/dashboard/settings') || pathname?.startsWith('/dashboard/white-label')) ? 'font-medium' : '',
+              (pathname?.startsWith('/dashboard/settings')) ? 'font-medium' : '',
             )}
             style={{
-              color: (pathname?.startsWith('/dashboard/settings') || pathname?.startsWith('/dashboard/white-label')) ? 'var(--ink)' : 'var(--ink-2)',
-              background: (pathname?.startsWith('/dashboard/settings') || pathname?.startsWith('/dashboard/white-label')) ? 'var(--paper-2)' : undefined,
+              color: (pathname?.startsWith('/dashboard/settings')) ? 'var(--ink)' : 'var(--ink-2)',
+              background: (pathname?.startsWith('/dashboard/settings')) ? 'var(--paper-2)' : undefined,
             }}
           >
-            <Settings size={collapsed ? 16 : 15} strokeWidth={1.75} style={{ color: (pathname?.startsWith('/dashboard/settings') || pathname?.startsWith('/dashboard/white-label')) ? 'var(--ink)' : 'var(--m-muted)' }} />
+            <Settings size={collapsed ? 16 : 15} strokeWidth={1.75} style={{ color: (pathname?.startsWith('/dashboard/settings')) ? 'var(--ink)' : 'var(--m-muted)' }} />
             {!collapsed && <span className="truncate">Settings</span>}
           </Link>
 
