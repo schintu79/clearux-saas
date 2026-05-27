@@ -251,48 +251,15 @@ function OverviewInner() {
     setAuditPages([]);
   }, [selection]);
 
-  /* ── Poll in-progress audit until it reaches a terminal state ──
+  /* ── In-progress audit tracking ──
    *
-   * When the bundle has an in-progress audit for this selection, we
-   * poll its status row every ~7s. When the status flips to
-   * `completed` or `failed`, we refetch the full bundle so the
-   * populated dashboard (or failed-state UI) appears without a
-   * manual reload. We only poll while a non-terminal audit exists —
-   * the interval auto-cancels on unmount, on selection change, or
-   * once the audit terminates.
+   * AuditBundleContext already polls every 3s while a non-terminal
+   * audit exists, so we don't need a separate polling loop here.
+   * We just track the inProgressAuditId for the progress banner
+   * and use the useAuditProgress hook for real-time stage data.
    */
   const inProgressAuditId = bundle?.inProgressAudit?.id || null;
-  useEffect(() => {
-    if (!user || !inProgressAuditId) return;
-    let cancelled = false;
-    const supabase = createBrowserSupabase();
-
-    const tick = async () => {
-      if (cancelled) return;
-      try {
-        const { data } = await supabase
-          .from('audits')
-          .select('status')
-          .eq('id', inProgressAuditId)
-          .maybeSingle();
-        const status = (data as any)?.status as string | undefined;
-        if (cancelled) return;
-        if (status && !isInProgressAuditStatus(status)) {
-          // Terminal — refetch the whole bundle via context so the
-          // populated dashboard or the failed-state UI takes over.
-          invalidate();
-        }
-      } catch {
-        /* swallow — next tick will retry */
-      }
-    };
-
-    const interval = setInterval(tick, 7000);
-    return () => {
-      cancelled = true;
-      clearInterval(interval);
-    };
-  }, [user, inProgressAuditId, invalidate]);
+  const { data: reauditProgress } = useAuditProgress(inProgressAuditId, { enabled: !!inProgressAuditId });
 
   useEffect(() => {
     if (!user || selection?.kind !== 'brand') {
@@ -674,6 +641,65 @@ function OverviewInner() {
       <OverviewTabs />
       {creditsBanner && <CreditsBanner onClose={() => setCreditsBanner(false)} />}
 
+      {/* ── Re-audit progress banner ──
+        * When a new audit is running for the same brand/site while a
+        * completed audit already exists, show a compact progress banner
+        * so the user knows we're working. Without this, re-audits look
+        * completely stalled because the old completed data stays visible.
+        */}
+      {inProgressAuditId && bundle?.audit && bundle?.report && (() => {
+        const ipAudit = bundle.inProgressAudit!;
+        const meta = statusMeta[(ipAudit as any).status] || statusMeta.payment_received;
+        const StatusIcon = meta.icon;
+        const stagesCompleted = reauditProgress?.stages
+          ? Object.values(reauditProgress.stages).filter(Boolean).length
+          : 0;
+        const totalStages = 8;
+        const pct = reauditProgress?.progress || Math.round((stagesCompleted / totalStages) * 100);
+        return (
+          <div
+            role="status"
+            aria-live="polite"
+            className="mb-4 px-4 py-3 rounded-xl flex items-center gap-3"
+            style={{
+              background: 'color-mix(in srgb, var(--signal) 7%, transparent)',
+              border: '1px solid color-mix(in srgb, var(--signal) 22%, transparent)',
+            }}
+          >
+            <span
+              className="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0"
+              style={{ background: 'color-mix(in srgb, var(--signal) 14%, transparent)', color: 'var(--signal)' }}
+            >
+              <StatusIcon size={14} className="animate-pulse" />
+            </span>
+            <div className="flex-1 min-w-0">
+              <p className="text-[13px] font-semibold leading-tight" style={{ color: 'var(--ink)' }}>
+                New audit in progress
+              </p>
+              <p className="text-[11px] mt-0.5" style={{ color: 'var(--m-muted)' }}>
+                {reauditProgress
+                  ? `${stagesCompleted} of ${totalStages} stages complete · ${pct}%`
+                  : 'Working on it — this page will update automatically when done.'}
+              </p>
+            </div>
+            {/* Compact progress bar */}
+            <div className="w-24 h-1 rounded-full overflow-hidden flex-shrink-0" style={{ background: 'color-mix(in srgb, var(--signal) 15%, transparent)' }}>
+              <div
+                className="h-full rounded-full transition-all duration-700 ease-out"
+                style={{ width: `${pct}%`, background: 'var(--signal)' }}
+              />
+            </div>
+            <Link
+              href={`/dashboard/audits/${ipAudit.id}`}
+              className="inline-flex items-center gap-1 text-[11px] font-semibold px-2.5 py-1 rounded-lg border flex-shrink-0 transition-colors hover:bg-surface-alt"
+              style={{ borderColor: 'var(--rule)', color: 'var(--ink)' }}
+            >
+              View <ChevronRight size={10} />
+            </Link>
+          </div>
+        );
+      })()}
+
       {/* ── Identity header ─────────────────────────────── */}
       <div className="flex items-start justify-between gap-4 mb-6">
         <div className="min-w-0">
@@ -998,6 +1024,39 @@ function OverviewInner() {
               />
             );
           })}
+        </div>
+      )}
+
+      {/* ── Brand Consistency upsell — shown when module wasn't included ── */}
+      {pillarScores.length > 0 && !pillarScores.some(p => p.name === 'Brand Consistency') && (
+        <div
+          className="mb-4 px-4 py-3 rounded-xl flex items-center gap-3"
+          style={{
+            background: MODULE_TINTS[5].bg,
+            border: `1px dashed ${MODULE_TINTS[5].border}`,
+          }}
+        >
+          <div
+            className="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0"
+            style={{ background: `${MODULE_TINTS[5].dot}15` }}
+          >
+            <Eye size={14} style={{ color: MODULE_TINTS[5].dot }} />
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="text-[13px] font-semibold leading-tight" style={{ color: 'var(--ink)' }}>
+              Brand Consistency not included
+            </p>
+            <p className="text-[11px] mt-0.5" style={{ color: 'var(--m-muted)' }}>
+              Upload your brand guidelines to unlock voice, visual identity, and consistency checks.
+            </p>
+          </div>
+          <Link
+            href="/dashboard/brand-dna"
+            className="inline-flex items-center gap-1 text-[11px] font-semibold px-3 py-1.5 rounded-lg border flex-shrink-0 transition-colors hover:opacity-80"
+            style={{ borderColor: MODULE_TINTS[5].border, color: MODULE_TINTS[5].dot }}
+          >
+            Set up Brand DNA <ArrowRight size={10} />
+          </Link>
         </div>
       )}
 

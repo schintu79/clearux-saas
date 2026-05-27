@@ -667,21 +667,22 @@ const DashboardShell: React.FC<DashboardShellProps> = ({ children }) => {
                               setBrandMenuOpen(false);
                               return;
                             }
-                            // Persist to localStorage SYNCHRONOUSLY so the
-                            // target page reads the correct value on mount.
+                            // Persist to localStorage SYNCHRONOUSLY so
+                            // every consumer (AuditBundleContext, page
+                            // hooks) picks up the new selection via the
+                            // CustomEvent that writeSelection dispatches.
                             const sel = selectionFromSidebarId(s.id);
                             writeSelection(sel);
-                            // Update local state through the internal path.
-                            // The write-back effect will see the flag but
-                            // skip the write because the value already matches
-                            // what writeSelection just persisted.
+                            // Update sidebar local state through the
+                            // internal path so the dropdown highlight
+                            // updates immediately.
                             selectSiteInternal(s.id);
                             setBrandMenuOpen(false);
-                            // Navigate to overview (skip if already there to
-                            // avoid unnecessary re-render).
-                            if (pathname !== '/dashboard/overview') {
-                              router.push('/dashboard/overview');
-                            }
+                            // Stay on the current page — the shared
+                            // AuditBundleContext reacts to the selection
+                            // change and refetches the bundle, so every
+                            // page that consumes useAuditBundle() will
+                            // update automatically. No navigation needed.
                           }}
                           className="w-full flex items-center gap-2 px-3 py-2 text-left transition-colors hover:bg-black/[0.04]"
                         >

@@ -332,7 +332,11 @@ export function moduleScoresFromReport(
     { name: 'Inclusive Design', score: report.mobile_score ?? null },
     { name: 'Future Readiness', score: report.ai_discoverability_score ?? null },
     { name: 'SEO Structure', score: report.conversion_score ?? null },
-    { name: 'Brand Consistency', score: report.overall_score ?? null },
+    // Brand Consistency has no legacy score column — only show it when
+    // the raw_json categoryScores include indices 20-23 with real data.
+    // Using overall_score was wrong: it made Brand Consistency appear
+    // even when the module was never run.
+    { name: 'Brand Consistency', score: null },
   ]
 
   if (!findings || findings.length === 0) return legacy()
@@ -355,6 +359,10 @@ export function moduleScoresFromReport(
 
   const baseline = typeof report.overall_score === 'number' ? report.overall_score : 100
   return PHASE1_MODULES.map((name, i) => {
+    // If no findings exist for this module, it wasn't analyzed — return null.
+    // This prevents Brand Consistency (and any other module) from showing a
+    // fabricated high score when it was never run.
+    if (countByModule[i] === 0) return { name, score: null }
     const load = loadByModule[i]
     const raw = 100 - load
     const clamped = Math.max(0, Math.min(100, raw))
