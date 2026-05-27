@@ -1905,6 +1905,11 @@ RULES FOR RE-AUDIT:
         activeSlugsBl = activeSlugsBl.filter(s => s !== 'brand_consistency')
       }
 
+      // Auto-add brand_consistency when a brand identity is provided but module wasn't selected
+      if (!activeSlugsBl.includes('brand_consistency') && auditDetails.brandIdentityId) {
+        activeSlugsBl.push('brand_consistency')
+      }
+
       // Check which modules had coverage in the previous audit
       const prevCategoryNames = new Set(
         siteContext.previousCategoryScores.map((c: { name: string }) => c.name)
@@ -2081,6 +2086,12 @@ RULES FOR RE-AUDIT:
       if (activeSlugs.includes('brand_consistency') && !auditDetails.brandIdentityId) {
         activeSlugs = activeSlugs.filter(s => s !== 'brand_consistency')
         await auditLog(auditId, 'brand_skipped', 'warning', 'Brand Consistency module skipped — no brand identity selected')
+      }
+
+      // Auto-add brand_consistency when a brand identity is provided but module wasn't selected
+      if (!activeSlugs.includes('brand_consistency') && auditDetails.brandIdentityId) {
+        activeSlugs.push('brand_consistency')
+        await auditLog(auditId, 'brand_auto_added', 'info', 'Brand Consistency module auto-added — brand identity detected')
       }
 
       // Build the set of category indices to analyze
@@ -2606,7 +2617,10 @@ RULES FOR RE-AUDIT:
       const reportContentWithContext = `${siteContext.context}\n\n${crawlResult.pageContent}`
 
       // Count fixed/dismissed from previous findings for baseline scoring
-      const droppedFixed = siteContext.previousRawFindings.filter((f: any) => f.status === 'fixed').length
+      // Include both user-confirmed fixes AND AI-verified likely fixes
+      const userConfirmedFixed = siteContext.previousRawFindings.filter((f: any) => f.status === 'fixed').length
+      const aiVerifiedFixed = (verificationData?.likelyFixed || 0)
+      const droppedFixed = userConfirmedFixed + aiVerifiedFixed
       const droppedDismissed = siteContext.previousRawFindings.filter((f: any) => f.dismissed).length
 
       const reportData = await generateReport(

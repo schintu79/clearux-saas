@@ -115,7 +115,15 @@ export function AuditBundleProvider({ children }: { children: React.ReactNode })
       return;
     }
 
-    // Start polling
+    // Fetch immediately so we don't wait for the first interval tick
+    const immediateId = ++fetchIdRef.current;
+    loadLatestAuditBundle(user.id, selection)
+      .then((b) => {
+        if (immediateId === fetchIdRef.current) setBundle(b);
+      })
+      .catch(() => {});
+
+    // Then continue polling
     pollingRef.current = setInterval(() => {
       const id = ++fetchIdRef.current;
       loadLatestAuditBundle(user.id, selection)
