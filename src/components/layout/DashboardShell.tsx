@@ -507,7 +507,7 @@ const DashboardShell: React.FC<DashboardShellProps> = ({ children }) => {
     if (selectedSite?.kind === 'brand' && selectedSite.hasBrandAudits) {
       return `/dashboard/audits/brand/${encodeURIComponent(selectedSite.label)}`;
     }
-    return '/dashboard/new-audit?type=brand_identity';
+    return '/dashboard/brand-dna';
   })();
 
   // Brand workspace IA: once inside a selected audit/brand workspace, the

@@ -756,7 +756,7 @@ export default function BrandAuditDetail({
               )}
               {audit.brand_identity_id && (
                 <Link
-                  href={`/dashboard/new-audit?type=brand_identity&brand=${audit.brand_identity_id}`}
+                  href="/dashboard/brand-dna"
                   onClick={() => setMenuOpen(false)}
                   className="w-full flex items-center gap-2.5 px-3.5 py-2 text-xs text-ink hover:bg-paper-2 transition-colors"
                 >
@@ -931,7 +931,7 @@ export default function BrandAuditDetail({
               </a>
               {audit.brand_identity_id && (
                 <Link
-                  href={`/dashboard/new-audit?type=brand_identity&brand=${audit.brand_identity_id}`}
+                  href="/dashboard/brand-dna"
                   className="flex items-center gap-2 border border-ink/20 text-ink text-[11px] font-mono tracking-[0.06em] uppercase px-4 py-2 rounded-lg hover:bg-paper-2 transition-colors"
                 >
                   <RefreshCw size={13} /> Re-audit

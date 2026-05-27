@@ -502,7 +502,7 @@ function AuditsPageInner() {
               : 'Run a brand identity audit to evaluate your brand materials.'}
           </p>
           <Link
-            href={activeTab === 'brand_identity' ? '/dashboard/new-audit?type=brand_identity' : '/dashboard/new-audit'}
+            href={activeTab === 'brand_identity' ? '/dashboard/brand-dna' : '/dashboard/new-audit'}
             className="inline-flex items-center gap-1.5 text-[13px] font-medium px-4 py-2 rounded-lg transition-all hover:opacity-90"
             style={{ background: 'var(--ink)', color: 'var(--paper)' }}
           >

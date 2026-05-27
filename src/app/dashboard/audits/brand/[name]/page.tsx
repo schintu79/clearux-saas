@@ -281,7 +281,7 @@ function BrandAuditsInner({ params }: { params: Promise<{ name: string }> }) {
             </a>
           )}
           <Link
-            href="/dashboard/new-audit?type=brand_identity"
+            href="/dashboard/brand-dna"
             className="inline-flex items-center gap-1.5 bg-brand text-surface text-xs font-medium px-3.5 py-2 rounded-lg transition-all hover:brightness-110"
           >
             <RefreshCw size={13} />
@@ -320,7 +320,7 @@ function BrandAuditsInner({ params }: { params: Promise<{ name: string }> }) {
           <h2 className="font-medium text-sm text-text mb-1">No audits for {brandName}</h2>
           <p className="text-muted text-xs mb-4 max-w-xs mx-auto">Start a brand identity audit to evaluate your brand materials.</p>
           <Link
-            href="/dashboard/new-audit?type=brand_identity"
+            href="/dashboard/brand-dna"
             className="inline-flex items-center gap-1.5 bg-brand text-surface text-xs font-medium px-4 py-2 rounded-lg transition-all hover:brightness-110"
           >
             <Sparkles size={13} /> Start audit

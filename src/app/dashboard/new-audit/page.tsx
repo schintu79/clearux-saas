@@ -3,7 +3,7 @@
 import React, { useState, useRef, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
-import { ArrowLeft, ArrowRight, Globe, Sparkles, Coins, Zap, Languages, Check, Fingerprint, ChevronDown, FileText, Palette, Lock, AlertCircle, Upload, X, Plus, Loader2, RefreshCw } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Globe, Sparkles, Coins, Zap, Languages, Check, ChevronDown, FileText, AlertCircle, Upload, X, Plus, Loader2, RefreshCw } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { createBrowserSupabase } from '@/lib/supabase-ssr';
 import { SUPPORTED_LANGUAGES, DEFAULT_LANGUAGE } from '@/lib/languages';
@@ -11,31 +11,9 @@ import { AUDIT_MODULES, COMPLETE_AUDIT_SLUGS } from '@/lib/audit-modules';
 import AllAuditsInclude from '@/components/ui/AllAuditsInclude';
 import { writeSelection } from '@/lib/dashboard/brand-selection';
 
-type AuditType = 'website' | 'brand_identity' | 'design';
+type AuditType = 'website';
 
-const AUDIT_TYPE_CONFIG: { type: AuditType; label: string; description: string; icon: React.ReactNode; available: boolean }[] = [
-  {
-    type: 'website',
-    label: 'Website',
-    description: 'Full UX audit of your live site',
-    icon: <Globe size={22} />,
-    available: true,
-  },
-  {
-    type: 'brand_identity',
-    label: 'Brand Identity',
-    description: 'Analyze uploaded brand materials',
-    icon: <Fingerprint size={22} />,
-    available: true,
-  },
-  {
-    type: 'design',
-    label: 'Design',
-    description: 'Review designs before production',
-    icon: <Palette size={22} />,
-    available: false, // Coming soon
-  },
-];
+// Website audit only — Brand Identity audits are launched from the Brand DNA page.
 
 const NewAuditInner: React.FC = () => {
   const router = useRouter();
@@ -43,9 +21,9 @@ const NewAuditInner: React.FC = () => {
   const { user, loading: userLoading } = useAuth();
   const urlInputRef = useRef<HTMLInputElement>(null);
 
-  // Audit type
-  const typeParam = searchParams.get('type') as AuditType | null;
-  const [auditType, setAuditType] = useState<AuditType>(typeParam === 'brand_identity' ? 'brand_identity' : 'website');
+  // Audit type — always website. Brand Identity audits redirect to Brand DNA.
+  const typeParam = searchParams.get('type');
+  const [auditType] = useState<AuditType>('website');
 
   // Mode: 'new-brand' (default) shows URL input; 're-audit' and 'dig-deeper' hide it
   const modeParam = searchParams.get('mode') as 'new-brand' | 're-audit' | 'dig-deeper' | null;
@@ -89,6 +67,14 @@ const NewAuditInner: React.FC = () => {
       urlInputRef.current.focus();
     }
   }, [userLoading, user, auditType, auditMode]);
+
+  // Redirect brand_identity requests to Brand DNA page
+  useEffect(() => {
+    if (typeParam === 'brand_identity' || typeParam === 'design') {
+      const brandParam = searchParams.get('brand');
+      router.replace(brandParam ? `/dashboard/brand-dna` : '/dashboard/brand-dna');
+    }
+  }, [typeParam, searchParams, router]);
 
   // Fetch credits + brand identities
   useEffect(() => {
@@ -468,7 +454,7 @@ const NewAuditInner: React.FC = () => {
         user_id: user.id,
         status: hasCredits ? 'payment_received' : 'pending_payment',
         product_type: 'auto_detect',
-        ux_concern: auditType === 'brand_identity' ? 'Brand identity audit' : 'General UX audit',
+        ux_concern: 'General UX audit',
         notes: null,
         plan: 'full_audit',
         language: language,
@@ -592,60 +578,11 @@ const NewAuditInner: React.FC = () => {
             ? 'Run a fresh audit on this brand to check for improvements and new issues.'
             : isDigDeeperMode
             ? 'Run a deeper analysis with extended modules and additional checks.'
-            : auditType === 'brand_identity'
-            ? 'Upload your brand materials and get AI-powered analysis of consistency, messaging, and quality.'
             : 'Paste your URL and our AI does a deep analysis across all 96 checkpoints.'}
         </p>
       </div>
 
-      {/* ── Audit Type Selector ── */}
-      <div className="mb-8">
-        <div className="grid grid-cols-3 gap-3">
-          {AUDIT_TYPE_CONFIG.map((config) => {
-            const isSelected = auditType === config.type;
-            const isDisabled = !config.available;
-
-            return (
-              <button
-                key={config.type}
-                type="button"
-                disabled={isDisabled}
-                onClick={() => {
-                  if (!isDisabled) {
-                    setAuditType(config.type);
-                    setGeneralError('');
-                  }
-                }}
-                className={`relative flex flex-col items-center gap-2 px-3 py-4 rounded-xl transition-all text-center ${
-                  isDisabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'
-                }`}
-                style={{
-                  border: isSelected ? '2px solid var(--ink)' : '2px solid var(--rule)',
-                  background: isSelected ? 'color-mix(in srgb, var(--ink) 4%, transparent)' : 'transparent',
-                }}
-              >
-                <div className="transition-colors" style={{ color: isSelected ? 'var(--ink)' : 'var(--m-muted)' }}>
-                  {config.icon}
-                </div>
-                <div>
-                  <p className={`text-sm font-medium ${isSelected ? 'text-text' : 'text-muted'}`}>
-                    {config.label}
-                  </p>
-                  <p className="text-[11px] text-muted leading-tight mt-0.5">
-                    {config.description}
-                  </p>
-                </div>
-                {isDisabled && (
-                  <span className="absolute top-2 right-2 flex items-center gap-1 text-[10px] text-muted bg-off px-1.5 py-0.5 rounded-full">
-                    <Lock size={8} />
-                    Soon
-                  </span>
-                )}
-              </button>
-            );
-          })}
-        </div>
-      </div>
+      {/* Audit type is always website — Brand DNA audits are launched from /dashboard/brand-dna */}
 
       {/* ══════════════════════════════════════════════════════════
           WEBSITE AUDIT FIELDS
@@ -840,7 +777,7 @@ const NewAuditInner: React.FC = () => {
           {brandIdentities.length > 0 && (
             <div className="mb-6">
               <label className="flex items-center gap-2 text-sm font-medium text-text mb-2">
-                <Fingerprint size={15} style={{ color: 'var(--ink)' }} />
+                <Globe size={15} style={{ color: 'var(--ink)' }} />
                 Brand Identity
                 <span className="text-xs font-normal text-muted">(optional)</span>
               </label>
@@ -866,196 +803,7 @@ const NewAuditInner: React.FC = () => {
         </>
       )}
 
-      {/* ══════════════════════════════════════════════════════════
-          BRAND IDENTITY AUDIT FIELDS
-          ══════════════════════════════════════════════════════════ */}
-      {auditType === 'brand_identity' && (
-        <>
-          <div className="mb-6">
-            <label className="flex items-center gap-2 text-sm font-medium text-text mb-2">
-              <Fingerprint size={15} style={{ color: 'var(--ink)' }} />
-              Brand Identity
-            </label>
-
-            {/* Toggle: existing vs new */}
-            {!showNewBrand ? (
-              <>
-                {/* Existing brand selector */}
-                {brandIdentities.length > 0 && (
-                  <>
-                    <select
-                      value={selectedBrandId}
-                      onChange={(e) => setSelectedBrandId(e.target.value)}
-                      className="w-full px-4 py-3 border-2 border-border rounded-xl font-sans text-sm bg-input-bg text-text transition-all focus:outline-none focus:border-text appearance-none"
-                      style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%239ca3af' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E")`, backgroundRepeat: 'no-repeat', backgroundPosition: 'right 12px center' }}
-                    >
-                      <option value="">Select a brand identity...</option>
-                      {brandIdentities.map((bi) => (
-                        <option key={bi.id} value={bi.id}>
-                          {bi.name} ({bi.fileCount} file{bi.fileCount !== 1 ? 's' : ''})
-                        </option>
-                      ))}
-                    </select>
-
-                    {selectedBrand && selectedBrand.fileCount === 0 && (
-                      <div className="mt-3 p-3 rounded-lg flex items-start gap-2" style={{ background: 'color-mix(in srgb, var(--warn) 8%, transparent)', border: '1px solid color-mix(in srgb, var(--warn) 25%, transparent)' }}>
-                        <AlertCircle size={14} className="flex-shrink-0 mt-0.5" style={{ color: 'var(--warn)' }} />
-                        <p className="text-xs" style={{ color: 'var(--ink)' }}>
-                          This brand has no files uploaded.{' '}
-                          <Link href={`/dashboard/brand-identity/${selectedBrandId}`} className="font-medium underline">
-                            Upload files
-                          </Link>{' '}
-                          before running an audit.
-                        </p>
-                      </div>
-                    )}
-
-                    {selectedBrand && selectedBrand.fileCount > 0 && (
-                      <div className="mt-3 p-3 rounded-lg flex items-start gap-2" style={{ background: 'color-mix(in srgb, var(--ok) 8%, transparent)', border: '1px solid color-mix(in srgb, var(--ok) 25%, transparent)' }}>
-                        <FileText size={14} className="flex-shrink-0 mt-0.5" style={{ color: 'var(--ok)' }} />
-                        <p className="text-xs" style={{ color: 'var(--ink)' }}>
-                          {selectedBrand.fileCount} file{selectedBrand.fileCount !== 1 ? 's' : ''} will be analyzed.
-                          The AI will evaluate visual consistency, tone of voice, professionalism, and wording quality.
-                        </p>
-                      </div>
-                    )}
-                  </>
-                )}
-
-                {/* Create new brand button */}
-                <button
-                  type="button"
-                  onClick={() => { setShowNewBrand(true); setSelectedBrandId(''); }}
-                  className={`w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl border-2 border-dashed border-border hover:border-brand/40 text-sm font-medium text-muted hover:text-text transition-all ${brandIdentities.length > 0 ? 'mt-3' : ''}`}
-                >
-                  <Plus size={16} />
-                  Create New Brand Identity
-                </button>
-
-                {brandIdentities.length > 0 && (
-                  <p className="text-xs text-muted mt-2">
-                    <Link href="/dashboard/brand-identity" className="text-brand hover:underline">
-                      Manage brands
-                    </Link>
-                  </p>
-                )}
-              </>
-            ) : (
-              /* ── Inline new brand creation ── */
-              <div className="rounded-xl p-4 space-y-4" style={{ border: '2px solid color-mix(in srgb, var(--ink) 20%, transparent)', background: 'color-mix(in srgb, var(--ink) 2%, transparent)' }}>
-                {/* Brand name */}
-                <div>
-                  <label htmlFor="new-brand-name" className="block text-xs font-medium text-text mb-1.5">
-                    Brand Name
-                  </label>
-                  <input
-                    id="new-brand-name"
-                    type="text"
-                    value={newBrandName}
-                    onChange={(e) => setNewBrandName(e.target.value)}
-                    placeholder="e.g. My Company"
-                    className="w-full px-3 py-2.5 border-2 border-border rounded-lg font-sans text-sm bg-input-bg text-text placeholder:text-placeholder transition-all focus:outline-none focus:border-text"
-                  />
-                </div>
-
-                {/* File upload area */}
-                <div>
-                  <label className="block text-xs font-medium text-text mb-1.5">
-                    Brand Files
-                  </label>
-                  <input
-                    ref={fileInputRef}
-                    type="file"
-                    multiple
-                    accept=".pdf,.doc,.docx,.txt,.png,.jpg,.jpeg,.svg,.webp"
-                    className="hidden"
-                    onChange={(e) => handleAddFiles(e.target.files)}
-                  />
-                  <button
-                    type="button"
-                    onClick={() => fileInputRef.current?.click()}
-                    onDragOver={(e) => { e.preventDefault(); e.stopPropagation(); }}
-                    onDrop={(e) => { e.preventDefault(); e.stopPropagation(); handleAddFiles(e.dataTransfer.files); }}
-                    className="w-full flex flex-col items-center gap-2 px-4 py-5 rounded-lg border-2 border-dashed border-border hover:border-brand/40 bg-off/50 transition-all cursor-pointer"
-                  >
-                    <Upload size={20} className="text-muted" />
-                    <span className="text-xs text-muted">
-                      Click to upload or drag files here
-                    </span>
-                    <span className="text-[10px] text-muted/60">
-                      PDF, DOCX, TXT, PNG, JPG, SVG, WebP — max 10 MB each
-                    </span>
-                  </button>
-                </div>
-
-                {/* File list */}
-                {newBrandFiles.length > 0 && (
-                  <div className="space-y-1.5">
-                    {newBrandFiles.map((f, i) => (
-                      <div key={`${f.name}-${i}`} className="flex items-center gap-2 px-3 py-2 rounded-lg bg-card border border-border/50">
-                        <FileText size={14} className="text-muted flex-shrink-0" />
-                        <span className="text-xs text-text flex-1 truncate">{f.name}</span>
-                        <span className="text-[10px] text-muted flex-shrink-0">
-                          {f.size < 1024 * 1024
-                            ? `${Math.round(f.size / 1024)} KB`
-                            : `${(f.size / (1024 * 1024)).toFixed(1)} MB`}
-                        </span>
-                        <button
-                          type="button"
-                          onClick={() => removeFile(i)}
-                          className="text-muted hover:text-red-500 transition-colors flex-shrink-0"
-                        >
-                          <X size={14} />
-                        </button>
-                      </div>
-                    ))}
-                    <p className="text-[10px] text-muted">
-                      {newBrandFiles.length} file{newBrandFiles.length !== 1 ? 's' : ''} ready to upload
-                    </p>
-                  </div>
-                )}
-
-                {/* Upload error */}
-                {brandUploadError && (
-                  <div className="p-2.5 rounded-lg" style={{ background: 'color-mix(in srgb, var(--severe) 8%, transparent)', border: '1px solid color-mix(in srgb, var(--severe) 20%, transparent)' }}>
-                    <p className="text-xs" style={{ color: 'var(--severe)' }}>{brandUploadError}</p>
-                  </div>
-                )}
-
-                {/* Actions */}
-                <div className="flex items-center gap-3 pt-1">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setShowNewBrand(false);
-                      setNewBrandName('');
-                      setNewBrandFiles([]);
-                      setBrandUploadError('');
-                    }}
-                    className="text-xs font-medium text-muted hover:text-text transition-colors"
-                  >
-                    Cancel
-                  </button>
-                  {brandIdentities.length > 0 && (
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setShowNewBrand(false);
-                        setNewBrandName('');
-                        setNewBrandFiles([]);
-                        setBrandUploadError('');
-                      }}
-                      className="text-xs font-medium text-brand hover:underline"
-                    >
-                      Use existing brand instead
-                    </button>
-                  )}
-                </div>
-              </div>
-            )}
-          </div>
-        </>
-      )}
+      {/* Brand Identity audit fields removed — Brand DNA audits launch from /dashboard/brand-dna */}
 
       {/* ══════════════════════════════════════════════════════════
           SHARED FIELDS (both audit types)
@@ -1163,7 +911,7 @@ const NewAuditInner: React.FC = () => {
       {/* CTA */}
       <button
         onClick={handleSubmit}
-        disabled={loading || brandUploading || (auditType === 'brand_identity' && !showNewBrand && (!selectedBrandId || (selectedBrand?.fileCount ?? 0) === 0)) || (auditType === 'brand_identity' && showNewBrand && (newBrandFiles.length === 0 || !newBrandName.trim()))}
+        disabled={loading || brandUploading}
         className="w-full flex items-center justify-center gap-2.5 font-sans font-medium text-[15px] py-3 px-6 rounded-lg active:scale-[0.98] transition-all min-h-[48px] disabled:opacity-60 disabled:cursor-not-allowed"
         style={{ background: 'var(--ink)', color: 'var(--paper)' }}
       >
@@ -1177,17 +925,17 @@ const NewAuditInner: React.FC = () => {
           </>
         ) : firstAuditFree ? (
           <>
-            Start free {auditType === 'brand_identity' ? 'Brand DNA ' : 'Website '}audit
+            Start free website audit
             <ArrowRight size={20} />
           </>
         ) : hasCredits ? (
           <>
-            Use 1 Credit — Start {auditType === 'brand_identity' ? 'Brand DNA' : 'Website'} Audit
+            Use 1 credit — start website audit
             <ArrowRight size={20} />
           </>
         ) : (
           <>
-            Start {auditType === 'brand_identity' ? 'Brand DNA' : 'Website'} Audit — $13
+            Start website audit — $13
             <ArrowRight size={20} />
           </>
         )}
