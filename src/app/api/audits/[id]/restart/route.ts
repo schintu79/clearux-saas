@@ -61,6 +61,7 @@ export async function POST(
         status: 'payment_received',
         crawl_error: null,
         pages_crawled: 0,
+        progress_percent: 0,
         updated_at: new Date().toISOString(),
       } as any)
       .eq('id', auditId)

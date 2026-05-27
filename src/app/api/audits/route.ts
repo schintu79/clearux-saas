@@ -6,6 +6,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
 import { createServerSupabase } from '@/lib/supabase-server'
+import { createServiceSupabase } from '@/lib/supabase-server'
 
 // Validation schema
 const createAuditSchema = z.object({
@@ -61,6 +62,30 @@ export async function POST(request: NextRequest) {
       plan,
     }: CreateAuditRequest = validationResult.data
 
+    // Auto-link existing brand identity by matching hostname
+    let brandIdentityId: string | null = null
+    try {
+      const host = new URL(product_url).hostname.replace(/^www\./, '')
+      const db = createServiceSupabase()
+      const { data: brands } = await db
+        .from('brand_identities')
+        .select('id, website_url')
+        .eq('user_id', user.id)
+        .is('deleted_at', null)
+      if (brands) {
+        const match = brands.find((b: any) => {
+          if (!b.website_url) return false
+          try {
+            const bHost = new URL(b.website_url).hostname.replace(/^www\./, '')
+            return bHost === host
+          } catch { return false }
+        })
+        if (match) brandIdentityId = match.id
+      }
+    } catch {
+      // URL parsing or DB lookup failure — proceed without brand linkage
+    }
+
     // Create audit in database
     // @ts-ignore Supabase type inference issue with Partial types
     const { data: audit, error: insertError } = await supabase
@@ -75,6 +100,8 @@ export async function POST(request: NextRequest) {
         ux_concern,
         notes: notes || null,
         plan,
+        progress_percent: 0,
+        ...(brandIdentityId ? { brand_identity_id: brandIdentityId } : {}),
       })
       .select()
       .single()

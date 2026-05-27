@@ -28,6 +28,7 @@ import { useAuth } from '@/context/AuthContext';
 import { useBrandSelection } from '@/lib/dashboard/useBrandSelection';
 import {
   loadLatestAuditBundle,
+  isInProgressAuditStatus,
   type LatestAuditBundle,
 } from '@/lib/dashboard/latest-audit';
 import type { AuditFinding, FindingStatus } from '@/types/database';
@@ -91,6 +92,46 @@ export function AuditBundleProvider({ children }: { children: React.ReactNode })
         if (id === fetchIdRef.current) setLoading(false);
       });
   }, [authLoading, user, ready, selection]);
+
+  // Poll every 3s while the active audit (or inProgressAudit) is still processing.
+  // This ensures the overview page gets live progress updates without requiring
+  // a manual page refresh.
+  const pollingRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Derive a stable string to avoid re-triggering the effect on every bundle update.
+  const inProgressStatus = bundle?.inProgressAudit
+    ? (bundle.inProgressAudit as any).status
+    : bundle?.audit
+      ? (bundle.audit as any).status
+      : null;
+  const needsPolling = isInProgressAuditStatus(inProgressStatus);
+
+  useEffect(() => {
+    if (!needsPolling || !user || !ready) {
+      if (pollingRef.current) {
+        clearInterval(pollingRef.current);
+        pollingRef.current = null;
+      }
+      return;
+    }
+
+    // Start polling
+    pollingRef.current = setInterval(() => {
+      const id = ++fetchIdRef.current;
+      loadLatestAuditBundle(user.id, selection)
+        .then((b) => {
+          if (id === fetchIdRef.current) setBundle(b);
+        })
+        .catch(() => {});
+    }, 3000);
+
+    return () => {
+      if (pollingRef.current) {
+        clearInterval(pollingRef.current);
+        pollingRef.current = null;
+      }
+    };
+  }, [needsPolling, user, ready, selection]);
 
   const updateFindingLocally = useCallback(
     (findingId: string, patch: Partial<AuditFinding>) => {
