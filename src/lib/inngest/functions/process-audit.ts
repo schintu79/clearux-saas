@@ -2356,6 +2356,61 @@ RULES FOR RE-AUDIT:
         }
       }
 
+      // ── 1c. Drop findings that match previously fixed or dismissed issues ───
+      // Deep mode relies on AI prompt instructions to avoid re-reporting fixed/dismissed
+      // findings, but the AI doesn't always comply. This programmatic filter catches
+      // any that slip through by comparing new finding titles against previous findings
+      // marked as fixed (status === 'fixed') or dismissed (dismissed === true).
+      if (
+        effectiveDepthMode === 'deep' &&
+        siteContext.previousRawFindings.length > 0 &&
+        findings.length > 0
+      ) {
+        const fixedOrDismissed = siteContext.previousRawFindings.filter(
+          (f: any) => f.status === 'fixed' || f.dismissed
+        )
+        if (fixedOrDismissed.length > 0) {
+          // Build a set of normalized previous titles for fast lookup
+          const normalize = (s: string) =>
+            s.toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim()
+          const prevTitles = fixedOrDismissed.map((f: any) => normalize(f.title))
+
+          const matchesFixed = (title: string): boolean => {
+            const norm = normalize(title)
+            for (const prev of prevTitles) {
+              // Exact match
+              if (norm === prev) return true
+              // One title contains the other (catches rephrased variants)
+              if (norm.length > 10 && prev.length > 10) {
+                if (norm.includes(prev) || prev.includes(norm)) return true
+              }
+              // High word overlap (≥80% of words shared)
+              const wordsA = new Set(norm.split(' ').filter(w => w.length > 2))
+              const wordsB = new Set(prev.split(' ').filter((w: string) => w.length > 2))
+              if (wordsA.size >= 3 && wordsB.size >= 3) {
+                const overlap = [...wordsA].filter(w => wordsB.has(w)).length
+                const smaller = Math.min(wordsA.size, wordsB.size)
+                if (overlap / smaller >= 0.8) return true
+              }
+            }
+            return false
+          }
+
+          const reReportedIds: string[] = []
+          for (const f of findings) {
+            if (matchesFixed(f.title)) reReportedIds.push(f.id)
+          }
+
+          if (reReportedIds.length > 0) {
+            for (const id of reReportedIds) idsToDelete.add(id)
+            findings = findings.filter(f => !idsToDelete.has(f.id))
+            await auditLog(auditId, 'fixed_dismissed_filtered', 'info',
+              `Removed ${reReportedIds.length} finding${reReportedIds.length > 1 ? 's' : ''} that match previously fixed or dismissed issues`)
+            console.log(`[inngest] Fixed/dismissed filter: removed ${reReportedIds.length} re-reported findings`)
+          }
+        }
+      }
+
       // ── 2. Filter speculative findings ───
       if (findings.length > 0) {
         const hasHeadTags = crawlResult.pageContent.includes('Head Tags:')
