@@ -1740,6 +1740,9 @@ RULES FOR RE-AUDIT:
     console.log(`[inngest] Audit ${auditId}: depth mode = ${effectiveDepthMode} (requested: ${auditDetails.depthMode})`)
 
     let verificationData: { verified: number; likelyFixed: number; poorlyFixed: number; results: Array<{ findingId: string; status: string; note: string }> } | null = null
+    // Titles of previous findings verified as fixed on the live site (for deep mode).
+    // Hoisted here so quality gates (which run after both branches) can access it.
+    let deepVerifiedFixedTitles: Set<string> = new Set()
 
     if (effectiveDepthMode === 'baseline') {
       // ════════════════════════════════════════════════════════════
@@ -1857,8 +1860,22 @@ RULES FOR RE-AUDIT:
           // Columns may not exist yet — that's OK, results are carried in memory
         }
 
+        // ── Remove likely_fixed findings from the report ──
+        // Previously these stayed visible with a label. Now we actually
+        // remove them so the report only shows real open issues. The
+        // droppedFixed count in generateReport still accounts for them
+        // when computing score improvement.
+        const likelyFixedIds = verificationResults
+          .filter(r => r.status === 'likely_fixed')
+          .map(r => r.findingId)
+        if (likelyFixedIds.length > 0) {
+          await db.from('audit_findings').delete().in('id', likelyFixedIds)
+          await auditLog(auditId, 'verified_fixed_removed', 'info',
+            `Removed ${likelyFixedIds.length} finding${likelyFixedIds.length > 1 ? 's' : ''} verified as fixed on the live site`)
+        }
+
         await auditLog(auditId, 'verification_completed', 'success',
-          `Verified ${verificationResults.length} findings: ${likelyFixedCount} likely fixed, ${poorlyFixedCount} poorly fixed, ${verificationResults.length - likelyFixedCount - poorlyFixedCount} confirmed open`, {
+          `Verified ${verificationResults.length} findings: ${likelyFixedCount} likely fixed (removed), ${poorlyFixedCount} poorly fixed, ${verificationResults.length - likelyFixedCount - poorlyFixedCount} confirmed open`, {
             total_verified: verificationResults.length,
             likely_fixed: likelyFixedCount,
             poorly_fixed: poorlyFixedCount,
@@ -2052,6 +2069,102 @@ RULES FOR RE-AUDIT:
 
     } else {
       // ════════════════════════════════════════════════════════════
+      // DEEP MODE PRE-VERIFICATION — Check if "open" findings were silently fixed
+      // Most companies download the report, fix issues, and never update the
+      // status in the dashboard. Before deep analysis, verify all [OPEN]
+      // previous findings against the fresh crawl. Findings confirmed as
+      // fixed get their labels updated so the AI analyzer doesn't re-report
+      // them, and the quality gates filter also catches any that slip through.
+      // ════════════════════════════════════════════════════════════
+      if (siteContext.previousRawFindings.length > 0) {
+        const deepPreVerify = await step.run('deep-pre-verify-findings', async () => {
+          // Only verify findings that are still "open" (not fixed/dismissed by user)
+          const openFindings = siteContext.previousRawFindings.filter(
+            (f: any) => !f.dismissed && f.status !== 'fixed'
+          )
+          if (openFindings.length === 0) {
+            return { verifiedFixedTitles: [] as string[], likelyFixed: 0 }
+          }
+
+          await auditLog(auditId, 'deep_pre_verify_started', 'info',
+            `Pre-verifying ${openFindings.length} open findings against live site before deep analysis`)
+
+          const verificationResults = await verifyFindings(
+            openFindings.map((f: any) => ({
+              id: f.id,
+              title: f.title,
+              description: f.description,
+              recommendation: f.recommendation,
+              page_url: f.page_url,
+              severity: f.severity,
+              target_element: f.target_element,
+            })),
+            crawlResult.pageContent,
+            auditDetails.language,
+          )
+
+          const fixedTitles = verificationResults
+            .filter(r => r.status === 'likely_fixed')
+            .map(r => {
+              const finding = openFindings.find((f: any) => f.id === r.findingId)
+              return finding ? finding.title : ''
+            })
+            .filter(Boolean)
+
+          const likelyFixed = fixedTitles.length
+          if (likelyFixed > 0) {
+            await auditLog(auditId, 'deep_pre_verify_completed', 'success',
+              `Pre-verification: ${likelyFixed} of ${openFindings.length} open findings appear fixed on the live site`, {
+                likely_fixed: likelyFixed,
+                total_verified: openFindings.length,
+              })
+          }
+
+          return { verifiedFixedTitles: fixedTitles, likelyFixed }
+        })
+
+        // Store verified-fixed titles for use in quality gates and context patching
+        deepVerifiedFixedTitles = new Set(deepPreVerify.verifiedFixedTitles)
+
+        // Update verificationData so the score calculation accounts for silently fixed findings
+        if (deepPreVerify.likelyFixed > 0) {
+          verificationData = {
+            verified: deepPreVerify.verifiedFixedTitles.length,
+            likelyFixed: deepPreVerify.likelyFixed,
+            poorlyFixed: 0,
+            results: [],
+          }
+        }
+      }
+
+      // Patch the context string: replace [OPEN] with [VERIFIED FIXED] for findings
+      // confirmed as fixed on the live site, so the AI analyzer doesn't re-report them
+      let patchedContext = siteContext.context
+      for (const title of deepVerifiedFixedTitles) {
+        // Replace the [OPEN] label with [VERIFIED FIXED] in the previous findings block
+        const openPattern = `  [OPEN] "${title}"`
+        const inProgressPattern = `  [IN PROGRESS] "${title}"`
+        if (patchedContext.includes(openPattern)) {
+          patchedContext = patchedContext.replace(
+            openPattern,
+            `  [VERIFIED FIXED] "${title}" — Confirmed fixed on live site`
+          )
+        } else if (patchedContext.includes(inProgressPattern)) {
+          patchedContext = patchedContext.replace(
+            inProgressPattern,
+            `  [VERIFIED FIXED] "${title}" — Confirmed fixed on live site`
+          )
+        }
+      }
+      // Add a rule for the new label
+      if (deepVerifiedFixedTitles.size > 0 && patchedContext.includes('RULES FOR RE-AUDIT:')) {
+        patchedContext = patchedContext.replace(
+          'RULES FOR RE-AUDIT:',
+          'RULES FOR RE-AUDIT:\n- [VERIFIED FIXED] findings: These have been confirmed as fixed on the live site. Do NOT re-report them under any circumstances.'
+        )
+      }
+
+      // ════════════════════════════════════════════════════════════
       // DEEP MODE (first audit or explicit Dig Deeper) — FULL AI ANALYSIS
       // ════════════════════════════════════════════════════════════
       // ── Determine which modules (and thus categories) to analyze ──
@@ -2147,7 +2260,8 @@ RULES FOR RE-AUDIT:
       const aiDiscoveryBlock = aiDiscovery.summary ? `\n\n${aiDiscovery.summary}` : ''
       const structuredDataBlock = structuredDataResult.summary ? `\n\n${structuredDataResult.summary}` : ''
       const llmProbeBlock = llmProbeResult.summary ? `\n\n${llmProbeResult.summary}` : ''
-      const contentWithContext = `${siteContext.context}\n\n${crawlResult.pageContent}${aiDiscoveryBlock}${structuredDataBlock}${llmProbeBlock}`
+      // Use patchedContext (which has [VERIFIED FIXED] labels) instead of siteContext.context
+      const contentWithContext = `${patchedContext}\n\n${crawlResult.pageContent}${aiDiscoveryBlock}${structuredDataBlock}${llmProbeBlock}`
       // Brand consistency categories get extra brand context prepended
       const brandContentWithContext = brandContext
         ? `=== BRAND IDENTITY GUIDELINES ===\n${brandContext}\n\n=== WEBSITE CONTENT ===\n${contentWithContext}`
@@ -2356,11 +2470,12 @@ RULES FOR RE-AUDIT:
         }
       }
 
-      // ── 1c. Drop findings that match previously fixed or dismissed issues ───
+      // ── 1c. Drop findings that match previously fixed, dismissed, or verified-fixed issues ───
       // Deep mode relies on AI prompt instructions to avoid re-reporting fixed/dismissed
       // findings, but the AI doesn't always comply. This programmatic filter catches
-      // any that slip through by comparing new finding titles against previous findings
-      // marked as fixed (status === 'fixed') or dismissed (dismissed === true).
+      // any that slip through by comparing new finding titles against:
+      //   1. Previous findings marked as fixed (status === 'fixed') or dismissed
+      //   2. Previous findings verified as fixed on the live site (deepVerifiedFixedTitles)
       if (
         effectiveDepthMode === 'deep' &&
         siteContext.previousRawFindings.length > 0 &&
@@ -2369,11 +2484,16 @@ RULES FOR RE-AUDIT:
         const fixedOrDismissed = siteContext.previousRawFindings.filter(
           (f: any) => f.status === 'fixed' || f.dismissed
         )
-        if (fixedOrDismissed.length > 0) {
+        // Also include titles verified as fixed on the live site (silently fixed, status still "open")
+        const allFixedTitles = [
+          ...fixedOrDismissed.map((f: any) => f.title),
+          ...deepVerifiedFixedTitles,
+        ]
+        if (allFixedTitles.length > 0) {
           // Build a set of normalized previous titles for fast lookup
           const normalize = (s: string) =>
             s.toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim()
-          const prevTitles = fixedOrDismissed.map((f: any) => normalize(f.title))
+          const prevTitles = allFixedTitles.map((t: string) => normalize(t))
 
           const matchesFixed = (title: string): boolean => {
             const norm = normalize(title)
