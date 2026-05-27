@@ -9,7 +9,7 @@
  * visibility trend, sentiment themes) belongs on Brand Intelligence.
  */
 
-import React, { useEffect, useMemo, useState, useCallback } from 'react';
+import React, { useEffect, useMemo, useState, useCallback, useRef } from 'react';
 import {
   Target,
   Plus,
@@ -28,6 +28,8 @@ import {
   Zap,
   Shield,
   Users,
+  Crown,
+  BarChart3,
 } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { useAuditBundle } from '@/context/AuditBundleContext';
@@ -147,6 +149,319 @@ function computePillarScores(report: any): Array<{ name: string; score: number }
   }).filter(p => p.score >= 0);
 }
 
+/* ── Chart color palette ───────────────────────────── */
+
+const CHART_COLORS = [
+  '#C8A93E', // gold — brand (always first)
+  '#4A7CDB', // blue
+  '#3B8A6E', // teal
+  '#D96B4D', // coral
+  '#8B6BB5', // purple
+  '#5AA3A3', // seafoam
+];
+
+/* ── AI Visibility Perception Card ──────────────────── */
+
+type VisRankedEntry = {
+  name: string;
+  domain: string;
+  visibility: number;
+  isBrand: boolean;
+  color: string;
+};
+
+function AIVisibilityPerceptionCard({
+  brandName,
+  brandDomain,
+  brandAiVisibility,
+  competitorMentions,
+  drafts,
+  trendSnapshots,
+  loading,
+}: {
+  brandName: string;
+  brandDomain: string | null;
+  brandAiVisibility: number | null;
+  competitorMentions: {
+    brand: { mentions: number; avgPlacement: number };
+    competitors: Array<{ name: string; mentions: number; avgPlacement: number; placements: number[] }>;
+    totalPrompts: number;
+  };
+  drafts: DraftCompetitor[];
+  trendSnapshots: any[];
+  loading: boolean;
+}) {
+  const chartRef = useRef<HTMLDivElement>(null);
+
+  // Build ranked entries: brand + competitors by AI visibility %
+  const rankedEntries = useMemo<VisRankedEntry[]>(() => {
+    const entries: VisRankedEntry[] = [];
+
+    // Brand entry — use real AI visibility score
+    if (brandAiVisibility != null) {
+      entries.push({
+        name: brandName,
+        domain: brandDomain || '',
+        visibility: brandAiVisibility,
+        isBrand: true,
+        color: CHART_COLORS[0],
+      });
+    }
+
+    // Competitor entries — use mention rate as AI visibility proxy
+    if (competitorMentions.totalPrompts > 0) {
+      competitorMentions.competitors.forEach((cm, idx) => {
+        const matchedDraft = drafts.find(d => d.domain.includes(cm.name) || (d.name || '').toLowerCase().includes(cm.name));
+        const mentionRate = Math.round((cm.mentions / competitorMentions.totalPrompts) * 100);
+        entries.push({
+          name: matchedDraft?.name || cm.name,
+          domain: matchedDraft?.domain || cm.name,
+          visibility: mentionRate,
+          isBrand: false,
+          color: CHART_COLORS[(idx + 1) % CHART_COLORS.length],
+        });
+      });
+    }
+
+    return entries.sort((a, b) => b.visibility - a.visibility);
+  }, [brandName, brandDomain, brandAiVisibility, competitorMentions, drafts]);
+
+  // Historical trend data for the brand
+  const brandTrend = useMemo(() => {
+    const snaps = trendSnapshots
+      .filter((s: any) => s.ai_visibility != null)
+      .map((s: any) => ({
+        date: new Date(s.snapshot_at),
+        value: s.ai_visibility as number,
+        label: new Date(s.snapshot_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+      }));
+    return snaps.length >= 2 ? snaps : null;
+  }, [trendSnapshots]);
+
+  // Derive insight sentence
+  const insightText = useMemo(() => {
+    if (rankedEntries.length < 2) return null;
+    const brandEntry = rankedEntries.find(e => e.isBrand);
+    if (!brandEntry) return null;
+    const brandIdx = rankedEntries.indexOf(brandEntry);
+    const leader = rankedEntries[0];
+    const gap = leader.visibility - brandEntry.visibility;
+
+    if (brandIdx === 0) {
+      return `${brandName} leads with ${brandEntry.visibility}% AI visibility, ${gap === 0 && rankedEntries.length > 1 ? 'tied with ' + rankedEntries[1].name : gap + ' points ahead of ' + (rankedEntries[1]?.name || 'competitors')}.`;
+    }
+    return `${brandName} ranks #${brandIdx + 1} at ${brandEntry.visibility}% — ${gap} points behind ${leader.name}.`;
+  }, [rankedEntries, brandName]);
+
+  // Skeleton loading
+  if (loading) {
+    return (
+      <DashCard>
+        <SectionTitle>AI visibility perception</SectionTitle>
+        <SectionDesc>Ranking of the added brands based on AI visibility</SectionDesc>
+        <div className="space-y-3 mt-4">
+          {[1, 2, 3].map(i => (
+            <div key={i} className="flex items-center gap-3">
+              <div className="w-8 h-4 rounded animate-pulse" style={{ background: 'var(--rule)' }} />
+              <div className="flex-1 h-6 rounded animate-pulse" style={{ background: 'var(--rule)' }} />
+              <div className="w-12 h-4 rounded animate-pulse" style={{ background: 'var(--rule)' }} />
+            </div>
+          ))}
+        </div>
+      </DashCard>
+    );
+  }
+
+  // Empty state — need at least brand + 1 competitor
+  if (rankedEntries.length < 2) {
+    return (
+      <DashCard>
+        <SectionTitle>AI visibility perception</SectionTitle>
+        <SectionDesc>Ranking of the added brands based on AI visibility</SectionDesc>
+        <div className="text-center py-10">
+          <BarChart3 size={28} strokeWidth={1.5} style={{ color: 'var(--m-muted)' }} className="mx-auto mb-3" />
+          <p className="text-[13px] font-medium" style={{ color: 'var(--ink)' }}>Not enough data yet</p>
+          <p className="text-[12px] mt-1" style={{ color: 'var(--m-muted)' }}>
+            {rankedEntries.length === 0
+              ? 'Run an audit with AI probes enabled, then add competitors to compare AI visibility.'
+              : 'Add at least one competitor to see how your brand compares in AI visibility.'}
+          </p>
+        </div>
+      </DashCard>
+    );
+  }
+
+  const maxVis = Math.max(...rankedEntries.map(e => e.visibility), 1);
+
+  return (
+    <DashCard>
+      <div className="flex items-start justify-between mb-1">
+        <div>
+          <SectionTitle>AI visibility perception</SectionTitle>
+          <SectionDesc>Ranking of the added brands based on AI visibility</SectionDesc>
+        </div>
+        {rankedEntries.find(e => e.isBrand) && (
+          <div
+            className="flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[11px] font-semibold"
+            style={{
+              background: rankedEntries.findIndex(e => e.isBrand) === 0
+                ? 'color-mix(in srgb, var(--ok) 10%, transparent)'
+                : 'color-mix(in srgb, var(--warn) 10%, transparent)',
+              color: rankedEntries.findIndex(e => e.isBrand) === 0 ? 'var(--ok)' : 'var(--warn)',
+            }}
+          >
+            {rankedEntries.findIndex(e => e.isBrand) === 0 ? (
+              <><Crown size={11} /> Leader</>
+            ) : (
+              <>#{rankedEntries.findIndex(e => e.isBrand) + 1} of {rankedEntries.length}</>
+            )}
+          </div>
+        )}
+      </div>
+
+      {/* ── Ranked bar chart ─────────────────────────── */}
+      <div ref={chartRef} className="mt-4 space-y-2.5">
+        {rankedEntries.map((entry, idx) => {
+          const barWidth = maxVis > 0 ? (entry.visibility / maxVis) * 100 : 0;
+          return (
+            <div key={entry.domain + idx} className="flex items-center gap-3 group">
+              {/* Rank number */}
+              <span
+                className="w-5 text-[11px] font-bold tabular-nums text-center flex-shrink-0"
+                style={{ color: entry.isBrand ? entry.color : 'var(--m-muted)' }}
+              >
+                {idx + 1}
+              </span>
+
+              {/* Brand marker + bar */}
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2 mb-1">
+                  <SiteFavicon hostname={entry.domain} size={14} />
+                  <span
+                    className="text-[12px] font-medium truncate"
+                    style={{ color: entry.isBrand ? 'var(--ink)' : 'color-mix(in srgb, var(--ink) 80%, transparent)' }}
+                  >
+                    {entry.name}
+                  </span>
+                  {entry.isBrand && (
+                    <span
+                      className="text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded"
+                      style={{ background: 'color-mix(in srgb, var(--ink) 6%, transparent)', color: 'var(--m-muted)' }}
+                    >
+                      You
+                    </span>
+                  )}
+                </div>
+                <div className="w-full h-[22px] rounded-md overflow-hidden relative" style={{ background: 'color-mix(in srgb, var(--ink) 4%, transparent)' }}>
+                  <div
+                    className="h-full rounded-md transition-all duration-700 ease-out"
+                    style={{
+                      width: `${Math.max(barWidth, 2)}%`,
+                      background: entry.isBrand
+                        ? `linear-gradient(90deg, ${entry.color}, color-mix(in srgb, ${entry.color} 70%, white))`
+                        : `color-mix(in srgb, ${entry.color} 50%, transparent)`,
+                      opacity: entry.isBrand ? 1 : 0.7,
+                    }}
+                  />
+                  {/* Value label inside bar if wide enough, otherwise outside */}
+                  <span
+                    className="absolute top-0 h-full flex items-center text-[11px] font-bold tabular-nums"
+                    style={{
+                      left: barWidth > 20 ? undefined : `${Math.max(barWidth, 3)}%`,
+                      right: barWidth > 20 ? `max(4px, ${100 - barWidth + 1}%)` : undefined,
+                      color: barWidth > 20 ? '#fff' : 'var(--ink)',
+                      paddingLeft: barWidth > 20 ? undefined : '6px',
+                      paddingRight: barWidth > 20 ? '8px' : undefined,
+                      textShadow: barWidth > 20 ? '0 1px 2px rgba(0,0,0,0.3)' : 'none',
+                    }}
+                  >
+                    {entry.visibility}%
+                  </span>
+                </div>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+
+      {/* ── Trend sparkline (if historical data exists) ── */}
+      {brandTrend && (
+        <div className="mt-5 pt-4" style={{ borderTop: '1px solid var(--rule)' }}>
+          <p className="text-[11px] font-semibold uppercase tracking-wider mb-3" style={{ color: 'var(--m-muted)' }}>
+            {brandName} visibility trend
+          </p>
+          <BrandTrendSparkline data={brandTrend} color={CHART_COLORS[0]} />
+        </div>
+      )}
+
+      {/* ── Insight sentence ──────────────────────────── */}
+      {insightText && (
+        <div
+          className="mt-4 px-3.5 py-2.5 rounded-lg text-[12px] leading-relaxed"
+          style={{ background: 'color-mix(in srgb, var(--ink) 3%, transparent)', color: 'var(--ink)' }}
+        >
+          <span className="font-semibold" style={{ color: 'var(--m-muted)' }}>Insight — </span>
+          {insightText}
+        </div>
+      )}
+    </DashCard>
+  );
+}
+
+/* ── Brand trend sparkline (SVG) ──────────────────── */
+
+function BrandTrendSparkline({ data, color }: { data: Array<{ date: Date; value: number; label: string }>; color: string }) {
+  const W = 600;
+  const H = 80;
+  const PAD_X = 40;
+  const PAD_Y = 12;
+  const plotW = W - PAD_X * 2;
+  const plotH = H - PAD_Y * 2;
+
+  const minV = Math.max(0, Math.min(...data.map(d => d.value)) - 5);
+  const maxV = Math.min(100, Math.max(...data.map(d => d.value)) + 5);
+  const rangeV = Math.max(maxV - minV, 1);
+
+  const points = data.map((d, i) => {
+    const x = PAD_X + (i / (data.length - 1)) * plotW;
+    const y = PAD_Y + plotH - ((d.value - minV) / rangeV) * plotH;
+    return { x, y, ...d };
+  });
+
+  const pathD = points.map((p, i) => (i === 0 ? `M${p.x},${p.y}` : `L${p.x},${p.y}`)).join(' ');
+  const areaD = pathD + ` L${points[points.length - 1].x},${H - PAD_Y} L${points[0].x},${H - PAD_Y} Z`;
+
+  // Show ~4 labels evenly
+  const labelStep = Math.max(1, Math.floor(data.length / 4));
+
+  return (
+    <svg viewBox={`0 0 ${W} ${H}`} className="w-full" style={{ maxHeight: 80 }}>
+      {/* Gradient fill */}
+      <defs>
+        <linearGradient id="sparkGrad" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor={color} stopOpacity={0.15} />
+          <stop offset="100%" stopColor={color} stopOpacity={0} />
+        </linearGradient>
+      </defs>
+      <path d={areaD} fill="url(#sparkGrad)" />
+      <path d={pathD} fill="none" stroke={color} strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" />
+
+      {/* Start + end dots */}
+      <circle cx={points[0].x} cy={points[0].y} r={3} fill={color} />
+      <circle cx={points[points.length - 1].x} cy={points[points.length - 1].y} r={3.5} fill={color} stroke="#fff" strokeWidth={1.5} />
+
+      {/* Value labels */}
+      <text x={points[0].x} y={points[0].y - 7} textAnchor="middle" fontSize={9} fontWeight={600} fill={color}>{points[0].value}%</text>
+      <text x={points[points.length - 1].x} y={points[points.length - 1].y - 7} textAnchor="middle" fontSize={9} fontWeight={600} fill={color}>{points[points.length - 1].value}%</text>
+
+      {/* X-axis labels */}
+      {points.filter((_, i) => i % labelStep === 0 || i === points.length - 1).map((p, i) => (
+        <text key={i} x={p.x} y={H - 1} textAnchor="middle" fontSize={8} fill="var(--m-muted)">{p.label}</text>
+      ))}
+    </svg>
+  );
+}
+
 /* ── Main Page ─────────────────────────────────────── */
 
 export default function CompetitorsPage() {
@@ -160,6 +475,8 @@ export default function CompetitorsPage() {
   const [promptResults, setPromptResults] = useState<PromptResult[]>([]);
   const [industry, setIndustry] = useState<string | null>(null);
   const [benchmarkPosition, setBenchmarkPosition] = useState<any>(null);
+  const [trendSnapshots, setTrendSnapshots] = useState<any[]>([]);
+  const [intelligenceLoading, setIntelligenceLoading] = useState(true);
 
   // Competitor management
   const [drafts, setDrafts] = useState<DraftCompetitor[]>([]);
@@ -194,6 +511,7 @@ export default function CompetitorsPage() {
     }
 
     // Fetch intelligence data
+    setIntelligenceLoading(true);
     fetch(`/api/audits/intelligence?audit_id=${audit.id}`)
       .then(r => r.ok ? r.json() : null)
       .then(d => {
@@ -201,8 +519,10 @@ export default function CompetitorsPage() {
         setBenchmarkPosition(d?.benchmarkPosition || null);
         if (d?.industry) setIndustry(d.industry);
         setPromptResults(d?.promptResults || []);
+        setTrendSnapshots(d?.trendSnapshots || []);
       })
-      .catch(() => {});
+      .catch(() => {})
+      .finally(() => setIntelligenceLoading(false));
 
     // Fetch competitors
     if (!productUrl) return;
@@ -510,7 +830,7 @@ export default function CompetitorsPage() {
          ══════════════════════════════════════════════════ */}
       <DashCard>
         <div className="flex items-center justify-between mb-1">
-          <SectionTitle>Competitor comparison</SectionTitle>
+          <SectionTitle>Competitors overview</SectionTitle>
           <div className="flex items-center gap-2">
             {/* Edit button */}
             {drafts.length > 0 && (
@@ -750,7 +1070,20 @@ export default function CompetitorsPage() {
       </DashCard>
 
       {/* ══════════════════════════════════════════════════
-          3. AI MENTIONS — Brand vs competitors in AI responses
+          3. AI VISIBILITY PERCEPTION — Ranked trend chart
+         ══════════════════════════════════════════════════ */}
+      <AIVisibilityPerceptionCard
+        brandName={brandName}
+        brandDomain={domain}
+        brandAiVisibility={biSummary?.aiVisibility ?? null}
+        competitorMentions={competitorMentions}
+        drafts={drafts}
+        trendSnapshots={trendSnapshots}
+        loading={intelligenceLoading}
+      />
+
+      {/* ══════════════════════════════════════════════════
+          4. AI MENTIONS — Brand vs competitors in AI responses
          ══════════════════════════════════════════════════ */}
       {competitorMentions.competitors.length > 0 && competitorMentions.totalPrompts > 0 && (
         <DashCard>
