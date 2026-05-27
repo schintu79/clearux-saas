@@ -190,12 +190,12 @@ function MetricCard({
           <p className="text-[15px] font-semibold mt-0.5" style={{ color: 'var(--ink)' }}>
             {value}
           </p>
-          <p className="text-[11px] mt-0.5" style={{ color: 'var(--m-muted)' }}>
+          <p className="text-[13px] mt-0.5" style={{ color: 'var(--m-muted)' }}>
             {subtext}
           </p>
         </div>
       </div>
-      <p className="text-[11px] leading-relaxed mt-3 pt-3" style={{ color: 'var(--m-muted)', borderTop: '1px solid var(--rule)' }}>
+      <p className="text-[13px] leading-relaxed mt-3 pt-3" style={{ color: 'var(--m-muted)', borderTop: '1px solid var(--rule)' }}>
         {description}
       </p>
       {children}
@@ -293,6 +293,11 @@ export default function AIPerceptionPage() {
   const [expandedQuestion, setExpandedQuestion] = useState<number | null>(null);
   const [expandedPage, setExpandedPage] = useState<string | null>(null);
 
+  // Fallback competitor data from detect-competitors API
+  const [fallbackCompetitors, setFallbackCompetitors] = useState<Array<{
+    name: string; domain: string; score: number;
+  }>>([]);
+
   // Re-scan state
   const [rescanning, setRescanning] = useState(false);
   const [rescanMessage, setRescanMessage] = useState<string | null>(null);
@@ -372,6 +377,25 @@ export default function AIPerceptionPage() {
                 title: p.title || null,
                 ai_readability: p.ai_readability,
               }))
+          );
+        })
+        .catch(() => {});
+    }
+
+    // Fetch competitors from detect-competitors API as a fallback
+    // (in case LLM probes returned no competitor mentions)
+    const productUrl = audit?.product_url;
+    if (productUrl) {
+      fetch(`/api/audits/detect-competitors?url=${encodeURIComponent(productUrl)}`)
+        .then(r => r.ok ? r.json() : null)
+        .then(d => {
+          if (!d?.competitors) return;
+          setFallbackCompetitors(
+            (d.competitors as any[]).map((c: any) => ({
+              name: c.name || c.domain,
+              domain: c.domain,
+              score: c.score ?? 0,
+            }))
           );
         })
         .catch(() => {});
@@ -529,6 +553,8 @@ export default function AIPerceptionPage() {
   const hasSentiment = avgSentiment != null;
   const hasPlacement = avgPlacement != null;
   const hasCompetitors = competitorData.length > 0;
+  const hasFallbackCompetitors = fallbackCompetitors.length > 0;
+  const brandIsUnknown = hasProbes && overallAccuracy != null && overallAccuracy === 0;
 
   return (
     <div className="space-y-6">
@@ -582,15 +608,44 @@ export default function AIPerceptionPage() {
         }}
       >
         <Search size={15} strokeWidth={1.75} className="mt-0.5 flex-shrink-0" style={{ color: 'var(--m-muted)' }} />
-        <p className="text-[12px] leading-relaxed" style={{ color: 'var(--m-muted)' }}>
+        <p className="text-[13px] leading-relaxed" style={{ color: 'var(--m-muted)' }}>
           We ask leading AI models — ChatGPT, Claude, Gemini, and Perplexity — questions about your brand,
           then compare their answers to what your website actually says. This shows you how accurately AI
           represents your brand to the millions of people using it every day.
         </p>
       </div>
 
-      {/* ── New brand notice ── */}
-      {hasProbes && overallAccuracy != null && overallAccuracy < 50 && (
+      {/* ── Brand unknown to AI notice ── */}
+      {brandIsUnknown && (
+        <div
+          className="flex items-start gap-3 rounded-lg border px-4 py-4"
+          style={{
+            background: 'rgba(234,179,8,0.06)',
+            borderColor: 'rgba(234,179,8,0.2)',
+          }}
+        >
+          <AlertTriangle size={16} strokeWidth={1.75} className="mt-0.5 flex-shrink-0" style={{ color: 'var(--warn)' }} />
+          <div>
+            <p className="text-[13px] font-semibold mb-1" style={{ color: 'var(--ink)' }}>
+              No AI data available for this brand yet
+            </p>
+            <p className="text-[12px] leading-relaxed" style={{ color: 'var(--m-muted)' }}>
+              AI models (ChatGPT, Claude, Gemini, Perplexity) don{"'"}t have enough training data to
+              answer questions about your brand. This is normal for newer or niche brands — AI knowledge
+              lags behind the live web by months. Focus on building authoritative backlinks, earning press
+              mentions, and publishing clear content. AI confidence follows web authority.
+            </p>
+            {hasFallbackCompetitors && (
+              <p className="text-[12px] leading-relaxed mt-2" style={{ color: 'var(--m-muted)' }}>
+                Your competitors are already visible to AI — see how they rank below.
+              </p>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* ── New brand notice (low but non-zero accuracy) ── */}
+      {hasProbes && overallAccuracy != null && overallAccuracy > 0 && overallAccuracy < 50 && (
         <div
           className="flex items-start gap-3 rounded-lg border px-4 py-3"
           style={{
@@ -657,7 +712,7 @@ export default function AIPerceptionPage() {
             <BarChart3 size={15} strokeWidth={1.75} style={{ color: 'var(--ink)' }} />
             <h2 className="text-[15px] font-semibold" style={{ color: 'var(--ink)' }}>Model-by-model breakdown</h2>
           </div>
-          <p className="text-[12px] mb-4" style={{ color: 'var(--m-muted)' }}>
+          <p className="text-[13px] mb-4" style={{ color: 'var(--m-muted)' }}>
             How each AI model performs when asked about your brand. Accuracy, sentiment, and placement vary by model.
           </p>
 
@@ -746,7 +801,7 @@ export default function AIPerceptionPage() {
             <TrendingUp size={15} strokeWidth={1.75} style={{ color: 'var(--ink)' }} />
             <h2 className="text-[15px] font-semibold" style={{ color: 'var(--ink)' }}>Brand perception themes</h2>
           </div>
-          <p className="text-[12px] mb-4" style={{ color: 'var(--m-muted)' }}>
+          <p className="text-[13px] mb-4" style={{ color: 'var(--m-muted)' }}>
             Recurring topics AI models mention about your brand, classified by tone.
           </p>
           <div className="flex flex-wrap gap-2">
@@ -779,11 +834,58 @@ export default function AIPerceptionPage() {
             <Users size={15} strokeWidth={1.75} style={{ color: 'var(--ink)' }} />
             <h2 className="text-[15px] font-semibold" style={{ color: 'var(--ink)' }}>Competitor AI placement</h2>
           </div>
-          <p className="text-[12px] mb-4" style={{ color: 'var(--m-muted)' }}>
+          <p className="text-[13px] mb-4" style={{ color: 'var(--m-muted)' }}>
             When people ask AI about your category, these competitors get mentioned too.
             Lower position numbers mean the competitor appears earlier in AI responses.
           </p>
           <CompetitorPlacementTable competitors={competitorData} />
+        </DashCard>
+      )}
+
+      {/* ── Fallback competitor list (when probe-based data is empty) ── */}
+      {!hasCompetitors && hasFallbackCompetitors && (
+        <DashCard>
+          <div className="flex items-center gap-2 mb-1">
+            <Users size={15} strokeWidth={1.75} style={{ color: 'var(--ink)' }} />
+            <h2 className="text-[15px] font-semibold" style={{ color: 'var(--ink)' }}>Competitors in your space</h2>
+          </div>
+          <p className="text-[13px] mb-4" style={{ color: 'var(--m-muted)' }}>
+            {brandIsUnknown
+              ? 'While your brand isn\'t yet visible to AI models, these competitors in your category already have an AI presence. Their UX scores are shown below.'
+              : 'Competitors detected in your category. Run a deeper scan to see how AI models rank them against your brand.'}
+          </p>
+          <div className="overflow-x-auto">
+            <table className="w-full text-[12px]" style={{ borderCollapse: 'separate', borderSpacing: 0 }}>
+              <thead>
+                <tr>
+                  <th className="text-left py-2 px-3 font-semibold" style={{ color: 'var(--m-muted)', borderBottom: '1px solid var(--rule)' }}>
+                    Competitor
+                  </th>
+                  <th className="text-left py-2 px-3 font-semibold" style={{ color: 'var(--m-muted)', borderBottom: '1px solid var(--rule)' }}>
+                    Domain
+                  </th>
+                  <th className="text-center py-2 px-3 font-semibold" style={{ color: 'var(--m-muted)', borderBottom: '1px solid var(--rule)' }}>
+                    UX score
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                {fallbackCompetitors.map((comp, i) => (
+                  <tr key={comp.domain} style={{ background: i % 2 === 0 ? 'transparent' : 'var(--paper-2)' }}>
+                    <td className="py-2 px-3 font-medium" style={{ color: 'var(--ink)' }}>
+                      {comp.name}
+                    </td>
+                    <td className="py-2 px-3" style={{ color: 'var(--m-muted)' }}>
+                      {comp.domain}
+                    </td>
+                    <td className="text-center py-2 px-3 tabular-nums font-semibold" style={{ color: comp.score > 0 ? scoreColorVar(comp.score) : 'var(--m-muted)' }}>
+                      {comp.score > 0 ? `${comp.score}/100` : '--'}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </DashCard>
       )}
 
@@ -794,7 +896,7 @@ export default function AIPerceptionPage() {
             <MessageSquare size={15} strokeWidth={1.75} style={{ color: 'var(--ink)' }} />
             <h2 className="text-[15px] font-semibold" style={{ color: 'var(--ink)' }}>What AI models say about you</h2>
           </div>
-          <p className="text-[12px] mb-4" style={{ color: 'var(--m-muted)' }}>
+          <p className="text-[13px] mb-4" style={{ color: 'var(--m-muted)' }}>
             We asked each AI model the same questions about your brand. Expand a question to see how each model answered and whether its response matches your website.
           </p>
 
@@ -812,7 +914,7 @@ export default function AIPerceptionPage() {
                     className="w-full flex items-center gap-3 px-4 py-3.5 text-left transition-colors hover:bg-black/[0.02]"
                   >
                     <div className="flex-1 min-w-0">
-                      <p className="text-[13px] font-medium" style={{ color: 'var(--ink)' }}>{group.question}</p>
+                      <p className="text-[15px] font-medium" style={{ color: 'var(--ink)' }}>{group.question}</p>
                     </div>
                     <div className="flex items-center gap-2 flex-shrink-0">
                       {accurate > 0 && (
@@ -861,7 +963,7 @@ export default function AIPerceptionPage() {
                                   </span>
                                 )}
                               </div>
-                              <p className="text-[12px] leading-relaxed" style={{ color: 'var(--m-muted)' }}>
+                              <p className="text-[13px] leading-relaxed" style={{ color: 'var(--m-muted)' }}>
                                 {a.answer}
                               </p>
                               {a.accuracyNote && (
@@ -889,7 +991,7 @@ export default function AIPerceptionPage() {
             <Globe size={15} strokeWidth={1.75} style={{ color: 'var(--ink)' }} />
             <h2 className="text-[15px] font-semibold" style={{ color: 'var(--ink)' }}>Page-level AI readability</h2>
           </div>
-          <p className="text-[12px] mb-4" style={{ color: 'var(--m-muted)' }}>
+          <p className="text-[13px] mb-4" style={{ color: 'var(--m-muted)' }}>
             What AI crawlers can extract from each page on your site. Pages with more structured data and clear signals are easier for AI to understand and recommend.
           </p>
 
@@ -904,7 +1006,7 @@ export default function AIPerceptionPage() {
                     className="w-full flex items-center gap-3 px-4 py-2.5 text-left transition-colors hover:bg-black/[0.02]"
                   >
                     <Globe size={14} style={{ color: 'var(--m-muted)' }} />
-                    <span className="flex-1 min-w-0 text-[13px] font-medium truncate" style={{ color: 'var(--ink)' }}>
+                    <span className="flex-1 min-w-0 text-[15px] font-medium truncate" style={{ color: 'var(--ink)' }}>
                       {page.title || page.url}
                     </span>
                     {ar?.overallScore != null && (
@@ -930,7 +1032,7 @@ export default function AIPerceptionPage() {
                           </p>
                           <div className="flex flex-wrap gap-1.5">
                             {ar.extractable.map(s => (
-                              <span key={s} className="text-[11px] px-2 py-0.5 rounded-full" style={{ background: 'var(--paper-2)', color: 'var(--ink)', border: '1px solid var(--rule)' }}>
+                              <span key={s} className="text-[13px] px-2 py-0.5 rounded-full" style={{ background: 'var(--paper-2)', color: 'var(--ink)', border: '1px solid var(--rule)' }}>
                                 {s}
                               </span>
                             ))}
@@ -945,7 +1047,7 @@ export default function AIPerceptionPage() {
                           </p>
                           <div className="flex flex-wrap gap-1.5">
                             {ar.missing.map(s => (
-                              <span key={s} className="text-[11px] px-2 py-0.5 rounded-full" style={{ background: 'var(--paper-2)', color: 'var(--m-muted)', border: '1px solid var(--rule)' }}>
+                              <span key={s} className="text-[13px] px-2 py-0.5 rounded-full" style={{ background: 'var(--paper-2)', color: 'var(--m-muted)', border: '1px solid var(--rule)' }}>
                                 {s}
                               </span>
                             ))}
@@ -986,26 +1088,26 @@ export default function AIPerceptionPage() {
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div className="rounded-lg p-4" style={{ background: 'rgba(34,197,94,0.04)', border: '1px solid var(--rule)' }}>
-              <p className="text-[12px] font-semibold mb-1" style={{ color: 'var(--ink)' }}>Improve accuracy</p>
-              <p className="text-[11px] leading-relaxed" style={{ color: 'var(--m-muted)' }}>
+              <p className="text-[15px] font-semibold mb-1" style={{ color: 'var(--ink)' }}>Improve accuracy</p>
+              <p className="text-[13px] leading-relaxed" style={{ color: 'var(--m-muted)' }}>
                 Make your website content clear, specific, and structured. Use schema markup, clear headings, and explicit claims that AI can easily parse and verify.
               </p>
             </div>
             <div className="rounded-lg p-4" style={{ background: 'rgba(34,197,94,0.04)', border: '1px solid var(--rule)' }}>
-              <p className="text-[12px] font-semibold mb-1" style={{ color: 'var(--ink)' }}>Boost sentiment</p>
-              <p className="text-[11px] leading-relaxed" style={{ color: 'var(--m-muted)' }}>
+              <p className="text-[15px] font-semibold mb-1" style={{ color: 'var(--ink)' }}>Boost sentiment</p>
+              <p className="text-[13px] leading-relaxed" style={{ color: 'var(--m-muted)' }}>
                 Earn positive mentions from authoritative sources — press coverage, expert reviews, satisfied customers on trusted platforms. AI sentiment follows public perception.
               </p>
             </div>
             <div className="rounded-lg p-4" style={{ background: 'rgba(34,197,94,0.04)', border: '1px solid var(--rule)' }}>
-              <p className="text-[12px] font-semibold mb-1" style={{ color: 'var(--ink)' }}>Climb placement rankings</p>
-              <p className="text-[11px] leading-relaxed" style={{ color: 'var(--m-muted)' }}>
+              <p className="text-[15px] font-semibold mb-1" style={{ color: 'var(--ink)' }}>Climb placement rankings</p>
+              <p className="text-[13px] leading-relaxed" style={{ color: 'var(--m-muted)' }}>
                 Be the most cited and linked-to brand in your category. AI models rank brands higher when many independent sources reference them consistently.
               </p>
             </div>
             <div className="rounded-lg p-4" style={{ background: 'rgba(34,197,94,0.04)', border: '1px solid var(--rule)' }}>
-              <p className="text-[12px] font-semibold mb-1" style={{ color: 'var(--ink)' }}>Beat competitors</p>
-              <p className="text-[11px] leading-relaxed" style={{ color: 'var(--m-muted)' }}>
+              <p className="text-[15px] font-semibold mb-1" style={{ color: 'var(--ink)' }}>Beat competitors</p>
+              <p className="text-[13px] leading-relaxed" style={{ color: 'var(--m-muted)' }}>
                 Create content that directly addresses common category questions. AI recommends brands that have clear, comprehensive answers to what users are asking.
               </p>
             </div>

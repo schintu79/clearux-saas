@@ -627,7 +627,7 @@ export default function WebsiteSpeedPage() {
                               className="w-2 h-2 rounded-full flex-shrink-0"
                               style={{ background: color }}
                             />
-                            <span className="text-[13px] font-semibold" style={{ color: 'var(--ink)' }}>
+                            <span className="text-[15px] font-semibold" style={{ color: 'var(--ink)' }}>
                               {m.fullLabel}
                             </span>
                             <span
@@ -637,7 +637,7 @@ export default function WebsiteSpeedPage() {
                               {m.label}
                             </span>
                           </div>
-                          <p className="text-[11px] leading-relaxed" style={{ color: 'var(--m-muted)' }}>
+                          <p className="text-[13px] leading-relaxed" style={{ color: 'var(--m-muted)' }}>
                             {m.description}
                           </p>
                         </div>
@@ -658,10 +658,10 @@ export default function WebsiteSpeedPage() {
                           style={{ background: `color-mix(in srgb, ${color} 5%, transparent)` }}
                         >
                           <div className="flex items-center gap-1.5 mb-1">
-                            <Lightbulb size={11} strokeWidth={1.75} style={{ color }} />
-                            <span className="text-[10px] font-semibold" style={{ color }}>How to improve</span>
+                            <Lightbulb size={12} strokeWidth={1.75} style={{ color }} />
+                            <span className="text-[11px] font-semibold" style={{ color }}>How to improve</span>
                           </div>
-                          <p className="text-[11px] leading-relaxed" style={{ color: 'var(--ink)' }}>
+                          <p className="text-[13px] leading-relaxed" style={{ color: 'var(--ink)' }}>
                             {rec}
                           </p>
                         </div>
@@ -746,11 +746,11 @@ export default function WebsiteSpeedPage() {
                           </span>
                         )}
                       </div>
-                      <h3 className="text-[13px] font-semibold leading-snug mb-1.5" style={{ color: 'var(--ink)' }}>
+                      <h3 className="text-[15px] font-semibold leading-snug mb-1.5" style={{ color: 'var(--ink)' }}>
                         {f.title}
                       </h3>
                       {f.description && (
-                        <p className="text-[11px] leading-relaxed mb-3 line-clamp-2 flex-1" style={{ color: 'var(--m-muted)' }}>
+                        <p className="text-[13px] leading-relaxed mb-3 line-clamp-2 flex-1" style={{ color: 'var(--m-muted)' }}>
                           {f.description}
                         </p>
                       )}
@@ -760,10 +760,10 @@ export default function WebsiteSpeedPage() {
                           style={{ background: 'color-mix(in srgb, var(--ok) 5%, transparent)' }}
                         >
                           <div className="flex items-center gap-1.5 mb-1">
-                            <Lightbulb size={10} strokeWidth={1.75} style={{ color: 'var(--ok)' }} />
-                            <span className="text-[10px] font-semibold" style={{ color: 'var(--ok)' }}>How to fix</span>
+                            <Lightbulb size={11} strokeWidth={1.75} style={{ color: 'var(--ok)' }} />
+                            <span className="text-[11px] font-semibold" style={{ color: 'var(--ok)' }}>How to fix</span>
                           </div>
-                          <p className="text-[11px] leading-relaxed line-clamp-3" style={{ color: 'var(--ink)' }}>
+                          <p className="text-[13px] leading-relaxed line-clamp-3" style={{ color: 'var(--ink)' }}>
                             {f.recommendation}
                           </p>
                         </div>
@@ -805,11 +805,11 @@ export default function WebsiteSpeedPage() {
                     className="rounded-xl border p-4 flex flex-col"
                     style={{ background: 'var(--card)', borderColor: 'var(--rule)' }}
                   >
-                    <h3 className="text-[13px] font-semibold leading-snug mb-1.5" style={{ color: 'var(--ink)' }}>
+                    <h3 className="text-[15px] font-semibold leading-snug mb-1.5" style={{ color: 'var(--ink)' }}>
                       {f.title}
                     </h3>
                     {f.description && (
-                      <p className="text-[11px] leading-relaxed mb-3 line-clamp-2 flex-1" style={{ color: 'var(--m-muted)' }}>
+                      <p className="text-[13px] leading-relaxed mb-3 line-clamp-2 flex-1" style={{ color: 'var(--m-muted)' }}>
                         {f.description}
                       </p>
                     )}
@@ -819,10 +819,10 @@ export default function WebsiteSpeedPage() {
                         style={{ background: 'color-mix(in srgb, var(--ink) 3%, transparent)' }}
                       >
                         <div className="flex items-center gap-1.5 mb-1">
-                          <Lightbulb size={10} strokeWidth={1.75} style={{ color: 'var(--ink)' }} />
-                          <span className="text-[10px] font-semibold" style={{ color: 'var(--ink)' }}>Recommendation</span>
+                          <Lightbulb size={11} strokeWidth={1.75} style={{ color: 'var(--ink)' }} />
+                          <span className="text-[11px] font-semibold" style={{ color: 'var(--ink)' }}>Recommendation</span>
                         </div>
-                        <p className="text-[11px] leading-relaxed line-clamp-3" style={{ color: 'var(--ink)' }}>
+                        <p className="text-[13px] leading-relaxed line-clamp-3" style={{ color: 'var(--ink)' }}>
                           {f.recommendation}
                         </p>
                       </div>
@@ -839,10 +839,10 @@ export default function WebsiteSpeedPage() {
               className="rounded-xl border p-4 flex items-center gap-3"
               style={{ background: 'color-mix(in srgb, var(--ok) 4%, var(--card))', borderColor: 'var(--rule)' }}
             >
-              <CheckCircle2 size={16} strokeWidth={1.75} style={{ color: 'var(--ok)' }} />
+              <CheckCircle2 size={18} strokeWidth={1.75} style={{ color: 'var(--ok)' }} />
               <div>
-                <p className="text-[13px] font-semibold" style={{ color: 'var(--ink)' }}>No speed issues detected</p>
-                <p className="text-[12px]" style={{ color: 'var(--m-muted)' }}>
+                <p className="text-[15px] font-semibold" style={{ color: 'var(--ink)' }}>No speed issues detected</p>
+                <p className="text-[13px] mt-0.5" style={{ color: 'var(--m-muted)' }}>
                   PageSpeed Insights found no actionable performance issues for this website.
                 </p>
               </div>
