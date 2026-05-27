@@ -844,11 +844,6 @@ function OverviewInner() {
         </div>
       </div>
 
-      {/* ── In-progress re-audit banner (non-blocking) ──── */}
-      {bundle.inProgressAudit && (
-        <RunningAuditBanner audit={bundle.inProgressAudit} />
-      )}
-
       {/* ── Alert / executive summary slot ───────────────── */}
       <AlertOrSummary
         critical={severityCounts.critical}
