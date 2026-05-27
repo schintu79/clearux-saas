@@ -172,6 +172,19 @@ function OverviewInner() {
   const [breakdownOpen, setBreakdownOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
 
+  // Force-refresh bundle when overview mounts (navigation from new-audit,
+  // audit detail, or any other page). Without this, a re-audit of the same
+  // brand/site doesn't trigger a context refetch because the selection
+  // reference hasn't changed — the user sees stale data until they manually
+  // refresh the page.
+  const mountInvalidatedRef = useRef(false);
+  useEffect(() => {
+    if (!user || !ready) return;
+    if (mountInvalidatedRef.current) return;
+    mountInvalidatedRef.current = true;
+    invalidate();
+  }, [user, ready, invalidate]);
+
   useEffect(() => {
     if (!menuOpen) return;
     const onClick = (e: MouseEvent) => {
@@ -221,7 +234,13 @@ function OverviewInner() {
       writeSelection({ kind: 'brand', brandId: brandParam });
     }
     window.history.replaceState({}, '', '/dashboard/overview');
-  }, [searchParams]);
+    // Force context refetch after writing the new selection so the
+    // bundle reflects the just-created audit (re-audit same brand
+    // wouldn't change the selection reference, leaving stale data).
+    // Small delay ensures the selection state has propagated to the
+    // context before invalidate reads it.
+    setTimeout(() => invalidate(), 50);
+  }, [searchParams, invalidate]);
 
   // Reset derived data when selection changes (bundle itself is managed by context).
   useEffect(() => {

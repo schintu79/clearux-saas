@@ -74,6 +74,10 @@ export function AuditBundleProvider({ children }: { children: React.ReactNode })
   const [bundle, setBundle] = useState<LatestAuditBundle | null>(null);
   const [loading, setLoading] = useState(true);
   const fetchIdRef = useRef(0);
+  // Keep a ref to the latest selection so invalidate() always uses the
+  // most recent value — not a stale closure from when it was memoised.
+  const selectionRef = useRef(selection);
+  selectionRef.current = selection;
 
   // Load bundle when auth or selection changes
   useEffect(() => {
@@ -169,12 +173,14 @@ export function AuditBundleProvider({ children }: { children: React.ReactNode })
   const invalidate = useCallback(() => {
     if (!user || !ready) return;
     const id = ++fetchIdRef.current;
-    loadLatestAuditBundle(user.id, selection)
+    // Read from ref so we always fetch with the latest selection, even
+    // if this callback was captured before the most recent writeSelection.
+    loadLatestAuditBundle(user.id, selectionRef.current)
       .then((b) => {
         if (id === fetchIdRef.current) setBundle(b);
       })
       .catch(() => {});
-  }, [user, ready, selection]);
+  }, [user, ready]);
 
   return (
     <AuditBundleContext.Provider
