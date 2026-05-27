@@ -350,7 +350,7 @@ const STEPS = [
   {
     number: '02',
     title: 'Our AI runs 96 checkpoints',
-    description: 'Each page is evaluated against four UX pillars: ethical design, cognitive accessibility, AI readiness, and conversion psychology.',
+    description: 'Each page is evaluated across six modules: Foundation, Human Experience, Inclusive Design, Future Readiness, Brand Consistency, and SEO Structure.',
   },
   {
     number: '03',

@@ -131,6 +131,12 @@ export function HomeJsonLd() {
             availability: 'https://schema.org/InStock',
           },
         ],
+        image: {
+          '@type': 'ImageObject',
+          url: `${siteUrl}/og-image.png`,
+          width: 1200,
+          height: 630,
+        },
         // aggregateRating: add back once real reviews exist on G2/Trustpilot
         // to avoid Google penalties for unverified ratings
       },

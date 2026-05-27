@@ -4,7 +4,7 @@ import Navbar from '@/components/layout/Navbar'
 import Footer from '@/components/layout/Footer'
 import { Sparkles, ArrowRight, CheckCircle } from 'lucide-react'
 
-const BASE_URL = 'https://www.fixpath.ai'
+const BASE_URL = process.env.NEXT_PUBLIC_APP_URL ?? 'https://www.fixpath.ai'
 
 export const metadata: Metadata = {
   title: 'UX Audit Checklist: 24 Categories Across 6 Modules | Fixpath',
@@ -48,6 +48,12 @@ const jsonLd = {
   },
   datePublished: '2025-01-20',
   dateModified: '2026-05-25',
+  image: {
+    '@type': 'ImageObject',
+    url: `${BASE_URL}/og-image.png`,
+    width: 1200,
+    height: 630,
+  },
 }
 
 type Category = { name: string; description: string }

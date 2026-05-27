@@ -187,7 +187,7 @@ export function renderWebsiteReport(data: WebsiteReportData): string {
       <div class="cover-info">
         <div><strong>Date:</strong> ${esc(dateStr)}</div>
         <div><strong>Issues found:</strong> ${totalIssues}</div>
-        <div><strong>Categories:</strong> ${categoryScores.filter(c => c.score >= 0).length} across ${pillarGroups.length} pillars</div>
+        <div><strong>Categories:</strong> ${categoryScores.filter(c => c.score >= 0).length} across ${pillarGroups.length} modules</div>
         <div><strong>Checkpoints:</strong> ${categoryScores.filter(c => c.score >= 0).length * 4} verified</div>
         <div><strong>Pages crawled:</strong> ${pages.length}</div>
         <div><strong>Language:</strong> ${esc(lang === 'en' ? 'English' : lang)}</div>
@@ -265,7 +265,7 @@ export function renderWebsiteReport(data: WebsiteReportData): string {
     </div>
     <div class="section-marker"></div>
     <h2 class="section-title">Score Breakdown</h2>
-    <p class="section-sub">${isFirst ? `Performance across ${pillarGroups.length} UX pillars and ${categoryScores.filter(c => c.score >= 0).length} categories, evaluated against ${categoryScores.filter(c => c.score >= 0).length * 4} checkpoints.` : 'Continued.'}</p>
+    <p class="section-sub">${isFirst ? `Performance across ${pillarGroups.length} modules and ${categoryScores.filter(c => c.score >= 0).length} categories, evaluated against ${categoryScores.filter(c => c.score >= 0).length * 4} checkpoints.` : 'Continued.'}</p>
     ${isFirst ? `
     <div class="score-legend">
       <div class="score-legend-item"><span class="score-legend-dot" style="background: var(--score-good);"></span> 70-100: Good</div>
