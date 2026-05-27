@@ -2308,6 +2308,7 @@ RULES FOR RE-AUDIT:
           for (let catIdx = 0; catIdx < batchResults.length; catIdx++) {
             const findings = batchResults[catIdx]
             const categoryName = batch[catIdx]
+            const absoluteCatIdx = UX_CATEGORY_NAMES.indexOf(categoryName)
 
             for (const finding of findings) {
               let resolvedPageUrl = crawlResult.firstPageUrl
@@ -2332,7 +2333,7 @@ RULES FOR RE-AUDIT:
                 severity: finding.severity,
                 findingType: finding.findingType,
                 fixType: finding.fixType,
-                categoryIndex: finding.categoryIndex ?? null,
+                categoryIndex: absoluteCatIdx >= 0 ? absoluteCatIdx : (finding.categoryIndex ?? null),
               })
               const classification = validateFixableRecommendation({
                 ...finding,
@@ -2342,7 +2343,7 @@ RULES FOR RE-AUDIT:
               batchInserts.push({
                 audit_id: auditId,
                 checklist_item_id: null,
-                category_index: finding.categoryIndex ?? null,
+                category_index: absoluteCatIdx >= 0 ? absoluteCatIdx : (finding.categoryIndex ?? null),
                 finding_type: classification.findingType,
                 fix_type: classification.fixType,
                 severity: finding.severity,
