@@ -131,7 +131,7 @@ function FindPageInner() {
   const strategicFindings = useMemo(() => {
     if (!bundle) return [];
     return bundle.findings.filter(
-      (f) => (f as any).finding_type === 'strategic' && f.status !== 'fixed' && !f.dismissed,
+      (f) => (f as any).finding_type === 'strategic' && f.status !== 'fixed' && !f.dismissed && (f as any).verification_status !== 'verified_fixed',
     );
   }, [bundle]);
 
@@ -241,7 +241,7 @@ function FindPageInner() {
   const totalAll = useMemo(() => buckets.reduce((s, b) => s + b.groups.length, 0), [buckets]);
 
   const openFindings = useMemo(
-    () => (bundle?.findings ?? []).filter((f) => f.status !== 'fixed' && !f.dismissed),
+    () => (bundle?.findings ?? []).filter((f) => f.status !== 'fixed' && !f.dismissed && (f as any).verification_status !== 'verified_fixed'),
     [bundle],
   );
   const priorityRecs = useMemo(

@@ -232,7 +232,7 @@ function BrandAuditsInner({ params }: { params: Promise<{ name: string }> }) {
   const latestScore = latestReport?.overall_score ?? 0;
 
   // Severity counts from latest audit findings (exclude fixed & dismissed)
-  const openFindings = findings.filter((f) => f.status !== 'fixed' && !f.dismissed);
+  const openFindings = findings.filter((f) => f.status !== 'fixed' && !f.dismissed && (f as any).verification_status !== 'verified_fixed');
   const severityCounts = {
     critical: openFindings.filter((f) => f.severity === 'critical').length,
     high: openFindings.filter((f) => f.severity === 'high').length,

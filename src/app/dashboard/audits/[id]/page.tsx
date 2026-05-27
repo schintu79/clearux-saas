@@ -889,9 +889,29 @@ function FindingCard({ finding, pillarColor, categoryName, pillarName, pillarInd
                 <Eye size={9} /> Likely fixed
               </span>
             )}
+            {(finding as any).verification_status === 'verified_fixed' && (
+              <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-ok bg-ok/10 px-1.5 py-0.5 rounded-full tracking-[0.03em] uppercase">
+                <CheckCircle2 size={9} /> Fixed and verified
+              </span>
+            )}
             {(finding as any).verification_status === 'poorly_fixed' && (
               <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-severe bg-severe/10 px-1.5 py-0.5 rounded-full tracking-[0.03em] uppercase">
                 <AlertTriangle size={9} /> Poorly fixed
+              </span>
+            )}
+            {(finding as any).verification_status === 'regressed' && (
+              <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-severe bg-severe/10 px-1.5 py-0.5 rounded-full tracking-[0.03em] uppercase">
+                <RefreshCw size={9} /> Reopened
+              </span>
+            )}
+            {finding.status === 'fixed' && !(finding as any).verification_status && (
+              <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-ok bg-ok/10 px-1.5 py-0.5 rounded-full tracking-[0.03em] uppercase">
+                <CheckCircle2 size={9} /> Fixed manually
+              </span>
+            )}
+            {finding.dismissed && (
+              <span className="inline-flex items-center gap-1 text-[10px] font-semibold px-1.5 py-0.5 rounded-full tracking-[0.03em] uppercase" style={{ color: 'var(--m-muted)', background: 'var(--paper-2)' }}>
+                Dismissed
               </span>
             )}
             {finding.primary_owner_role && ROLE_LABELS[finding.primary_owner_role] && (
@@ -2653,6 +2673,46 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
                   })()}
                 </>
               )}
+
+              {/* Reconciliation delta — re-audit lifecycle summary */}
+              {rawJson?.reconciliationSummary && (() => {
+                const recon = rawJson.reconciliationSummary;
+                const { verifiedFixed, regressed, newFindings, stillOpen, notReverified } = recon;
+                return (
+                  <div className="mb-4 p-4 rounded-xl border flex items-start gap-3" style={{ background: 'color-mix(in srgb, var(--signal) 3%, var(--card))', borderColor: 'color-mix(in srgb, var(--signal) 15%, var(--rule))' }}>
+                    <RefreshCw size={16} className="flex-shrink-0 mt-0.5" style={{ color: 'var(--signal)' }} />
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium mb-1" style={{ color: 'var(--ink)' }}>Re-audit reconciliation</p>
+                      <div className="flex flex-wrap gap-x-4 gap-y-1 text-[12px]">
+                        {verifiedFixed > 0 && (
+                          <span className="inline-flex items-center gap-1">
+                            <CheckCircle2 size={11} className="text-ok" />
+                            <span style={{ color: 'var(--ink)' }}>{verifiedFixed} verified fixed</span>
+                          </span>
+                        )}
+                        {stillOpen > 0 && (
+                          <span style={{ color: 'var(--m-muted)' }}>{stillOpen} still open</span>
+                        )}
+                        {newFindings > 0 && (
+                          <span className="inline-flex items-center gap-1">
+                            <Zap size={11} style={{ color: 'var(--signal)' }} />
+                            <span style={{ color: 'var(--ink)' }}>{newFindings} new</span>
+                          </span>
+                        )}
+                        {regressed > 0 && (
+                          <span className="inline-flex items-center gap-1">
+                            <AlertTriangle size={11} className="text-severe" />
+                            <span style={{ color: 'var(--ink)' }}>{regressed} regressed</span>
+                          </span>
+                        )}
+                        {notReverified > 0 && (
+                          <span style={{ color: 'var(--m-muted)' }}>{notReverified} not re-checked</span>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                );
+              })()}
 
               {/* Transparency alerts — inform user about engine limitations */}
               {auditLimitations.filter(l => !l.tab).length > 0 && (

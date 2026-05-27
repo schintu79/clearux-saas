@@ -69,6 +69,15 @@ function matchFindings(
 
     for (const prev of previousFindings) {
       if (matchedPrevIds.has(prev.id)) continue
+
+      // Signal 1: checklist_item_id (deterministic match)
+      if (current.checklist_item_id && prev.checklist_item_id &&
+          current.checklist_item_id === prev.checklist_item_id) {
+        bestMatch = prev
+        bestScore = 1.0
+        break
+      }
+
       const score = similarityScore(current, prev)
       if (score > bestScore && score >= 0.6) {
         bestScore = score
@@ -82,7 +91,10 @@ function matchFindings(
       const sevOrder = { critical: 4, high: 3, medium: 2, low: 1 }
       const prevSev = sevOrder[bestMatch.severity] || 0
       const currSev = sevOrder[current.severity] || 0
-      const diffStatus = currSev > prevSev ? 'regressed' : currSev < prevSev ? 'improved' : 'persisted'
+      // Check if this was previously fixed but reappeared (regressed)
+      const wasFixed = bestMatch.status === 'fixed' || bestMatch.dismissed ||
+                       (bestMatch as any).fix_status === 'fixed'
+      const diffStatus = wasFixed ? 'regressed' : currSev > prevSev ? 'regressed' : currSev < prevSev ? 'improved' : 'persisted'
       results.push({ current, previous: bestMatch, diffStatus })
     } else {
       results.push({ current, previous: null, diffStatus: 'new' })
@@ -92,7 +104,7 @@ function matchFindings(
   // Previous findings not matched = fixed
   for (const prev of previousFindings) {
     if (!matchedPrevIds.has(prev.id)) {
-      // Also check if the finding was explicitly marked as fixed
+      // Already fixed/dismissed in previous — don't double-count
       const isFixed = prev.status === 'fixed' || prev.dismissed
       if (!isFixed) {
         results.push({ current: null, previous: prev, diffStatus: 'fixed' })

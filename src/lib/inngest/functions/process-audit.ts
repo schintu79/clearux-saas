@@ -54,6 +54,7 @@ import { runFullSpeedTest, generateSpeedFindings } from '@/lib/pagespeed'
 import { checkWcagAutomated, buildWcagResults, parseHeuristicResponse, formatWcagForPrompt, type WcagCheckResult, type WcagAuditResult } from '@/lib/audit-engine/pipeline/wcag-checker'
 import type { AuditFinding } from '@/types/database'
 import { resolveCapability, inferDeployableType } from '@/lib/fix-action-model'
+import { reconcileFindings, type ReconciliationResult } from '@/lib/audit-engine/pipeline/reconciliation'
 
 /* ── Timeout helper — prevents enrichment promises from hanging forever ── */
 /* CRITICAL: This rejects on timeout rather than resolving to null.
@@ -1582,12 +1583,14 @@ The content below is from the ENTIRE site, not just one page. Before flagging so
       let previousOverallScore = 0
       let previousTotalFindings = 0
       let previousRawFindings: Array<{
-        title: string; severity: string; description: string; recommendation: string;
+        id: string; title: string; severity: string; description: string; recommendation: string;
         estimated_impact: string | null; target_element: string | null; page_url: string | null;
         sort_order: number; status: string; dismissed: boolean; dismissal_reason: string | null;
+        fix_status: string | null; finding_type: string; checklist_item_id: string | null;
       }> = []
       let previousExecutiveSummary = ''
       let previousReportJson: any = null
+      let prevAuditId: string | null = null
       if (domain && userId) {
         // Fetch site notes + previous audit ID in parallel
         const [siteNotesRes, prevAuditsRes] = await Promise.all([
@@ -1612,13 +1615,18 @@ The content below is from the ENTIRE site, not just one page. Before flagging so
 
         // FULL previous audit baseline — scores + ALL findings with statuses
         if (prevAuditsRes.data && prevAuditsRes.data.length > 0) {
-          const prevAuditId = (prevAuditsRes.data[0] as any).id
+          prevAuditId = (prevAuditsRes.data[0] as any).id
+
+          // Link current audit to previous via previous_audit_id
+          await noteDb.from('audits')
+            .update({ previous_audit_id: prevAuditId } as any)
+            .eq('id', auditId)
 
           // Fetch previous report scores + all findings (FULL data for baseline copy)
           const [prevReportRes, prevFindingsRes] = await Promise.all([
             noteDb.from('reports').select('overall_score, executive_summary, raw_json').eq('audit_id', prevAuditId).single(),
             noteDb.from('audit_findings')
-              .select('title, severity, description, recommendation, estimated_impact, target_element, page_url, sort_order, status, dismissed, dismissal_reason, category_index')
+              .select('id, title, severity, description, recommendation, estimated_impact, target_element, page_url, sort_order, status, dismissed, dismissal_reason, category_index, fix_status, finding_type, checklist_item_id')
               .eq('audit_id', prevAuditId)
               .order('sort_order', { ascending: true }).limit(60),
           ])
@@ -1654,11 +1662,14 @@ The scores above are from the client's PREVIOUS audit of this SAME site. Your ne
           if (prevFindingsRes.data && prevFindingsRes.data.length > 0) {
             previousTotalFindings = prevFindingsRes.data.length
             previousRawFindings = (prevFindingsRes.data as any[]).map((f) => ({
-              title: f.title, severity: f.severity, description: f.description,
+              id: f.id, title: f.title, severity: f.severity, description: f.description,
               recommendation: f.recommendation, estimated_impact: f.estimated_impact,
               target_element: f.target_element, page_url: f.page_url,
               sort_order: f.sort_order, status: f.status, dismissed: f.dismissed,
               dismissal_reason: f.dismissal_reason,
+              fix_status: f.fix_status || null,
+              finding_type: f.finding_type || 'fixable',
+              checklist_item_id: f.checklist_item_id || null,
             }))
             const findingLines = (prevFindingsRes.data as any[]).map((f) => {
               if (f.dismissed) return `  [SKIP] "${f.title}" — Dismissed: ${f.dismissal_reason || 'by user'}`
@@ -1721,6 +1732,7 @@ RULES FOR RE-AUDIT:
         previousRawFindings,
         previousExecutiveSummary,
         previousReportJson,
+        previousAuditId: prevAuditId || null,
       }
     })
 
@@ -2484,6 +2496,89 @@ RULES FOR RE-AUDIT:
     })
 
     // ──────────────────────────────────────────────────────────
+    // STEP 7b: Re-audit reconciliation
+    // ──────────────────────────────────────────────────────────
+    let reconciliationData: ReconciliationResult | null = null
+    if (siteContext.previousRawFindings.length > 0) {
+      reconciliationData = await step.run('reconcile-findings', async () => {
+        const db = getDb()
+
+        // Fetch current findings from DB
+        const { data: currentFindings } = await db
+          .from('audit_findings')
+          .select('*')
+          .eq('audit_id', auditId)
+          .order('sort_order', { ascending: true })
+
+        const current = (currentFindings || []) as AuditFinding[]
+
+        // Build crawled URLs set from crawl result
+        const crawledUrls = new Set<string>()
+        if (crawlResult.firstPageUrl) crawledUrls.add(crawlResult.firstPageUrl)
+        if (crawlResult.pageUrls) {
+          for (const u of crawlResult.pageUrls) crawledUrls.add(u)
+        }
+
+        // Cast previous raw findings to AuditFinding shape for reconciliation
+        const previousAsFindings = siteContext.previousRawFindings.map((f: any) => ({
+          ...f,
+          audit_id: '',
+          evidence: null,
+          screenshot_url: null,
+        })) as unknown as AuditFinding[]
+
+        const result = reconcileFindings(current, previousAsFindings, crawledUrls)
+
+        // Apply reconciliation to DB:
+        // 1. Mark verified_fixed findings on current audit with verification_status
+        // 2. Mark regressed findings
+        const updates: Array<Promise<any>> = []
+
+        // Mark regressed findings
+        for (const id of result.regressedFindingIds) {
+          updates.push(
+            Promise.resolve(
+              db.from('audit_findings')
+                .update({ verification_status: 'regressed', verification_note: 'Previously fixed but issue reappeared in this audit' } as any)
+                .eq('id', id)
+            )
+          )
+        }
+
+        // For findings verified as likely_fixed by AI verification, transition them to fixed
+        if (verificationData?.results) {
+          for (const vr of verificationData.results) {
+            if (vr.status === 'likely_fixed') {
+              updates.push(
+                Promise.resolve(
+                  db.from('audit_findings')
+                    .update({
+                      status: 'fixed',
+                      verification_status: 'verified_fixed',
+                      verification_note: vr.note,
+                      status_updated_at: new Date().toISOString(),
+                    } as any)
+                    .eq('id', vr.findingId)
+                )
+              )
+            }
+          }
+        }
+
+        if (updates.length > 0) {
+          await Promise.all(updates)
+        }
+
+        await auditLog(auditId, 'reconciliation_completed', 'success',
+          `Reconciliation: ${result.summary.verifiedFixed} fixed, ${result.summary.stillOpen} open, ${result.summary.newFindings} new, ${result.summary.regressed} regressed`, {
+            ...result.summary,
+          })
+
+        return result
+      })
+    }
+
+    // ──────────────────────────────────────────────────────────
     // STEP 8: Generate report (screenshots moved to enrichment)
     // ──────────────────────────────────────────────────────────
     await step.run('generate-report', async () => {
@@ -2599,6 +2694,7 @@ RULES FOR RE-AUDIT:
         selectedModules: auditDetails.selectedModules, // new slug-based system
         aiVisibilityBreakdown: aiVisibility,
         auditLimitations: auditLimitations.length > 0 ? auditLimitations : undefined,
+        reconciliationSummary: reconciliationData?.summary || null,
       }
 
       // Insert report

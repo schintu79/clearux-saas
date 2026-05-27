@@ -580,7 +580,7 @@ function OverviewInner() {
   const isBrand = selection?.kind === 'brand';
   const productUrl = audit.product_url || (domain ? `https://${domain}` : '');
 
-  const openFindings = findings.filter((f) => f.status !== 'fixed' && !f.dismissed);
+  const openFindings = findings.filter((f) => f.status !== 'fixed' && !f.dismissed && (f as any).verification_status !== 'verified_fixed');
   const severityCounts = {
     critical: openFindings.filter((f) => f.severity === 'critical').length,
     high: openFindings.filter((f) => f.severity === 'high').length,
@@ -790,6 +790,59 @@ function OverviewInner() {
         latestAuditId={audit.id}
         completedAt={audit.completed_at || audit.created_at}
       />
+
+      {/* ── Re-audit reconciliation delta summary ────────── */}
+      {(() => {
+        const rawJson = (bundle?.report?.raw_json || null) as any;
+        const recon = rawJson?.reconciliationSummary;
+        if (!recon) return null;
+        const { verifiedFixed, regressed, newFindings, stillOpen, notReverified } = recon;
+        const prevScore = scoreTrend.length >= 2 ? scoreTrend[scoreTrend.length - 2]?.overallScore : null;
+        const scoreDelta = prevScore != null ? overallScore - prevScore : null;
+        return (
+          <div className="mb-4 p-4 rounded-xl border flex items-start gap-3" style={{ background: 'color-mix(in srgb, var(--signal) 3%, var(--card))', borderColor: 'color-mix(in srgb, var(--signal) 15%, var(--rule))' }}>
+            <RefreshCw size={16} className="flex-shrink-0 mt-0.5" style={{ color: 'var(--signal)' }} />
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-medium mb-1" style={{ color: 'var(--ink)' }}>Re-audit results</p>
+              <div className="flex flex-wrap gap-x-4 gap-y-1 text-[12px]">
+                {verifiedFixed > 0 && (
+                  <span className="inline-flex items-center gap-1">
+                    <CheckCircle2 size={11} className="text-ok" />
+                    <span style={{ color: 'var(--ink)' }}>{verifiedFixed} fixed</span>
+                  </span>
+                )}
+                {stillOpen > 0 && (
+                  <span className="inline-flex items-center gap-1" style={{ color: 'var(--m-muted)' }}>
+                    {stillOpen} still open
+                  </span>
+                )}
+                {newFindings > 0 && (
+                  <span className="inline-flex items-center gap-1">
+                    <Zap size={11} style={{ color: 'var(--signal)' }} />
+                    <span style={{ color: 'var(--ink)' }}>{newFindings} new</span>
+                  </span>
+                )}
+                {regressed > 0 && (
+                  <span className="inline-flex items-center gap-1">
+                    <AlertTriangle size={11} className="text-severe" />
+                    <span style={{ color: 'var(--ink)' }}>{regressed} regressed</span>
+                  </span>
+                )}
+                {notReverified > 0 && (
+                  <span className="inline-flex items-center gap-1" style={{ color: 'var(--m-muted)' }}>
+                    {notReverified} not re-checked
+                  </span>
+                )}
+                {scoreDelta != null && (
+                  <span className={`font-semibold tabular-nums ${scoreDelta > 0 ? 'text-ok' : scoreDelta < 0 ? 'text-severe' : ''}`} style={scoreDelta === 0 ? { color: 'var(--m-muted)' } : {}}>
+                    {scoreDelta > 0 ? '+' : ''}{scoreDelta} score
+                  </span>
+                )}
+              </div>
+            </div>
+          </div>
+        );
+      })()}
 
       {/* ── Row 1: 3 equal summary cards ─────────────────────────────── */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-4 auto-rows-fr">

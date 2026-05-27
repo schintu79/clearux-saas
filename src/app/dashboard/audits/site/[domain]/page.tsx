@@ -208,7 +208,7 @@ function DomainAuditsInner({ params }: { params: Promise<{ domain: string }> }) 
   const productUrl = latest?.product_url || '';
 
   // Severity counts from latest audit findings (exclude fixed & dismissed)
-  const openFindings = findings.filter((f) => f.status !== 'fixed' && !f.dismissed);
+  const openFindings = findings.filter((f) => f.status !== 'fixed' && !f.dismissed && (f as any).verification_status !== 'verified_fixed');
   const severityCounts = {
     critical: openFindings.filter((f) => f.severity === 'critical').length,
     high: openFindings.filter((f) => f.severity === 'high').length,
