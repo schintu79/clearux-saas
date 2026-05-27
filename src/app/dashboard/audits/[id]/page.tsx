@@ -1748,9 +1748,10 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
     setDeleting(true);
     try {
       const supabase = createBrowserSupabase();
-      const { error } = await supabase.from('audits').delete().eq('id', auditId);
+      const { error } = await supabase.from('audits').update({ deleted_at: new Date().toISOString() }).eq('id', auditId);
       if (error) throw error;
-      router.push('/dashboard');
+      // Stay in the same site context — overview will pick up the next audit
+      router.push('/dashboard/overview');
     } catch (err) {
       console.error('Error deleting audit:', err);
       alert('Failed to delete audit');

@@ -453,10 +453,11 @@ function OverviewInner() {
   // Reload the bundle after a delete from the history card. If the deleted
   // audit was the one currently displayed at the top of Overview, the card
   // itself routes us away — otherwise we just refetch so the row vanishes.
-  const handleAuditDeleted = useCallback((deletedAuditId: string) => {
-    if (bundle?.audit?.id === deletedAuditId) return;
+  const handleAuditDeleted = useCallback((_deletedAuditId: string) => {
+    // Always invalidate — the bundle context will re-fetch and return the next
+    // available audit, or null (triggering the "Start a new Audit" empty state).
     invalidate();
-  }, [invalidate, bundle?.audit?.id]);
+  }, [invalidate]);
 
   // Quick action "Delete this audit" — the destructive option in the
   // header dropdown. Surfaced via a small inline confirmation modal so the
@@ -475,13 +476,15 @@ function OverviewInner() {
         throw new Error(body?.error || 'Delete failed');
       }
       setHeaderDeleteOpen(false);
-      router.push('/dashboard');
+      // Stay in the same site context — invalidate re-fetches the next available
+      // audit (or returns null for the "Start a new Audit" empty state).
+      invalidate();
     } catch (e: any) {
       setHeaderDeleteError(e?.message || 'Delete failed');
     } finally {
       setHeaderDeleting(false);
     }
-  }, [latestCompleted, router]);
+  }, [latestCompleted, invalidate]);
 
   /* ── Loading skeleton ─────────────────────────────────── */
   if (authLoading || bundleLoading || !ready) {
@@ -1336,7 +1339,6 @@ function AuditHistoryCard({
   currentAuditId: string;
   onDeleted: (deletedAuditId: string) => void;
 }) {
-  const router = useRouter();
   const PREVIEW = 8;
   const showingAll = showAllHistory || auditCount <= PREVIEW;
   const rows = showingAll ? history : history.slice(0, PREVIEW);
@@ -1356,20 +1358,16 @@ function AuditHistoryCard({
       }
       const deletedId = pendingDeleteId;
       setPendingDeleteId(null);
+      // Whether deleting the current audit or an older one, call onDeleted
+      // which triggers invalidate() to re-fetch — the context stays on the same
+      // site and shows either the next audit or the empty state.
       onDeleted(deletedId);
-      // If the user just deleted the audit currently displayed on Overview,
-      // bounce them to the dashboard root so we don't render stale state.
-      if (deletedId === currentAuditId) {
-        router.push('/dashboard');
-      } else {
-        router.refresh();
-      }
     } catch (e: any) {
       setDeleteError(e?.message || 'Delete failed');
     } finally {
       setDeleting(false);
     }
-  }, [pendingDeleteId, onDeleted, currentAuditId, router]);
+  }, [pendingDeleteId, onDeleted, currentAuditId]);
 
   return (
     <section
@@ -1451,6 +1449,11 @@ function AuditHistoryCard({
                       <span style={{ color: 'var(--rule)' }}>·</span>
                       <span className={`font-medium ${scoreColor(r.overall_score)}`}>{r.overall_score} pts</span>
                     </>
+                  )}
+                  {a.id === currentAuditId && (
+                    <span className="text-[10px] font-semibold text-signal bg-signal/10 px-1.5 py-0.5 rounded-full uppercase tracking-[0.03em]">
+                      Current
+                    </span>
                   )}
                   {(a as any).depth_mode === 'deep' && (
                     <span className="text-[10px] font-semibold text-brand bg-brand/10 px-1.5 py-0.5 rounded uppercase tracking-wide">

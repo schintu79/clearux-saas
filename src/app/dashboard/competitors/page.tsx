@@ -194,6 +194,7 @@ function AIVisibilityPerceptionCard({
   const chartRef = useRef<HTMLDivElement>(null);
 
   // Build ranked entries: brand + competitors by AI visibility %
+  // Primary source: LLM probe mention data. Fallback: competitor_benchmarks scores.
   const rankedEntries = useMemo<VisRankedEntry[]>(() => {
     const entries: VisRankedEntry[] = [];
 
@@ -208,7 +209,7 @@ function AIVisibilityPerceptionCard({
       });
     }
 
-    // Competitor entries — use mention rate as AI visibility proxy
+    // Primary: competitor entries from LLM probe mention rates
     if (competitorMentions.totalPrompts > 0) {
       competitorMentions.competitors.forEach((cm, idx) => {
         const matchedDraft = drafts.find(d => d.domain.includes(cm.name) || (d.name || '').toLowerCase().includes(cm.name));
@@ -217,6 +218,18 @@ function AIVisibilityPerceptionCard({
           name: matchedDraft?.name || cm.name,
           domain: matchedDraft?.domain || cm.name,
           visibility: mentionRate,
+          isBrand: false,
+          color: CHART_COLORS[(idx + 1) % CHART_COLORS.length],
+        });
+      });
+    } else if (drafts.length > 0) {
+      // Fallback: use competitor_benchmarks scores when no probe data exists yet.
+      // This ensures the card renders a comparison even before LLM probes run.
+      drafts.forEach((d, idx) => {
+        entries.push({
+          name: d.name || d.domain,
+          domain: d.domain,
+          visibility: d.score != null ? Math.min(d.score, 100) : 0,
           isBrand: false,
           color: CHART_COLORS[(idx + 1) % CHART_COLORS.length],
         });
@@ -272,19 +285,24 @@ function AIVisibilityPerceptionCard({
     );
   }
 
-  // Empty state — need at least brand + 1 competitor
+  // Empty state — differentiate between "no competitors at all" vs "data not yet computed"
   if (rankedEntries.length < 2) {
+    const hasCompetitors = drafts.length > 0;
     return (
       <DashCard>
         <SectionTitle>AI visibility perception</SectionTitle>
         <SectionDesc>Ranking of the added brands based on AI visibility</SectionDesc>
         <div className="text-center py-10">
           <BarChart3 size={28} strokeWidth={1.5} style={{ color: 'var(--m-muted)' }} className="mx-auto mb-3" />
-          <p className="text-[13px] font-medium" style={{ color: 'var(--ink)' }}>Not enough data yet</p>
+          <p className="text-[13px] font-medium" style={{ color: 'var(--ink)' }}>
+            {hasCompetitors ? 'AI visibility data is being computed' : 'Not enough data yet'}
+          </p>
           <p className="text-[12px] mt-1" style={{ color: 'var(--m-muted)' }}>
-            {rankedEntries.length === 0
-              ? 'Run an audit with AI probes enabled, then add competitors to compare AI visibility.'
-              : 'Add at least one competitor to see how your brand compares in AI visibility.'}
+            {hasCompetitors
+              ? 'Competitor data has been uploaded. Run an audit with AI probes enabled to generate visibility scores.'
+              : drafts.length === 0 && rankedEntries.length === 0
+                ? 'Run an audit with AI probes enabled, then add competitors to compare AI visibility.'
+                : 'Add at least one competitor to see how your brand compares in AI visibility.'}
           </p>
         </div>
       </DashCard>
