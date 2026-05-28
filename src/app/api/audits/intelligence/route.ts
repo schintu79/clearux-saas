@@ -151,8 +151,54 @@ export async function GET(req: NextRequest) {
     .eq('id', auditId)
     .single()
 
+  // Aggregate probe rows by model_id — the DB may have multiple rows
+  // per model (one per probe question batch or re-run). Merge into one
+  // entry per model with averaged scores and combined results_json.
+  const rawProbes = (modelProbes.data || []) as any[]
+  const probeMap = new Map<string, any>()
+  for (const row of rawProbes) {
+    const key = row.model_id as string
+    if (!probeMap.has(key)) {
+      probeMap.set(key, {
+        ...row,
+        _accuracyScores: [row.accuracy_score],
+        _sentimentScores: row.sentiment_score != null ? [row.sentiment_score] : [],
+        _placementScores: row.placement_score != null ? [row.placement_score] : [],
+        _sovScores: row.share_of_voice != null ? [row.share_of_voice] : [],
+        results_json: Array.isArray(row.results_json) ? [...row.results_json] : [],
+        sentiment_themes: Array.isArray(row.sentiment_themes) ? [...row.sentiment_themes] : [],
+      })
+    } else {
+      const existing = probeMap.get(key)!
+      existing._accuracyScores.push(row.accuracy_score)
+      if (row.sentiment_score != null) existing._sentimentScores.push(row.sentiment_score)
+      if (row.placement_score != null) existing._placementScores.push(row.placement_score)
+      if (row.share_of_voice != null) existing._sovScores.push(row.share_of_voice)
+      if (Array.isArray(row.results_json)) existing.results_json.push(...row.results_json)
+      if (Array.isArray(row.sentiment_themes)) {
+        for (const t of row.sentiment_themes) {
+          const dup = existing.sentiment_themes.find((e: any) => e.theme === t.theme)
+          if (dup) { dup.count = (dup.count || 0) + (t.count || 1) }
+          else existing.sentiment_themes.push({ ...t })
+        }
+      }
+      // Keep the latest created_at and most informative status
+      if (row.created_at > existing.created_at) existing.created_at = row.created_at
+      if (row.status === 'measured') existing.status = 'measured'
+    }
+  }
+  const avg = (arr: number[]) => arr.length ? Math.round(arr.reduce((a, b) => a + b, 0) / arr.length) : 0
+  const aggregatedProbes = Array.from(probeMap.values()).map(p => {
+    p.accuracy_score = avg(p._accuracyScores)
+    p.sentiment_score = p._sentimentScores.length ? avg(p._sentimentScores) : null
+    p.placement_score = p._placementScores.length ? avg(p._placementScores) : null
+    p.share_of_voice = p._sovScores.length ? avg(p._sovScores) : null
+    delete p._accuracyScores; delete p._sentimentScores; delete p._placementScores; delete p._sovScores
+    return p
+  }).sort((a, b) => (b.accuracy_score ?? 0) - (a.accuracy_score ?? 0))
+
   return NextResponse.json({
-    modelProbes: modelProbes.data || [],
+    modelProbes: aggregatedProbes,
     recommendations: recommendations.data || [],
     benchmarkPosition,
     modelBenchmarks: (report.data as any)?.model_benchmarks || null,
