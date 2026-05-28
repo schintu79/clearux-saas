@@ -375,6 +375,7 @@ const NewAuditInner: React.FC = () => {
             audit_type: 'brand_identity',
             brand_identity_id: newId,
             depth_mode: 'deep',
+            workspace_id: workspace?.id || null,
           };
           const { data: audit, error: auditError } = await supabase
             .from('audits').insert(insertPayload).select('id').single();
@@ -436,6 +437,7 @@ const NewAuditInner: React.FC = () => {
         plan: 'full_audit',
         language: language,
         audit_type: auditType,
+        workspace_id: workspace?.id || null,
       };
 
       if (auditType === 'website') {
