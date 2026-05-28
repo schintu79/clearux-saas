@@ -342,12 +342,11 @@ const DashboardShell: React.FC<DashboardShellProps> = ({ children }) => {
                           onClick={() => {
                             setWsMenuOpen(false);
                             if (!selected) {
-                              // When already inside a workspace, carry over the current sub-page;
-                              // otherwise (on /dashboard with no slug) go to the workspace's overview.
-                              const currentPage = workspaceSlug
-                                ? (pathname?.replace(`/dashboard/${workspaceSlug}`, '') || '/overview')
-                                : '/overview';
-                              router.push(`/dashboard/${ws.slug}${currentPage}`);
+                              // Hard navigation to the new workspace's overview.
+                              // Using window.location ensures a full React remount
+                              // so WorkspaceContext, AuditBundleContext, and all
+                              // child state reset cleanly — no stale closures.
+                              window.location.href = `/dashboard/${ws.slug}/overview`;
                             }
                           }}
                           className="w-full flex items-center gap-2 px-3 py-2 text-left transition-colors hover:bg-black/[0.04]"

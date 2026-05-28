@@ -3,7 +3,7 @@
 import React, { useState, useRef, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
-import { ArrowLeft, ArrowRight, Globe, Sparkles, Coins, Zap, Languages, Check, ChevronDown, FileText, AlertCircle, Upload, X, Plus, Loader2, RefreshCw } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Globe, Sparkles, Coins, Zap, Languages, Check, ChevronDown, RefreshCw } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { createBrowserSupabase } from '@/lib/supabase-ssr';
 import { SUPPORTED_LANGUAGES, DEFAULT_LANGUAGE } from '@/lib/languages';
@@ -52,17 +52,10 @@ const NewAuditInner: React.FC = () => {
   const [scopeOpen, setScopeOpen] = useState(false);
   const isCompleteAudit = COMPLETE_AUDIT_SLUGS.every((s) => selectedModules.includes(s));
 
-  // Brand identity selection (shared between website + brand identity audit)
-  const [brandIdentities, setBrandIdentities] = useState<{ id: string; name: string; fileCount: number }[]>([]);
-  const [selectedBrandId, setSelectedBrandId] = useState<string>(searchParams.get('brand') || '');
-
-  // Inline brand creation + file upload
-  const [showNewBrand, setShowNewBrand] = useState(false);
-  const [newBrandName, setNewBrandName] = useState('');
-  const [newBrandFiles, setNewBrandFiles] = useState<File[]>([]);
-  const [brandUploading, setBrandUploading] = useState(false);
-  const [brandUploadError, setBrandUploadError] = useState('');
-  const fileInputRef = useRef<HTMLInputElement>(null);
+  // Brand consistency — workspace-scoped Brand DNA check
+  const [workspaceBrandId, setWorkspaceBrandId] = useState<string | null>(null);
+  const [workspaceBrandHasFiles, setWorkspaceBrandHasFiles] = useState(false);
+  const [includeBrandConsistency, setIncludeBrandConsistency] = useState(false);
 
   useEffect(() => {
     if (!userLoading && user && urlInputRef.current && auditType === 'website' && auditMode === 'new-brand') {
@@ -90,18 +83,26 @@ const NewAuditInner: React.FC = () => {
       })
       .catch(() => setCredits(0));
 
-    fetch('/api/brand-identities')
-      .then((r) => r.json())
-      .then((d) => {
-        const identities = (d.identities || []).map((bi: any) => ({
-          id: bi.id,
-          name: bi.name,
-          fileCount: bi.brand_identity_files?.length ?? 0,
-        }));
-        setBrandIdentities(identities);
-      })
-      .catch(() => {});
   }, [user]);
+
+  // Check if current workspace has Brand DNA with files
+  useEffect(() => {
+    if (!user || !workspace) return;
+    const brandId = (workspace as any).active_brand_identity_id;
+    if (!brandId) {
+      setWorkspaceBrandId(null);
+      setWorkspaceBrandHasFiles(false);
+      return;
+    }
+    setWorkspaceBrandId(brandId);
+    fetch(`/api/brand-identities/${brandId}`)
+      .then((r) => r.ok ? r.json() : null)
+      .then((d) => {
+        const files = d?.identity?.brand_identity_files || [];
+        setWorkspaceBrandHasFiles(files.length > 0);
+      })
+      .catch(() => setWorkspaceBrandHasFiles(false));
+  }, [user, workspace]);
 
   // In re-audit / dig-deeper mode, resolve the brand's website URL if not already set
   useEffect(() => {
@@ -155,14 +156,14 @@ const NewAuditInner: React.FC = () => {
     return () => { cancelled = true; clearTimeout(timer); };
   }, [url, user, auditType, depthParam]);
 
-  // Auto-add brand_consistency when a brand is selected; remove when deselected
+  // Auto-add brand_consistency when checkbox is checked; remove when unchecked
   useEffect(() => {
-    if (selectedBrandId && !selectedModules.includes('brand_consistency')) {
+    if (includeBrandConsistency && !selectedModules.includes('brand_consistency')) {
       setSelectedModules((prev) => [...prev, 'brand_consistency']);
-    } else if (!selectedBrandId && selectedModules.includes('brand_consistency')) {
+    } else if (!includeBrandConsistency && selectedModules.includes('brand_consistency')) {
       setSelectedModules((prev) => prev.filter((s) => s !== 'brand_consistency'));
     }
-  }, [selectedBrandId]);
+  }, [includeBrandConsistency]);
 
   if (userLoading) {
     return (
@@ -211,99 +212,61 @@ const NewAuditInner: React.FC = () => {
       setSelectedModules([]);
     } else {
       const next = [...COMPLETE_AUDIT_SLUGS];
-      if (selectedBrandId && !next.includes('brand_consistency')) {
+      if (includeBrandConsistency && !next.includes('brand_consistency')) {
         next.push('brand_consistency');
       }
       setSelectedModules(next);
     }
   };
 
-  const selectedBrand = brandIdentities.find((bi) => bi.id === selectedBrandId);
+  const resolvedBrandIdRef = useRef<string | null>(null);
 
-  const handleAddFiles = (files: FileList | null) => {
-    if (!files) return;
-    const allowed = ['application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'text/plain', 'image/png', 'image/jpeg', 'image/svg+xml', 'image/webp'];
-    const maxSize = 10 * 1024 * 1024;
-    const valid: File[] = [];
-    for (let i = 0; i < files.length; i++) {
-      const f = files[i];
-      if (!allowed.includes(f.type)) {
-        setBrandUploadError(`${f.name}: unsupported file type`);
-        return;
-      }
-      if (f.size > maxSize) {
-        setBrandUploadError(`${f.name}: exceeds 10 MB limit`);
-        return;
-      }
-      valid.push(f);
-    }
-    setBrandUploadError('');
-    setNewBrandFiles((prev) => [...prev, ...valid]);
-  };
-
-  const removeFile = (idx: number) => {
-    setNewBrandFiles((prev) => prev.filter((_, i) => i !== idx));
-  };
-
-  const createBrandAndUpload = async (): Promise<string | null> => {
-    if (!newBrandName.trim()) {
-      setBrandUploadError('Enter a name for the brand identity.');
-      return null;
-    }
-    if (newBrandFiles.length === 0) {
-      setBrandUploadError('Upload at least one file.');
-      return null;
-    }
-
-    setBrandUploading(true);
-    setBrandUploadError('');
-
+  /**
+   * Find or create a workspace for the given domain.
+   * If the current workspace already matches the domain, reuse it.
+   * Otherwise look through existing workspaces or create a new one.
+   * Returns { id, slug } of the resolved workspace.
+   */
+  const ensureWorkspaceForDomain = async (productUrl: string): Promise<{ id: string; slug: string } | null> => {
     try {
-      // 1. Create brand identity
-      const createRes = await fetch('/api/brand-identities', {
+      const host = new URL(productUrl).hostname.replace(/^www\./, '');
+
+      // If the current workspace matches this domain, no need to create/switch
+      if (workspace?.primary_domain === host) {
+        return { id: workspace.id, slug: (workspace as any).slug || workspaceSlug };
+      }
+
+      // Check if any existing workspace matches this domain
+      const res = await fetch('/api/workspaces');
+      if (!res.ok) return null;
+      const { workspaces: allWs } = await res.json();
+      const existing = (allWs || []).find((w: any) => w.primary_domain === host);
+      if (existing) {
+        return { id: existing.id, slug: existing.slug };
+      }
+
+      // Create a new workspace for this domain
+      const prettyName = host.replace(/\.[^.]+$/, '').replace(/[^a-zA-Z0-9]+/g, ' ').replace(/\b\w/g, (c: string) => c.toUpperCase());
+      const createRes = await fetch('/api/workspaces', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name: newBrandName.trim() }),
+        body: JSON.stringify({
+          name: prettyName,
+          primary_domain: host,
+          workspace_type: 'website',
+        }),
       });
-      const createData = await createRes.json();
-      if (!createRes.ok) throw new Error(createData.error || 'Failed to create brand identity');
-
-      const brandId = createData.identity.id;
-
-      // 2. Upload each file
-      for (const file of newBrandFiles) {
-        const fd = new FormData();
-        fd.append('file', file);
-        const uploadRes = await fetch(`/api/brand-identities/${brandId}/upload`, {
-          method: 'POST',
-          body: fd,
-        });
-        if (!uploadRes.ok) {
-          const uploadData = await uploadRes.json();
-          throw new Error(uploadData.error || `Failed to upload ${file.name}`);
-        }
+      if (!createRes.ok) {
+        console.warn('[new-audit] Failed to create workspace for', host);
+        return workspace ? { id: workspace.id, slug: (workspace as any).slug || workspaceSlug } : null;
       }
-
-      // 3. Update local state
-      setBrandIdentities((prev) => [
-        { id: brandId, name: newBrandName.trim(), fileCount: newBrandFiles.length },
-        ...prev,
-      ]);
-      setSelectedBrandId(brandId);
-      setShowNewBrand(false);
-      setNewBrandName('');
-      setNewBrandFiles([]);
-
-      return brandId;
+      const { workspace: newWs } = await createRes.json();
+      return { id: newWs.id, slug: newWs.slug };
     } catch (err) {
-      setBrandUploadError(err instanceof Error ? err.message : 'Upload failed');
-      return null;
-    } finally {
-      setBrandUploading(false);
+      console.warn('[new-audit] Error ensuring workspace:', err);
+      return workspace ? { id: workspace.id, slug: (workspace as any).slug || workspaceSlug } : null;
     }
   };
-
-  const resolvedBrandIdRef = useRef<string | null>(null);
 
   /**
    * Find or create a brand_identity for a website domain.
@@ -312,9 +275,7 @@ const NewAuditInner: React.FC = () => {
   const ensureBrandForWebsite = async (productUrl: string): Promise<string | null> => {
     try {
       const host = new URL(productUrl).hostname.replace(/^www\./, '');
-      // Check if a brand already exists for this domain (by website_url match)
-      const existingBrands = brandIdentities;
-      // Also fetch fresh list in case it wasn't loaded yet
+      // Fetch all brands to check if one already exists for this domain
       const brandsRes = await fetch('/api/brand-identities').then(r => r.ok ? r.json() : { identities: [] }).catch(() => ({ identities: [] }));
       const allBrands = (brandsRes?.identities || []) as any[];
       // Match by website_url containing the same hostname
@@ -353,74 +314,6 @@ const NewAuditInner: React.FC = () => {
         setGeneralError('Select at least one module to audit.');
         return;
       }
-    } else if (auditType === 'brand_identity') {
-      // If user is creating a new brand inline, do that first
-      if (showNewBrand) {
-        const newId = await createBrandAndUpload();
-        if (!newId) return; // error was set inside createBrandAndUpload
-        // Update selectedBrandId for the rest of the flow
-        setSelectedBrandId(newId);
-        // Use newId directly since state update is async
-        setLoading(true);
-        setGeneralError('');
-        try {
-          const supabase = createBrowserSupabase();
-          const insertPayload: Record<string, any> = {
-            user_id: user.id,
-            status: hasCredits ? 'payment_received' : 'pending_payment',
-            product_type: 'auto_detect',
-            ux_concern: 'Brand identity audit',
-            notes: null,
-            plan: 'full_audit',
-            language: language,
-            audit_type: 'brand_identity',
-            brand_identity_id: newId,
-            depth_mode: 'deep',
-            workspace_id: workspace?.id || null,
-          };
-          const { data: audit, error: auditError } = await supabase
-            .from('audits').insert(insertPayload).select('id').single();
-          // If the DB rejects because the schema is missing columns
-          // (migration 021/022 not applied), fail hard with a clear
-          // message instead of silently downgrading the audit — a
-          // brand audit cannot run without brand_identity_id, and
-          // we don't want to charge users for an audit that can't
-          // produce its intended output.
-          if (auditError?.message?.includes('selected_modules') ||
-              auditError?.message?.includes('audit_type') ||
-              auditError?.message?.includes('brand_identity_id')) {
-            throw new Error(
-              'This Fixpath instance is missing required database migrations. ' +
-              'Please ask an admin to run supabase/migrations/021 and 022 before trying again.'
-            );
-          }
-          if (auditError) throw new Error(auditError.message || 'Failed to create audit');
-          if (!audit) throw new Error('Failed to create audit');
-          if (hasCredits) {
-            const creditRes = await fetch('/api/credits', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ audit_id: audit.id, is_free_first: firstAuditFree }) });
-            if (!creditRes.ok) throw new Error('Failed to apply credit');
-            router.push(`/dashboard/${workspaceSlug}/overview`);
-            return;
-          }
-          const checkoutRes = await fetch('/api/stripe/checkout', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ audit_id: audit.id }) });
-          const checkoutData = await checkoutRes.json();
-          if (!checkoutRes.ok || !checkoutData.url) throw new Error(checkoutData.error || 'Failed to create checkout');
-          window.location.href = checkoutData.url;
-          return;
-        } catch (err) {
-          setGeneralError(err instanceof Error ? err.message : 'Something went wrong.');
-          setLoading(false);
-          return;
-        }
-      }
-      if (!selectedBrandId) {
-        setGeneralError('Select a brand identity or create a new one.');
-        return;
-      }
-      if (selectedBrand && selectedBrand.fileCount === 0) {
-        setGeneralError('This brand identity has no files uploaded. Upload at least one file before running an audit.');
-        return;
-      }
     }
 
     setLoading(true);
@@ -428,6 +321,15 @@ const NewAuditInner: React.FC = () => {
 
     try {
       const supabase = createBrowserSupabase();
+
+      // Resolve the correct workspace for the domain being audited.
+      // This ensures new domains get their own workspace, and audits
+      // for existing domains go to the right workspace — not the
+      // currently selected one in the sidebar.
+      const productUrl = url.startsWith('http') ? url : `https://${url}`;
+      const resolvedWs = await ensureWorkspaceForDomain(productUrl);
+      const targetWorkspaceId = resolvedWs?.id || workspace?.id || null;
+      const targetSlug = resolvedWs?.slug || workspaceSlug;
 
       const insertPayload: Record<string, any> = {
         user_id: user.id,
@@ -438,24 +340,23 @@ const NewAuditInner: React.FC = () => {
         plan: 'full_audit',
         language: language,
         audit_type: auditType,
-        workspace_id: workspace?.id || null,
+        workspace_id: targetWorkspaceId,
       };
 
       if (auditType === 'website') {
-        const productUrl = url.startsWith('http') ? url : `https://${url}`;
         insertPayload.product_url = productUrl;
         insertPayload.depth_mode = (isReAuditMode || isDigDeeperMode) ? depthMode : 'standard';
         insertPayload.selected_modules = selectedModules;
-        // Auto-create (or reuse) a brand for this domain so the sidebar
+        // Use workspace brand if brand consistency is checked, otherwise
+        // auto-create (or reuse) a brand for this domain so the sidebar
         // always has a proper brand tab for the user to navigate to.
-        const autoBrandId = selectedBrandId || await ensureBrandForWebsite(productUrl);
-        if (autoBrandId) {
-          insertPayload.brand_identity_id = autoBrandId;
-          resolvedBrandIdRef.current = autoBrandId;
+        const brandId = (includeBrandConsistency && workspaceBrandId)
+          ? workspaceBrandId
+          : await ensureBrandForWebsite(productUrl);
+        if (brandId) {
+          insertPayload.brand_identity_id = brandId;
+          resolvedBrandIdRef.current = brandId;
         }
-      } else if (auditType === 'brand_identity') {
-        insertPayload.brand_identity_id = selectedBrandId;
-        insertPayload.depth_mode = 'deep'; // Brand audits always run full analysis
       }
 
       const { data: audit, error: auditError } = await supabase
@@ -496,7 +397,7 @@ const NewAuditInner: React.FC = () => {
         if (!creditRes.ok) {
           throw new Error(creditData.error || 'Failed to apply credit');
         }
-        router.push(`/dashboard/${workspaceSlug}/overview`);
+        router.push(`/dashboard/${targetSlug}/overview`);
         return;
       }
 
@@ -691,7 +592,7 @@ const NewAuditInner: React.FC = () => {
 
                   {AUDIT_MODULES.map((mod) => {
                     const selected = selectedModules.includes(mod.slug);
-                    const brandRequired = mod.requiresBrandIdentity && !selectedBrandId;
+                    const brandRequired = mod.requiresBrandIdentity && !includeBrandConsistency;
                     const disabled = brandRequired;
 
                     return (
@@ -736,33 +637,47 @@ const NewAuditInner: React.FC = () => {
             )}
           </div>
 
-          {/* Brand Identity selector (optional for website audits) */}
-          {brandIdentities.length > 0 && (
-            <div className="mb-6">
-              <label className="flex items-center gap-2 text-sm font-medium text-text mb-2">
-                <Globe size={15} style={{ color: 'var(--ink)' }} />
-                Brand Identity
-                <span className="text-xs font-normal text-muted">(optional)</span>
-              </label>
-              <select
-                value={selectedBrandId}
-                onChange={(e) => setSelectedBrandId(e.target.value)}
-                className="w-full px-4 py-2.5 border border-border rounded-xl font-sans text-sm bg-input-bg text-text transition-all focus:outline-none focus:border-text appearance-none"
-                style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%239ca3af' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E")`, backgroundRepeat: 'no-repeat', backgroundPosition: 'right 12px center' }}
+          {/* Brand Consistency checkbox — enabled only when workspace has Brand DNA files */}
+          <div className="mb-6">
+            <label
+              className={`flex items-center gap-3 px-4 py-3 rounded-xl cursor-pointer transition-all ${
+                workspaceBrandHasFiles ? 'hover:bg-surface' : 'opacity-50 cursor-not-allowed'
+              }`}
+              style={{ border: '1px solid var(--rule)', background: includeBrandConsistency ? 'color-mix(in srgb, var(--ok) 4%, transparent)' : 'transparent' }}
+            >
+              <input
+                type="checkbox"
+                checked={includeBrandConsistency}
+                disabled={!workspaceBrandHasFiles}
+                onChange={(e) => setIncludeBrandConsistency(e.target.checked)}
+                className="sr-only"
+              />
+              <div
+                className="w-5 h-5 rounded flex items-center justify-center flex-shrink-0 transition-colors"
+                style={includeBrandConsistency ? { background: 'var(--ok)' } : { border: '2px solid var(--rule)' }}
               >
-                <option value="">No brand identity</option>
-                {brandIdentities.map((bi) => (
-                  <option key={bi.id} value={bi.id}>{bi.name}</option>
-                ))}
-              </select>
-              <p className="text-xs text-muted mt-1.5">
-                Select a brand to check website consistency against your brand guidelines.{' '}
-                <Link href={`${dashPrefix}/brand-identity`} className="text-brand hover:underline">
-                  Manage brands
-                </Link>
-              </p>
-            </div>
-          )}
+                {includeBrandConsistency && <Check size={12} className="text-white" />}
+              </div>
+              <div className="flex-1 min-w-0">
+                <span className="text-sm font-medium" style={{ color: 'var(--ink)' }}>
+                  Include brand consistency audit
+                </span>
+                {workspaceBrandHasFiles ? (
+                  <p className="text-xs mt-0.5" style={{ color: 'var(--m-muted)' }}>
+                    Check website against your brand guidelines and design tokens.
+                  </p>
+                ) : (
+                  <p className="text-xs mt-0.5" style={{ color: 'var(--m-muted)' }}>
+                    Add brand identity files on the{' '}
+                    <Link href={`${dashPrefix}/brand-dna`} className="font-medium hover:underline" style={{ color: 'var(--ink)' }}>
+                      Brand DNA tab
+                    </Link>{' '}
+                    to enable this.
+                  </p>
+                )}
+              </div>
+            </label>
+          </div>
         </>
       )}
 
@@ -874,17 +789,17 @@ const NewAuditInner: React.FC = () => {
       {/* CTA */}
       <button
         onClick={handleSubmit}
-        disabled={loading || brandUploading}
+        disabled={loading}
         className="w-full flex items-center justify-center gap-2.5 font-sans font-medium text-[15px] py-3 px-6 rounded-lg active:scale-[0.98] transition-all min-h-[48px] disabled:opacity-60 disabled:cursor-not-allowed"
         style={{ background: 'var(--ink)', color: 'var(--paper)' }}
       >
-        {loading || brandUploading ? (
+        {loading ? (
           <>
             <svg className="animate-spin h-5 w-5" viewBox="0 0 24 24" fill="none">
               <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
               <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
             </svg>
-            {brandUploading ? 'Uploading brand files...' : hasCredits ? 'Starting audit...' : 'Creating checkout...'}
+            {hasCredits ? 'Starting audit...' : 'Creating checkout...'}
           </>
         ) : firstAuditFree ? (
           <>
