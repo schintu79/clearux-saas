@@ -21,7 +21,6 @@ import { createBrowserSupabase } from '@/lib/supabase-ssr';
 import { AuditDashboardOverview } from '@/components/dashboard/AuditDashboard';
 import { PILLAR_FOR_CATEGORY } from '@/lib/audit-checkpoints';
 import type { Audit, Report, AuditFinding } from '@/types/database';
-import { writeSelection } from '@/lib/dashboard/brand-selection';
 
 /* ── Helpers ───────────────────────────────────────────────── */
 
@@ -110,7 +109,7 @@ function BrandAuditsInner({ params }: { params: Promise<{ name: string }> }) {
       // selector, and the "Viewing X" topbar agree. Without this they
       // would diverge when the user opened a brand from a list while a
       // different selection was persisted.
-      if (brandIds[0]) writeSelection({ kind: 'brand', brandId: brandIds[0] });
+      // Workspace context is URL-driven, no selection sync needed
 
       // Fetch this user's audits and keep ones that either link to one of
       // the brand identities OR whose product_url host matches the brand's

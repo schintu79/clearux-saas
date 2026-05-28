@@ -3,6 +3,28 @@
 // Auto-generated from schema. Keep in sync with migrations.
 // ============================================================
 
+// ── Workspace ───────────────────────────────────────────────
+
+export type WorkspaceType = 'website' | 'brand' | 'website_and_brand'
+export type WorkspaceStatus = 'active' | 'archived'
+
+export interface Workspace {
+  id:                       string
+  user_id:                  string
+  name:                     string
+  slug:                     string
+  primary_domain:           string | null
+  brand_name:               string | null
+  workspace_type:           WorkspaceType
+  status:                   WorkspaceStatus
+  active_audit_id:          string | null
+  active_brand_identity_id: string | null
+  settings_json:            Record<string, unknown>
+  created_at:               string
+  updated_at:               string
+  archived_at:              string | null
+}
+
 export type AuditStatus =
   | 'pending_payment'
   | 'payment_received'
@@ -120,6 +142,8 @@ export interface Audit {
   speed_tested_at:  string | null
   // Progressive loading: current pipeline stage
   audit_stage:      AuditStage | null
+  // Workspace scoping
+  workspace_id:     string | null
 }
 
 /** Pipeline stage for progressive frontend loading */
@@ -304,10 +328,11 @@ export interface ScheduledAudit {
   frequency:   'weekly' | 'monthly' | 'quarterly'
   language:    string
   is_active:   boolean
-  last_run_at: string | null
-  next_run_at: string | null
-  created_at:  string
-  updated_at:  string
+  last_run_at:   string | null
+  next_run_at:   string | null
+  created_at:    string
+  updated_at:    string
+  workspace_id:  string | null
 }
 
 export interface Payment {
@@ -402,17 +427,18 @@ export type FindingStatus = 'open' | 'in_progress' | 'fixed' | 'backlog'
 export type SiteNoteType = 'context' | 'dismissal' | 'discussion'
 
 export interface SiteNote {
-  id:          string
-  user_id:     string
-  domain:      string
-  note_type:   SiteNoteType
-  category:    string | null
-  title:       string
-  content:     string
-  finding_ref: string | null
-  is_active:   boolean
-  created_at:  string
-  updated_at:  string
+  id:            string
+  user_id:       string
+  domain:        string
+  note_type:     SiteNoteType
+  category:      string | null
+  title:         string
+  content:       string
+  finding_ref:   string | null
+  is_active:     boolean
+  created_at:    string
+  updated_at:    string
+  workspace_id:  string | null
 }
 
 /**
@@ -702,8 +728,11 @@ export interface BrandIdentity {
   tone_keywords:  string[]
   primary_colors: string[]
   logo_url:       string | null
-  created_at:  string
-  updated_at:  string
+  created_at:     string
+  updated_at:     string
+  deleted_at:     string | null
+  // Workspace scoping
+  workspace_id:   string | null
 }
 
 export interface BrandIdentityFile {
@@ -785,6 +814,7 @@ export interface FtpConnection {
   is_active:          boolean
   created_at:         string
   updated_at:         string
+  workspace_id:       string | null
 }
 
 export interface FtpDeployLog {

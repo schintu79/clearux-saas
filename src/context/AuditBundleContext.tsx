@@ -3,17 +3,11 @@
 /**
  * AuditBundleContext — Single source of truth for the latest audit bundle.
  *
- * Every dashboard page (Overview, Find, Fix, Track, AI Readability, Intelligence)
- * previously loaded its own copy of the audit bundle via loadLatestAuditBundle().
- * This caused stale data bugs: a status change on the Fix page wouldn't appear
- * on the Find page until the user navigated away and back.
+ * WORKSPACE-SCOPED: reads workspace_id from WorkspaceContext instead of
+ * the old localStorage brand-selection. No more cross-brand race conditions.
  *
- * This context centralizes the bundle so:
- *  1. One Supabase query per selection change, shared across all tabs.
- *  2. Optimistic finding updates propagate to every mounted consumer instantly.
- *  3. After any mutation (status, dismiss, deploy, rollback), calling invalidate()
- *     re-fetches the authoritative state from the database.
- *  4. Score updates from the API are applied to the local report.
+ * Every dashboard page (Overview, Find, Fix, Track, AI Readability, Intelligence)
+ * shares one bundle so mutations propagate instantly.
  */
 
 import React, {
@@ -25,13 +19,13 @@ import React, {
   useRef,
 } from 'react';
 import { useAuth } from '@/context/AuthContext';
-import { useBrandSelection } from '@/lib/dashboard/useBrandSelection';
+import { useWorkspace } from '@/context/WorkspaceContext';
 import {
   loadLatestAuditBundle,
   isInProgressAuditStatus,
   type LatestAuditBundle,
 } from '@/lib/dashboard/latest-audit';
-import type { AuditFinding, FindingStatus } from '@/types/database';
+import type { AuditFinding } from '@/types/database';
 
 interface AuditBundleContextValue {
   /** The shared bundle — null while loading or if no audit exists. */
@@ -46,12 +40,10 @@ interface AuditBundleContextValue {
   updateFindingLocally: (findingId: string, patch: Partial<AuditFinding>) => void;
   /**
    * Update the report's overall_score in the local bundle.
-   * Used to apply scoreUpdate from PATCH /api/findings/:id responses.
    */
   updateReportScore: (newScore: number) => void;
   /**
    * Force re-fetch the bundle from the database.
-   * Call after any mutation to reconcile optimistic state with server truth.
    */
   invalidate: () => void;
 }
@@ -70,29 +62,29 @@ export function useAuditBundle() {
 
 export function AuditBundleProvider({ children }: { children: React.ReactNode }) {
   const { user, loading: authLoading } = useAuth();
-  const { selection, ready } = useBrandSelection();
+  const { workspaceId, loading: wsLoading } = useWorkspace();
   const [bundle, setBundle] = useState<LatestAuditBundle | null>(null);
   const [loading, setLoading] = useState(true);
   const fetchIdRef = useRef(0);
-  // Keep a ref to the latest selection so invalidate() always uses the
-  // most recent value — not a stale closure from when it was memoised.
-  const selectionRef = useRef(selection);
-  selectionRef.current = selection;
+  const workspaceIdRef = useRef(workspaceId);
+  workspaceIdRef.current = workspaceId;
 
-  // Load bundle when auth or selection changes.
-  // CRITICAL: clear the old bundle immediately so no page shows stale
-  // data from the previous site during the fetch window. Without this,
-  // switching from site A → site B keeps site A's data visible until
-  // site B's fetch completes.
+  // Load bundle when auth or workspace changes.
+  // Clear old bundle immediately so no page shows stale data.
   useEffect(() => {
-    if (authLoading || !user || !ready) {
-      if (!authLoading) setLoading(false);
+    if (authLoading || wsLoading || !user) {
+      if (!authLoading && !wsLoading) setLoading(false);
+      return;
+    }
+    if (!workspaceId) {
+      setBundle(null);
+      setLoading(false);
       return;
     }
     const id = ++fetchIdRef.current;
     setBundle(null);
     setLoading(true);
-    loadLatestAuditBundle(user.id, selection)
+    loadLatestAuditBundle(user.id, workspaceId)
       .then((b) => {
         if (id === fetchIdRef.current) setBundle(b);
       })
@@ -100,14 +92,11 @@ export function AuditBundleProvider({ children }: { children: React.ReactNode })
       .finally(() => {
         if (id === fetchIdRef.current) setLoading(false);
       });
-  }, [authLoading, user, ready, selection]);
+  }, [authLoading, wsLoading, user, workspaceId]);
 
-  // Poll every 3s while the active audit (or inProgressAudit) is still processing.
-  // This ensures the overview page gets live progress updates without requiring
-  // a manual page refresh.
+  // Poll every 3s while an audit is in progress.
   const pollingRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Derive a stable string to avoid re-triggering the effect on every bundle update.
   const inProgressStatus = bundle?.inProgressAudit
     ? (bundle.inProgressAudit as any).status
     : bundle?.audit
@@ -116,7 +105,7 @@ export function AuditBundleProvider({ children }: { children: React.ReactNode })
   const needsPolling = isInProgressAuditStatus(inProgressStatus);
 
   useEffect(() => {
-    if (!needsPolling || !user || !ready) {
+    if (!needsPolling || !user || !workspaceId) {
       if (pollingRef.current) {
         clearInterval(pollingRef.current);
         pollingRef.current = null;
@@ -124,21 +113,16 @@ export function AuditBundleProvider({ children }: { children: React.ReactNode })
       return;
     }
 
-    // Fetch immediately so we don't wait for the first interval tick.
-    // Use selectionRef.current (not the closure-captured `selection`) so
-    // the poll always fetches for the latest selection, even if the user
-    // switches sites while polling is active.
     const immediateId = ++fetchIdRef.current;
-    loadLatestAuditBundle(user.id, selectionRef.current)
+    loadLatestAuditBundle(user.id, workspaceIdRef.current!)
       .then((b) => {
         if (immediateId === fetchIdRef.current) setBundle(b);
       })
       .catch(() => {});
 
-    // Then continue polling
     pollingRef.current = setInterval(() => {
       const id = ++fetchIdRef.current;
-      loadLatestAuditBundle(user.id, selectionRef.current)
+      loadLatestAuditBundle(user.id, workspaceIdRef.current!)
         .then((b) => {
           if (id === fetchIdRef.current) setBundle(b);
         })
@@ -151,7 +135,7 @@ export function AuditBundleProvider({ children }: { children: React.ReactNode })
         pollingRef.current = null;
       }
     };
-  }, [needsPolling, user, ready, selection]);
+  }, [needsPolling, user, workspaceId]);
 
   const updateFindingLocally = useCallback(
     (findingId: string, patch: Partial<AuditFinding>) => {
@@ -179,12 +163,10 @@ export function AuditBundleProvider({ children }: { children: React.ReactNode })
   }, []);
 
   const invalidate = useCallback(() => {
-    if (!user || !ready) return;
+    if (!user || !workspaceIdRef.current) return;
     const id = ++fetchIdRef.current;
     setLoading(true);
-    // Read from ref so we always fetch with the latest selection, even
-    // if this callback was captured before the most recent writeSelection.
-    loadLatestAuditBundle(user.id, selectionRef.current)
+    loadLatestAuditBundle(user.id, workspaceIdRef.current!)
       .then((b) => {
         if (id === fetchIdRef.current) setBundle(b);
       })
@@ -192,7 +174,7 @@ export function AuditBundleProvider({ children }: { children: React.ReactNode })
       .finally(() => {
         if (id === fetchIdRef.current) setLoading(false);
       });
-  }, [user, ready]);
+  }, [user]);
 
   return (
     <AuditBundleContext.Provider

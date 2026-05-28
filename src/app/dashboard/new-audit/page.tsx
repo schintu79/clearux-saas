@@ -9,7 +9,7 @@ import { createBrowserSupabase } from '@/lib/supabase-ssr';
 import { SUPPORTED_LANGUAGES, DEFAULT_LANGUAGE } from '@/lib/languages';
 import { AUDIT_MODULES, COMPLETE_AUDIT_SLUGS } from '@/lib/audit-modules';
 import AllAuditsInclude from '@/components/ui/AllAuditsInclude';
-import { writeSelection } from '@/lib/dashboard/brand-selection';
+import { useWorkspace } from '@/context/WorkspaceContext';
 
 type AuditType = 'website';
 
@@ -19,6 +19,7 @@ const NewAuditInner: React.FC = () => {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { user, loading: userLoading } = useAuth();
+  const { workspace, workspaceSlug } = useWorkspace();
   const urlInputRef = useRef<HTMLInputElement>(null);
 
   // Audit type — always website. Brand Identity audits redirect to Brand DNA.
@@ -301,29 +302,7 @@ const NewAuditInner: React.FC = () => {
     }
   };
 
-  // Persist the brand/site the user just audited so Overview opens
-  // scoped to it after redirect (post-credit or post-Stripe).
   const resolvedBrandIdRef = useRef<string | null>(null);
-  const persistAuditSelection = () => {
-    // When a brand was resolved (either selected or auto-created by
-    // ensureBrandForWebsite), persist as BRAND selection so the sidebar
-    // and Overview immediately show the brand context. This also aligns
-    // with the redirect URL which uses ?brand=<id>, preventing a double
-    // selection change (site → brand) that causes a loading race.
-    const brandId = resolvedBrandIdRef.current || selectedBrandId;
-    if (brandId) {
-      writeSelection({ kind: 'brand', brandId });
-      return;
-    }
-    // Fallback: website audit without a resolved brand
-    if (auditType === 'website') {
-      try {
-        const productUrl = url.startsWith('http') ? url : `https://${url}`;
-        const host = new URL(productUrl).hostname.replace(/^www\./, '');
-        if (host) { writeSelection({ kind: 'site', host }); return; }
-      } catch {}
-    }
-  };
 
   /**
    * Find or create a brand_identity for a website domain.
@@ -418,14 +397,12 @@ const NewAuditInner: React.FC = () => {
           if (hasCredits) {
             const creditRes = await fetch('/api/credits', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ audit_id: audit.id, is_free_first: firstAuditFree }) });
             if (!creditRes.ok) throw new Error('Failed to apply credit');
-            writeSelection({ kind: 'brand', brandId: newId });
-            router.push(`/dashboard/overview?brand=${encodeURIComponent(newId)}`);
+            router.push(`/dashboard/${workspaceSlug}/overview`);
             return;
           }
           const checkoutRes = await fetch('/api/stripe/checkout', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ audit_id: audit.id }) });
           const checkoutData = await checkoutRes.json();
           if (!checkoutRes.ok || !checkoutData.url) throw new Error(checkoutData.error || 'Failed to create checkout');
-          writeSelection({ kind: 'brand', brandId: newId });
           window.location.href = checkoutData.url;
           return;
         } catch (err) {
@@ -516,23 +493,7 @@ const NewAuditInner: React.FC = () => {
         if (!creditRes.ok) {
           throw new Error(creditData.error || 'Failed to apply credit');
         }
-        persistAuditSelection();
-        // Redirect with explicit selection param so overview resolves the
-        // correct brand even if localStorage hasn't propagated yet.
-        const redirectBrandId = resolvedBrandIdRef.current || selectedBrandId;
-        if (redirectBrandId) {
-          router.push(`/dashboard/overview?brand=${encodeURIComponent(redirectBrandId)}`);
-        } else if (auditType === 'website') {
-          try {
-            const productUrl = url.startsWith('http') ? url : `https://${url}`;
-            const host = new URL(productUrl).hostname.replace(/^www\./, '');
-            router.push(`/dashboard/overview?site=${encodeURIComponent(host)}`);
-          } catch {
-            router.push('/dashboard/overview');
-          }
-        } else {
-          router.push('/dashboard/overview');
-        }
+        router.push(`/dashboard/${workspaceSlug}/overview`);
         return;
       }
 
@@ -546,7 +507,6 @@ const NewAuditInner: React.FC = () => {
       if (!checkoutRes.ok || !checkoutData.url) {
         throw new Error(checkoutData.error || 'Failed to create checkout session');
       }
-      persistAuditSelection();
       window.location.href = checkoutData.url;
     } catch (err) {
       console.error('Error creating audit:', err);

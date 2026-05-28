@@ -32,7 +32,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { useAuditBundle } from '@/context/AuditBundleContext';
-import { useBrandSelection } from '@/lib/dashboard/useBrandSelection';
+import { useWorkspace } from '@/context/WorkspaceContext';
 import ScoreCircle from '@/components/ui/ScoreCircle';
 import EmptyAudit from '@/components/dashboard/v2/EmptyAudit';
 import PageHeader from '@/components/dashboard/v2/PageHeader';
@@ -282,9 +282,9 @@ function CompetitorPlacementTable({
 
 export default function AIPerceptionPage() {
   const { user, loading: authLoading } = useAuth();
-  const { selection, ready } = useBrandSelection();
+  const { workspace, loading: wsLoading } = useWorkspace();
   const { bundle, loading: bundleLoading } = useAuditBundle();
-  const loading = authLoading || !ready || bundleLoading || !bundle;
+  const loading = authLoading || wsLoading || bundleLoading || !bundle;
 
   const [modelProbes, setModelProbes] = useState<ModelProbe[]>([]);
   const [promptResults, setPromptResults] = useState<PromptResult[]>([]);

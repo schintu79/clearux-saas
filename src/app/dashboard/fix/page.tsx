@@ -35,7 +35,7 @@ import {
   MODULE_TINTS,
   PHASE1_MODULES,
 } from '@/lib/dashboard/latest-audit';
-import { useBrandSelection } from '@/lib/dashboard/useBrandSelection';
+import { useWorkspace } from '@/context/WorkspaceContext';
 import EmptyAudit from '@/components/dashboard/v2/EmptyAudit';
 import OverviewBreadcrumb from '@/components/dashboard/OverviewBreadcrumb';
 import PageHeader from '@/components/dashboard/v2/PageHeader';
@@ -484,10 +484,10 @@ function ActiveFindingDetail({
 
 function FixPageInner() {
   const { user, loading: authLoading } = useAuth();
-  const { selection, ready } = useBrandSelection();
+  const { workspace, loading: wsLoading } = useWorkspace();
   const { bundle, loading: bundleLoading, updateFindingLocally, updateReportScore, invalidate } = useAuditBundle();
   const searchParams = useSearchParams();
-  const loading = authLoading || !ready || bundleLoading || !bundle;
+  const loading = authLoading || wsLoading || bundleLoading || !bundle;
   const [pending, setPending] = useState<Record<string, boolean>>({});
   const [activeFindingId, setActiveFindingId] = useState<string | null>(null);
 
@@ -518,8 +518,8 @@ function FixPageInner() {
 
   // Load FTP connections
   useEffect(() => {
-    if (authLoading || !user || !ready) return;
-    const siteHost = selection?.kind === 'site' ? selection.host : null;
+    if (authLoading || !user || wsLoading) return;
+    const siteHost = workspace?.primary_domain || null;
     const url = siteHost ? `/api/ftp?siteHost=${encodeURIComponent(siteHost)}` : '/api/ftp';
     fetch(url)
       .then(async (res) => {
@@ -529,7 +529,7 @@ function FixPageInner() {
       })
       .catch(() => setFtpConnections([]))
       .finally(() => setFtpLoaded(true));
-  }, [authLoading, user, ready, selection]);
+  }, [authLoading, user, wsLoading, workspace]);
 
   // Deep link via #finding-<id> — auto-select the referenced finding.
   // Sets deepLinkHonoured ref so the auto-select effect doesn't
@@ -770,7 +770,7 @@ function FixPageInner() {
         <PageHeader
           icon={<Wrench size={18} strokeWidth={1.75} style={{ color: 'var(--ink)' }} />}
           title="Fix"
-          subtitle={selection ? 'No audit for this brand yet.' : 'Run an audit to get your fix queue.'}
+          subtitle={workspace ? 'No audit for this workspace yet.' : 'Run an audit to get your fix queue.'}
         />
         <EmptyAudit
           title="No fixes ready"
@@ -796,8 +796,8 @@ function FixPageInner() {
           <button
             onClick={() => {
               const exportFindings = prepareFindingsForExport(filteredGroups, PHASE1_MODULES);
-              const siteName = selection?.kind === 'site' ? selection.host : 'brand';
-              const siteHostname = selection?.kind === 'site' ? selection.host : '';
+              const siteName = workspace?.primary_domain || workspace?.name || 'brand';
+              const siteHostname = workspace?.primary_domain || '';
               const auditDate = bundle.audit?.completed_at || bundle.audit?.created_at || new Date().toISOString();
               const auditId = bundle.audit?.id || 'unknown';
 
@@ -811,7 +811,7 @@ function FixPageInner() {
 
               const blob = new Blob([md], { type: 'text/markdown;charset=utf-8' });
               const url = URL.createObjectURL(blob);
-              const hostname = selection?.kind === 'site' ? selection.host : 'brand';
+              const hostname = workspace?.primary_domain || 'brand';
               const dateStr = new Date().toISOString().slice(0, 10);
               const a = document.createElement('a');
               a.href = url;

@@ -50,7 +50,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { createBrowserSupabase } from '@/lib/supabase-ssr';
-import { useBrandSelection } from '@/lib/dashboard/useBrandSelection';
+import { useWorkspace } from '@/context/WorkspaceContext';
 import { BRAND_AUDIT_CATEGORIES } from '@/lib/brand-audit-modules';
 import ScoreCircle from '@/components/ui/ScoreCircle';
 import { useAuditProgress } from '@/hooks/useAuditProgress';
@@ -237,7 +237,7 @@ const CATEGORY_TINTS: Record<string, { dot: string; bg: string; border: string }
 
 export default function BrandDnaPage() {
   const { user, loading: authLoading } = useAuth();
-  const { selection, ready } = useBrandSelection();
+  const { workspace, loading: wsLoading } = useWorkspace();
 
   /* ── Brand identity state ── */
   const [identity, setIdentity] = useState<BrandIdentity | null>(null);
@@ -292,33 +292,35 @@ export default function BrandDnaPage() {
 
   /* ── Load brand identity ── */
   const loadIdentity = useCallback(async () => {
-    if (!user || !selection) return null;
+    if (!user || !workspace) return null;
     try {
-      if (selection.kind === 'brand') {
-        const res = await fetch(`/api/brand-identities/${selection.brandId}`);
+      if (workspace.active_brand_identity_id) {
+        const res = await fetch(`/api/brand-identities/${workspace.active_brand_identity_id}`);
+        if (res.status === 404) return null;
+        if (!res.ok) throw new Error('Failed to load brand DNA');
+        const data = await res.json();
+        return data.identity || null;
+      } else if (workspace.primary_domain) {
+        // workspace has a domain but no active brand identity — find linked brand identity
+        const supabase = createBrowserSupabase();
+        const { data: audits } = await supabase
+          .from('audits')
+          .select('product_url, brand_identity_id, completed_at')
+          .eq('user_id', user.id)
+          .is('deleted_at', null)
+          .order('completed_at', { ascending: false, nullsFirst: false } as any)
+          .limit(100);
+        const match = (audits || []).find((a: any) => hostnameOf(a.product_url) === workspace.primary_domain && !!a.brand_identity_id);
+        if (!match) return null;
+        const res = await fetch(`/api/brand-identities/${(match as any).brand_identity_id}`);
         if (res.status === 404) return null;
         if (!res.ok) throw new Error('Failed to load brand DNA');
         const data = await res.json();
         return data.identity || null;
       }
-      // site selection — find linked brand identity
-      const supabase = createBrowserSupabase();
-      const { data: audits } = await supabase
-        .from('audits')
-        .select('product_url, brand_identity_id, completed_at')
-        .eq('user_id', user.id)
-        .is('deleted_at', null)
-        .order('completed_at', { ascending: false, nullsFirst: false } as any)
-        .limit(100);
-      const match = (audits || []).find((a: any) => hostnameOf(a.product_url) === selection.host && !!a.brand_identity_id);
-      if (!match) return null;
-      const res = await fetch(`/api/brand-identities/${(match as any).brand_identity_id}`);
-      if (res.status === 404) return null;
-      if (!res.ok) throw new Error('Failed to load brand DNA');
-      const data = await res.json();
-      return data.identity || null;
+      return null;
     } catch { return null; }
-  }, [user, selection]);
+  }, [user, workspace]);
 
   /* ── Load latest brand audit for this identity ── */
   const loadBrandAudit = useCallback(async (brandId: string) => {
@@ -351,8 +353,8 @@ export default function BrandDnaPage() {
 
   /* ── Master load ── */
   useEffect(() => {
-    if (authLoading || !user || !ready) {
-      if (!authLoading && ready) setLoading(false);
+    if (authLoading || !user || wsLoading) {
+      if (!authLoading && !wsLoading) setLoading(false);
       return;
     }
     let cancelled = false;
@@ -367,8 +369,8 @@ export default function BrandDnaPage() {
     setFindings([]);
 
     (async () => {
-      if (!selection) { if (!cancelled) setLoading(false); return; }
-      if (selection.kind === 'site') setSiteLabel(selection.host);
+      if (!workspace) { if (!cancelled) setLoading(false); return; }
+      if (workspace.primary_domain) setSiteLabel(workspace.primary_domain);
       try {
         const id = await loadIdentity();
         if (cancelled) return;
@@ -392,7 +394,7 @@ export default function BrandDnaPage() {
       }
     })();
     return () => { cancelled = true; };
-  }, [authLoading, user, ready, selection, loadIdentity, loadBrandAudit]);
+  }, [authLoading, user, wsLoading, workspace, loadIdentity, loadBrandAudit]);
 
   /* ── Poll in-progress audits ── */
   useEffect(() => {
@@ -598,9 +600,9 @@ export default function BrandDnaPage() {
 
   const categoryScores = useMemo(() => reportJson?.categoryResults || [], [reportJson]);
 
-  const selectedLabel = selection?.kind === 'brand'
-    ? (identity?.name || 'this brand')
-    : (selection?.kind === 'site' ? selection.host : null);
+  const selectedLabel = workspace?.active_brand_identity_id
+    ? (identity?.name || (workspace as any).brand_name || workspace.name)
+    : (workspace?.primary_domain || null);
 
   const completion = useMemo(() => {
     if (!identity) return 0;
@@ -614,7 +616,7 @@ export default function BrandDnaPage() {
   const visuals = useMemo(() => identity?.brand_identity_files.filter(f => !isDocFile(f.file_name)) || [], [identity]);
 
   /* ── Skeleton ── */
-  if (authLoading || loading || !ready) {
+  if (authLoading || loading || wsLoading) {
     return (
       <div>
         <OverviewTabs />
@@ -629,7 +631,7 @@ export default function BrandDnaPage() {
   }
 
   /* ── Empty states ── */
-  if (!selection) {
+  if (!workspace) {
     return (
       <div>
         <OverviewTabs />
@@ -658,7 +660,7 @@ export default function BrandDnaPage() {
           subtitle={selectedLabel ? `Brand identity for ${selectedLabel}` : 'Capture your brand identity so audits can score consistency.'}
         />
         <EmptyState
-          title={selection.kind === 'brand' ? 'No Brand DNA on file yet' : `No Brand DNA for ${siteLabel || 'this site'}`}
+          title={!workspace.primary_domain ? 'No Brand DNA on file yet' : `No Brand DNA for ${siteLabel || 'this site'}`}
           body="Add your brand name, voice, colours, and upload guidelines so we can audit brand consistency."
           ctaHref="/dashboard/brand-identity/new"
           ctaLabel="Add brand DNA"

@@ -1,5 +1,16 @@
 'use client';
 
+/**
+ * DashboardShell — Workspace-aware sidebar + top bar layout.
+ *
+ * Reads the workspace slug from the URL path (/dashboard/[slug]/...) and
+ * uses it to scope all navigation links. The old brand-selection dropdown
+ * is replaced by a workspace name display derived from the URL.
+ *
+ * AuditBundleProvider is NOT rendered here — it lives in the [slug] layout
+ * so it can access WorkspaceContext.
+ */
+
 import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
@@ -29,53 +40,55 @@ import {
   Bot,
   Gauge,
   LayoutDashboard,
+  FolderOpen,
 } from 'lucide-react';
 import clsx from 'clsx';
-import { AuditBundleProvider } from '@/context/AuditBundleContext';
 import { useAuth } from '@/context/AuthContext';
-import { createBrowserSupabase } from '@/lib/supabase-ssr';
 import ThemeToggle from '@/components/ui/ThemeToggle';
 import SiteFavicon from '@/components/ui/SiteFavicon';
 import Logo, { Iconmark } from '@/components/ui/Logo';
-import {
-  readSelection,
-  writeSelection,
-  selectionFromSidebarId,
-  subscribeSelection,
-  type BrandSelection,
-} from '@/lib/dashboard/brand-selection';
 
 interface DashboardShellProps {
   children: React.ReactNode;
 }
 
-type SiteEntry = {
-  kind: 'site' | 'brand';
-  // For sites: latest audit id is used to deep-link feature nav.
-  // For brands: brand_identity id, used for /dashboard/brand-identity/[id].
-  id: string;
-  label: string;
-  // Display sublabel — domain hostname or "Brand identity".
-  sub: string;
-  auditId?: string | null;
-  // Whether brand audits exist for this entry (used for Brand audit nav link)
-  hasBrandAudits?: boolean;
-  // For brand entries backed by a website — show favicon instead of fingerprint
-  hostname?: string;
-};
+/**
+ * Extract the workspace slug from the current pathname.
+ * Pattern: /dashboard/[slug]/...
+ * If we're at /dashboard (no slug), returns null.
+ */
+function extractSlugFromPath(pathname: string | null): string | null {
+  if (!pathname) return null;
+  const parts = pathname.split('/').filter(Boolean);
+  // /dashboard/[slug]/... → parts = ['dashboard', slug, ...]
+  if (parts.length >= 2 && parts[0] === 'dashboard') {
+    const candidate = parts[1];
+    // These are known non-slug dashboard routes at /dashboard level
+    const nonSlugRoutes = new Set([
+      'settings', 'buy-credits', 'notifications', 'new-audit',
+      'portfolio', 'reports', 'audits', 'brand-identity',
+      'deploy', 'admin',
+    ]);
+    if (!nonSlugRoutes.has(candidate)) {
+      return candidate;
+    }
+  }
+  return null;
+}
 
 const DashboardShell: React.FC<DashboardShellProps> = ({ children }) => {
   const pathname = usePathname();
   const router = useRouter();
   const { user, profile, signOut, loading } = useAuth();
 
-  // Sidebar UI state — React state only (no localStorage) so this stays safe in
-  // sandboxed iframes. Mobile drawer + desktop collapse are independent.
+  // Extract workspace slug from URL
+  const workspaceSlug = extractSlugFromPath(pathname);
+
+  // Sidebar UI state
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [collapsed, setCollapsed] = useState(false);
-  const [brandMenuOpen, setBrandMenuOpen] = useState(false);
-  const brandMenuRef = useRef<HTMLDivElement>(null);
 
+  // Credit data
   const [creditData, setCreditData] = useState<{
     credits: number;
     subscription_plan: string | null;
@@ -86,68 +99,34 @@ const DashboardShell: React.FC<DashboardShellProps> = ({ children }) => {
   } | null>(null);
   const [unreadNotifications, setUnreadNotifications] = useState(0);
 
-  // Sites/Brands derived from existing data. Site entries are the distinct
-  // hostnames found across the user's audits; brand entries come from
-  // brand_identities. Each site entry remembers its latest audit id so the
-  // feature nav can deep-link into the audit detail tabs.
-  const [sites, setSites] = useState<SiteEntry[]>([]);
-  const [sitesLoaded, setSitesLoaded] = useState(false);
-  // Track IDs we've already added temporary placeholders for, so the
-  // "add missing entry" effect doesn't re-fire when loadSites replaces
-  // the sites array (which would remove the placeholder and loop).
-  const placeholderAddedRef = useRef(new Set<string>());
-  // Selection persists via brand-selection store so that Overview/Find/Fix/
-  // Track all scope queries to the SAME brand the sidebar shows. Initial
-  // value is hydrated from localStorage on mount in the effect below.
-  const [selectedSiteId, setSelectedSiteId] = useState<string | null>(null);
+  // Workspace list for the workspace switcher dropdown
+  const [workspaces, setWorkspaces] = useState<Array<{
+    id: string;
+    slug: string;
+    name: string;
+    primary_domain: string | null;
+    brand_name: string | null;
+    workspace_type: string;
+  }>>([]);
+  const [wsMenuOpen, setWsMenuOpen] = useState(false);
+  const wsMenuRef = useRef<HTMLDivElement>(null);
 
-  // Track whether the last setSelectedSiteId call was from an internal UI
-  // action (sidebar click, route sync) vs. an external source (subscription
-  // from another component calling writeSelection). Only internal changes
-  // should write back to the persistent store — otherwise we clobber
-  // selections set by the new-audit page's persistAuditSelection().
-  const internalChangeRef = useRef(false);
-
-  // Wrapper: call this instead of raw setSelectedSiteId when the change
-  // originates from a user action inside this shell (sidebar dropdown,
-  // route-sync effect). It flags the change as "internal" so the
-  // write-back effect knows to mirror it to the persistent store.
-  const selectSiteInternal = (id: string | null) => {
-    internalChangeRef.current = true;
-    setSelectedSiteId(id);
-  };
-
-  // Hydrate selection from localStorage on first render AND subscribe to
-  // external changes so the shell's selectedSiteId mirrors the persistent
-  // store. Without the subscription, callers like `/dashboard/page.tsx`
-  // (portfolio rows) and the audit detail pages can call `writeSelection`
-  // and the body would scope to the new brand, while the sidebar/header
-  // (which read from this state) stay on the old one. That divergence is
-  // exactly the bug we're fixing here.
-  const sidebarIdFromSelection = (sel: BrandSelection): string | null => {
-    if (!sel) return null;
-    if (sel.kind === 'site') return `site:${sel.host}`;
-    if (sel.kind === 'brand') return `brand:${sel.brandId}`;
-    return null;
-  };
+  // Fetch workspaces for the sidebar switcher
   useEffect(() => {
-    const sel = readSelection();
-    const id = sidebarIdFromSelection(sel);
-    if (id) setSelectedSiteId(id);
-    const unsub = subscribeSelection((next) => {
-      // If an internal action (dropdown click) already set state AND
-      // wrote to localStorage in the same tick, skip the subscription
-      // update to avoid a competing setSelectedSiteId that races with
-      // the internal one and causes the two-click selection bug.
-      if (internalChangeRef.current) return;
-      const nextId = sidebarIdFromSelection(next);
-      // External change — do NOT flag as internal so the write-back
-      // effect won't clobber what was just written to the store.
-      setSelectedSiteId((prev) => (nextId === prev ? prev : nextId));
-    });
-    return unsub;
-  }, []);
+    if (!user) return;
+    fetch('/api/workspaces')
+      .then((r) => r.ok ? r.json() : { workspaces: [] })
+      .then((d) => setWorkspaces(d.workspaces || []))
+      .catch(() => {});
+  }, [user]);
 
+  // Current workspace derived from slug
+  const currentWorkspace = useMemo(
+    () => workspaces.find((w) => w.slug === workspaceSlug) || null,
+    [workspaces, workspaceSlug],
+  );
+
+  // Fetch credits and notifications
   useEffect(() => {
     if (!user) return;
     const load = () => {
@@ -167,317 +146,24 @@ const DashboardShell: React.FC<DashboardShellProps> = ({ children }) => {
     return () => window.removeEventListener('focus', onFocus);
   }, [user]);
 
-  // Load sites/brands. We only need a small, stable list for the selector;
-  // selecting a site does not refetch global data, it just rewires the
-  // feature-nav deep links to the latest audit for that domain.
-  const fetchIdRef = useRef(0);
-  const loadSites = useCallback(async () => {
-    if (!user) return;
-    const id = ++fetchIdRef.current;
-    const supabase = createBrowserSupabase();
-    const [{ data: audits }, brandsRes] = await Promise.all([
-      supabase
-        .from('audits')
-        .select('id, product_url, completed_at, created_at, status, brand_identity_id, audit_type')
-        .eq('user_id', user.id)
-        .is('deleted_at', null)
-        .order('completed_at', { ascending: false, nullsFirst: false } as any)
-        .limit(50),
-      fetch('/api/brand-identities').then(r => r.ok ? r.json() : { identities: [] }).catch(() => ({ identities: [] })),
-    ]);
-    if (id !== fetchIdRef.current) return;
-
-    // Track which brand_identity_ids have audits
-    const brandIdsWithAudits = new Set<string>();
-    for (const a of (audits || []) as any[]) {
-      if (a.brand_identity_id) brandIdsWithAudits.add(a.brand_identity_id);
-    }
-
-    // Build a set of hostnames that have a brand_identity AND at least one
-    // brand_identity-type audit. Website audits auto-create brand records but
-    // should still appear as site entries in the sidebar.
-    const brandIdsWithBrandAudits = new Set<string>();
-    for (const a of (audits || []) as any[]) {
-      if (a.brand_identity_id && a.audit_type === 'brand_identity') {
-        brandIdsWithBrandAudits.add(a.brand_identity_id);
-      }
-    }
-    const brandHostnames = new Set<string>();
-    for (const b of (brandsRes?.identities || []) as any[]) {
-      if (b.website_url && brandIdsWithBrandAudits.has(b.id)) {
-        try {
-          const bHost = new URL(b.website_url).hostname.replace(/^www\./, '');
-          if (bHost) brandHostnames.add(bHost);
-        } catch {}
-      }
-    }
-
-    const byDomain = new Map<string, SiteEntry>();
-    for (const a of (audits || []) as any[]) {
-      if (!a.product_url) continue;
-      let host = a.product_url as string;
-      try { host = new URL(a.product_url).hostname.replace(/^www\./, ''); } catch {}
-      // Skip site entry if a brand already covers this hostname
-      if (brandHostnames.has(host)) continue;
-      if (!byDomain.has(host)) {
-        byDomain.set(host, {
-          kind: 'site',
-          id: `site:${host}`,
-          label: host,
-          sub: 'Website',
-          auditId: a.id || null,
-        });
-      }
-    }
-    const siteEntries = Array.from(byDomain.values());
-
-    // Only show brand entries for brands that have actual brand_identity audits
-    // or were explicitly created (not auto-created from website audits).
-    // Auto-created brands without brand_identity audits show as site entries instead.
-    const brandEntries: SiteEntry[] = ((brandsRes?.identities || []) as any[])
-      .filter((b: any) => {
-        // Show if the brand has a brand_identity audit
-        if (brandIdsWithBrandAudits.has(b.id)) return true;
-        // Show if the brand has no website_url (pure brand, not auto-created)
-        if (!b.website_url) return true;
-        // Hide auto-created brands that only have website audits — they show as site entries
-        return false;
-      })
-      .map((b: any) => {
-        let brandHost: string | null = null;
-        if (b.website_url) {
-          try { brandHost = new URL(b.website_url).hostname.replace(/^www\./, ''); } catch {}
-        }
-        return {
-          kind: 'brand' as const,
-          id: `brand:${b.id}`,
-          label: b.name || brandHost || 'Untitled brand',
-          sub: brandHost ? `Website` : 'Brand identity',
-          hostname: brandHost || undefined,
-          hasBrandAudits: brandIdsWithAudits.has(b.id),
-        };
-      });
-
-    // Build a lookup from hostname → brand entry id so we can auto-migrate
-    // stale site:host selections to their brand equivalent — but only for
-    // brands that have actual brand_identity audits (not auto-created ones).
-    const hostToBrandEntryId = new Map<string, string>();
-    for (const b of (brandsRes?.identities || []) as any[]) {
-      if (b.website_url && brandIdsWithBrandAudits.has(b.id)) {
-        try {
-          const bHost = new URL(b.website_url).hostname.replace(/^www\./, '');
-          if (bHost) hostToBrandEntryId.set(bHost, `brand:${b.id}`);
-        } catch {}
-      }
-    }
-
-    const all = [...siteEntries, ...brandEntries];
-    const allIds = new Set(all.map(s => s.id));
-
-    // Only purge placeholders that are NOW in the authoritative list
-    // (i.e. they're no longer placeholders). DO NOT clear() the whole
-    // set — that removes the "already handled" guard in the placeholder
-    // effect, which re-adds the placeholder and calls loadSites() again,
-    // creating an infinite loop.
-    for (const id of Array.from(placeholderAddedRef.current)) {
-      if (allIds.has(id)) placeholderAddedRef.current.delete(id);
-    }
-
-    setSites(all);
-    setSitesLoaded(true);
-
-    // Default selection: prefer current route context, else most-recent site.
-    // Also auto-migrate stale site:host → brand:id when a brand now covers that host.
-    // CRITICAL: If the persisted selection points to a deleted item (no longer
-    // in `allIds`), clear it so ghost entries don't resurface.
-    setSelectedSiteId((prev) => {
-      const persisted = readSelection();
-      const persistedId = sidebarIdFromSelection(persisted);
-      const effective = persistedId || prev;
-
-      // Clear stale selection pointing to a deleted item.
-      // IMPORTANT: Do NOT call writeSelection(null) here — it fires
-      // a subscription that cascades through the system (overview
-      // defensive sync detects null → writes back resolved selection →
-      // triggers placeholder effect → calls loadSites → infinite loop).
-      // Just update the local state; the write-back effect (#5) will
-      // persist it once via the internalChangeRef guard.
-      if (effective && !allIds.has(effective)) {
-        internalChangeRef.current = true;
-        return all[0]?.id || null;
-      }
-
-      if (effective?.startsWith('site:')) {
-        const host = effective.slice(5);
-        const brandEntryId = hostToBrandEntryId.get(host);
-        if (brandEntryId) {
-          internalChangeRef.current = true;
-          return brandEntryId;
-        }
-      }
-      return effective || all[0]?.id || null;
-    });
-  }, [user]);
-
-  useEffect(() => { loadSites(); }, [loadSites]);
-
-  // When the selected brand/site changes and isn't in the sites list yet
-  // (e.g. new audit for a domain that hasn't completed), add a temporary
-  // entry so the selector shows the new domain immediately, then refresh
-  // the full list in the background.
-  //
-  // IMPORTANT: This effect must NOT depend on `sites` — otherwise it loops:
-  // 1. adds placeholder → sites changes → effect re-runs
-  // 2. loadSites replaces array (drops placeholder) → sites changes → re-runs
-  // 3. placeholder gone → re-adds it → loadSites → back to 1
-  // Instead we use a ref to track already-handled IDs.
+  // Click-outside / Escape to close workspace menu
   useEffect(() => {
-    if (!selectedSiteId) return;
-    // Already added a placeholder for this ID — skip
-    if (placeholderAddedRef.current.has(selectedSiteId)) return;
-
-    // Check current sites via the state setter to avoid stale closure
-    setSites(prev => {
-      const exists = prev.some(s => s.id === selectedSiteId);
-      if (exists) return prev; // already in list, no change
-
-      placeholderAddedRef.current.add(selectedSiteId);
-
-      if (selectedSiteId.startsWith('site:')) {
-        const host = selectedSiteId.slice(5);
-        return [...prev, { kind: 'site', id: selectedSiteId, label: host, sub: 'Website', auditId: null }];
-      } else if (selectedSiteId.startsWith('brand:')) {
-        const brandId = selectedSiteId.slice(6);
-        // Fetch brand name so we don't show a raw UUID in the selector.
-        // The placeholder is added synchronously; fetch replaces it.
-        fetch('/api/brand-identities')
-          .then(r => r.ok ? r.json() : { identities: [] })
-          .then(data => {
-            const brand = ((data?.identities || []) as any[]).find((b: any) => b.id === brandId);
-            if (brand) {
-              let brandHost: string | null = null;
-              if (brand.website_url) {
-                try { brandHost = new URL(brand.website_url).hostname.replace(/^www\./, ''); } catch {}
-              }
-              setSites(p => p.map(s =>
-                s.id === `brand:${brandId}`
-                  ? { ...s, label: brand.name || brandHost || brandId, sub: brandHost ? 'Website' : 'Brand identity', hostname: brandHost || undefined }
-                  : s
-              ));
-            } else {
-              // Brand not found (deleted) — remove the placeholder and clear selection
-              setSites(p => p.filter(s => s.id !== `brand:${brandId}`));
-              placeholderAddedRef.current.delete(`brand:${brandId}`);
-              writeSelection(null);
-            }
-          })
-          .catch(() => {});
-        return [...prev, { kind: 'brand', id: selectedSiteId, label: 'Loading...', sub: 'Brand identity' }];
-      }
-      return prev;
-    });
-
-    // NOTE: Do NOT call loadSites() here. It clears/merges placeholders
-    // and updates selectedSiteId, which re-triggers this effect and
-    // creates an infinite loop. The placeholder + async brand-name fetch
-    // above is sufficient for display; the authoritative list refreshes
-    // naturally via the [loadSites] effect when user/auth changes.
-  }, [selectedSiteId]);
-
-  // Sync the selected site/brand with the current route so the selector
-  // reflects what the user is looking at. Specifically: when the user is on
-  // /dashboard/audits/<id>, find the matching site entry and switch.
-  useEffect(() => {
-    if (!sites.length) return;
-    if (pathname?.startsWith('/dashboard/audits/')) {
-      const auditId = pathname.split('/')[3];
-      const match = sites.find(s => s.kind === 'site' && s.auditId === auditId);
-      if (match) selectSiteInternal(match.id);
-    } else if (pathname?.startsWith('/dashboard/brand-identity/')) {
-      const brandId = pathname.split('/')[3];
-      const match = sites.find(s => s.kind === 'brand' && s.id === `brand:${brandId}`);
-      if (match) selectSiteInternal(match.id);
-    }
-  }, [pathname, sites]);
-
-  // Mirror INTERNAL selection changes into the persistent brand-selection
-  // store so Overview / Find / Fix / Track scope their queries to the same
-  // brand. Only writes when the change came from a user action inside this
-  // shell (sidebar dropdown click, route sync) — NOT from an external
-  // subscription event. This prevents the race where:
-  //   - new-audit page writes { kind:'site', host:'newsite.com' } to store
-  //   - the subscription syncs selectedSiteId to the new value
-  //   - but this effect would re-write the OLD stale value back to the store
-  //     before the subscription fires, clobbering the new selection
-  useEffect(() => {
-    // Only write back when the change was triggered internally
-    if (!internalChangeRef.current) return;
-    internalChangeRef.current = false;
-
-    const next = selectionFromSidebarId(selectedSiteId);
-    const current = readSelection();
-    const sameSite = next?.kind === 'site' && current?.kind === 'site' && next.host === current.host;
-    const sameBrand = next?.kind === 'brand' && current?.kind === 'brand' && next.brandId === current.brandId;
-    const bothNull = next == null && current == null;
-    if (sameSite || sameBrand || bothNull) return;
-    // Don't clobber a real persisted selection with `null` during the
-    // initial render window before hydrate has populated state.
-    if (next == null && current != null) return;
-    writeSelection(next);
-  }, [selectedSiteId]);
-
-  // Click-outside / Escape to close brand menu.
-  useEffect(() => {
-    if (!brandMenuOpen) return;
+    if (!wsMenuOpen) return;
     const onClick = (e: MouseEvent) => {
-      if (brandMenuRef.current && !brandMenuRef.current.contains(e.target as Node)) {
-        setBrandMenuOpen(false);
+      if (wsMenuRef.current && !wsMenuRef.current.contains(e.target as Node)) {
+        setWsMenuOpen(false);
       }
     };
-    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') setBrandMenuOpen(false); };
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') setWsMenuOpen(false); };
     document.addEventListener('mousedown', onClick);
     document.addEventListener('keydown', onKey);
     return () => {
       document.removeEventListener('mousedown', onClick);
       document.removeEventListener('keydown', onKey);
     };
-  }, [brandMenuOpen]);
+  }, [wsMenuOpen]);
 
-  const selectedSite = useMemo(
-    () => sites.find(s => s.id === selectedSiteId) || null,
-    [sites, selectedSiteId],
-  );
-
-  // Derived plan info
-  const credits = creditData?.credits ?? 0;
-  const isSubscribed = creditData?.subscription_status === 'active' && !!creditData?.subscription_plan;
-  const isFreeUser = !isSubscribed && credits === 0 && (creditData?.first_audit_free ?? false);
-  const planName = isSubscribed
-    ? creditData!.subscription_plan!.charAt(0).toUpperCase() + creditData!.subscription_plan!.slice(1)
-    : isFreeUser
-      ? 'Free'
-      : 'Credit-based';
-  const auditsRemaining = creditData?.audits_remaining ?? 0;
-  const auditsPerMonth = creditData?.audits_per_month ?? 0;
-  const totalAvailable = isSubscribed ? auditsRemaining + credits : credits;
-  const usagePercent = isSubscribed && auditsPerMonth > 0
-    ? Math.round((auditsRemaining / auditsPerMonth) * 100)
-    : 0;
-
-  type NavItem = {
-    label: string;
-    href: string;
-    icon: React.ElementType;
-    badge?: boolean;
-    matchPaths?: string[]; // additional paths considered "active"
-  };
-  type NavGroup = { label: string | null; items: NavItem[] };
-
-  const onAuditDetail = pathname?.startsWith('/dashboard/audits/') && pathname.split('/').length >= 4;
-  // Track URL hash in state so the sidebar's active highlight updates the
-  // moment the audit page's tab changes (via in-page click, sidebar click,
-  // or browser back/forward). usePathname does not re-render on hash change,
-  // so we have to subscribe manually.
+  // Hash tracking for breadcrumb
   const [currentHash, setCurrentHash] = useState('');
   useEffect(() => {
     if (typeof window === 'undefined') return;
@@ -491,58 +177,45 @@ const DashboardShell: React.FC<DashboardShellProps> = ({ children }) => {
     };
   }, [pathname]);
 
-  // Dynamic href for Brand identity nav item based on selected brand/site
-  const brandIdentityHref = (() => {
-    if (selectedSite?.kind === 'brand') {
-      // Link to this brand's detail page (id is "brand:<uuid>")
-      const brandId = selectedSite.id.replace('brand:', '');
-      return `/dashboard/brand-identity/${brandId}`;
-    }
-    // Site selected — no brand identity exists, go to create new
-    return '/dashboard/brand-identity/new';
-  })();
+  // Nav base path — when inside a workspace, prefix all links
+  const navBase = workspaceSlug ? `/dashboard/${workspaceSlug}` : '/dashboard';
 
-  // Dynamic href for Brand audit nav item based on selected brand
-  const brandAuditHref = (() => {
-    if (selectedSite?.kind === 'brand' && selectedSite.hasBrandAudits) {
-      return `/dashboard/audits/brand/${encodeURIComponent(selectedSite.label)}`;
-    }
-    return '/dashboard/brand-dna';
-  })();
+  // Audit detail detection
+  const onAuditDetail = pathname?.startsWith(`${navBase}/audits/`) && pathname.split('/').length >= 5;
 
-  // Brand workspace IA: once inside a selected audit/brand workspace, the
-  // sidebar exposes ONLY the practical operator path — Overview, Find, Fix,
-  // Track, Brand DNA. Find/Fix/Track are where findings, page-level data, AI
-  // readability, X-Ray, and Intelligence live; the audit detail page exposes
-  // those same surfaces as in-page tabs. Reports is a parent/account-level
-  // destination and is intentionally NOT a peer of audit workflow items.
-  // Audit deep-dive features are reached through the audit detail page (in-
-  // page tabs) and Find/Fix/Track — not as sidebar peers, which previously
-  // created competing nav and made the audit area feel like a feature gallery.
+  type NavItem = {
+    label: string;
+    href: string;
+    icon: React.ElementType;
+    badge?: boolean;
+    matchPaths?: string[];
+  };
+  type NavGroup = { label: string | null; items: NavItem[] };
+
   const navGroups: NavGroup[] = [
     {
       label: '',
       items: [
-        { label: 'Overview', href: '/dashboard/overview', icon: LayoutDashboard },
+        { label: 'Overview', href: `${navBase}/overview`, icon: LayoutDashboard },
       ],
     },
     {
       label: 'Analysis',
       items: [
-        { label: 'Competitors', href: '/dashboard/competitors', icon: Target },
-        { label: 'Brand intelligence', href: '/dashboard/intelligence', icon: BarChart3 },
-        { label: 'AI Perception', href: '/dashboard/ai-perception', icon: Bot, matchPaths: ['/dashboard/ai-readability'] },
-        { label: 'Website speed', href: '/dashboard/speed', icon: Gauge },
-        { label: 'Brand DNA', href: '/dashboard/brand-dna', icon: Fingerprint, matchPaths: ['/dashboard/brand-identity'] },
+        { label: 'Competitors', href: `${navBase}/competitors`, icon: Target },
+        { label: 'Brand intelligence', href: `${navBase}/intelligence`, icon: BarChart3 },
+        { label: 'AI Perception', href: `${navBase}/ai-perception`, icon: Bot, matchPaths: [`${navBase}/ai-readability`] },
+        { label: 'Website speed', href: `${navBase}/speed`, icon: Gauge },
+        { label: 'Brand DNA', href: `${navBase}/brand-dna`, icon: Fingerprint, matchPaths: [`${navBase}/brand-identity`] },
       ],
     },
     {
       label: 'Actions',
       items: [
-        { label: 'Find', href: '/dashboard/find', icon: Search, matchPaths: ['/dashboard/audits'] },
-        { label: 'Fix', href: '/dashboard/fix', icon: Wrench },
-        { label: 'Track', href: '/dashboard/track', icon: LineChart },
-        { label: 'Connect site', href: '/dashboard/connect', icon: Server },
+        { label: 'Find', href: `${navBase}/find`, icon: Search, matchPaths: [`${navBase}/audits`] },
+        { label: 'Fix', href: `${navBase}/fix`, icon: Wrench },
+        { label: 'Track', href: `${navBase}/track`, icon: LineChart },
+        { label: 'Connect site', href: `${navBase}/connect`, icon: Server },
       ],
     },
   ];
@@ -561,12 +234,17 @@ const DashboardShell: React.FC<DashboardShellProps> = ({ children }) => {
     ? displayName.split(' ').map((n: string) => n[0]).join('').slice(0, 2).toUpperCase()
     : user?.email?.[0]?.toUpperCase() || '?';
 
+  const workspaceLabel = currentWorkspace?.name
+    || currentWorkspace?.primary_domain
+    || workspaceSlug
+    || null;
+
   const SidebarLogo = (
     <div
       className={clsx('h-12 flex items-center', collapsed ? 'px-2 justify-between' : 'px-3.5 justify-between')}
       style={{ borderBottom: '1px solid var(--rule)' }}
     >
-      <Link href="/dashboard/overview" className="flex items-center min-w-0" aria-label="Fixpath home">
+      <Link href="/dashboard" className="flex items-center min-w-0" aria-label="Fixpath home">
         {collapsed ? (
           <Iconmark size={36} />
         ) : (
@@ -608,81 +286,66 @@ const DashboardShell: React.FC<DashboardShellProps> = ({ children }) => {
       >
         {SidebarLogo}
 
-        {/* Spacer before brand selector */}
+        {/* Spacer before workspace selector */}
         <div style={{ minHeight: 12 }} />
 
-        {/* Brand/site selector */}
+        {/* Workspace selector */}
         {!collapsed && (
-          <div className="px-3 pt-2 pb-3" ref={brandMenuRef}>
+          <div className="px-3 pt-2 pb-3" ref={wsMenuRef}>
             <div className="relative">
               <button
-                onClick={() => setBrandMenuOpen((v) => !v)}
+                onClick={() => setWsMenuOpen((v) => !v)}
                 className="w-full flex items-center gap-2.5 px-2.5 py-2 rounded-md transition-colors hover:bg-black/[0.04]"
                 style={{ border: '1px solid var(--rule)' }}
                 aria-haspopup="listbox"
-                aria-expanded={brandMenuOpen}
-                aria-label="Switch site or brand"
+                aria-expanded={wsMenuOpen}
+                aria-label="Switch workspace"
               >
                 <span
                   className="w-7 h-7 rounded-md flex items-center justify-center flex-shrink-0"
                   style={{ background: 'var(--ink)', color: 'var(--paper)' }}
                 >
-                  {selectedSite?.kind === 'brand' && !selectedSite?.hostname
-                    ? <Fingerprint size={13} strokeWidth={1.75} />
-                    : <SiteFavicon hostname={selectedSite?.hostname || selectedSite?.label || ''} size={13} />}
+                  {currentWorkspace?.primary_domain
+                    ? <SiteFavicon hostname={currentWorkspace.primary_domain} size={13} />
+                    : <FolderOpen size={13} strokeWidth={1.75} />}
                 </span>
                 <span className="flex-1 min-w-0 text-left">
                   <span className="block text-[13px] font-medium truncate leading-tight" style={{ color: 'var(--ink)' }}>
-                    {selectedSite?.label || 'No site yet'}
+                    {workspaceLabel || 'Select workspace'}
                   </span>
                   <span className="block text-[10.5px] truncate leading-tight mt-0.5" style={{ color: 'var(--m-muted)' }}>
-                    {selectedSite?.sub || 'Run your first audit'}
+                    {currentWorkspace?.primary_domain || currentWorkspace?.workspace_type || 'Choose a workspace'}
                   </span>
                 </span>
                 <ChevronDown size={14} style={{ color: 'var(--m-muted)' }} />
               </button>
 
-              {brandMenuOpen && (
+              {wsMenuOpen && (
                 <div
                   className="absolute left-0 right-0 mt-1 rounded-lg shadow-lg overflow-hidden z-50"
                   style={{ background: 'var(--card)', border: '1px solid var(--rule)' }}
                   role="listbox"
                 >
                   <div className="max-h-[280px] overflow-y-auto py-1">
-                    {sites.length === 0 && (
+                    {workspaces.length === 0 && (
                       <p className="px-3 py-2.5 text-[12px]" style={{ color: 'var(--m-muted)' }}>
-                        No sites or brands yet. Run your first audit.
+                        No workspaces yet. Create one to get started.
                       </p>
                     )}
-                    {sites.map((s) => {
-                      const selected = s.id === selectedSiteId;
+                    {workspaces.map((ws) => {
+                      const selected = ws.slug === workspaceSlug;
                       return (
                         <button
-                          key={s.id}
+                          key={ws.id}
                           role="option"
                           aria-selected={selected}
                           onClick={() => {
-                            if (s.id === selectedSiteId) {
-                              // Already selected — just close the menu
-                              setBrandMenuOpen(false);
-                              return;
+                            setWsMenuOpen(false);
+                            if (!selected) {
+                              // Navigate to the same page type in the new workspace
+                              const currentPage = pathname?.replace(`/dashboard/${workspaceSlug}`, '') || '/overview';
+                              router.push(`/dashboard/${ws.slug}${currentPage}`);
                             }
-                            // Persist to localStorage SYNCHRONOUSLY so
-                            // every consumer (AuditBundleContext, page
-                            // hooks) picks up the new selection via the
-                            // CustomEvent that writeSelection dispatches.
-                            const sel = selectionFromSidebarId(s.id);
-                            writeSelection(sel);
-                            // Update sidebar local state through the
-                            // internal path so the dropdown highlight
-                            // updates immediately.
-                            selectSiteInternal(s.id);
-                            setBrandMenuOpen(false);
-                            // Stay on the current page — the shared
-                            // AuditBundleContext reacts to the selection
-                            // change and refetches the bundle, so every
-                            // page that consumes useAuditBundle() will
-                            // update automatically. No navigation needed.
                           }}
                           className="w-full flex items-center gap-2 px-3 py-2 text-left transition-colors hover:bg-black/[0.04]"
                         >
@@ -690,14 +353,19 @@ const DashboardShell: React.FC<DashboardShellProps> = ({ children }) => {
                             className="w-6 h-6 rounded-md flex items-center justify-center flex-shrink-0"
                             style={{ background: 'var(--paper-2)', border: '1px solid var(--rule)', color: 'var(--m-muted)' }}
                           >
-                            {s.kind === 'brand' && !s.hostname
-                              ? <Fingerprint size={12} strokeWidth={1.75} />
-                              : <SiteFavicon hostname={s.hostname || s.label} size={12} />}
+                            {ws.primary_domain
+                              ? <SiteFavicon hostname={ws.primary_domain} size={12} />
+                              : <FolderOpen size={12} strokeWidth={1.75} />}
                           </span>
                           <span className="flex-1 min-w-0">
                             <span className="block text-[13px] font-medium truncate leading-tight" style={{ color: 'var(--ink)' }}>
-                              {s.label}
+                              {ws.name}
                             </span>
+                            {ws.primary_domain && (
+                              <span className="block text-[10px] truncate leading-tight mt-0.5" style={{ color: 'var(--m-muted)' }}>
+                                {ws.primary_domain}
+                              </span>
+                            )}
                           </span>
                           {selected && <Check size={13} style={{ color: 'var(--ink)' }} />}
                         </button>
@@ -706,13 +374,13 @@ const DashboardShell: React.FC<DashboardShellProps> = ({ children }) => {
                   </div>
                   <div style={{ borderTop: '1px solid var(--rule)' }}>
                     <Link
-                      href="/dashboard/new-audit"
-                      onClick={() => { setBrandMenuOpen(false); setSidebarOpen(false); }}
+                      href="/dashboard"
+                      onClick={() => { setWsMenuOpen(false); setSidebarOpen(false); }}
                       className="flex items-center gap-1.5 px-3 py-2 text-[12px] font-medium transition-colors hover:bg-black/[0.04]"
                       style={{ color: 'var(--m-muted)' }}
                     >
                       <Plus size={12} />
-                      Add site or brand
+                      All workspaces
                     </Link>
                   </div>
                 </div>
@@ -721,43 +389,43 @@ const DashboardShell: React.FC<DashboardShellProps> = ({ children }) => {
           </div>
         )}
 
-        {/* Collapsed: tiny selector icon → expand to choose */}
+        {/* Collapsed: tiny workspace icon → expand to choose */}
         {collapsed && (
           <div className="px-2 pt-2 pb-1">
             <button
               onClick={() => setCollapsed(false)}
               className="w-full flex items-center justify-center py-2.5 rounded-lg hover:bg-black/[0.04] transition-colors"
-              title={selectedSite ? `${selectedSite.label}` : 'Switch site / brand'}
-              aria-label="Switch site or brand"
+              title={workspaceLabel || 'Switch workspace'}
+              aria-label="Switch workspace"
               style={{ color: 'var(--ink)', border: '1px solid var(--rule)' }}
             >
-              {selectedSite?.kind === 'brand'
-                ? <Fingerprint size={17} strokeWidth={1.75} />
-                : <SiteFavicon hostname={selectedSite?.label || ''} size={17} />}
+              {currentWorkspace?.primary_domain
+                ? <SiteFavicon hostname={currentWorkspace.primary_domain} size={17} />
+                : <FolderOpen size={17} strokeWidth={1.75} />}
             </button>
           </div>
         )}
 
-        {/* Add new site/brand — only when sites have loaded and nothing is selected */}
-        {sitesLoaded && !selectedSite && (
+        {/* "Create workspace" CTA when no workspace is selected */}
+        {!workspaceSlug && (
           <div className={clsx('pb-2', collapsed ? 'px-2' : 'px-3')}>
             <Link
-              href="/dashboard/new-audit"
+              href="/dashboard"
               onClick={() => setSidebarOpen(false)}
               className={clsx(
                 'flex items-center justify-center w-full rounded-md transition-all hover:opacity-90',
                 collapsed ? 'px-0 py-2' : 'gap-1.5 px-3 py-[7px] text-[13px] font-medium',
               )}
               style={{ background: 'var(--ink)', color: 'var(--paper)' }}
-              title={collapsed ? 'Add new site or brand' : undefined}
+              title={collapsed ? 'Create workspace' : undefined}
             >
               <PlusCircle size={collapsed ? 16 : 14} strokeWidth={1.75} />
-              {!collapsed && 'Add new site or brand'}
+              {!collapsed && 'Create workspace'}
             </Link>
           </div>
         )}
 
-        {/* Navigation — Brand workspace nav */}
+        {/* Navigation */}
         <nav aria-label="Dashboard navigation" className={clsx('flex-1 overflow-y-auto pb-2', collapsed ? 'px-1.5' : 'px-2')}>
           {navGroups.map((group, gi) => (
             <div key={`g-${gi}`} className={clsx(gi > 0 && 'mt-3')}>
@@ -916,8 +584,7 @@ const DashboardShell: React.FC<DashboardShellProps> = ({ children }) => {
 
       {/* Main Content */}
       <div className="flex-1 flex flex-col overflow-hidden">
-        {/* Top bar — visible on every dashboard page. Hosts mobile menu trigger
-            and the always-visible notifications bell. */}
+        {/* Top bar */}
         <div
           className="h-12 flex items-center justify-between px-3 md:px-5 gap-3"
           style={{ background: 'var(--card)', borderBottom: '1px solid var(--rule)' }}
@@ -934,11 +601,11 @@ const DashboardShell: React.FC<DashboardShellProps> = ({ children }) => {
             <span className="md:hidden flex items-center">
               <Logo height={38} />
             </span>
-            {selectedSite && (
+            {workspaceLabel && (
               <div className="hidden md:flex items-center gap-1.5 min-w-0">
                 <span className="text-[12px]" style={{ color: 'var(--m-muted)' }}>Viewing</span>
                 <span className="text-[13px] font-semibold truncate" style={{ color: 'var(--ink)' }}>
-                  {selectedSite.label}
+                  {workspaceLabel}
                 </span>
                 {onAuditDetail && (() => {
                   const featureLabel = !currentHash || currentHash === 'overview' ? 'Overview'
@@ -988,11 +655,9 @@ const DashboardShell: React.FC<DashboardShellProps> = ({ children }) => {
           </div>
         </div>
 
-        {/* Content area */}
+        {/* Content area — AuditBundleProvider is in [slug]/layout.tsx */}
         <main id="main-content" className="flex-1 overflow-auto">
-          <AuditBundleProvider>
-            <div className="p-5 sm:p-6 lg:p-8">{children}</div>
-          </AuditBundleProvider>
+          <div className="p-5 sm:p-6 lg:p-8">{children}</div>
         </main>
       </div>
     </div>

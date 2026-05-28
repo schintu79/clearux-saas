@@ -69,14 +69,13 @@ import {
   isInProgressAuditStatus,
   type LatestAuditBundle,
 } from '@/lib/dashboard/latest-audit';
-import { useBrandSelection } from '@/lib/dashboard/useBrandSelection';
+import { useWorkspace } from '@/context/WorkspaceContext';
 import { useAuditProgress } from '@/hooks/useAuditProgress';
-import { writeSelection } from '@/lib/dashboard/brand-selection';
 import EmptyAudit from '@/components/dashboard/v2/EmptyAudit';
 import WebsiteSpeedCard from '@/components/dashboard/v2/WebsiteSpeedCard';
 import BrandIntelligenceCard from '@/components/dashboard/v2/BrandIntelligenceCard';
 import type { BrandIntelligenceSummary } from '@/lib/audit-engine/brand-intelligence';
-import type { Audit, Report, AuditFinding, SpeedDataSummary } from '@/types/database';
+import type { Audit, Report, AuditFinding, SpeedDataSummary, Workspace } from '@/types/database';
 import SiteFavicon from '@/components/ui/SiteFavicon';
 import OverviewTabs from '@/components/dashboard/OverviewTabs';
 
@@ -147,7 +146,7 @@ type AuditPage = {
 
 function OverviewInner() {
   const { user, loading: authLoading } = useAuth();
-  const { selection, ready } = useBrandSelection();
+  const { workspace, loading: wsLoading } = useWorkspace();
   const searchParams = useSearchParams();
   const router = useRouter();
 
@@ -179,11 +178,11 @@ function OverviewInner() {
   // refresh the page.
   const mountInvalidatedRef = useRef(false);
   useEffect(() => {
-    if (!user || !ready) return;
+    if (!user || wsLoading) return;
     if (mountInvalidatedRef.current) return;
     mountInvalidatedRef.current = true;
     invalidate();
-  }, [user, ready, invalidate]);
+  }, [user, wsLoading, invalidate]);
 
   useEffect(() => {
     if (!menuOpen) return;
@@ -228,25 +227,14 @@ function OverviewInner() {
     if (paramsHandledRef.current) return;
     paramsHandledRef.current = true;
 
-    if (siteParam) {
-      writeSelection({ kind: 'site', host: siteParam });
-    } else if (brandParam) {
-      writeSelection({ kind: 'brand', brandId: brandParam });
-    }
-    window.history.replaceState({}, '', '/dashboard/overview');
-    // The main load effect in AuditBundleContext fires automatically
-    // when the selection changes (writeSelection dispatches CustomEvent
-    // → useBrandSelection updates → effect re-runs). For re-audits of
-    // the same brand (where selection reference doesn't change), the
-    // mount invalidation at line 180-186 handles the refetch.
-    // NOTE: We intentionally do NOT call invalidate() here. The
-    // previous setTimeout(invalidate, 50) was a race condition that
-    // could orphan fetchIdRef and cause stale data or infinite loading.
+    // Workspace context is URL-driven — no selection persistence needed.
+    // Clear URL params to avoid re-processing on next render.
+    window.history.replaceState({}, '', window.location.pathname);
   }, [searchParams]);
 
-  // Reset ALL derived data when selection changes so no stale data
+  // Reset ALL derived data when workspace changes so no stale data
   // from the previous site is ever visible. The bundle itself is managed
-  // by AuditBundleContext (which now clears to null on selection change).
+  // by AuditBundleContext (which now clears to null on workspace change).
   useEffect(() => {
     setScoreTrend([]);
     setCompetitors([]);
@@ -258,7 +246,7 @@ function OverviewInner() {
     setBrandName(null);
     setShareUrl(null);
     setShareEnabled(false);
-  }, [selection]);
+  }, [workspace]);
 
   /* ── In-progress audit tracking ──
    *
@@ -271,7 +259,7 @@ function OverviewInner() {
   const { data: reauditProgress } = useAuditProgress(inProgressAuditId, { enabled: !!inProgressAuditId });
 
   useEffect(() => {
-    if (!user || selection?.kind !== 'brand') {
+    if (!user || !workspace?.active_brand_identity_id) {
       setBrandName(null);
       return;
     }
@@ -281,55 +269,15 @@ function OverviewInner() {
         const { data } = await supabase
           .from('brand_identities')
           .select('name')
-          .eq('id', selection.brandId)
+          .eq('id', workspace.active_brand_identity_id!)
           .is('deleted_at', null)
           .maybeSingle();
         setBrandName((data as any)?.name || null);
       } catch {}
     })();
-  }, [user, selection]);
+  }, [user, workspace]);
 
-  // Defensive sync (PR #17): if the loaded bundle's audit identity does
-  // NOT match the current selection (e.g. selection was null on a direct
-  // visit and the loader returned the globally-most-recent audit), write
-  // the resolved audit's identity back to the selection store so the
-  // sidebar selector + topbar "Viewing X" agree with what the body is
-  // showing.
-  //
-  // CRITICAL: this only fires when the selection is null/missing. We
-  // must NEVER overwrite a real brand selection with a derived site
-  // selection — that was the brand-selection loop bug. When the user
-  // picked a brand and the loader returned a website-type audit that
-  // belongs to that brand (joined via brand_identity_id), the previous
-  // implementation flipped the selection from {brand:B} to {site:H},
-  // which then made the sidebar visibly switch to the site even though
-  // the user had just picked the brand. Guard against that by only
-  // syncing when the selection is null.
-  // Track whether we've already written a defensive sync for this
-  // null-selection episode. Without this guard, every bundle update
-  // (e.g. from polling) re-fires writeSelection, creating a cascade:
-  // writeSelection → subscription → selectedSiteId → placeholder
-  // effect → loadSites → stale selection cleared → null again → loop.
-  const defensiveSyncDone = useRef(false);
-  useEffect(() => {
-    if (selection) { defensiveSyncDone.current = false; return; }
-    if (defensiveSyncDone.current) return;
-    const resolved = bundle?.audit;
-    if (!resolved) return;
-    let resolvedSel: { kind: 'brand'; brandId: string } | { kind: 'site'; host: string } | null = null;
-    if ((resolved as any).brand_identity_id) {
-      resolvedSel = { kind: 'brand', brandId: (resolved as any).brand_identity_id };
-    } else if (resolved.product_url) {
-      try {
-        const host = new URL(resolved.product_url).hostname.replace(/^www\./, '');
-        if (host) resolvedSel = { kind: 'site', host };
-      } catch {}
-    }
-    if (resolvedSel) {
-      defensiveSyncDone.current = true;
-      writeSelection(resolvedSel);
-    }
-  }, [bundle, selection]);
+  // No defensive sync needed — workspace identity is URL-driven.
 
   const latestCompleted = bundle?.audit && bundle.report ? bundle.audit : null;
   useEffect(() => {
@@ -483,12 +431,12 @@ function OverviewInner() {
 
   /* ── Loading skeleton ─────────────────────────────────── */
   // Show skeleton only during the very first load (no bundle yet) or
-  // before auth/selection have hydrated. Once a bundle has been loaded
+  // before auth/workspace have hydrated. Once a bundle has been loaded
   // at least once (even if a background refetch is in progress), skip
   // the skeleton so the user sees real content. This prevents a stall
   // where invalidate() bumps the fetch counter, causing the primary
   // load's .finally() to never set loading=false.
-  if (authLoading || !ready || (bundleLoading && !bundle)) {
+  if (authLoading || wsLoading || (bundleLoading && !bundle)) {
     return (
       <div className="w-full">
         <OverviewTabs />
@@ -523,7 +471,7 @@ function OverviewInner() {
       <InProgressOverview
         audit={bundle.inProgressAudit}
         brandName={brandName}
-        selection={selection}
+        workspace={workspace}
       />
     );
   }
@@ -540,7 +488,7 @@ function OverviewInner() {
       <FailedAuditOverview
         audit={bundle.failedAudit}
         brandName={brandName}
-        selection={selection}
+        workspace={workspace}
       />
     );
   }
@@ -556,13 +504,13 @@ function OverviewInner() {
             Overview
           </h1>
           <p className="text-[13px] mt-1" style={{ color: 'var(--m-muted)' }}>
-            {selection
+            {workspace
               ? 'No audit for this brand yet. Run one to see your Website Health Score and what to fix next.'
               : 'Pick a brand or run your first audit to see your Website Health Score.'}
           </p>
         </div>
         <EmptyAudit
-          title={selection ? 'No audit for this brand yet' : 'Run your first audit'}
+          title={workspace ? 'No audit for this brand yet' : 'Run your first audit'}
           body="Enter a website URL and we will show you your Website Health Score, the top issues hurting it, and a clear next action."
         />
       </div>
@@ -578,10 +526,10 @@ function OverviewInner() {
   let domain: string | null = null;
   try { domain = new URL(audit.product_url || '').hostname.replace(/^www\./, ''); } catch {}
 
-  const displayTitle = selection?.kind === 'brand' && brandName
+  const displayTitle = !workspace?.primary_domain && brandName
     ? brandName
     : (domain || 'Latest audit');
-  const isBrand = selection?.kind === 'brand';
+  const isBrand = !workspace?.primary_domain;
   const productUrl = audit.product_url || (domain ? `https://${domain}` : '');
 
   const openFindings = findings.filter((f) => f.status !== 'fixed' && !f.dismissed && (f as any).verification_status !== 'verified_fixed');
@@ -725,7 +673,7 @@ function OverviewInner() {
             <h1 className="text-2xl font-medium font-sans text-text truncate" style={{ color: 'var(--ink)' }}>
               {displayTitle}
             </h1>
-            {productUrl && selection?.kind !== 'brand' && (
+            {productUrl && workspace?.primary_domain && (
               <a
                 href={productUrl}
                 target="_blank"
@@ -1998,18 +1946,18 @@ interface PartialAuditData {
 function InProgressOverview({
   audit,
   brandName,
-  selection,
+  workspace,
 }: {
   audit: Audit;
   brandName: string | null;
-  selection: ReturnType<typeof useBrandSelection>['selection'];
+  workspace: Workspace | null;
 }) {
   let domain: string | null = null;
   try { domain = new URL(audit.product_url || '').hostname.replace(/^www\./, ''); } catch {}
-  const displayTitle = selection?.kind === 'brand' && brandName
+  const displayTitle = !workspace?.primary_domain && brandName
     ? brandName
     : (domain || 'Your website');
-  const isBrand = selection?.kind === 'brand';
+  const isBrand = !workspace?.primary_domain;
   const meta = statusMeta[audit.status] || statusMeta.payment_received;
   const StatusIcon = meta.icon;
 
@@ -2400,18 +2348,18 @@ function SkeletonCard({
 function FailedAuditOverview({
   audit,
   brandName,
-  selection,
+  workspace,
 }: {
   audit: Audit;
   brandName: string | null;
-  selection: ReturnType<typeof useBrandSelection>['selection'];
+  workspace: Workspace | null;
 }) {
   let domain: string | null = null;
   try { domain = new URL(audit.product_url || '').hostname.replace(/^www\./, ''); } catch {}
-  const displayTitle = selection?.kind === 'brand' && brandName
+  const displayTitle = !workspace?.primary_domain && brandName
     ? brandName
     : (domain || 'Your website');
-  const isBrand = selection?.kind === 'brand';
+  const isBrand = !workspace?.primary_domain;
   const productUrl = audit.product_url || (domain ? `https://${domain}` : '');
   const retryHref = productUrl
     ? `/dashboard/new-audit?url=${encodeURIComponent(productUrl)}`

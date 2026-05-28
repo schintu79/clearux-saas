@@ -41,7 +41,7 @@ import {
   PHASE1_MODULES,
 } from '@/lib/dashboard/latest-audit';
 import { useAuditBundle } from '@/context/AuditBundleContext';
-import { useBrandSelection } from '@/lib/dashboard/useBrandSelection';
+import { useWorkspace } from '@/context/WorkspaceContext';
 import EmptyAudit from '@/components/dashboard/v2/EmptyAudit';
 import PriorityRecommendations, { derivePriorityRecs } from '@/components/dashboard/v2/PriorityRecommendations';
 import PageHeader from '@/components/dashboard/v2/PageHeader';
@@ -103,10 +103,10 @@ function FilterDropdown({
 
 function FindPageInner() {
   const { loading: authLoading } = useAuth();
-  const { selection, ready } = useBrandSelection();
+  const { workspace, loading: wsLoading } = useWorkspace();
   const { bundle, loading: bundleLoading } = useAuditBundle();
   const searchParams = useSearchParams();
-  const loading = authLoading || !ready || bundleLoading || !bundle;
+  const loading = authLoading || wsLoading || bundleLoading || !bundle;
   const [collapsed, setCollapsed] = useState<Record<number, boolean>>({});
   const [expanded, setExpanded] = useState<Record<string, boolean>>({});
   const [activeTab, setActiveTab] = useState<'priority' | 'strategic'>('priority');
@@ -272,7 +272,7 @@ function FindPageInner() {
         <PageHeader
           icon={<SearchIcon size={18} style={{ color: 'var(--ink)' }} />}
           title="Find"
-          subtitle={selection ? 'No audit for this brand yet.' : 'Run an audit to see what needs fixing.'}
+          subtitle={workspace ? 'No audit for this brand yet.' : 'Run an audit to see what needs fixing.'}
         />
         <EmptyAudit
           title="No findings yet"

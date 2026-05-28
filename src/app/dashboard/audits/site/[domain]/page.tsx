@@ -22,7 +22,6 @@ import { useAuth } from '@/context/AuthContext';
 import { createBrowserSupabase } from '@/lib/supabase-ssr';
 import { AuditDashboardOverview } from '@/components/dashboard/AuditDashboard';
 import type { Audit, Report, AuditFinding } from '@/types/database';
-import { writeSelection } from '@/lib/dashboard/brand-selection';
 
 /* ── Helpers ───────────────────────────────────────────────── */
 
@@ -161,7 +160,7 @@ function DomainAuditsInner({ params }: { params: Promise<{ domain: string }> }) 
   // page body is showing a different site, which was the divergence
   // reported in the bug.
   useEffect(() => {
-    if (domain) writeSelection({ kind: 'site', host: domain });
+    // Workspace context is URL-driven, no selection sync needed
   }, [domain]);
 
   // Poll for in-progress audits

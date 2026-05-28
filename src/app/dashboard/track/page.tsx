@@ -20,7 +20,7 @@ import {
   AlertTriangle,
   ExternalLink,
 } from 'lucide-react';
-import { useBrandSelection } from '@/lib/dashboard/useBrandSelection';
+import { useWorkspace } from '@/context/WorkspaceContext';
 import { computeAuditDiff } from '@/lib/audit-engine/audit-diff';
 import { createBrowserSupabase } from '@/lib/supabase-ssr';
 import EmptyAudit from '@/components/dashboard/v2/EmptyAudit';
@@ -62,9 +62,9 @@ function ScoreLine({ points }: { points: Array<{ score: number; date: string }> 
 
 export default function TrackPage() {
   const { user, loading: authLoading } = useAuth();
-  const { selection, ready } = useBrandSelection();
+  const { workspace, loading: wsLoading } = useWorkspace();
   const { bundle, loading: bundleLoading } = useAuditBundle();
-  const loading = authLoading || !ready || bundleLoading || !bundle;
+  const loading = authLoading || wsLoading || bundleLoading || !bundle;
   const [priorFindings, setPriorFindings] = useState<import('@/types/database').AuditFinding[]>([]);
 
   // Fetch prior audit findings for diff validation
@@ -91,13 +91,13 @@ export default function TrackPage() {
   // same-domain matching.
   const scopedHistory = useMemo(() => {
     if (!bundle?.audit) return [];
-    if (selection) return [...bundle.history].reverse();
+    if (workspace) return [...bundle.history].reverse();
     const host = hostOf(bundle.audit.product_url);
     if (!host) return [];
     return bundle.history
       .filter((h) => hostOf(h.audit.product_url) === host)
       .reverse();
-  }, [bundle, selection]);
+  }, [bundle, workspace]);
 
   // All hooks must be above early returns to avoid #310 ("Rendered more hooks than during the previous render")
   const report = bundle?.report ?? null;
@@ -131,7 +131,7 @@ export default function TrackPage() {
     return (
       <div>
         <OverviewBreadcrumb current="Track" />
-        <PageHeader icon={<TrendingUp size={18} strokeWidth={1.75} style={{ color: 'var(--ink)' }} />} title="Track" subtitle={selection ? 'No audit for this brand yet.' : 'Run your first audit to start tracking progress.'} />
+        <PageHeader icon={<TrendingUp size={18} strokeWidth={1.75} style={{ color: 'var(--ink)' }} />} title="Track" subtitle={workspace ? 'No audit for this brand yet.' : 'Run your first audit to start tracking progress.'} />
         <EmptyAudit
           title="No audits to track yet"
           body="Run your first audit to set a baseline. Re-audit after fixing issues to see what improved and confirm fixes landed."

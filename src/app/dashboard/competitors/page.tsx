@@ -35,7 +35,7 @@ import {
 import Link from 'next/link';
 import { useAuth } from '@/context/AuthContext';
 import { useAuditBundle } from '@/context/AuditBundleContext';
-import { useBrandSelection } from '@/lib/dashboard/useBrandSelection';
+import { useWorkspace } from '@/context/WorkspaceContext';
 import ScoreCircle, { getScoreColor } from '@/components/ui/ScoreCircle';
 import SiteFavicon from '@/components/ui/SiteFavicon';
 import EmptyAudit from '@/components/dashboard/v2/EmptyAudit';
@@ -536,12 +536,12 @@ function BrandTrendSparkline({ data, color }: { data: Array<{ date: Date; value:
 
 export default function CompetitorsPage() {
   const { user, loading: authLoading } = useAuth();
-  const { selection, ready } = useBrandSelection();
+  const { workspace, loading: wsLoading } = useWorkspace();
   const { bundle, loading: bundleLoading } = useAuditBundle();
   // Show loading during initial load, bundle fetch, or site transition.
   // When bundle is null (site switch in progress), always show loading
   // to prevent any stale data flash from the previous site.
-  const loading = authLoading || !ready || bundleLoading || !bundle;
+  const loading = authLoading || wsLoading || bundleLoading || !bundle;
 
   // Clear all local state when selection changes so no stale data from
   // a previous site is visible (AuditBundleContext now clears bundle to
@@ -554,7 +554,7 @@ export default function CompetitorsPage() {
     setTrendSnapshots([]);
     setDrafts([]);
     setServerSnapshot([]);
-  }, [selection]);
+  }, [workspace]);
 
   // Intelligence data
   const [biSummary, setBiSummary] = useState<BrandIntelligenceSummary | null>(null);

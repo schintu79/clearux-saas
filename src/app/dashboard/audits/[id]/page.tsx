@@ -86,7 +86,6 @@ import { type CockpitSeverity, type ModuleScore } from '@/components/dashboard/A
 import { groupFindingsForDisplay, type GroupedFinding } from '@/lib/audit-findings-presentation';
 import clsx from 'clsx';
 import { matchFindingToCategory } from '@/lib/audit-engine/pipeline/category-keywords';
-import { readSelection, writeSelection } from '@/lib/dashboard/brand-selection';
 import { WcagOverview } from '@/components/dashboard/v2/WcagChecklist';
 import { ACCURACY_TOOLTIP, AccuracyTooltip } from '@/components/dashboard/AIXRayComparison';
 import { useAuditProgress, type AuditProgressData } from '@/hooks/useAuditProgress';
@@ -1519,20 +1518,7 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
         // captured under a brand workspace doesn't overwrite the brand
         // selection with a site selection. Skip writes when the
         // persisted selection already matches the resolved identity.
-        try {
-          const current = readSelection();
-          if ((auditData as any).brand_identity_id) {
-            const brandId = (auditData as any).brand_identity_id as string;
-            if (!(current?.kind === 'brand' && current.brandId === brandId)) {
-              writeSelection({ kind: 'brand', brandId });
-            }
-          } else if (auditData.product_url) {
-            const host = new URL(auditData.product_url).hostname.replace(/^www\./, '');
-            if (host && !(current?.kind === 'site' && current.host === host)) {
-              writeSelection({ kind: 'site', host });
-            }
-          }
-        } catch {}
+        // Workspace context is URL-driven, no selection sync needed
 
         if (auditData.status === 'completed') {
           const [findingsRes, pagesRes] = await Promise.all([

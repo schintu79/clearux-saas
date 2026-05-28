@@ -28,7 +28,7 @@ import DashCard from '@/components/dashboard/v2/DashCard';
 import SectionHeader from '@/components/dashboard/v2/SectionHeader';
 import { formatDate } from '@/components/dashboard/v2/score-utils';
 import { useAuth } from '@/context/AuthContext';
-import { useBrandSelection } from '@/lib/dashboard/useBrandSelection';
+import { useWorkspace } from '@/context/WorkspaceContext';
 import OverviewBreadcrumb from '@/components/dashboard/OverviewBreadcrumb';
 
 interface SavedConnection {
@@ -66,7 +66,7 @@ const DEFAULT_FORM: FormState = {
 
 export default function ConnectPage() {
   const { user } = useAuth();
-  const { selection } = useBrandSelection();
+  const { workspace } = useWorkspace();
 
   const [connections, setConnections] = useState<SavedConnection[]>([]);
   const [loading, setLoading] = useState(true);
@@ -81,7 +81,7 @@ export default function ConnectPage() {
 
   const fetchConnections = useCallback(async () => {
     try {
-      const siteHost = selection?.kind === 'site' ? selection.host : null;
+      const siteHost = workspace?.primary_domain || null;
       const url = siteHost ? `/api/ftp?siteHost=${encodeURIComponent(siteHost)}` : '/api/ftp';
       const res = await fetch(url);
       const data = await res.json();
@@ -104,7 +104,7 @@ export default function ConnectPage() {
     } finally {
       setLoading(false);
     }
-  }, [selection]);
+  }, [workspace]);
 
   useEffect(() => {
     if (user) fetchConnections();
@@ -157,7 +157,7 @@ export default function ConnectPage() {
   const handleSave = async () => {
     setSaving(true);
     try {
-      const siteHost = selection?.kind === 'site' ? selection.host : null;
+      const siteHost = workspace?.primary_domain || null;
       const payload: any = {
         action: editingId ? 'update' : 'save',
         label: form.label,
@@ -278,7 +278,7 @@ export default function ConnectPage() {
       )}
 
       {/* Brand required notice */}
-      {selection?.kind !== 'site' && (
+      {!workspace?.primary_domain && (
         <div className="mb-5 rounded-xl border border-border bg-off/60 p-4 flex items-start gap-2.5">
           <AlertCircle size={15} className="text-muted flex-shrink-0 mt-0.5" />
           <div className="text-xs text-text">
@@ -457,10 +457,10 @@ export default function ConnectPage() {
                   !form.username ||
                   (!form.password && !editingId) ||
                   (provisioning ? !provisioning.provisioned || !provisioning.configured : false) ||
-                  selection?.kind !== 'site'
+                  !workspace?.primary_domain
                 }
                 title={
-                  selection?.kind !== 'site'
+                  !workspace?.primary_domain
                     ? 'Select a website from the sidebar before saving'
                     : provisioning && (!provisioning.provisioned || !provisioning.configured)
                       ? 'Provisioning required — see banner above'

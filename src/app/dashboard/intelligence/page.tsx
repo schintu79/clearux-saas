@@ -51,7 +51,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { useAuditBundle } from '@/context/AuditBundleContext';
-import { useBrandSelection } from '@/lib/dashboard/useBrandSelection';
+import { useWorkspace } from '@/context/WorkspaceContext';
 import ScoreCircle from '@/components/ui/ScoreCircle';
 import EmptyAudit from '@/components/dashboard/v2/EmptyAudit';
 import PageHeader from '@/components/dashboard/v2/PageHeader';
@@ -157,9 +157,9 @@ function placementDisplay(p: number | null): { label: string; color: string } {
 
 export default function IntelligencePage() {
   const { user, loading: authLoading } = useAuth();
-  const { selection, ready } = useBrandSelection();
+  const { workspace, loading: wsLoading } = useWorkspace();
   const { bundle, loading: bundleLoading } = useAuditBundle();
-  const loading = authLoading || !ready || bundleLoading || !bundle;
+  const loading = authLoading || wsLoading || bundleLoading || !bundle;
 
   // Brand Intelligence data
   const [biSummary, setBiSummary] = useState<BrandIntelligenceSummary | null>(null);
@@ -398,7 +398,7 @@ export default function IntelligencePage() {
         <PageHeader
           icon={<Radio size={18} strokeWidth={1.75} style={{ color: 'var(--ink)' }} />}
           title="Brand Intelligence"
-          subtitle={selection ? 'No audit for this brand yet.' : 'Pick a brand or run an audit to unlock brand intelligence.'}
+          subtitle={workspace ? 'No audit for this brand yet.' : 'Pick a brand or run an audit to unlock brand intelligence.'}
         />
         <EmptyAudit
           title="No intelligence yet"

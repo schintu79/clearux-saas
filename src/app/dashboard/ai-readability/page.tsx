@@ -33,7 +33,7 @@ import { useAuditBundle } from '@/context/AuditBundleContext';
 import { createBrowserSupabase } from '@/lib/supabase-ssr';
 import { AIProviderIcon, providerKeyToIcon } from '@/components/ui/AIProviderIcon';
 import type { LatestAuditBundle } from '@/lib/dashboard/latest-audit';
-import { useBrandSelection } from '@/lib/dashboard/useBrandSelection';
+import { useWorkspace } from '@/context/WorkspaceContext';
 import EmptyAudit from '@/components/dashboard/v2/EmptyAudit';
 import PageHeader from '@/components/dashboard/v2/PageHeader';
 import OverviewBreadcrumb from '@/components/dashboard/OverviewBreadcrumb';
@@ -85,11 +85,11 @@ function scoreColor(s: number | null): string {
 
 export default function AIReadabilityPage() {
   const { user, loading: authLoading } = useAuth();
-  const { selection, ready } = useBrandSelection();
+  const { workspace, loading: wsLoading } = useWorkspace();
   const { bundle, loading: bundleLoading } = useAuditBundle();
   const [pages, setPages] = useState<AuditPageRow[]>([]);
   const [probes, setProbes] = useState<ModelProbe[]>([]);
-  const loading = authLoading || !ready || bundleLoading || !bundle;
+  const loading = authLoading || wsLoading || bundleLoading || !bundle;
 
   const refreshProbes = React.useCallback(async (auditId: string) => {
     try {
@@ -139,7 +139,7 @@ export default function AIReadabilityPage() {
           icon={<Brain size={18} strokeWidth={1.75} style={{ color: 'var(--ink)' }} />}
           title="AI Readability"
           subtitle={
-            selection
+            workspace
               ? 'No audit for this brand yet. Run one to see how AI assistants read this brand.'
               : 'Pick a brand or run an audit to see how AI reads it.'
           }
