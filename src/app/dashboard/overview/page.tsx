@@ -2085,7 +2085,7 @@ function InProgressOverview({
               <div
                 className="h-full rounded-full transition-all duration-700 ease-out"
                 style={{
-                  width: `${progress.progress || Math.round((stagesCompleted / totalStages) * 100)}%`,
+                  width: `${progress.progress > 0 ? progress.progress : Math.round((stagesCompleted / totalStages) * 100)}%`,
                   background: 'var(--signal)',
                 }}
               />

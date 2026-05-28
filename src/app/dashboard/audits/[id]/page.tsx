@@ -334,8 +334,8 @@ function AuditProgressLoader({
   }, [lastProgressChange])
 
   const stageFallback: Record<string, number> = {
-    payment_received: 5,
-    crawling: 25,
+    payment_received: 0,
+    crawling: 5,
     analysing: 50,
     generating_report: 85,
     completed: 100,

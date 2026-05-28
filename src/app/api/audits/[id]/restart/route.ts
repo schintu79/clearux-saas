@@ -59,6 +59,7 @@ export async function POST(
       .from('audits')
       .update({
         status: 'payment_received',
+        audit_stage: null,
         crawl_error: null,
         pages_crawled: 0,
         progress_percent: 0,

@@ -47,6 +47,7 @@ import { calculatePageReadability } from '@/lib/audit-engine/page-ai-readability
 import { runCitationAudit } from '@/lib/audit-engine/ai-citation-audit'
 import { generateFixPlaybooks } from '@/lib/audit-engine/fix-playbooks'
 import { runMultiModelBenchmark } from '@/lib/audit-engine/pipeline/multi-model-probe'
+import { findModelBySlug } from '@/lib/ai/model-catalog'
 import { detectIndustry, getUserBenchmarkPosition } from '@/lib/audit-engine/industry-benchmark'
 import { generatePredictiveRecommendations } from '@/lib/audit-engine/predictive-recommendations'
 import { runBrandIntelligenceAnalysis } from '@/lib/audit-engine/brand-intelligence'
@@ -1387,9 +1388,19 @@ Return 2-6 findings. Be specific and evidence-based. Reference specific files/co
                 .select('model_slug, enabled')
                 .eq('user_id', auditUserId)
               if (userSettings && userSettings.length > 0) {
-                enabledModelSlugs = (userSettings as any[])
+                const rawSlugs = (userSettings as any[])
                   .filter((s: any) => s.enabled)
                   .map((s: any) => s.model_slug)
+                // Validate slugs against current catalog — stale slugs from
+                // old model catalog versions get filtered out here
+                const validSlugs = rawSlugs.filter((slug: string) => findModelBySlug(slug) != null)
+                if (validSlugs.length > 0) {
+                  enabledModelSlugs = validSlugs
+                }
+                // If ALL slugs are stale, leave undefined → uses catalog defaults
+                if (validSlugs.length < rawSlugs.length) {
+                  console.warn(`[inngest] Filtered out ${rawSlugs.length - validSlugs.length} stale model slug(s) from user settings`)
+                }
               }
             }
           } catch {
@@ -1430,14 +1441,34 @@ Return 2-6 findings. Be specific and evidence-based. Reference specific files/co
       // Rate limit risk is acceptable — providers use per-minute token budgets
       // and our calls are spread across different providers (Anthropic, OpenAI,
       // Google, Perplexity).
-      const [aiDisc, sdResult, , llmProbe, citation, multiModel] = await Promise.all([
-        aiDiscoveryPromise,
-        structuredDataPromise,
-        readabilityPromise,
-        runLlmProbeStep(),
-        runCitationStep(),
-        runMultiModelStep(),
-      ])
+      // Wrap all probes in a 90-second hard timeout to prevent indefinite blocking.
+      // If any single probe hangs (rate limit, unresponsive model), the entire
+      // Promise.all() would block. This timeout ensures forward progress.
+      const PROBE_TIMEOUT_MS = 90_000
+      const [aiDisc, sdResult, , llmProbe, citation, multiModel] = await Promise.race([
+        Promise.all([
+          aiDiscoveryPromise,
+          structuredDataPromise,
+          readabilityPromise,
+          runLlmProbeStep(),
+          runCitationStep(),
+          runMultiModelStep(),
+        ]),
+        new Promise<never>((_, reject) =>
+          setTimeout(() => reject(new Error('Parallel probes exceeded 90s timeout')), PROBE_TIMEOUT_MS),
+        ),
+      ]).catch(err => {
+        console.error(`[inngest] Parallel probes failed or timed out: ${err?.message || err}`)
+        // Return safe defaults so the pipeline can continue
+        return [
+          { summary: '', result: null },          // aiDiscovery
+          { summary: '', findingsCount: 0, typesFound: [] as string[] }, // structuredData
+          undefined,                               // readability (unused)
+          null,                                    // llmProbe
+          null,                                    // citation
+          { comparison: null, industry: null },    // multiModel
+        ] as any
+      })
 
       await setProgress(auditId, 25)
 

@@ -66,8 +66,12 @@ export async function GET(
     .single()
 
   // Build stage completion map
+  // Only mark preflight as done once the pipeline has actually advanced past it
+  const progressPct = a.progress_percent ?? 0
+  const currentStage = a.audit_stage || ''
+  const pastPreflight = progressPct > 2 || ['crawling', 'checking', 'probing', 'analysing', 'reporting', 'enriching', 'complete'].includes(currentStage)
   const stages = {
-    preflight: true, // Always done if we're past it
+    preflight: pastPreflight,
     crawling: (a.pages_crawled ?? 0) > 0,
     checking: !!(a.speed_data || a.audit_stage === 'probing' || a.audit_stage === 'analysing' || a.audit_stage === 'reporting' || a.audit_stage === 'enriching' || a.audit_stage === 'complete'),
     probing: !!(a.audit_stage === 'analysing' || a.audit_stage === 'reporting' || a.audit_stage === 'enriching' || a.audit_stage === 'complete'),
