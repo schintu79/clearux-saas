@@ -342,8 +342,11 @@ const DashboardShell: React.FC<DashboardShellProps> = ({ children }) => {
                           onClick={() => {
                             setWsMenuOpen(false);
                             if (!selected) {
-                              // Navigate to the same page type in the new workspace
-                              const currentPage = pathname?.replace(`/dashboard/${workspaceSlug}`, '') || '/overview';
+                              // When already inside a workspace, carry over the current sub-page;
+                              // otherwise (on /dashboard with no slug) go to the workspace's overview.
+                              const currentPage = workspaceSlug
+                                ? (pathname?.replace(`/dashboard/${workspaceSlug}`, '') || '/overview')
+                                : '/overview';
                               router.push(`/dashboard/${ws.slug}${currentPage}`);
                             }
                           }}
