@@ -146,9 +146,10 @@ type AuditPage = {
 
 function OverviewInner() {
   const { user, loading: authLoading } = useAuth();
-  const { workspace, loading: wsLoading } = useWorkspace();
+  const { workspace, workspaceSlug, loading: wsLoading } = useWorkspace();
   const searchParams = useSearchParams();
   const router = useRouter();
+  const dashPrefix = workspaceSlug ? `/dashboard/${workspaceSlug}` : '/dashboard';
 
   const { bundle, loading: bundleLoading, invalidate } = useAuditBundle();
   const [creditsBanner, setCreditsBanner] = useState(false);
@@ -201,7 +202,7 @@ function OverviewInner() {
   useEffect(() => {
     if (searchParams.get('credits') !== 'purchased') return;
     setCreditsBanner(true);
-    window.history.replaceState({}, '', '/dashboard/overview');
+    window.history.replaceState({}, '', `${dashPrefix}/overview`);
     const t = setTimeout(() => setCreditsBanner(false), 6000);
     fetch('/api/stripe/verify-credits', { method: 'POST' }).catch(() => {});
     return () => clearTimeout(t);
@@ -353,7 +354,7 @@ function OverviewInner() {
     // Severity tiles route into Fix (the action view) with a severity
     // prefilter. Fix is where triage status lives; Find is discovery
     // and doesn't currently support a severity prefilter via URL.
-    router.push(`/dashboard/fix?severity=${filter}`);
+    router.push(`${dashPrefix}/fix?severity=${filter}`);
   }, [latestCompleted, router]);
 
   useEffect(() => {
@@ -653,7 +654,7 @@ function OverviewInner() {
               />
             </div>
             <Link
-              href={`/dashboard/audits/${ipAudit.id}`}
+              href={`${dashPrefix}/audits/${ipAudit.id}`}
               className="inline-flex items-center gap-1 text-[11px] font-semibold px-2.5 py-1 rounded-lg border flex-shrink-0 transition-colors hover:bg-surface-alt"
               style={{ borderColor: 'var(--rule)', color: 'var(--ink)' }}
             >
@@ -716,13 +717,13 @@ function OverviewInner() {
             )}
           </button>
           <Link
-            href={productUrl ? `/dashboard/new-audit?mode=dig-deeper&url=${encodeURIComponent(productUrl)}&depth=deep` : '/dashboard/new-audit?mode=dig-deeper&depth=deep'}
+            href={productUrl ? `${dashPrefix}/new-audit?mode=dig-deeper&url=${encodeURIComponent(productUrl)}&depth=deep` : `${dashPrefix}/new-audit?mode=dig-deeper&depth=deep`}
             className="inline-flex items-center gap-1.5 bg-card border border-border text-text text-xs font-medium px-3 py-2 rounded-lg hover:bg-surface-alt transition-colors"
           >
             <Search size={12} /> Dig deeper
           </Link>
           <Link
-            href={productUrl ? `/dashboard/new-audit?mode=re-audit&url=${encodeURIComponent(productUrl)}` : '/dashboard/new-audit?mode=re-audit'}
+            href={productUrl ? `${dashPrefix}/new-audit?mode=re-audit&url=${encodeURIComponent(productUrl)}` : `${dashPrefix}/new-audit?mode=re-audit`}
             className="inline-flex items-center gap-1.5 bg-brand text-surface text-xs font-medium px-3.5 py-2 rounded-lg transition-all hover:brightness-110"
           >
             <RefreshCw size={13} />
@@ -912,7 +913,7 @@ function OverviewInner() {
               <TrendingUp size={28} style={{ color: 'var(--m-muted)', opacity: 0.4 }} className="mb-2" />
               <p className="text-[11px]" style={{ color: 'var(--m-muted)' }}>Re-audit to track your score over time.</p>
               <Link
-                href={productUrl ? `/dashboard/new-audit?url=${encodeURIComponent(productUrl)}` : '/dashboard/new-audit'}
+                href={productUrl ? `${dashPrefix}/new-audit?url=${encodeURIComponent(productUrl)}` : `${dashPrefix}/new-audit`}
                 className="text-[11px] font-medium mt-2 hover:underline"
                 style={{ color: 'var(--ink)' }}
               >
@@ -976,7 +977,7 @@ function OverviewInner() {
                   score: cat.score,
                   Icon: CATEGORY_ICONS[start + relIdx] || Sparkles,
                 }))}
-                href={`/dashboard/find?module=${encodeURIComponent(p.name)}`}
+                href={`${dashPrefix}/find?module=${encodeURIComponent(p.name)}`}
                 expanded={breakdownOpen}
                 onToggle={() => setBreakdownOpen((v) => !v)}
               />
@@ -1009,7 +1010,7 @@ function OverviewInner() {
             </p>
           </div>
           <Link
-            href="/dashboard/brand-dna"
+            href={`${dashPrefix}/brand-dna`}
             className="inline-flex items-center gap-1 text-[11px] font-semibold px-3 py-1.5 rounded-lg border flex-shrink-0 transition-colors hover:opacity-80"
             style={{ borderColor: MODULE_TINTS[5].border, color: MODULE_TINTS[5].dot }}
           >
@@ -1028,7 +1029,7 @@ function OverviewInner() {
           speedData={(latestCompleted as any)?.speed_data ?? null}
           auditId={latestCompleted?.id ?? null}
           onViewIssues={() => {
-            router.push('/dashboard/speed');
+            router.push(`${dashPrefix}/speed`);
           }}
           onTestComplete={(newData) => {
             // Force a re-render by refreshing the bundle
@@ -1465,7 +1466,7 @@ function AuditHistoryCard({
               className="flex items-center hover:bg-black/[0.02] transition-colors group/row"
             >
               <Link
-                href={`/dashboard/audits/${a.id}`}
+                href={`${dashPrefix}/audits/${a.id}`}
                 className="flex-1 min-w-0 px-4 py-2.5 flex items-center gap-3"
               >
                 <div className="flex items-center gap-2 text-[11px] flex-1 min-w-0 flex-wrap">
@@ -1755,7 +1756,7 @@ function CheckpointHealthCard({
                             </p>
                             {finding && (
                               <Link
-                                href={`/dashboard/fix#finding-${finding.id}`}
+                                href={`${dashPrefix}/fix#finding-${finding.id}`}
                                 className="text-[11px] mt-0.5 line-clamp-1 hover:underline"
                                 style={{ color: 'var(--m-muted)' }}
                               >
@@ -1817,7 +1818,7 @@ function AlertOrSummary({
           </p>
         </div>
         <Link
-          href={`/dashboard/fix?severity=critical`}
+          href={`${dashPrefix}/fix?severity=critical`}
           className="flex-shrink-0 inline-flex items-center gap-1 text-[12px] font-semibold px-3 py-1.5 rounded-lg"
           style={{ background: 'var(--severe)', color: '#fff' }}
         >
@@ -1870,6 +1871,8 @@ function AlertOrSummary({
  * without reloading.
  */
 function RunningAuditBanner({ audit }: { audit: Audit }) {
+  const { workspaceSlug: _ws } = useWorkspace();
+  const _dp = _ws ? `/dashboard/${_ws}` : '/dashboard';
   const { data: progress } = useAuditProgress(audit.id, { interval: 3000 });
   const liveStatus = progress?.status || audit.status;
   const meta = statusMeta[liveStatus] || statusMeta.payment_received;
@@ -1914,7 +1917,7 @@ function RunningAuditBanner({ audit }: { audit: Audit }) {
         )}
       </div>
       <Link
-        href={`/dashboard/audits/${audit.id}`}
+        href={`${_dp}/audits/${audit.id}`}
         className="flex-shrink-0 inline-flex items-center gap-1 text-[12px] font-medium hover:underline"
         style={{ color: 'var(--ink)' }}
       >
@@ -2096,7 +2099,7 @@ function InProgressOverview({
             )}
           </button>
           <Link
-            href={`/dashboard/audits/${audit.id}`}
+            href={`${_dp}/audits/${audit.id}`}
             className="inline-flex items-center gap-1 text-[12px] font-semibold px-3 py-1.5 rounded-lg border border-border text-text hover:bg-surface-alt transition-colors"
           >
             View progress <ChevronRight size={12} />
@@ -2354,6 +2357,8 @@ function FailedAuditOverview({
   brandName: string | null;
   workspace: Workspace | null;
 }) {
+  const { workspaceSlug: _ws } = useWorkspace();
+  const _dp = _ws ? `/dashboard/${_ws}` : '/dashboard';
   let domain: string | null = null;
   try { domain = new URL(audit.product_url || '').hostname.replace(/^www\./, ''); } catch {}
   const displayTitle = !workspace?.primary_domain && brandName
@@ -2362,8 +2367,8 @@ function FailedAuditOverview({
   const isBrand = !workspace?.primary_domain;
   const productUrl = audit.product_url || (domain ? `https://${domain}` : '');
   const retryHref = productUrl
-    ? `/dashboard/new-audit?url=${encodeURIComponent(productUrl)}`
-    : '/dashboard/new-audit';
+    ? `${_dp}/new-audit?url=${encodeURIComponent(productUrl)}`
+    : `${_dp}/new-audit`;
 
   return (
     <div className="w-full max-w-3xl mx-auto">
@@ -2516,7 +2521,7 @@ function FailedAuditOverview({
                 Retry audit
               </Link>
               <Link
-                href={`/dashboard/audits/${audit.id}`}
+                href={`${_dp}/audits/${audit.id}`}
                 className="inline-flex items-center gap-1.5 text-[13px] font-medium px-3.5 py-2 rounded-lg bg-card border border-border text-text hover:bg-surface-alt transition-colors"
               >
                 View details <ChevronRight size={12} />

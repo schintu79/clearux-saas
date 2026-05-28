@@ -237,7 +237,8 @@ const CATEGORY_TINTS: Record<string, { dot: string; bg: string; border: string }
 
 export default function BrandDnaPage() {
   const { user, loading: authLoading } = useAuth();
-  const { workspace, loading: wsLoading } = useWorkspace();
+  const { workspace, workspaceSlug, loading: wsLoading } = useWorkspace();
+  const dashPrefix = workspaceSlug ? `/dashboard/${workspaceSlug}` : '/dashboard';
 
   /* ── Brand identity state ── */
   const [identity, setIdentity] = useState<BrandIdentity | null>(null);
@@ -643,7 +644,7 @@ export default function BrandDnaPage() {
         <EmptyState
           title="Pick a brand to see its DNA"
           body="Brand DNA is scoped to the brand you have selected in the sidebar."
-          ctaHref="/dashboard/new-audit"
+          ctaHref={`${dashPrefix}/new-audit`}
           ctaLabel="Run your first audit"
         />
       </div>
@@ -662,7 +663,7 @@ export default function BrandDnaPage() {
         <EmptyState
           title={!workspace.primary_domain ? 'No Brand DNA on file yet' : `No Brand DNA for ${siteLabel || 'this site'}`}
           body="Add your brand name, voice, colours, and upload guidelines so we can audit brand consistency."
-          ctaHref="/dashboard/brand-identity/new"
+          ctaHref={`${dashPrefix}/brand-identity/new`}
           ctaLabel="Add brand DNA"
         />
       </div>

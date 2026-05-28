@@ -3,6 +3,7 @@
 import React from 'react';
 import Link from 'next/link';
 import { ChevronRight, ArrowLeft } from 'lucide-react';
+import { useWorkspace } from '@/context/WorkspaceContext';
 
 /**
  * Sub-page breadcrumb shown above the page heading on detail pages
@@ -17,12 +18,15 @@ export default function OverviewBreadcrumb({
   current: string;
   parent?: { label: string; href: string };
 }) {
+  const { workspaceSlug } = useWorkspace();
+  const prefix = workspaceSlug ? `/dashboard/${workspaceSlug}` : '/dashboard';
+
   return (
     <nav aria-label="Breadcrumb" className="mb-4">
       <ol className="flex items-center gap-1.5 text-[12px] flex-wrap">
         <li className="inline-flex items-center">
           <Link
-            href="/dashboard/overview"
+            href={`${prefix}/overview`}
             className="inline-flex items-center gap-1 hover:underline"
             style={{ color: 'var(--m-muted)' }}
           >
