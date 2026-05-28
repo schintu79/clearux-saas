@@ -12,13 +12,15 @@
 
 import React from 'react';
 
-export type AIProvider = 'claude' | 'chatgpt' | 'gemini' | 'perplexity';
+export type AIProvider = 'claude' | 'chatgpt' | 'gemini' | 'perplexity' | 'llama' | 'mistral';
 
 const BRAND_COLOR: Record<AIProvider, string> = {
   claude: '#D97757',
   chatgpt: '#10A37F',
   gemini: '#4285F4',
   perplexity: '#20B8CD',
+  llama: '#0467DF',
+  mistral: '#F7D046',
 };
 
 const LOGO_SRC: Record<AIProvider, string> = {
@@ -26,6 +28,8 @@ const LOGO_SRC: Record<AIProvider, string> = {
   chatgpt: '/assets/ai-providers/chatgpt.svg',
   gemini: '/assets/ai-providers/gemini.svg',
   perplexity: '/assets/ai-providers/perplexity.svg',
+  llama: '/assets/ai-providers/llama.svg',
+  mistral: '/assets/ai-providers/mistral.svg',
 };
 
 export const PROVIDER_LABEL: Record<AIProvider, string> = {
@@ -33,6 +37,8 @@ export const PROVIDER_LABEL: Record<AIProvider, string> = {
   chatgpt: 'ChatGPT',
   gemini: 'Gemini',
   perplexity: 'Perplexity',
+  llama: 'Llama',
+  mistral: 'Mistral',
 };
 
 export const PROVIDER_SUBTITLE: Record<AIProvider, string> = {
@@ -40,6 +46,8 @@ export const PROVIDER_SUBTITLE: Record<AIProvider, string> = {
   chatgpt: 'OpenAI GPT-4o',
   gemini: 'Google Gemini',
   perplexity: 'Perplexity Sonar',
+  llama: 'Meta Llama 3.3',
+  mistral: 'Mistral Small 3.1',
 };
 
 export function providerBrandColor(provider: AIProvider): string {
@@ -85,5 +93,7 @@ export function providerKeyToIcon(key: string): AIProvider | null {
   if (key === 'gpt4o' || key === 'chatgpt' || key === 'openai') return 'chatgpt';
   if (key === 'gemini' || key === 'google') return 'gemini';
   if (key === 'perplexity') return 'perplexity';
+  if (key === 'llama' || key === 'meta') return 'llama';
+  if (key === 'mistral' || key === 'mistralai') return 'mistral';
   return null;
 }

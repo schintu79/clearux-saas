@@ -603,7 +603,12 @@ export interface ModelBenchmarksSummary {
   insight: string
 }
 
-export type AIModelId = 'claude' | 'gpt4o' | 'gemini' | 'perplexity'
+/**
+ * AI model identifiers. Now a string to support dynamic user-enabled
+ * models via OpenRouter. Legacy short IDs ('claude', 'gpt4o', 'gemini',
+ * 'perplexity') remain valid for backwards compatibility with existing DB data.
+ */
+export type AIModelId = string
 
 export type MultiModelProbeStatus = 'measured' | 'skipped' | 'error'
 

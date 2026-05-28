@@ -1376,7 +1376,26 @@ Return 2-6 findings. Be specific and evidence-based. Reference specific files/co
               return { url: urlM?.[1] || '', title: titleM?.[1] || null }
             }).filter((p: { url: string }) => p.url),
           }
-          const comparison = await runMultiModelBenchmark(domain, groundTruth)
+          // Load user's AI model settings to determine which models to probe
+          let enabledModelSlugs: string[] | undefined
+          try {
+            const { data: auditRow } = await db.from('audits').select('user_id').eq('id', auditId).single()
+            const auditUserId = (auditRow as any)?.user_id
+            if (auditUserId) {
+              const { data: userSettings } = await db
+                .from('ai_model_settings')
+                .select('model_slug, enabled')
+                .eq('user_id', auditUserId)
+              if (userSettings && userSettings.length > 0) {
+                enabledModelSlugs = (userSettings as any[])
+                  .filter((s: any) => s.enabled)
+                  .map((s: any) => s.model_slug)
+              }
+            }
+          } catch {
+            // If table doesn't exist yet or query fails, use defaults
+          }
+          const comparison = await runMultiModelBenchmark(domain, groundTruth, enabledModelSlugs)
           // Batch insert all multi-model benchmark results at once
           if (comparison.benchmarks.length > 0) {
             const benchInserts = comparison.benchmarks.map(b => ({

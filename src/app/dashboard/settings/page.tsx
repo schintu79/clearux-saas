@@ -1,13 +1,14 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
-import { ArrowLeft, Lock, User, Building2, CreditCard, Settings as SettingsIcon } from 'lucide-react';
+import { ArrowLeft, Lock, User, Building2, CreditCard, Settings as SettingsIcon, Cpu, RefreshCw, AlertTriangle } from 'lucide-react';
 import PageHeader from '@/components/dashboard/v2/PageHeader';
 import { useAuth } from '@/context/AuthContext';
 import { createBrowserSupabase } from '@/lib/supabase-ssr';
 import Button from '@/components/ui/Button';
 import DashCard from '@/components/dashboard/v2/DashCard';
+import { AIProviderIcon, providerKeyToIcon } from '@/components/ui/AIProviderIcon';
 
 interface ProfileFormData {
   full_name: string;
@@ -44,12 +45,25 @@ interface Messages {
   billingError?: string;
 }
 
-type TabId = 'profile' | 'company' | 'security';
+interface AIModelUI {
+  slug: string;
+  displayName: string;
+  provider: string;
+  shortId: string;
+  enabled: boolean;
+  useForCompetitors: boolean;
+  useForVoice: boolean;
+  useForAnswers: boolean;
+  useForReports: boolean;
+}
+
+type TabId = 'profile' | 'company' | 'security' | 'ai_models';
 
 const TABS: { id: TabId; label: string; icon: React.ElementType }[] = [
   { id: 'profile', label: 'Profile', icon: User },
   { id: 'company', label: 'Company & Billing', icon: Building2 },
   { id: 'security', label: 'Security', icon: Lock },
+  { id: 'ai_models', label: 'AI Models', icon: Cpu },
 ];
 
 const SettingsPage: React.FC = () => {
@@ -83,6 +97,85 @@ const SettingsPage: React.FC = () => {
   const [deleteConfirm, setDeleteConfirm] = useState('');
   const [deletingAccount, setDeletingAccount] = useState(false);
   const [deleteError, setDeleteError] = useState<string | null>(null);
+
+  // AI Models state
+  const [aiModels, setAiModels] = useState<AIModelUI[]>([]);
+  const [aiModelsLoading, setAiModelsLoading] = useState(false);
+  const [aiModelsSaving, setAiModelsSaving] = useState(false);
+  const [aiModelsMessage, setAiModelsMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+  const [refreshingModels, setRefreshingModels] = useState(false);
+
+  const fetchAIModels = useCallback(async () => {
+    setAiModelsLoading(true);
+    try {
+      const res = await fetch('/api/ai-models');
+      if (!res.ok) throw new Error('Failed to load AI models');
+      const data = await res.json();
+      setAiModels(data.models || []);
+    } catch (err) {
+      setAiModelsMessage({ type: 'error', text: err instanceof Error ? err.message : 'Failed to load AI models' });
+    } finally {
+      setAiModelsLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (activeTab === 'ai_models' && aiModels.length === 0 && !aiModelsLoading) {
+      fetchAIModels();
+    }
+  }, [activeTab, aiModels.length, aiModelsLoading, fetchAIModels]);
+
+  const handleAIModelToggle = (slug: string, field: keyof AIModelUI) => {
+    setAiModels((prev) =>
+      prev.map((m) =>
+        m.slug === slug ? { ...m, [field]: !m[field as keyof AIModelUI] } : m,
+      ),
+    );
+  };
+
+  const saveAIModelSettings = async () => {
+    setAiModelsSaving(true);
+    setAiModelsMessage(null);
+    try {
+      const settings = aiModels.map((m) => ({
+        model_slug: m.slug,
+        enabled: m.enabled,
+        use_for_competitors: m.useForCompetitors,
+        use_for_voice: m.useForVoice,
+        use_for_answers: m.useForAnswers,
+        use_for_reports: m.useForReports,
+      }));
+      const res = await fetch('/api/ai-models', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ settings }),
+      });
+      if (!res.ok) throw new Error('Failed to save');
+      setAiModelsMessage({ type: 'success', text: 'AI model settings saved' });
+      setTimeout(() => setAiModelsMessage(null), 3000);
+    } catch (err) {
+      setAiModelsMessage({ type: 'error', text: err instanceof Error ? err.message : 'Failed to save' });
+    } finally {
+      setAiModelsSaving(false);
+    }
+  };
+
+  const handleRefreshModels = async () => {
+    setRefreshingModels(true);
+    try {
+      const res = await fetch('/api/ai-models/refresh', { method: 'POST' });
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.error || 'Refresh failed');
+      }
+      setAiModelsMessage({ type: 'success', text: 'Model list refreshed from OpenRouter' });
+      setTimeout(() => setAiModelsMessage(null), 3000);
+    } catch (err) {
+      setAiModelsMessage({ type: 'error', text: err instanceof Error ? err.message : 'Refresh failed' });
+    } finally {
+      setRefreshingModels(false);
+    }
+  };
 
   // Initialize form with profile data
   useEffect(() => {
@@ -452,6 +545,165 @@ const SettingsPage: React.FC = () => {
             </div>
           </div>
         </DashCard>
+      )}
+
+      {/* ═══ AI MODELS TAB ═══ */}
+      {activeTab === 'ai_models' && (
+        <div className="space-y-6">
+          <DashCard>
+            <div className="space-y-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <div className="flex items-center gap-2 mb-1">
+                    <Cpu size={18} style={{ color: 'var(--ink)' }} />
+                    <h2 className="text-lg font-normal font-sans text-text">AI Models</h2>
+                  </div>
+                  <p className="text-sm text-muted">Configure which AI models are used for benchmarking and analysis. All non-Claude models route through OpenRouter.</p>
+                </div>
+                <button
+                  onClick={handleRefreshModels}
+                  disabled={refreshingModels}
+                  className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg transition-all hover:bg-black/[0.04]"
+                  style={{ color: 'var(--ink-2)', border: '1px solid var(--rule)' }}
+                >
+                  <RefreshCw size={12} className={refreshingModels ? 'animate-spin' : ''} />
+                  Refresh
+                </button>
+              </div>
+
+              {aiModelsMessage && (
+                <div
+                  className="rounded-lg p-3"
+                  style={{
+                    background: aiModelsMessage.type === 'success'
+                      ? 'color-mix(in srgb, var(--ok) 8%, transparent)'
+                      : 'color-mix(in srgb, var(--severe) 8%, transparent)',
+                    border: `1px solid ${aiModelsMessage.type === 'success'
+                      ? 'color-mix(in srgb, var(--ok) 20%, transparent)'
+                      : 'color-mix(in srgb, var(--severe) 20%, transparent)'}`,
+                  }}
+                >
+                  <p className="text-sm" style={{ color: aiModelsMessage.type === 'success' ? 'var(--ok)' : 'var(--severe)' }}>
+                    {aiModelsMessage.text}
+                  </p>
+                </div>
+              )}
+
+              {aiModelsLoading ? (
+                <div className="space-y-4">
+                  {[1, 2, 3].map((i) => (
+                    <div key={i} className="h-24 rounded-xl animate-pulse" style={{ background: 'var(--paper-2)' }} />
+                  ))}
+                </div>
+              ) : (
+                <>
+                  {/* Claude — always enabled */}
+                  <div
+                    className="rounded-xl p-4"
+                    style={{ background: 'var(--paper-2)', border: '1px solid var(--rule)' }}
+                  >
+                    <div className="flex items-center gap-3 mb-2">
+                      {(() => {
+                        const iconKey = providerKeyToIcon('claude');
+                        return iconKey ? <AIProviderIcon provider={iconKey} size={20} /> : null;
+                      })()}
+                      <div className="flex-1">
+                        <p className="text-sm font-medium text-text">Claude</p>
+                        <p className="text-xs text-muted">Anthropic — Direct SDK (always enabled, uses prompt caching)</p>
+                      </div>
+                      <span className="text-xs font-medium px-2 py-0.5 rounded-full" style={{ background: 'color-mix(in srgb, var(--ok) 12%, transparent)', color: 'var(--ok)' }}>
+                        Always On
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Dynamic models */}
+                  {aiModels.map((model) => {
+                    const iconKey = providerKeyToIcon(model.shortId);
+                    const allDisabled = aiModels.every((m) => !m.enabled);
+                    return (
+                      <div
+                        key={model.slug}
+                        className="rounded-xl p-4 transition-all"
+                        style={{
+                          background: model.enabled ? 'var(--card)' : 'var(--paper-2)',
+                          border: `1px solid ${model.enabled ? 'var(--rule)' : 'color-mix(in srgb, var(--rule) 50%, transparent)'}`,
+                          opacity: model.enabled ? 1 : 0.7,
+                        }}
+                      >
+                        <div className="flex items-center gap-3 mb-3">
+                          {iconKey ? <AIProviderIcon provider={iconKey} size={20} /> : (
+                            <div className="w-5 h-5 rounded-full" style={{ background: 'var(--rule)' }} />
+                          )}
+                          <div className="flex-1">
+                            <p className="text-sm font-medium text-text">{model.displayName}</p>
+                            <p className="text-xs text-muted">{model.provider} via OpenRouter</p>
+                          </div>
+                          {/* Master toggle */}
+                          <button
+                            onClick={() => handleAIModelToggle(model.slug, 'enabled')}
+                            className="relative w-10 h-[22px] rounded-full transition-colors"
+                            style={{ background: model.enabled ? 'var(--signal)' : 'var(--rule)' }}
+                            aria-label={`${model.enabled ? 'Disable' : 'Enable'} ${model.displayName}`}
+                          >
+                            <span
+                              className="absolute top-[2px] w-[18px] h-[18px] rounded-full bg-white shadow transition-transform"
+                              style={{ left: model.enabled ? '20px' : '2px' }}
+                            />
+                          </button>
+                        </div>
+
+                        {model.enabled && (
+                          <div className="flex gap-3 flex-wrap">
+                            {([
+                              { key: 'useForCompetitors' as const, label: 'Competitors' },
+                              { key: 'useForVoice' as const, label: 'Voice' },
+                              { key: 'useForAnswers' as const, label: 'Answers' },
+                              { key: 'useForReports' as const, label: 'Reports' },
+                            ]).map(({ key, label }) => (
+                              <button
+                                key={key}
+                                onClick={() => handleAIModelToggle(model.slug, key)}
+                                className="flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs transition-all"
+                                style={{
+                                  background: model[key] ? 'color-mix(in srgb, var(--signal) 10%, transparent)' : 'transparent',
+                                  border: `1px solid ${model[key] ? 'color-mix(in srgb, var(--signal) 30%, transparent)' : 'var(--rule)'}`,
+                                  color: model[key] ? 'var(--ink)' : 'var(--m-muted)',
+                                }}
+                              >
+                                <span className="w-2 h-2 rounded-full" style={{ background: model[key] ? 'var(--signal)' : 'var(--rule)' }} />
+                                {label}
+                              </button>
+                            ))}
+                          </div>
+                        )}
+
+                        {allDisabled && model === aiModels[0] && (
+                          <div className="mt-3 flex items-center gap-2 p-2 rounded-lg" style={{ background: 'color-mix(in srgb, var(--warn) 8%, transparent)' }}>
+                            <AlertTriangle size={14} style={{ color: 'var(--warn)' }} />
+                            <p className="text-xs" style={{ color: 'var(--warn)' }}>
+                              All OpenRouter models are disabled. Only Claude will be used for benchmarking.
+                            </p>
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+
+                  <Button
+                    variant="primary"
+                    size="md"
+                    loading={aiModelsSaving}
+                    disabled={aiModelsSaving}
+                    onClick={saveAIModelSettings}
+                  >
+                    Save Model Settings
+                  </Button>
+                </>
+              )}
+            </div>
+          </DashCard>
+        </div>
       )}
 
       {/* ═══ SECURITY TAB ═══ */}

@@ -1,12 +1,12 @@
 // ============================================================
 // ClearUX Audit Engine — Multi-Model AI Benchmarking
 // ============================================================
-// Probes multiple AI models (Claude, GPT-4o, Gemini, Perplexity)
-// about the audited domain and compares their knowledge/accuracy.
-// Tracks how different models represent the site over time.
+// Probes multiple AI models about the audited domain and compares
+// their knowledge/accuracy. Now routes all non-Claude models
+// through OpenRouter for a single-gateway architecture.
 //
-// "Semrush tells you your SEO score. ClearUX shows you what
-//  AI actually thinks about your website — across every model."
+// Claude stays on the direct Anthropic SDK (prompt caching).
+// All other models go through openRouterChat().
 //
 // PROPRIETARY — do not distribute outside the ClearUX codebase.
 // ============================================================
@@ -14,10 +14,17 @@
 import Anthropic from '@anthropic-ai/sdk'
 import type { LlmProbeAccuracy } from '@/types/database'
 import type { SiteGroundTruth } from './llm-probe'
+import { openRouterChat, isOpenRouterConfigured } from '@/lib/ai/openrouter-client'
+import {
+  DEFAULT_MODEL_CATALOG,
+  findModelBySlug,
+  type AIModelDef,
+} from '@/lib/ai/model-catalog'
 
 /* ── Types ──────────────────────────────────────────────────── */
 
-export type AIModelId = 'claude' | 'gpt4o' | 'gemini' | 'perplexity'
+/** Model ID is now a string (dynamic) to support user-enabled models */
+export type AIModelId = string
 
 export interface ModelProbeResult {
   modelId: AIModelId
@@ -31,14 +38,9 @@ export interface ModelProbeResult {
 /**
  * Lifecycle state for a provider's benchmark row.
  *
- *  - `measured` — the provider answered at least one question. Real
- *    accuracy data, score is meaningful.
- *  - `skipped`  — the provider's API key is not configured. The probe
- *    never ran. Not an error; just unconfigured.
- *  - `error`    — the provider was configured but every probe call
- *    failed (HTTP error, timeout, content blocked, model deprecated).
- *    The UI shows this as a real failure so it's visible to operators
- *    instead of silently looking like "Not yet measured".
+ *  - `measured` — the provider answered at least one question.
+ *  - `skipped`  — the provider's API key is not configured.
+ *  - `error`    — the provider was configured but every probe failed.
  */
 export type ModelBenchmarkStatus = 'measured' | 'skipped' | 'error'
 
@@ -87,7 +89,7 @@ function getClient(): Anthropic {
   return _anthropic
 }
 
-/** Retry an async function with exponential backoff (for rate limit resilience) */
+/** Retry an async function with exponential backoff */
 async function withRetry<T>(
   fn: () => Promise<T>,
   label: string,
@@ -119,19 +121,18 @@ async function withRetry<T>(
 
 /* ── Model probers ─────────────────────────────────────────── */
 
-/**
- * Output of every individual model probe. Carries enough metadata for
- * the engine to decide whether the provider was `measured`, `skipped`,
- * or had a real `error`, instead of guessing from the answer strings.
- */
 interface ProbeRun {
   answers: Array<{ question: string; answer: string }>
   status: ModelBenchmarkStatus
   errorMessage: string | null
 }
 
+const SYSTEM_PROMPT =
+  'You are answering questions about websites and companies. Share what you know confidently — most well-known products and companies are in your training data. Provide specific details: names, features, pricing tiers. Only say "I don\'t know" if the company is genuinely obscure. Never redirect users to "visit the website." Give a direct, substantive answer.'
+
 /**
  * Probe using Claude — direct Anthropic SDK call.
+ * Stays on direct SDK for prompt caching support.
  */
 async function probeClaude(
   domain: string,
@@ -157,7 +158,7 @@ async function probeClaude(
           model: 'claude-haiku-4-5-20251001',
           max_tokens: 400,
           temperature: 0,
-          system: [{ type: 'text', text: 'You are answering questions about websites and companies. Share what you know confidently — most well-known products and companies are in your training data. Provide specific details: names, features, pricing tiers. Only say "I don\'t know" if the company is genuinely obscure. Never redirect users to "visit the website." Give a direct, substantive answer.', cache_control: { type: 'ephemeral' } }],
+          system: [{ type: 'text', text: SYSTEM_PROMPT, cache_control: { type: 'ephemeral' } }],
           messages: [{ role: 'user', content: q }],
         }),
         `multi-model-claude(${q.substring(0, 40)})`,
@@ -182,22 +183,21 @@ async function probeClaude(
 }
 
 /**
- * Probe using GPT-4o via OpenAI-compatible API.
- * Falls back gracefully if OPENAI_API_KEY is not set.
+ * Probe using any non-Claude model via OpenRouter.
+ * Replaces the old provider-specific probeOpenAI, probeGemini, probePerplexity.
  */
-async function probeOpenAI(
-  domain: string,
+async function probeViaOpenRouter(
+  modelDef: AIModelDef,
   questions: string[],
 ): Promise<ProbeRun> {
-  const apiKey = process.env.OPENAI_API_KEY
-  if (!apiKey) {
+  if (!isOpenRouterConfigured()) {
     return {
       answers: questions.map((q) => ({
         question: q,
-        answer: '[OpenAI API key not configured — skipped]',
+        answer: `[OpenRouter API key not configured — ${modelDef.displayName} skipped]`,
       })),
       status: 'skipped',
-      errorMessage: 'OPENAI_API_KEY is not set',
+      errorMessage: 'OPENROUTER_API_KEY is not set',
     }
   }
 
@@ -207,365 +207,28 @@ async function probeOpenAI(
 
   for (const q of questions) {
     try {
-      const resp = await fetch('https://api.openai.com/v1/chat/completions', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${apiKey}`,
-        },
-        body: JSON.stringify({
-          model: 'gpt-4o-mini',
-          messages: [
-            {
-              role: 'system',
-              content: 'You are answering questions about websites and companies. Share what you know confidently — most well-known products and companies are in your training data. Provide specific details: names, features, pricing tiers. Only say "I don\'t know" if the company is genuinely obscure. Never redirect users to "visit the website." Give a direct, substantive answer.',
-            },
-            { role: 'user', content: q },
-          ],
-          max_tokens: 400,
-          temperature: 0,
-        }),
-        signal: AbortSignal.timeout(20_000),
+      const result = await openRouterChat({
+        model: modelDef.slug,
+        messages: [
+          { role: 'system', content: SYSTEM_PROMPT },
+          { role: 'user', content: q },
+        ],
+        maxTokens: 400,
+        temperature: 0,
+        timeoutMs: 20_000,
       })
-
-      if (!resp.ok) {
-        lastError = `HTTP ${resp.status}`
-        answers.push({ question: q, answer: `[GPT-4o probe failed: HTTP ${resp.status}]` })
-        continue
-      }
-
-      const data = (await resp.json()) as {
-        choices?: Array<{ message?: { content?: string } }>
-      }
-      const answer = data.choices?.[0]?.message?.content?.trim() || '[No response]'
-      answers.push({ question: q, answer })
+      answers.push({ question: q, answer: result.content || '[No response]' })
       anySuccess = true
     } catch (err) {
       lastError = err instanceof Error ? err.message : String(err)
-      answers.push({ question: q, answer: `[GPT-4o probe failed: ${lastError}]` })
+      answers.push({ question: q, answer: `[${modelDef.displayName} probe failed: ${lastError}]` })
     }
-  }
-  return {
-    answers,
-    status: anySuccess ? 'measured' : 'error',
-    errorMessage: anySuccess ? null : (lastError || 'GPT-4o probe failed'),
-  }
-}
-
-/**
- * Resolve the Google Gemini API key from the environment.
- *
- * Canonical var: `GEMINI_API_KEY` (matches Google AI Studio's own
- * default naming and the variable name shown on aistudio.google.com).
- * We also accept several other common aliases — this is forgiving on
- * purpose because operators frequently set whichever name they saw
- * first in docs or another SDK:
- *   - GEMINI_API_KEY              (canonical, recommended)
- *   - GOOGLE_AI_API_KEY           (legacy name in this repo's docs)
- *   - GOOGLE_GENERATIVE_AI_API_KEY (Vercel AI SDK convention)
- *   - GOOGLE_API_KEY              (generic Google Cloud)
- */
-function resolveGeminiApiKey(): string | null {
-  const candidates = [
-    process.env.GEMINI_API_KEY,
-    process.env.GOOGLE_AI_API_KEY,
-    process.env.GOOGLE_GENERATIVE_AI_API_KEY,
-    process.env.GOOGLE_API_KEY,
-  ]
-  for (const v of candidates) {
-    if (v && v.trim()) return v.trim()
-  }
-  return null
-}
-
-const GEMINI_SYSTEM_PROMPT =
-  'You are answering questions about websites and companies. Share what you know confidently — most well-known products and companies are in your training data. Provide specific details: names, features, pricing tiers. Only say "I don\'t know" if the company is genuinely obscure. Never redirect users to "visit the website." Give a direct, substantive answer.'
-
-// Models tried in order. We start with the current stable model, then
-// fall back to previous generations if the first 404s on the account's
-// API tier. Keeps the probe resilient as Google rotates model names.
-// Updated May 2026: gemini-2.0-flash deprecated (shutdown June 1 2026),
-// gemini-2.5-flash is the current production model.
-const GEMINI_MODEL_FALLBACKS = [
-  'gemini-2.5-flash',
-  'gemini-2.0-flash',
-  'gemini-1.5-flash',
-]
-
-/**
- * Probe using Gemini via Google AI API.
- * Falls back gracefully if no Gemini API key is set. Uses a tolerant
- * env-var lookup ([[resolveGeminiApiKey]]) and tries multiple Gemini
- * model IDs so a single deprecation does not silently break X-Ray.
- */
-async function probeGemini(
-  domain: string,
-  questions: string[],
-): Promise<ProbeRun> {
-  const apiKey = resolveGeminiApiKey()
-  if (!apiKey) {
-    return {
-      answers: questions.map((q) => ({
-        question: q,
-        answer: '[Gemini API key not configured — skipped]',
-      })),
-      status: 'skipped',
-      errorMessage:
-        'No Gemini API key found. Set GEMINI_API_KEY (preferred), GOOGLE_AI_API_KEY, GOOGLE_GENERATIVE_AI_API_KEY, or GOOGLE_API_KEY.',
-    }
-  }
-
-  const answers: Array<{ question: string; answer: string }> = []
-  let anySuccess = false
-  let firstError: string | null = null
-  // Remember which model actually worked so we don't re-probe fallbacks
-  // for every question once we've found a live one.
-  let workingModel: string | null = null
-
-  for (const q of questions) {
-    const modelsToTry: readonly string[] = workingModel
-      ? [workingModel]
-      : GEMINI_MODEL_FALLBACKS
-    let answer: string | null = null
-    let lastError: string | null = null
-    let blocked = false
-
-    for (const model of modelsToTry) {
-      try {
-        const resp = await fetch(
-          `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${encodeURIComponent(apiKey)}`,
-          {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              contents: [{ parts: [{ text: q }] }],
-              generationConfig: { maxOutputTokens: 400, temperature: 0 },
-              systemInstruction: {
-                parts: [{ text: GEMINI_SYSTEM_PROMPT }],
-              },
-            }),
-            signal: AbortSignal.timeout(20_000),
-          },
-        )
-
-        if (!resp.ok) {
-          // 404 = model not available on this key's tier; try next fallback.
-          // 400/403/429 etc = surface the error but stop trying other models
-          // (auth/quota issues won't change between models).
-          // Try to parse the structured Google API error envelope first so
-          // we log the real reason (INVALID_ARGUMENT, PERMISSION_DENIED,
-          // RESOURCE_EXHAUSTED, NOT_FOUND…) instead of just "HTTP 400".
-          const raw = await resp.text().catch(() => '')
-          let apiErrorMessage: string | null = null
-          let apiErrorStatus: string | null = null
-          let apiErrorCode: number | null = null
-          if (raw) {
-            try {
-              const parsed = JSON.parse(raw) as {
-                error?: { code?: number; message?: string; status?: string }
-              }
-              if (parsed?.error) {
-                apiErrorCode = typeof parsed.error.code === 'number' ? parsed.error.code : null
-                apiErrorStatus = parsed.error.status || null
-                apiErrorMessage = parsed.error.message || null
-              }
-            } catch {
-              // Non-JSON body; fall back to a truncated raw snippet.
-            }
-          }
-          const detail = apiErrorMessage
-            ? `${apiErrorStatus || 'error'}: ${apiErrorMessage}`
-            : (raw ? raw.slice(0, 160) : '')
-          lastError = `HTTP ${resp.status}${detail ? ` ${detail}` : ''}`
-          console.error('[multi-model] Gemini non-OK response', {
-            provider: 'gemini',
-            model,
-            httpStatus: resp.status,
-            apiErrorCode,
-            apiErrorStatus,
-            apiErrorMessage,
-          })
-          if (resp.status === 404 && !workingModel) continue
-          break
-        }
-
-        const data = (await resp.json()) as {
-          candidates?: Array<{
-            content?: { parts?: Array<{ text?: string }> }
-            finishReason?: string
-            safetyRatings?: unknown
-          }>
-          promptFeedback?: { blockReason?: string; safetyRatings?: unknown }
-          error?: { code?: number; message?: string; status?: string }
-        }
-
-        // Some Google API errors come back with HTTP 200 plus an `error`
-        // envelope in the body (rare, but documented). Treat the same as
-        // a non-OK response so it isn't silently swallowed.
-        if (data.error) {
-          lastError = `API ${data.error.status || 'error'}${data.error.code ? ` (${data.error.code})` : ''}${data.error.message ? `: ${data.error.message}` : ''}`
-          console.error('[multi-model] Gemini API error in 200 body', {
-            provider: 'gemini',
-            model,
-            apiErrorCode: data.error.code ?? null,
-            apiErrorStatus: data.error.status ?? null,
-            apiErrorMessage: data.error.message ?? null,
-          })
-          break
-        }
-
-        if (data.promptFeedback?.blockReason) {
-          // Safety block — counts as a successful call (we got a real
-          // response from Gemini), just one we can't grade. Don't mark
-          // the whole provider as `error` for this. Logged at warn level
-          // so operators can see safety filters tripping on real prompts.
-          console.warn('[multi-model] Gemini prompt blocked by safety filter', {
-            provider: 'gemini',
-            model,
-            blockReason: data.promptFeedback.blockReason,
-            candidatesCount: data.candidates?.length ?? 0,
-          })
-          answer = `[Gemini blocked: ${data.promptFeedback.blockReason}]`
-          blocked = true
-        } else if (!data.candidates || data.candidates.length === 0) {
-          // Newer Gemini models can return `{ candidates: [] }` (no
-          // promptFeedback) when content is filtered. Previously this
-          // silently became "[No response]". Surface it as an empty-result
-          // failure so the operator can see it in logs and the grader can
-          // mark it `no_data` rather than treating it as a real answer.
-          console.warn('[multi-model] Gemini returned zero candidates', {
-            provider: 'gemini',
-            model,
-            hasPromptFeedback: Boolean(data.promptFeedback),
-          })
-          lastError = 'Empty candidates array (response filtered)'
-          answer = '[Gemini returned no candidates]'
-          blocked = true
-        } else {
-          const parts = data.candidates[0]?.content?.parts || []
-          const text = parts.map((p) => p?.text || '').join('').trim()
-          if (!text) {
-            const finishReason = data.candidates[0]?.finishReason || null
-            console.warn('[multi-model] Gemini candidate had no text parts', {
-              provider: 'gemini',
-              model,
-              finishReason,
-              partsCount: parts.length,
-            })
-            answer = finishReason
-              ? `[Gemini returned no text (finishReason: ${finishReason})]`
-              : '[No response]'
-            blocked = true
-          } else {
-            answer = text
-          }
-        }
-        workingModel = model
-        break
-      } catch (err) {
-        lastError = err instanceof Error ? err.message : String(err)
-        const isAbort = err instanceof Error && err.name === 'AbortError'
-        console.error('[multi-model] Gemini fetch threw', {
-          provider: 'gemini',
-          model,
-          errorName: err instanceof Error ? err.name : 'unknown',
-          errorMessage: lastError,
-          aborted: isAbort,
-        })
-        // Network errors / timeouts: don't churn through every fallback.
-        break
-      }
-    }
-
-    if (answer != null && !blocked) anySuccess = true
-    if (!firstError && lastError) firstError = lastError
-    answers.push({
-      question: q,
-      answer: answer ?? `[Gemini probe failed: ${lastError || 'unknown error'}]`,
-    })
   }
 
   return {
     answers,
     status: anySuccess ? 'measured' : 'error',
-    errorMessage: anySuccess ? null : (firstError || 'Gemini probe failed for all questions'),
-  }
-}
-
-/**
- * Probe using Perplexity via their OpenAI-compatible chat completions API.
- * Falls back gracefully if PERPLEXITY_API_KEY is not set.
- *
- * Uses Perplexity's stable `sonar` model (search-augmented). We disable
- * web search to make the probe comparable to the other models — we want
- * to measure what the model *knows* from training/index, not what it can
- * retrieve in real time. Perplexity returns the same shape as OpenAI
- * (`choices[0].message.content`).
- */
-async function probePerplexity(
-  domain: string,
-  questions: string[],
-): Promise<ProbeRun> {
-  const apiKey = process.env.PERPLEXITY_API_KEY
-  if (!apiKey) {
-    return {
-      answers: questions.map((q) => ({
-        question: q,
-        answer: '[Perplexity API key not configured — skipped]',
-      })),
-      status: 'skipped',
-      errorMessage: 'PERPLEXITY_API_KEY is not set',
-    }
-  }
-
-  const answers: Array<{ question: string; answer: string }> = []
-  let lastError: string | null = null
-  let anySuccess = false
-
-  for (const q of questions) {
-    try {
-      const resp = await fetch('https://api.perplexity.ai/chat/completions', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${apiKey}`,
-        },
-        body: JSON.stringify({
-          model: 'sonar',
-          messages: [
-            {
-              role: 'system',
-              content: 'You are answering questions about websites and companies. Share what you know confidently — most well-known products and companies are in your training data. Provide specific details: names, features, pricing tiers. Only say "I don\'t know" if the company is genuinely obscure. Never redirect users to "visit the website." Give a direct, substantive answer.',
-            },
-            { role: 'user', content: q },
-          ],
-          max_tokens: 400,
-          temperature: 0,
-        }),
-        signal: AbortSignal.timeout(20_000),
-      })
-
-      if (!resp.ok) {
-        lastError = `HTTP ${resp.status}`
-        answers.push({ question: q, answer: `[Perplexity probe failed: HTTP ${resp.status}]` })
-        continue
-      }
-
-      const data = (await resp.json()) as {
-        choices?: Array<{ message?: { content?: string } }>
-      }
-      const answer = data.choices?.[0]?.message?.content?.trim() || '[No response]'
-      answers.push({ question: q, answer })
-      anySuccess = true
-    } catch (err) {
-      lastError = err instanceof Error ? err.message : String(err)
-      answers.push({ question: q, answer: `[Perplexity probe failed: ${lastError}]` })
-    }
-  }
-  return {
-    answers,
-    status: anySuccess ? 'measured' : 'error',
-    errorMessage: anySuccess ? null : (lastError || 'Perplexity probe failed'),
+    errorMessage: anySuccess ? null : (lastError || `${modelDef.displayName} probe failed`),
   }
 }
 
@@ -574,12 +237,12 @@ async function probePerplexity(
 async function gradeModelAnswers(
   domain: string,
   modelLabel: string,
+  modelId: string,
   answers: Array<{ question: string; answer: string }>,
   groundTruth: SiteGroundTruth,
 ): Promise<ModelProbeResult[]> {
   const client = getClient()
 
-  // Build compact ground truth
   const truthParts: string[] = []
   if (groundTruth.siteName) truthParts.push(`Name: ${groundTruth.siteName}`)
   if (groundTruth.siteDescription) truthParts.push(`Description: ${groundTruth.siteDescription}`)
@@ -595,10 +258,10 @@ ANSWERS:
 ${answers.map((a, i) => `Q${i + 1}: ${a.question}\nA${i + 1}: ${a.answer}`).join('\n\n')}
 
 GRADING RULES:
-- "accurate": Answer is factually correct. It matches the website content, OR it provides plausible, specific details that are consistent with what the site describes (AI models have training data beyond what's on the site — don't penalize correct knowledge).
+- "accurate": Answer is factually correct. It matches the website content, OR it provides plausible, specific details that are consistent with what the site describes.
 - "partial": Some correct info but incomplete or slightly off.
 - "inaccurate": Clearly wrong information that contradicts the website content, OR the AI refused/hedged when the website clearly has the answer.
-- "hallucinated": Made up specific details that CONTRADICT the website (e.g., wrong pricing, wrong product names, invented features that don't exist). Only use this if the answer is demonstrably false — not just "not found on the site."
+- "hallucinated": Made up specific details that CONTRADICT the website (e.g., wrong pricing, wrong product names, invented features that don't exist). Only use this if the answer is demonstrably false.
 - "no_data": The website itself has no relevant info AND the AI correctly acknowledged uncertainty.
 
 IMPORTANT DISTINCTIONS:
@@ -634,7 +297,7 @@ Respond with a JSON array:
     }>
 
     return answers.map((a, i) => ({
-      modelId: resolveModelId(modelLabel),
+      modelId,
       modelLabel,
       question: a.question,
       answer: a.answer,
@@ -643,7 +306,7 @@ Respond with a JSON array:
     }))
   } catch {
     return answers.map((a) => ({
-      modelId: resolveModelId(modelLabel),
+      modelId,
       modelLabel,
       question: a.question,
       answer: a.answer,
@@ -651,14 +314,6 @@ Respond with a JSON array:
       accuracyNote: 'Grading failed',
     }))
   }
-}
-
-function resolveModelId(modelLabel: string): AIModelId {
-  const n = modelLabel.toLowerCase()
-  if (n.includes('claude')) return 'claude'
-  if (n.includes('gpt')) return 'gpt4o'
-  if (n.includes('perplexity')) return 'perplexity'
-  return 'gemini'
 }
 
 function normalizeAccuracy(raw: string | undefined): LlmProbeAccuracy {
@@ -688,9 +343,6 @@ function buildBenchmark(
   }
 
   const total = results.length
-  // Score is only meaningful for `measured` benchmarks. Skipped/errored
-  // providers stay at 0 — the UI checks `status` first so this 0 never
-  // gets displayed as "0/100".
   const score = status === 'measured' && total > 0
     ? Math.round(((counts.accurate * 100 + counts.partial * 50 + counts.noData * 25) / (total * 100)) * 100)
     : 0
@@ -714,41 +366,46 @@ function buildBenchmark(
 /* ── Main engine ───────────────────────────────────────────── */
 
 /**
- * Run multi-model benchmarking: probe Claude, GPT-4o, Gemini, and
- * Perplexity about the same domain, grade all answers, and compare.
+ * Run multi-model benchmarking: probe Claude + all enabled models
+ * about the same domain, grade all answers, and compare.
  *
- * Every provider always returns a benchmark row — even when it was
- * skipped (no API key) or errored (HTTP/timeout) — so the rescan
- * endpoint can persist an explicit status per provider rather than
- * silently dropping providers and leaving the UI showing "Not yet
- * measured" (which used to look identical to a brand-new audit).
- *
- * Only `measured` benchmarks count toward averages, best/worst, and
- * the natural-language insight; skipped/errored rows are surfaced via
- * `status` and `errorMessage` so the dashboard can render a clear
- * "Not configured" or "Probe failed" badge instead of a fake score.
+ * @param enabledModels Optional list of OpenRouter model slugs to
+ *   probe (from user settings). If not provided, uses the default
+ *   catalog with defaultEnabled: true.
  */
 export async function runMultiModelBenchmark(
   domain: string,
   groundTruth: SiteGroundTruth,
+  enabledModels?: string[],
 ): Promise<MultiModelComparison> {
   const questions = BENCHMARK_QUESTIONS.map((q) => q.replace('{domain}', domain))
 
-  // Probe all models in parallel
-  const [claudeRun, gptRun, geminiRun, perplexityRun] = await Promise.all([
-    probeClaude(domain, questions),
-    probeOpenAI(domain, questions),
-    probeGemini(domain, questions),
-    probePerplexity(domain, questions),
+  // Determine which non-Claude models to probe
+  const modelsToProbe: AIModelDef[] = enabledModels
+    ? enabledModels
+        .map((slug) => findModelBySlug(slug))
+        .filter((m): m is AIModelDef => m != null)
+    : DEFAULT_MODEL_CATALOG.filter((m) => m.defaultEnabled)
+
+  // Probe all models in parallel: Claude direct + OpenRouter models
+  const claudePromise = probeClaude(domain, questions)
+  const openRouterPromises = modelsToProbe.map((modelDef) =>
+    probeViaOpenRouter(modelDef, questions).then((run) => ({
+      modelDef,
+      run,
+    })),
+  )
+
+  const [claudeRun, ...openRouterResults] = await Promise.all([
+    claudePromise,
+    ...openRouterPromises,
   ])
 
-  // Grade only the providers that actually got real answers. Grading a
-  // run of "[Gemini probe failed: HTTP 403]" strings just wastes a
-  // Claude call and produces meaningless grades.
+  // Grade only providers that actually got real answers
   const gradeIfMeasured = async (
     label: string,
+    modelId: string,
     run: ProbeRun,
-    modelId: AIModelId,
   ): Promise<ModelProbeResult[]> => {
     if (run.status !== 'measured') {
       return run.answers.map((a) => ({
@@ -760,24 +417,35 @@ export async function runMultiModelBenchmark(
         accuracyNote: run.status === 'skipped' ? 'Provider not configured' : (run.errorMessage || 'Probe failed'),
       }))
     }
-    return gradeModelAnswers(domain, label, run.answers, groundTruth)
+    return gradeModelAnswers(domain, label, modelId, run.answers, groundTruth)
   }
 
-  const [claudeGrades, gptGrades, geminiGrades, perplexityGrades] = await Promise.all([
-    gradeIfMeasured('Claude', claudeRun, 'claude'),
-    gradeIfMeasured('GPT-4o', gptRun, 'gpt4o'),
-    gradeIfMeasured('Gemini', geminiRun, 'gemini'),
-    gradeIfMeasured('Perplexity', perplexityRun, 'perplexity'),
+  // Grade Claude
+  const claudeGradesPromise = gradeIfMeasured('Claude', 'claude', claudeRun)
+
+  // Grade all OpenRouter models
+  const openRouterGradePromises = openRouterResults.map(({ modelDef, run }) =>
+    gradeIfMeasured(modelDef.displayName, modelDef.shortId, run).then((grades) => ({
+      modelDef,
+      run,
+      grades,
+    })),
+  )
+
+  const [claudeGrades, ...openRouterGraded] = await Promise.all([
+    claudeGradesPromise,
+    ...openRouterGradePromises,
   ])
 
+  // Build benchmarks
   const benchmarks: ModelBenchmark[] = [
     buildBenchmark('claude', 'Claude', claudeGrades, claudeRun.status, claudeRun.errorMessage),
-    buildBenchmark('gpt4o', 'GPT-4o', gptGrades, gptRun.status, gptRun.errorMessage),
-    buildBenchmark('gemini', 'Gemini', geminiGrades, geminiRun.status, geminiRun.errorMessage),
-    buildBenchmark('perplexity', 'Perplexity', perplexityGrades, perplexityRun.status, perplexityRun.errorMessage),
+    ...openRouterGraded.map(({ modelDef, run, grades }) =>
+      buildBenchmark(modelDef.shortId, modelDef.displayName, grades, run.status, run.errorMessage),
+    ),
   ]
 
-  // Averages / best / worst / insight only consider `measured` rows.
+  // Averages / best / worst / insight only consider `measured` rows
   const measured = benchmarks.filter((b) => b.status === 'measured')
   const sorted = [...measured].sort((a, b) => b.accuracyScore - a.accuracyScore)
   const bestModel = sorted[0]?.modelId || 'claude'
@@ -789,7 +457,7 @@ export async function runMultiModelBenchmark(
 
   let insight: string
   if (measured.length === 0) {
-    insight = 'No AI providers responded — check API key configuration in your environment (Gemini, OpenAI, Perplexity).'
+    insight = 'No AI providers responded — check API key configuration in your environment.'
   } else if (measured.length === 1) {
     insight = `AI knowledge benchmarked with ${sorted[0].modelLabel}. Multi-model comparison available when additional AI providers are configured.`
   } else if (avgAccuracy <= 15) {

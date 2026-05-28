@@ -16,6 +16,8 @@
 
 import Anthropic from '@anthropic-ai/sdk'
 import { createServiceSupabase } from '@/lib/supabase-server'
+import { openRouterChat, isOpenRouterConfigured } from '@/lib/ai/openrouter-client'
+import { DEFAULT_MODEL_CATALOG, type AIModelDef } from '@/lib/ai/model-catalog'
 
 /* ── Types ───────────────────────────────────────────── */
 
@@ -149,21 +151,38 @@ async function analyzeResponseForBrand(
 }
 
 /**
- * Execute a single prompt against Claude and analyze for brand visibility.
+ * Execute a single prompt against a model and analyze for brand visibility.
+ * Routes through OpenRouter for non-Claude models; uses direct Anthropic SDK for Claude.
  */
 async function executePromptAgainstModel(
   prompt: string,
   brandName: string,
   modelId: string,
+  modelSlug?: string,
 ): Promise<{ response: string; analysis: Awaited<ReturnType<typeof analyzeResponseForBrand>> }> {
   try {
-    const client = new Anthropic()
-    const msg = await client.messages.create({
-      model: 'claude-haiku-4-5-20251001',
-      max_tokens: 1000,
-      messages: [{ role: 'user', content: prompt }],
-    })
-    const response = msg.content[0]?.type === 'text' ? msg.content[0].text : ''
+    let response: string
+
+    if (modelId === 'claude' || !modelSlug) {
+      // Claude direct path
+      const client = new Anthropic()
+      const msg = await client.messages.create({
+        model: 'claude-haiku-4-5-20251001',
+        max_tokens: 1000,
+        messages: [{ role: 'user', content: prompt }],
+      })
+      response = msg.content[0]?.type === 'text' ? msg.content[0].text : ''
+    } else {
+      // OpenRouter path for all other models
+      const result = await openRouterChat({
+        model: modelSlug,
+        messages: [{ role: 'user', content: prompt }],
+        maxTokens: 1000,
+        temperature: 0,
+      })
+      response = result.content
+    }
+
     const analysis = await analyzeResponseForBrand(brandName, response)
     return { response, analysis }
   } catch {
@@ -179,12 +198,17 @@ async function executePromptAgainstModel(
 /**
  * Run the prompt library against AI models for a brand.
  * Executes category-relevant prompts and calculates visibility metrics.
+ *
+ * @param enabledModelSlugs Optional list of OpenRouter model slugs to
+ *   query in addition to Claude. If not provided, uses default-enabled
+ *   models from the catalog when OpenRouter is configured.
  */
 export async function runPromptLibrary(
   brandDomain: string,
   brandName: string,
   category: string,
   auditId: string,
+  enabledModelSlugs?: string[],
 ): Promise<PromptLibraryAnalysis> {
   const prompts = await getPromptsForCategory(category, 10)
 
@@ -201,44 +225,66 @@ export async function runPromptLibrary(
     }
   }
 
-  // Execute prompts (using Claude as primary model for cost efficiency)
+  // Build the list of models to query
+  interface ModelTarget { modelId: string; modelSlug?: string; label: string }
+  const targets: ModelTarget[] = [{ modelId: 'claude', label: 'Claude' }]
+
+  if (isOpenRouterConfigured()) {
+    const modelsToAdd: AIModelDef[] = enabledModelSlugs
+      ? DEFAULT_MODEL_CATALOG.filter((m) => enabledModelSlugs.includes(m.slug))
+      : DEFAULT_MODEL_CATALOG.filter((m) => m.defaultEnabled)
+
+    for (const m of modelsToAdd) {
+      targets.push({ modelId: m.shortId, modelSlug: m.slug, label: m.displayName })
+    }
+  }
+
   const results: PromptExecutionResult[] = []
   const db = createServiceSupabase()
 
   for (const prompt of prompts) {
-    const { response, analysis } = await executePromptAgainstModel(
-      prompt.promptText,
-      brandName,
-      'claude',
+    // Run each prompt against all target models in parallel
+    const modelResults = await Promise.all(
+      targets.map(async (target) => {
+        const { response, analysis } = await executePromptAgainstModel(
+          prompt.promptText,
+          brandName,
+          target.modelId,
+          target.modelSlug,
+        )
+        return { target, response, analysis }
+      }),
     )
 
-    const result: PromptExecutionResult = {
-      promptId: prompt.id,
-      promptText: prompt.promptText,
-      modelId: 'claude',
-      responseText: response,
-      brandMentioned: analysis.brandMentioned,
-      placement: analysis.placement,
-      sentimentScore: analysis.sentimentScore,
-      shareOfVoice: analysis.shareOfVoice,
-      competitorsMentioned: analysis.competitorsMentioned,
-    }
-    results.push(result)
+    for (const { target, response, analysis } of modelResults) {
+      const result: PromptExecutionResult = {
+        promptId: prompt.id,
+        promptText: prompt.promptText,
+        modelId: target.modelId,
+        responseText: response,
+        brandMentioned: analysis.brandMentioned,
+        placement: analysis.placement,
+        sentimentScore: analysis.sentimentScore,
+        shareOfVoice: analysis.shareOfVoice,
+        competitorsMentioned: analysis.competitorsMentioned,
+      }
+      results.push(result)
 
-    // Store result in DB
-    await db.from('prompt_results').insert({
-      audit_id: auditId,
-      prompt_id: prompt.id,
-      brand_domain: brandDomain,
-      model_id: 'claude',
-      prompt_text: prompt.promptText,
-      response_text: response,
-      brand_mentioned: analysis.brandMentioned,
-      placement: analysis.placement,
-      sentiment_score: analysis.sentimentScore,
-      share_of_voice: analysis.shareOfVoice,
-      competitors_mentioned: analysis.competitorsMentioned,
-    } as any)
+      // Store result in DB
+      await db.from('prompt_results').insert({
+        audit_id: auditId,
+        prompt_id: prompt.id,
+        brand_domain: brandDomain,
+        model_id: target.modelId,
+        prompt_text: prompt.promptText,
+        response_text: response,
+        brand_mentioned: analysis.brandMentioned,
+        placement: analysis.placement,
+        sentiment_score: analysis.sentimentScore,
+        share_of_voice: analysis.shareOfVoice,
+        competitors_mentioned: analysis.competitorsMentioned,
+      } as any)
+    }
   }
 
   // Compute aggregates
