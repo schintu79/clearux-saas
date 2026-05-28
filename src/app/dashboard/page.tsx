@@ -49,13 +49,10 @@ function WorkspaceSwitcherInner() {
     }
   }, [searchParams, router, workspaces]);
 
-  // Auto-redirect: if user has exactly one workspace and lands on /dashboard,
-  // go directly to that workspace's overview.
-  useEffect(() => {
-    if (!loading && workspaces.length === 1 && !showCreate && !searchParams.get('credits')) {
-      router.replace(`/dashboard/${workspaces[0].slug}/overview`);
-    }
-  }, [loading, workspaces, showCreate, router, searchParams]);
+  // NOTE: We intentionally do NOT auto-redirect when there's only 1 workspace.
+  // The user must always be able to access this hub to create new workspaces,
+  // manage existing ones, or switch between them. The sidebar workspace dropdown
+  // provides quick access to any workspace from anywhere in the app.
 
   const loadWorkspaces = useCallback(async () => {
     if (!user) return;

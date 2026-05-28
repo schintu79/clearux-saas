@@ -521,9 +521,9 @@ const DashboardShell: React.FC<DashboardShellProps> = ({ children }) => {
             </div>
           )}
 
-          {/* Settings */}
+          {/* Settings — global page, not workspace-scoped */}
           <Link
-            href={`${navBase}/settings`}
+            href="/dashboard/settings"
             onClick={() => setSidebarOpen(false)}
             title={collapsed ? 'Settings' : undefined}
             aria-current={pathname?.startsWith('/dashboard/settings') ? 'page' : undefined}
@@ -541,9 +541,9 @@ const DashboardShell: React.FC<DashboardShellProps> = ({ children }) => {
             {!collapsed && <span className="truncate">Settings</span>}
           </Link>
 
-          {/* Buy credits */}
+          {/* Buy credits — global page, not workspace-scoped */}
           <Link
-            href={`${navBase}/buy-credits`}
+            href="/dashboard/buy-credits"
             onClick={() => setSidebarOpen(false)}
             title={collapsed ? 'Buy credits' : undefined}
             aria-current={pathname === '/dashboard/buy-credits' ? 'page' : undefined}
@@ -646,7 +646,7 @@ const DashboardShell: React.FC<DashboardShellProps> = ({ children }) => {
 
           <div className="flex items-center gap-1">
             <Link
-              href={`${navBase}/notifications`}
+              href="/dashboard/notifications"
               className="relative w-9 h-9 rounded-md inline-flex items-center justify-center transition-colors hover:bg-black/[0.04]"
               aria-label={
                 unreadNotifications > 0

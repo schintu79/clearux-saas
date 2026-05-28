@@ -9,6 +9,7 @@
 import React, { useState } from 'react';
 import Link from 'next/link';
 import { ArrowRight, Sparkles } from 'lucide-react';
+import { useWorkspace } from '@/context/WorkspaceContext';
 
 interface EmptyAuditProps {
   title?: string;
@@ -19,10 +20,12 @@ const EmptyAudit: React.FC<EmptyAuditProps> = ({
   title = 'No audit yet',
   body = 'Run your first audit to find what is hurting your site and get a prioritised fix path.',
 }) => {
+  const { workspaceSlug } = useWorkspace();
+  const dashPrefix = workspaceSlug ? `/dashboard/${workspaceSlug}` : '/dashboard';
   const [url, setUrl] = useState('');
   const href = url.trim()
-    ? `/dashboard/new-audit?url=${encodeURIComponent(url.trim())}`
-    : '/dashboard/new-audit';
+    ? `${dashPrefix}/new-audit?url=${encodeURIComponent(url.trim())}`
+    : `${dashPrefix}/new-audit`;
   return (
     <div
       className="rounded-xl p-8 flex flex-col items-start gap-5"

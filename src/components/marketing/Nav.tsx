@@ -109,7 +109,7 @@ export function Nav() {
                     </div>
                     <div className="py-1">
                       <a
-                        href="/dashboard/account"
+                        href="/dashboard/settings"
                         onClick={() => setDropdownOpen(false)}
                         className="flex items-center gap-3 px-4 py-2.5 text-[13px] font-sans font-medium text-ink hover:bg-paper-2 transition-colors no-underline"
                       >
@@ -188,7 +188,7 @@ export function Nav() {
             <div className="flex flex-col gap-1 mt-4 pt-2 border-t border-rule">
               {isLoggedIn ? (
                 <>
-                  <a href="/dashboard/account" onClick={() => setMobileOpen(false)} className="block py-3 text-[16px] font-sans font-medium text-ink hover:text-signal transition-colors no-underline">My account</a>
+                  <a href="/dashboard/settings" onClick={() => setMobileOpen(false)} className="block py-3 text-[16px] font-sans font-medium text-ink hover:text-signal transition-colors no-underline">My account</a>
                   <a href="/dashboard" onClick={() => setMobileOpen(false)} className="block py-3 text-[16px] font-sans font-medium text-ink hover:text-signal transition-colors no-underline">Dashboard</a>
                   <button onClick={() => { setMobileOpen(false); signOut() }} className="block py-3 text-[16px] font-sans font-medium text-ink hover:text-signal transition-colors cursor-pointer bg-transparent border-0 text-left w-full px-0">Log out</button>
                 </>

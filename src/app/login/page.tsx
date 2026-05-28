@@ -81,7 +81,7 @@ function LoginContent() {
   const claimParam = searchParams.get('claim')
   const redirectTo = searchParams.get('redirectTo')
     || (redirectParam ? (claimParam ? `${redirectParam}?claim=${claimParam}` : redirectParam) : null)
-    || (pendingUrl ? `/dashboard/new-audit?url=${encodeURIComponent(pendingUrl)}` : '/dashboard/overview')
+    || (pendingUrl ? `/dashboard/new-audit?url=${encodeURIComponent(pendingUrl)}` : '/dashboard')
   const { user: authUser, loading: authLoading } = useAuth()
   const [formData, setFormData] = useState({ email: '', password: '' })
   const [errors, setErrors] = useState<Record<string, string>>({})
