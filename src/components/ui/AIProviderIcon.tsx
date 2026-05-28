@@ -1,6 +1,6 @@
 /**
  * AIProviderIcon — renders the official brand logo for each AI provider
- * surfaced in AI X-Ray (Claude, ChatGPT, Gemini, Perplexity).
+ * surfaced in AI X-Ray, AI Perception, Competitors, and Settings.
  *
  * The actual SVG files live in `public/assets/ai-providers/` so they
  * are served as static assets — no inline path data, no handmade
@@ -12,15 +12,16 @@
 
 import React from 'react';
 
-export type AIProvider = 'claude' | 'chatgpt' | 'gemini' | 'perplexity' | 'llama' | 'mistral';
+export type AIProvider = 'claude' | 'chatgpt' | 'gemini' | 'perplexity' | 'grok' | 'meta' | 'deepseek';
 
 const BRAND_COLOR: Record<AIProvider, string> = {
   claude: '#D97757',
   chatgpt: '#10A37F',
   gemini: '#4285F4',
   perplexity: '#20B8CD',
-  llama: '#0467DF',
-  mistral: '#F7D046',
+  grok: '#000000',
+  meta: '#0081FB',
+  deepseek: '#4D6BFE',
 };
 
 const LOGO_SRC: Record<AIProvider, string> = {
@@ -28,8 +29,9 @@ const LOGO_SRC: Record<AIProvider, string> = {
   chatgpt: '/assets/ai-providers/chatgpt.svg',
   gemini: '/assets/ai-providers/gemini.svg',
   perplexity: '/assets/ai-providers/perplexity.svg',
-  llama: '/assets/ai-providers/llama.svg',
-  mistral: '/assets/ai-providers/mistral.svg',
+  grok: '/assets/ai-providers/grok.svg',
+  meta: '/assets/ai-providers/meta.svg',
+  deepseek: '/assets/ai-providers/deepseek.svg',
 };
 
 export const PROVIDER_LABEL: Record<AIProvider, string> = {
@@ -37,17 +39,19 @@ export const PROVIDER_LABEL: Record<AIProvider, string> = {
   chatgpt: 'ChatGPT',
   gemini: 'Gemini',
   perplexity: 'Perplexity',
-  llama: 'Llama',
-  mistral: 'Mistral',
+  grok: 'Grok',
+  meta: 'Meta AI',
+  deepseek: 'DeepSeek',
 };
 
 export const PROVIDER_SUBTITLE: Record<AIProvider, string> = {
   claude: 'Anthropic Claude',
-  chatgpt: 'OpenAI GPT-4o',
+  chatgpt: 'OpenAI ChatGPT',
   gemini: 'Google Gemini',
-  perplexity: 'Perplexity Sonar',
-  llama: 'Meta Llama 3.3',
-  mistral: 'Mistral Small 3.1',
+  perplexity: 'Perplexity Search',
+  grok: 'xAI Grok',
+  meta: 'Meta AI',
+  deepseek: 'DeepSeek Search',
 };
 
 export function providerBrandColor(provider: AIProvider): string {
@@ -84,16 +88,18 @@ export function AIProviderIcon({
 }
 
 /**
- * Map an internal model_id (claude / gpt4o / gemini / perplexity) to a
- * provider key. Returns null for unknown IDs so callers can degrade
- * gracefully instead of rendering the wrong logo.
+ * Map an internal model_id / shortId / provider key to a provider icon key.
+ * Returns null for unknown IDs so callers can degrade gracefully.
  */
 export function providerKeyToIcon(key: string): AIProvider | null {
   if (key === 'claude') return 'claude';
-  if (key === 'gpt4o' || key === 'chatgpt' || key === 'openai') return 'chatgpt';
+  if (key === 'chatgpt' || key === 'gpt4o' || key === 'openai') return 'chatgpt';
   if (key === 'gemini' || key === 'google') return 'gemini';
   if (key === 'perplexity') return 'perplexity';
-  if (key === 'llama' || key === 'meta') return 'llama';
-  if (key === 'mistral' || key === 'mistralai') return 'mistral';
+  if (key === 'grok' || key === 'xai') return 'grok';
+  if (key === 'meta' || key === 'llama') return 'meta';
+  if (key === 'deepseek') return 'deepseek';
+  // Legacy fallbacks
+  if (key === 'mistral' || key === 'mistralai') return null;
   return null;
 }

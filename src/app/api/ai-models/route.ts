@@ -34,6 +34,7 @@ export async function GET() {
       displayName: model.displayName,
       provider: model.provider,
       shortId: model.shortId,
+      productName: model.productName,
       supportsTools: model.supportsTools,
       supportsStructuredOutput: model.supportsStructuredOutput,
       supportsVision: model.supportsVision,

@@ -50,6 +50,7 @@ interface AIModelUI {
   displayName: string;
   provider: string;
   shortId: string;
+  productName?: string;
   enabled: boolean;
   useForCompetitors: boolean;
   useForVoice: boolean;
@@ -558,7 +559,7 @@ const SettingsPage: React.FC = () => {
                     <Cpu size={18} style={{ color: 'var(--ink)' }} />
                     <h2 className="text-lg font-normal font-sans text-text">AI Models</h2>
                   </div>
-                  <p className="text-sm text-muted">Configure which AI models are used for benchmarking and analysis. All non-Claude models route through OpenRouter.</p>
+                  <p className="text-sm text-muted">Configure which AI search engines are used in your audits — AI perception, brand intelligence, competitors, and benchmarking.</p>
                 </div>
                 <button
                   onClick={handleRefreshModels}
@@ -637,7 +638,7 @@ const SettingsPage: React.FC = () => {
                           )}
                           <div className="flex-1">
                             <p className="text-sm font-medium text-text">{model.displayName}</p>
-                            <p className="text-xs text-muted">{model.provider} via OpenRouter</p>
+                            <p className="text-xs text-muted">{model.productName || `${model.provider} via OpenRouter`}</p>
                           </div>
                           {/* Master toggle */}
                           <button
@@ -657,8 +658,8 @@ const SettingsPage: React.FC = () => {
                           <div className="flex gap-3 flex-wrap">
                             {([
                               { key: 'useForCompetitors' as const, label: 'Competitors' },
-                              { key: 'useForVoice' as const, label: 'Voice' },
-                              { key: 'useForAnswers' as const, label: 'Answers' },
+                              { key: 'useForVoice' as const, label: 'AI Perception' },
+                              { key: 'useForAnswers' as const, label: 'Brand Intelligence' },
                               { key: 'useForReports' as const, label: 'Reports' },
                             ]).map(({ key, label }) => (
                               <button

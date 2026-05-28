@@ -1,15 +1,22 @@
 // ============================================================
 // Fixpath AI Gateway — Model Catalog
 // ============================================================
-// Local allowed model catalog with capability metadata.
-// Models are identified by their OpenRouter slug.
+// The top AI search engines and chat assistants that shape how
+// brands appear across AI-powered discovery.  Every model here
+// powers a consumer product people use daily to search, compare,
+// and evaluate brands.
+//
+// Claude stays on the direct Anthropic SDK (prompt caching).
+// All others route through OpenRouter.
 // ============================================================
 
 export interface AIModelDef {
   slug: string           // OpenRouter model ID e.g. 'openai/gpt-4o-mini'
-  displayName: string    // e.g. 'GPT-4o Mini'
-  provider: string       // 'openai' | 'google' | 'anthropic' | 'perplexity' | 'meta' | 'mistral'
-  shortId: string        // Our internal ID for display e.g. 'gpt4o', 'gemini', 'perplexity', 'llama', 'mistral'
+  displayName: string    // Consumer-facing name e.g. 'ChatGPT'
+  provider: string       // 'openai' | 'google' | 'perplexity' | 'xai' | 'meta' | 'deepseek'
+  shortId: string        // Our internal ID for display e.g. 'chatgpt', 'gemini', 'grok'
+  /** The consumer product this model powers */
+  productName: string
   supportsTools: boolean
   supportsStructuredOutput: boolean
   supportsVision: boolean
@@ -23,13 +30,14 @@ export interface AIModelDef {
   }
 }
 
-/** Default catalog — these are the models we support out of the box */
+/** Default catalog — the top AI search engines and assistants */
 export const DEFAULT_MODEL_CATALOG: AIModelDef[] = [
   {
     slug: 'openai/gpt-4o-mini',
-    displayName: 'GPT-4o Mini',
+    displayName: 'ChatGPT',
     provider: 'openai',
-    shortId: 'gpt4o',
+    shortId: 'chatgpt',
+    productName: 'ChatGPT Search',
     supportsTools: true,
     supportsStructuredOutput: true,
     supportsVision: true,
@@ -39,9 +47,10 @@ export const DEFAULT_MODEL_CATALOG: AIModelDef[] = [
   },
   {
     slug: 'google/gemini-2.5-flash',
-    displayName: 'Gemini 2.5 Flash',
+    displayName: 'Gemini',
     provider: 'google',
     shortId: 'gemini',
+    productName: 'Google AI Overviews',
     supportsTools: true,
     supportsStructuredOutput: true,
     supportsVision: true,
@@ -51,38 +60,54 @@ export const DEFAULT_MODEL_CATALOG: AIModelDef[] = [
   },
   {
     slug: 'perplexity/sonar',
-    displayName: 'Perplexity Sonar',
+    displayName: 'Perplexity',
     provider: 'perplexity',
     shortId: 'perplexity',
+    productName: 'Perplexity Search',
     supportsTools: false,
     supportsStructuredOutput: false,
     supportsVision: false,
     defaultEnabled: true,
     priorityOrder: 3,
-    features: { competitors: true, voice: true, answers: true, reports: false },
+    features: { competitors: true, voice: true, answers: true, reports: true },
   },
   {
-    slug: 'meta-llama/llama-3.3-70b-instruct',
-    displayName: 'Llama 3.3 70B',
-    provider: 'meta',
-    shortId: 'llama',
+    slug: 'xai/grok-3-mini-beta',
+    displayName: 'Grok',
+    provider: 'xai',
+    shortId: 'grok',
+    productName: 'Grok on X',
     supportsTools: true,
     supportsStructuredOutput: true,
     supportsVision: false,
-    defaultEnabled: false,
+    defaultEnabled: true,
     priorityOrder: 4,
     features: { competitors: true, voice: true, answers: true, reports: true },
   },
   {
-    slug: 'mistralai/mistral-small-3.1-24b-instruct',
-    displayName: 'Mistral Small 3.1',
-    provider: 'mistral',
-    shortId: 'mistral',
+    slug: 'meta-llama/llama-4-scout-17b-16e-instruct',
+    displayName: 'Meta AI',
+    provider: 'meta',
+    shortId: 'meta',
+    productName: 'Meta AI on WhatsApp, Instagram & Facebook',
     supportsTools: true,
     supportsStructuredOutput: true,
     supportsVision: false,
-    defaultEnabled: false,
+    defaultEnabled: true,
     priorityOrder: 5,
+    features: { competitors: true, voice: true, answers: true, reports: true },
+  },
+  {
+    slug: 'deepseek/deepseek-chat-v3-0324',
+    displayName: 'DeepSeek',
+    provider: 'deepseek',
+    shortId: 'deepseek',
+    productName: 'DeepSeek Search',
+    supportsTools: true,
+    supportsStructuredOutput: true,
+    supportsVision: false,
+    defaultEnabled: true,
+    priorityOrder: 6,
     features: { competitors: true, voice: true, answers: true, reports: true },
   },
 ]
