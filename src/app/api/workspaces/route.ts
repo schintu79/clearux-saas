@@ -22,13 +22,21 @@ export async function GET() {
 
   const { data, error } = await supabase
     .from('workspaces')
-    .select('*')
+    .select('*, audits(count)')
     .eq('user_id', user.id)
     .eq('status', 'active')
     .order('created_at', { ascending: false })
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
-  return NextResponse.json({ workspaces: data || [] })
+
+  // Flatten the audit count from Supabase's nested aggregate format
+  const workspaces = (data || []).map((ws: any) => ({
+    ...ws,
+    audit_count: ws.audits?.[0]?.count ?? 0,
+    audits: undefined,
+  }))
+
+  return NextResponse.json({ workspaces })
 }
 
 export async function POST(request: NextRequest) {

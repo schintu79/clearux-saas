@@ -20,8 +20,7 @@ import {
   Trash2,
   X,
   ArrowRight,
-  Activity,
-  AlertTriangle,
+  FileSearch,
 } from 'lucide-react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
@@ -201,94 +200,95 @@ function WorkspaceSwitcherInner() {
       {/* Workspace cards — 3-column grid */}
       {workspaces.length > 0 ? (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          {workspaces.map((ws) => (
-            <div key={ws.id} className="relative group">
-              <Link
-                href={`/dashboard/${ws.slug}/overview`}
-                className="block rounded-lg p-5 transition-all hover:shadow-sm"
-                style={{
-                  background: 'var(--card)',
-                  border: '1px solid var(--rule)',
-                }}
-              >
-                {/* Card header: icon + name */}
-                <div className="flex items-start gap-3 mb-4">
-                  <span
-                    className="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0"
-                    style={{ background: 'var(--paper-2)', border: '1px solid var(--rule)' }}
-                  >
-                    {ws.primary_domain
-                      ? <SiteFavicon hostname={ws.primary_domain} size={20} />
-                      : <FolderOpen size={20} strokeWidth={1.25} style={{ color: 'var(--m-muted)' }} />}
-                  </span>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-[15px] font-semibold truncate leading-tight" style={{ color: 'var(--ink)' }}>
-                      {ws.name}
-                    </p>
-                    <p className="text-[12px] truncate mt-1 leading-tight" style={{ color: 'var(--m-muted)' }}>
-                      {ws.primary_domain || ws.brand_name || ws.workspace_type}
-                    </p>
-                  </div>
-                </div>
-
-                {/* Card stats row */}
-                <div className="flex items-center gap-4">
-                  <div className="flex items-center gap-1.5">
-                    <Globe size={12} strokeWidth={1.75} style={{ color: 'var(--m-muted)' }} />
-                    <span className="text-[11px] font-medium" style={{ color: 'var(--ink-2)' }}>
-                      {ws.workspace_type === 'brand' ? 'Brand' : ws.workspace_type === 'website_and_brand' ? 'Website + brand' : 'Website'}
+          {workspaces.map((ws) => {
+            const auditCount = (ws as any).audit_count ?? 0;
+            return (
+              <div key={ws.id} className="relative group">
+                <Link
+                  href={`/dashboard/${ws.slug}/overview`}
+                  className="block rounded-lg p-5 transition-all hover:shadow-sm"
+                  style={{
+                    background: 'var(--card)',
+                    border: '1px solid var(--rule)',
+                  }}
+                >
+                  {/* Card header: large icon + name */}
+                  <div className="flex items-center gap-3.5 mb-4">
+                    <span
+                      className="w-14 h-14 rounded-xl flex items-center justify-center flex-shrink-0"
+                      style={{ background: 'var(--paper-2)', border: '1px solid var(--rule)' }}
+                    >
+                      {ws.primary_domain
+                        ? <SiteFavicon hostname={ws.primary_domain} size={28} />
+                        : <FolderOpen size={28} strokeWidth={1.25} style={{ color: 'var(--m-muted)' }} />}
                     </span>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-[16px] font-semibold truncate leading-tight" style={{ color: 'var(--ink)' }}>
+                        {ws.name}
+                      </p>
+                      <p className="text-[12px] truncate mt-1 leading-tight" style={{ color: 'var(--m-muted)' }}>
+                        {ws.primary_domain || ws.brand_name || ws.workspace_type}
+                      </p>
+                    </div>
                   </div>
-                  <div className="flex items-center gap-1.5">
-                    <Activity size={12} strokeWidth={1.75} style={{ color: 'var(--m-muted)' }} />
-                    <span className="text-[11px] font-medium" style={{ color: 'var(--ink-2)' }}>
-                      {ws.status === 'active' ? 'Active' : 'Archived'}
-                    </span>
+
+                  {/* Card stats row */}
+                  <div className="flex items-center gap-4">
+                    <div className="flex items-center gap-1.5">
+                      <Globe size={12} strokeWidth={1.75} style={{ color: 'var(--m-muted)' }} />
+                      <span className="text-[11px] font-medium" style={{ color: 'var(--ink-2)' }}>
+                        {ws.workspace_type === 'brand' ? 'Brand' : ws.workspace_type === 'website_and_brand' ? 'Website + brand' : 'Website'}
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-1.5">
+                      <FileSearch size={12} strokeWidth={1.75} style={{ color: 'var(--m-muted)' }} />
+                      <span className="text-[11px] font-medium" style={{ color: 'var(--ink-2)' }}>
+                        {auditCount} {auditCount === 1 ? 'audit' : 'audits'}
+                      </span>
+                    </div>
                   </div>
-                </div>
 
-                {/* Open arrow */}
-                <div
-                  className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity"
-                >
-                  <ArrowRight size={16} strokeWidth={1.75} style={{ color: 'var(--m-muted)' }} />
-                </div>
-              </Link>
+                  {/* Open arrow */}
+                  <div className="absolute top-5 right-5 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <ArrowRight size={16} strokeWidth={1.75} style={{ color: 'var(--m-muted)' }} />
+                  </div>
+                </Link>
 
-              {/* Archive button — bottom-right of card */}
-              {confirmArchive === ws.id ? (
-                <div
-                  className="absolute bottom-3 right-3 flex items-center gap-2 rounded-md shadow-sm px-3 py-1.5 z-10"
-                  style={{ background: 'var(--card)', border: '1px solid var(--rule)' }}
-                >
-                  <span className="text-[12px]" style={{ color: 'var(--ink-2)' }}>Archive?</span>
-                  <button
-                    onClick={(e) => { e.preventDefault(); handleArchive(ws.id); }}
-                    disabled={archiving === ws.id}
-                    className="text-[12px] font-medium px-2 py-0.5 rounded hover:bg-red-50 transition-colors"
-                    style={{ color: 'var(--severe)' }}
+                {/* Delete button — bottom-right of card, visible on hover */}
+                {confirmArchive === ws.id ? (
+                  <div
+                    className="absolute bottom-3 right-3 flex items-center gap-1 rounded-lg shadow-md px-3 py-2 z-10"
+                    style={{ background: 'var(--card)', border: '1px solid var(--rule)' }}
                   >
-                    {archiving === ws.id ? '...' : 'Yes'}
-                  </button>
+                    <span className="text-[12px] mr-1" style={{ color: 'var(--ink-2)' }}>Delete this workspace?</span>
+                    <button
+                      onClick={(e) => { e.preventDefault(); e.stopPropagation(); handleArchive(ws.id); }}
+                      disabled={archiving === ws.id}
+                      className="text-[12px] font-semibold px-2.5 py-1 rounded-md transition-colors"
+                      style={{ background: 'var(--severe)', color: '#fff' }}
+                    >
+                      {archiving === ws.id ? 'Deleting...' : 'Delete'}
+                    </button>
+                    <button
+                      onClick={(e) => { e.preventDefault(); e.stopPropagation(); setConfirmArchive(null); }}
+                      className="text-[12px] font-medium px-2.5 py-1 rounded-md hover:bg-black/5 transition-colors"
+                      style={{ color: 'var(--m-muted)' }}
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                ) : (
                   <button
-                    onClick={(e) => { e.preventDefault(); setConfirmArchive(null); }}
-                    className="text-[12px] px-2 py-0.5 rounded hover:bg-black/5 transition-colors"
-                    style={{ color: 'var(--m-muted)' }}
+                    onClick={(e) => { e.preventDefault(); e.stopPropagation(); setConfirmArchive(ws.id); }}
+                    className="absolute bottom-3 right-3 opacity-0 group-hover:opacity-100 p-1.5 rounded-md hover:bg-red-50 transition-all z-10"
+                    title="Delete workspace"
                   >
-                    No
+                    <Trash2 size={14} strokeWidth={1.75} style={{ color: 'var(--m-muted)' }} />
                   </button>
-                </div>
-              ) : (
-                <button
-                  onClick={(e) => { e.preventDefault(); setConfirmArchive(ws.id); }}
-                  className="absolute bottom-3 right-3 opacity-0 group-hover:opacity-100 p-1.5 rounded hover:bg-red-50 transition-all z-10"
-                  title="Archive workspace"
-                >
-                  <Trash2 size={13} style={{ color: 'var(--m-muted)' }} />
-                </button>
-              )}
-            </div>
-          ))}
+                )}
+              </div>
+            );
+          })}
         </div>
       ) : (
         !showCreate && (
