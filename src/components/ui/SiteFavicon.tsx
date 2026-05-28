@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Globe } from 'lucide-react';
 
 interface SiteFaviconProps {
@@ -9,29 +9,83 @@ interface SiteFaviconProps {
   className?: string;
 }
 
-export default function SiteFavicon({ hostname, size = 16, className }: SiteFaviconProps) {
-  const [error, setError] = useState(false);
-  const prevHostRef = useRef(hostname);
+/**
+ * Favicon sources in priority order.
+ * Google's service is fast but misses newer/less-indexed domains.
+ * The site's own /favicon.ico is a reliable fallback.
+ * DuckDuckGo's icon service is another good alternative.
+ */
+function getFaviconSources(hostname: string): string[] {
+  const clean = hostname.replace(/^www\./, '');
+  return [
+    `https://www.google.com/s2/favicons?domain=${encodeURIComponent(clean)}&sz=128`,
+    `https://${clean}/favicon.ico`,
+    `https://icons.duckduckgo.com/ip3/${encodeURIComponent(clean)}.ico`,
+  ];
+}
 
-  // Reset error state when hostname changes so a new favicon can load
+export default function SiteFavicon({ hostname, size = 16, className }: SiteFaviconProps) {
+  const [sourceIndex, setSourceIndex] = useState(0);
+  const [allFailed, setAllFailed] = useState(false);
+  const prevHostRef = useRef(hostname);
+  const sourcesRef = useRef<string[]>(getFaviconSources(hostname));
+
+  // Reset when hostname changes
   useEffect(() => {
     if (prevHostRef.current !== hostname) {
-      setError(false);
+      setSourceIndex(0);
+      setAllFailed(false);
+      sourcesRef.current = getFaviconSources(hostname);
       prevHostRef.current = hostname;
     }
   }, [hostname]);
 
-  if (error || !hostname) {
-    return <Globe size={size} strokeWidth={1.75} className={className} />;
+  const handleError = useCallback(() => {
+    const nextIndex = sourceIndex + 1;
+    if (nextIndex < sourcesRef.current.length) {
+      setSourceIndex(nextIndex);
+    } else {
+      setAllFailed(true);
+    }
+  }, [sourceIndex]);
+
+  // Also detect Google's default 1x1 transparent globe by checking natural size
+  const handleLoad = useCallback((e: React.SyntheticEvent<HTMLImageElement>) => {
+    const img = e.currentTarget;
+    // Google returns a 16x16 default globe for unknown domains even when sz=128 is requested
+    if (sourceIndex === 0 && img.naturalWidth <= 16 && img.naturalHeight <= 16) {
+      handleError();
+    }
+  }, [sourceIndex, handleError]);
+
+  if (allFailed || !hostname) {
+    // Letter avatar as final fallback — shows first letter of domain
+    const letter = hostname?.replace(/^www\./, '').charAt(0).toUpperCase() || '?';
+    return (
+      <span
+        className={`inline-flex items-center justify-center rounded-md font-semibold flex-shrink-0${className ? ` ${className}` : ''}`}
+        style={{
+          width: size,
+          height: size,
+          fontSize: Math.max(size * 0.5, 10),
+          background: 'var(--ink)',
+          color: 'var(--paper)',
+        }}
+      >
+        {letter}
+      </span>
+    );
   }
 
   return (
     <img
-      src={`https://www.google.com/s2/favicons?domain=${encodeURIComponent(hostname)}&sz=32`}
+      key={`${hostname}-${sourceIndex}`}
+      src={sourcesRef.current[sourceIndex]}
       alt=""
       width={size}
       height={size}
-      onError={() => setError(true)}
+      onError={handleError}
+      onLoad={handleLoad}
       className={`rounded-sm object-contain${className ? ` ${className}` : ''}`}
       style={{ flexShrink: 0 }}
     />
