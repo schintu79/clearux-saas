@@ -51,12 +51,29 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Name is required' }, { status: 400 })
   }
 
-  // Generate unique slug
+  // Generate a clean, human-readable slug from the workspace name.
+  // Only append a numeric suffix (-2, -3, ...) if the slug is already taken.
   let baseSlug = slugify(name || primary_domain || 'workspace')
   if (!baseSlug) baseSlug = 'workspace'
 
-  // Check for slug collision and append random suffix
-  const slug = `${baseSlug}-${Math.random().toString(36).slice(2, 6)}`
+  // Try the clean slug first, then increment if collision
+  let slug = baseSlug
+  const { count } = await supabase
+    .from('workspaces')
+    .select('id', { count: 'exact', head: true })
+    .eq('slug', slug)
+
+  if (count && count > 0) {
+    // Find the next available number
+    const { data: existing } = await supabase
+      .from('workspaces')
+      .select('slug')
+      .like('slug', `${baseSlug}%`)
+    const taken = new Set((existing || []).map((w: any) => w.slug))
+    let suffix = 2
+    while (taken.has(`${baseSlug}-${suffix}`)) suffix++
+    slug = `${baseSlug}-${suffix}`
+  }
 
   const { data, error } = await supabase
     .from('workspaces')

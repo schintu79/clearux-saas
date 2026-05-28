@@ -2,79 +2,72 @@
 -- CLEAN SLATE: Delete all brands, sites, audits & test data
 -- Preserves: auth.users, profiles, ai_model_catalog, prompt_library, payments
 -- Run in Supabase SQL Editor
+-- Uses TRUNCATE ... CASCADE to handle FK constraints automatically
+-- and IF EXISTS to skip tables that haven't been created yet
 -- ============================================================
 
-BEGIN;
+DO $$
+DECLARE
+  t text;
+BEGIN
+  -- All content tables in safe deletion order (children before parents).
+  -- Tables that don't exist yet are silently skipped.
+  FOREACH t IN ARRAY ARRAY[
+    -- Deepest children / audit sub-tables
+    'finding_action_history',
+    'finding_patterns',
+    'fix_playbooks',
+    'ai_citations',
+    'audit_findings',
+    'audit_pages',
+    'audit_logs',
+    'reports',
+    'brand_audit_file_snapshots',
+    -- AI / probe results
+    'multi_model_probes',
+    'llm_probe_results',
+    'prompt_results',
+    -- Human perception
+    'brand_reviews',
+    'reddit_mentions',
+    'web_mentions',
+    'content_gaps',
+    -- Intelligence & competitors
+    'intelligence_snapshots',
+    'competitor_benchmarks',
+    'predictive_recommendations',
+    -- Quality stats & rules
+    'global_quality_stats',
+    'rule_changelog',
+    -- Notifications
+    'notification_reads',
+    'notifications',
+    'admin_logs',
+    -- Site-level data
+    'site_notes',
+    'scheduled_audits',
+    -- FTP
+    'ftp_deploy_log',
+    'ftp_connections',
+    -- Brand identity files (before brand_identities)
+    'brand_identity_files',
+    -- Core records
+    'audits',
+    'brand_identities',
+    'workspaces'
+  ]
+  LOOP
+    IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = 'public' AND table_name = t) THEN
+      EXECUTE format('TRUNCATE TABLE public.%I CASCADE', t);
+      RAISE NOTICE 'Truncated: %', t;
+    ELSE
+      RAISE NOTICE 'Skipped (does not exist): %', t;
+    END IF;
+  END LOOP;
+END $$;
 
--- 1. Deepest children first (depend on audit_findings or audits)
-DELETE FROM finding_action_history;
-DELETE FROM finding_patterns;
-DELETE FROM fix_playbooks;
-DELETE FROM ai_citations;
-
--- 2. Audit child tables
-DELETE FROM audit_findings;
-DELETE FROM audit_pages;
-DELETE FROM audit_logs;
-DELETE FROM reports;
-DELETE FROM brand_audit_file_snapshots;
-
--- 3. AI / probe results
-DELETE FROM multi_model_probes;
-DELETE FROM llm_probe_results;
-DELETE FROM prompt_results;
-
--- 4. Human perception data
-DELETE FROM brand_reviews;
-DELETE FROM reddit_mentions;
-DELETE FROM web_mentions;
-DELETE FROM content_gaps;
-
--- 5. Intelligence & competitor data
-DELETE FROM intelligence_snapshots;
-DELETE FROM competitor_benchmarks;
-DELETE FROM predictive_recommendations;
-
--- 6. Quality stats & rules
-DELETE FROM global_quality_stats;
-DELETE FROM rule_changelog;
-
--- 7. Notifications
-DELETE FROM notification_reads;
-DELETE FROM notifications;
-DELETE FROM admin_logs;
-
--- 8. Site-level data
-DELETE FROM site_notes;
-DELETE FROM scheduled_audits;
-
--- 9. FTP
-DELETE FROM ftp_deploy_log;
-DELETE FROM ftp_connections;
-
--- 10. Brand identity files (before brand_identities)
-DELETE FROM brand_identity_files;
-
--- 11. Audits themselves
-DELETE FROM audits;
-
--- 12. Brand identities
-DELETE FROM brand_identities;
-
--- 13. Workspaces
-DELETE FROM workspaces;
-
--- 14. User-level settings (optional — uncomment if you want to reset these too)
--- DELETE FROM ai_model_settings;
--- DELETE FROM white_label_settings;
--- DELETE FROM api_keys;
-
-COMMIT;
-
--- Verify clean state
+-- Verify clean state (only checks tables that exist)
 SELECT 'audits' as tbl, count(*) FROM audits
 UNION ALL SELECT 'audit_findings', count(*) FROM audit_findings
 UNION ALL SELECT 'brand_identities', count(*) FROM brand_identities
-UNION ALL SELECT 'workspaces', count(*) FROM workspaces
-UNION ALL SELECT 'multi_model_probes', count(*) FROM multi_model_probes
-UNION ALL SELECT 'reports', count(*) FROM reports;
+UNION ALL SELECT 'workspaces', count(*) FROM workspaces;
