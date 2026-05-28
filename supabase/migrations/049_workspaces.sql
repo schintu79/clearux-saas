@@ -148,6 +148,7 @@ CROSS JOIN LATERAL (
   ) AS host
 ) h
 WHERE bi.website_url IS NOT NULL
+  AND bi.user_id IS NOT NULL
   AND bi.deleted_at IS NULL
   AND h.host != ''
 ON CONFLICT DO NOTHING;
@@ -169,6 +170,7 @@ CROSS JOIN LATERAL (
   ) AS host
 ) h
 WHERE a.product_url IS NOT NULL
+  AND a.user_id IS NOT NULL
   AND a.deleted_at IS NULL
   AND a.brand_identity_id IS NULL
   AND h.host != ''
@@ -190,6 +192,7 @@ SELECT
   bi.id
 FROM brand_identities bi
 WHERE bi.website_url IS NULL
+  AND bi.user_id IS NOT NULL
   AND bi.deleted_at IS NULL
   AND NOT EXISTS (
     SELECT 1 FROM workspaces w
