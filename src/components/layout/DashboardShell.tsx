@@ -427,6 +427,14 @@ const DashboardShell: React.FC<DashboardShellProps> = ({ children }) => {
 
         {/* Navigation */}
         <nav aria-label="Dashboard navigation" className={clsx('flex-1 overflow-y-auto pb-2', collapsed ? 'px-1.5' : 'px-2')}>
+          {/* Prompt to select workspace when none is active */}
+          {!workspaceSlug && !collapsed && (
+            <div className="mx-2 mb-3 mt-1 rounded-md px-3 py-3" style={{ background: 'var(--paper-2)', border: '1px solid var(--rule)' }}>
+              <p className="text-[12px] font-medium leading-snug" style={{ color: 'var(--ink-2)' }}>
+                Select a workspace to access your dashboard
+              </p>
+            </div>
+          )}
           {navGroups.map((group, gi) => (
             <div key={`g-${gi}`} className={clsx(gi > 0 && 'mt-3')}>
               {group.label && !collapsed && gi > 0 && (
@@ -444,30 +452,33 @@ const DashboardShell: React.FC<DashboardShellProps> = ({ children }) => {
                 {group.items.map((item) => {
                   const Icon = item.icon;
                   const active = isActive(item);
+                  const disabled = !workspaceSlug;
                   const onClick = () => setSidebarOpen(false);
                   const linkClass = clsx(
                     'flex items-center rounded-md transition-colors text-[14px] outline-none focus-visible:ring-2 focus-visible:ring-signal/40',
                     collapsed ? 'justify-center px-0 py-1.5' : 'gap-2 px-2 py-[7px]',
-                    active ? 'font-medium' : 'hover:bg-black/[0.04]',
+                    disabled ? 'pointer-events-none opacity-[0.33]' : active ? 'font-medium' : 'hover:bg-black/[0.04]',
                   );
                   const linkStyle = {
-                    color: active ? 'var(--ink)' : 'var(--ink-2)',
-                    background: active ? 'var(--paper-2)' : undefined,
+                    color: disabled ? 'var(--m-muted)' : active ? 'var(--ink)' : 'var(--ink-2)',
+                    background: active && !disabled ? 'var(--paper-2)' : undefined,
                   } as React.CSSProperties;
                   return (
                     <li key={`${group.label}-${item.label}`}>
                       <Link
-                        href={item.href}
-                        onClick={onClick}
+                        href={disabled ? '#' : item.href}
+                        onClick={disabled ? (e) => e.preventDefault() : onClick}
                         title={collapsed ? item.label : undefined}
-                        aria-current={active ? 'page' : undefined}
+                        aria-current={active && !disabled ? 'page' : undefined}
+                        aria-disabled={disabled || undefined}
+                        tabIndex={disabled ? -1 : undefined}
                         className={linkClass}
                         style={linkStyle}
                       >
                         <Icon
                           size={collapsed ? 17 : 15}
                           strokeWidth={1.75}
-                          style={{ color: active ? 'var(--ink)' : 'var(--m-muted)' }}
+                          style={{ color: disabled ? 'var(--m-muted)' : active ? 'var(--ink)' : 'var(--m-muted)' }}
                         />
                         {!collapsed && <span className="truncate">{item.label}</span>}
                       </Link>
