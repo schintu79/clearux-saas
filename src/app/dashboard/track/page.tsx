@@ -62,7 +62,8 @@ function ScoreLine({ points }: { points: Array<{ score: number; date: string }> 
 
 export default function TrackPage() {
   const { user, loading: authLoading } = useAuth();
-  const { workspace, loading: wsLoading } = useWorkspace();
+  const { workspace, workspaceSlug, loading: wsLoading } = useWorkspace();
+  const dashPrefix = workspaceSlug ? `/dashboard/${workspaceSlug}` : '/dashboard';
   const { bundle, loading: bundleLoading } = useAuditBundle();
   const loading = authLoading || wsLoading || bundleLoading || !bundle;
   const [priorFindings, setPriorFindings] = useState<import('@/types/database').AuditFinding[]>([]);
@@ -183,7 +184,7 @@ export default function TrackPage() {
               <p className="text-[12px] mt-1.5" style={{ color: 'var(--m-muted)' }}>
                 One audit so far. Run another to track movement.
               </p>
-              <ActionLink href="/dashboard/new-audit" icon={RefreshCw} className="mt-4">
+              <ActionLink href={`${dashPrefix}/new-audit`} icon={RefreshCw} className="mt-4">
                 Run re-audit
               </ActionLink>
             </div>
@@ -213,7 +214,7 @@ export default function TrackPage() {
               <span className="text-[15px] font-semibold tabular-nums" style={{ color: 'var(--signal)' }}>{backlog}</span>
             </div>
           </div>
-          <ActionLink href="/dashboard/fix" icon={ArrowRight}>
+          <ActionLink href={`${dashPrefix}/fix`} icon={ArrowRight}>
             Open Fix queue
           </ActionLink>
         </DashCard>
@@ -285,7 +286,7 @@ export default function TrackPage() {
                         {isRegressed ? 'Regressed' : 'Not resolved'}
                       </span>
                       <Link
-                        href={`/dashboard/fix?finding=${f.id}`}
+                        href={`${dashPrefix}/fix?finding=${f.id}`}
                         className="inline-flex items-center gap-1 text-[10px] font-medium flex-shrink-0"
                         style={{ color: 'var(--signal)' }}
                       >
@@ -303,7 +304,7 @@ export default function TrackPage() {
       {/* Recent audits */}
       <DashCard padding="lg">
         <SectionHeader title="Recent audits">
-          <ActionLink href="/dashboard/new-audit" icon={RefreshCw}>
+          <ActionLink href={`${dashPrefix}/new-audit`} icon={RefreshCw}>
             Run re-audit
           </ActionLink>
         </SectionHeader>
@@ -334,7 +335,7 @@ export default function TrackPage() {
                     </span>
                   )}
                   <Link
-                    href={`/dashboard/audits/${h.audit.id}`}
+                    href={`${dashPrefix}/audits/${h.audit.id}`}
                     className="text-[11px] font-medium"
                     style={{ color: 'var(--signal)' }}
                   >

@@ -56,6 +56,7 @@ import {
   Search,
 } from 'lucide-react';
 // FixPreviewPanel removed — search/social/assistant previews were causing confusion
+import { useWorkspace } from '@/context/WorkspaceContext';
 import type { AuditFinding, FixType as DbFixType } from '@/types/database';
 import DiffPreview from './DiffPreview';
 import type { SurgicalFixResult } from '@/lib/surgical-fix';
@@ -1114,6 +1115,8 @@ function SelfServeConsole({
   affectedPages?: string[];
   allCrawledPages?: string[];
 }) {
+  const { workspaceSlug: _ws } = useWorkspace();
+  const _dp = _ws ? `/dashboard/${_ws}` : '/dashboard';
   const initialPatch = (finding.recommendation || '').trim();
   const [patch, setPatch] = useState<string>(initialPatch);
 
@@ -2245,7 +2248,7 @@ function SelfServeConsole({
               Connect your FTP/SFTP server to deploy fixes directly.
             </p>
             <Link
-              href="/dashboard/connect"
+              href={`${_dp}/connect`}
               className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-[12px] font-semibold"
               style={{ background: 'var(--ink)', color: 'var(--paper)' }}
             >

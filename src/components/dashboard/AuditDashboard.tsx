@@ -13,6 +13,7 @@ import {
   RefreshCw,
 } from 'lucide-react';
 import ScoreRing from '@/components/ui/ScoreRing';
+import { useWorkspace } from '@/context/WorkspaceContext';
 import type { AuditFinding } from '@/types/database';
 
 /* ── Score Over Time Chart ───────────────────────────────── */
@@ -21,6 +22,8 @@ export function ScoreOverTimeChart({ trend }: {
   trend: Array<{ auditId: string; date: string; overallScore: number }>;
 }) {
   const router = useRouter();
+  const { workspaceSlug } = useWorkspace();
+  const dashPrefix = workspaceSlug ? `/dashboard/${workspaceSlug}` : '/dashboard';
   const [hoveredIdx, setHoveredIdx] = useState<number | null>(null);
 
   if (trend.length === 0) return null;
@@ -85,7 +88,7 @@ export function ScoreOverTimeChart({ trend }: {
                 cx={p.x} cy={p.y} r="14" fill="transparent"
                 onMouseEnter={() => setHoveredIdx(i)}
                 onMouseLeave={() => setHoveredIdx(null)}
-                onClick={() => router.push(`/dashboard/audits/${p.auditId}`)}
+                onClick={() => router.push(`${dashPrefix}/audits/${p.auditId}`)}
                 style={{ cursor: 'pointer' }}
               />
               <circle
@@ -172,6 +175,8 @@ export function TopIssuesPanel({ findings, auditId }: {
   findings: AuditFinding[];
   auditId?: string;
 }) {
+  const { workspaceSlug } = useWorkspace();
+  const dashPrefix = workspaceSlug ? `/dashboard/${workspaceSlug}` : '/dashboard';
   const sorted = [...findings]
     .filter(f => !f.dismissed && f.status !== 'fixed')
     .sort((a, b) => {
@@ -220,7 +225,7 @@ export function TopIssuesPanel({ findings, auditId }: {
           return (
             <Link
               key={f.id}
-              href={auditId ? `/dashboard/audits/${auditId}?finding=${f.id}` : '#'}
+              href={auditId ? `${dashPrefix}/audits/${auditId}?finding=${f.id}` : '#'}
               className="flex items-center gap-3 py-2.5 group hover:bg-brand/5 rounded-lg px-2 -mx-2 transition-colors"
             >
               <span className={`w-2 h-2 rounded-full flex-shrink-0 ${dotColor}`} />
@@ -595,6 +600,8 @@ export function AuditDashboardOverview({
   /** Open the benchmarks section by default (command-center mode). */
   defaultOpenBenchmarks?: boolean;
 }) {
+  const { workspaceSlug } = useWorkspace();
+  const dashPrefix = workspaceSlug ? `/dashboard/${workspaceSlug}` : '/dashboard';
   const totalFindings = findings.filter(f => !f.dismissed && f.status !== 'fixed').length;
   const [heuristicOpen, setHeuristicOpen] = useState(defaultOpenHeuristic);
   const [benchmarksOpen, setBenchmarksOpen] = useState(defaultOpenBenchmarks);
@@ -632,7 +639,7 @@ export function AuditDashboardOverview({
                 <TrendingUp size={28} className="text-muted/30 mb-2" />
                 <p className="text-xs text-muted">Re-audit to track your score over time</p>
                 <Link
-                  href={`/dashboard/new-audit?url=${encodeURIComponent(productUrl)}`}
+                  href={`${dashPrefix}/new-audit?url=${encodeURIComponent(productUrl)}`}
                   className="text-xs font-medium text-brand hover:text-brand/80 transition-colors mt-2"
                 >
                   Re-audit (1 credit) →

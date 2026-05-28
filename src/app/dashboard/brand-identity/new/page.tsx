@@ -16,6 +16,7 @@ import {
   BookOpen,
 } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
+import { useWorkspace } from '@/context/WorkspaceContext';
 import Button from '@/components/ui/Button';
 
 const ACCEPTED_TYPES = [
@@ -77,6 +78,8 @@ function getFileTypeLabel(name: string): string {
 const NewBrandPage: React.FC = () => {
   const router = useRouter();
   const { user, loading: userLoading } = useAuth();
+  const { workspaceSlug } = useWorkspace();
+  const dashPrefix = workspaceSlug ? `/dashboard/${workspaceSlug}` : '/dashboard';
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [name, setName] = useState('');
@@ -165,7 +168,7 @@ const NewBrandPage: React.FC = () => {
       }
 
       // 3. Navigate to the brand detail page
-      router.push(`/dashboard/brand-identity/${brandId}`);
+      router.push(`${dashPrefix}/brand-identity/${brandId}`);
     } catch (err) {
       setErrorMsg(err instanceof Error ? err.message : 'Failed to create brand identity');
       setCreating(false);
@@ -189,7 +192,7 @@ const NewBrandPage: React.FC = () => {
     <div className="max-w-2xl mx-auto">
       {/* Back button */}
       <Link
-        href="/dashboard/brand-identity"
+        href={`${dashPrefix}/brand-identity`}
         className="inline-flex items-center gap-1.5 text-sm text-muted hover:text-text transition-colors mb-6"
       >
         <ArrowLeft size={16} />
@@ -376,7 +379,7 @@ const NewBrandPage: React.FC = () => {
             </Button>
             {!creating && (
               <Link
-                href="/dashboard/brand-identity"
+                href={`${dashPrefix}/brand-identity`}
                 className="text-sm text-muted hover:text-text transition-colors"
               >
                 Cancel

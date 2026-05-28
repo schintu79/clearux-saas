@@ -20,6 +20,7 @@ const NewAuditInner: React.FC = () => {
   const searchParams = useSearchParams();
   const { user, loading: userLoading } = useAuth();
   const { workspace, workspaceSlug } = useWorkspace();
+  const dashPrefix = workspaceSlug ? `/dashboard/${workspaceSlug}` : '/dashboard';
   const urlInputRef = useRef<HTMLInputElement>(null);
 
   // Audit type — always website. Brand Identity audits redirect to Brand DNA.
@@ -73,7 +74,7 @@ const NewAuditInner: React.FC = () => {
   useEffect(() => {
     if (typeParam === 'brand_identity' || typeParam === 'design') {
       const brandParam = searchParams.get('brand');
-      router.replace(brandParam ? `/dashboard/brand-dna` : '/dashboard/brand-dna');
+      router.replace(`${dashPrefix}/brand-dna`);
     }
   }, [typeParam, searchParams, router]);
 
@@ -756,7 +757,7 @@ const NewAuditInner: React.FC = () => {
               </select>
               <p className="text-xs text-muted mt-1.5">
                 Select a brand to check website consistency against your brand guidelines.{' '}
-                <Link href="/dashboard/brand-identity" className="text-brand hover:underline">
+                <Link href={`${dashPrefix}/brand-identity`} className="text-brand hover:underline">
                   Manage brands
                 </Link>
               </p>
@@ -854,7 +855,7 @@ const NewAuditInner: React.FC = () => {
               <p className="text-xs text-muted">Subscribe or buy credits to run this audit.</p>
             </div>
             <Link
-              href="/dashboard/buy-credits"
+              href={`${dashPrefix}/buy-credits`}
               className="text-xs font-medium text-text hover:underline transition-colors whitespace-nowrap ml-3"
             >
               Buy credits &rarr;

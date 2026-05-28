@@ -11,6 +11,7 @@
 import React from 'react';
 import Link from 'next/link';
 import { ArrowRight, ChevronRight, Lightbulb, Wrench } from 'lucide-react';
+import { useWorkspace } from '@/context/WorkspaceContext';
 import type { AuditFinding, Report } from '@/types/database';
 
 export function derivePriorityRecs(
@@ -38,6 +39,8 @@ interface Props {
 }
 
 export default function PriorityRecommendations({ recs, findings, auditId }: Props) {
+  const { workspaceSlug } = useWorkspace();
+  const dashPrefix = workspaceSlug ? `/dashboard/${workspaceSlug}` : '/dashboard';
   const topFindings = findings
     .filter((f) => (f.severity === 'critical' || f.severity === 'high') && f.recommendation)
     .slice(0, 3);
@@ -73,7 +76,7 @@ export default function PriorityRecommendations({ recs, findings, auditId }: Pro
         </div>
         {recs.length > 0 && (
           <Link
-            href="/dashboard/fix"
+            href={`${dashPrefix}/fix`}
             className="flex-shrink-0 inline-flex items-center gap-1 text-[11px] font-semibold px-2.5 py-1 rounded-lg hover:underline"
             style={{ color: 'var(--ink)' }}
           >
@@ -113,7 +116,7 @@ export default function PriorityRecommendations({ recs, findings, auditId }: Pro
                     <div className="mt-1.5 flex items-center gap-3 flex-wrap text-[11px]">
                       {linkedFinding && (
                         <Link
-                          href={`/dashboard/fix#finding-${linkedFinding.id}`}
+                          href={`${dashPrefix}/fix#finding-${linkedFinding.id}`}
                           className="inline-flex items-center gap-1 font-semibold hover:underline"
                           style={{ color: 'var(--signal)' }}
                         >

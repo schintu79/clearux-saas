@@ -16,6 +16,7 @@ import {
   CheckCircle2,
 } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
+import { useWorkspace } from '@/context/WorkspaceContext';
 import Button from '@/components/ui/Button';
 import Card from '@/components/ui/Card';
 
@@ -69,6 +70,8 @@ const BrandIdentityDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const router = useRouter();
   const { user, loading: userLoading } = useAuth();
+  const { workspaceSlug } = useWorkspace();
+  const dashPrefix = workspaceSlug ? `/dashboard/${workspaceSlug}` : '/dashboard';
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [identity, setIdentity] = useState<BrandIdentityDetail | null>(null);
@@ -233,7 +236,7 @@ const BrandIdentityDetailPage: React.FC = () => {
     return (
       <div className="max-w-2xl mx-auto text-center py-20">
         <p className="text-muted mb-4">Brand identity not found</p>
-        <Link href="/dashboard/brand-identity" className="text-sm text-brand hover:underline">
+        <Link href={`${dashPrefix}/brand-identity`} className="text-sm text-brand hover:underline">
           Back to Brand Identities
         </Link>
       </div>
@@ -246,7 +249,7 @@ const BrandIdentityDetailPage: React.FC = () => {
     <div className="max-w-2xl mx-auto">
       {/* Back button */}
       <Link
-        href="/dashboard/brand-identity"
+        href={`${dashPrefix}/brand-identity`}
         className="inline-flex items-center gap-1.5 text-sm text-muted hover:text-text transition-colors mb-6"
       >
         <ArrowLeft size={16} />

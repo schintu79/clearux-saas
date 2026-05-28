@@ -19,6 +19,7 @@ import {
   ExternalLink,
 } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
+import { useWorkspace } from '@/context/WorkspaceContext';
 import { createBrowserSupabase } from '@/lib/supabase-ssr';
 import { AuditDashboardOverview } from '@/components/dashboard/AuditDashboard';
 import type { Audit, Report, AuditFinding } from '@/types/database';
@@ -68,6 +69,8 @@ function DomainAuditsInner({ params }: { params: Promise<{ domain: string }> }) 
   const { domain: rawDomain } = use(params);
   const domain = decodeURIComponent(rawDomain);
   const router = useRouter();
+  const { workspaceSlug } = useWorkspace();
+  const dashPrefix = workspaceSlug ? `/dashboard/${workspaceSlug}` : '/dashboard';
 
   const { user, loading: authLoading } = useAuth();
   const [audits, setAudits] = useState<AuditWithReport[]>([]);
@@ -227,7 +230,7 @@ function DomainAuditsInner({ params }: { params: Promise<{ domain: string }> }) 
 
   const handleStatCardClick = (filter: string) => {
     if (latestCompleted && filter !== 'passed') {
-      router.push(`/dashboard/audits/${latestCompleted.id}?tab=findings&severity=${filter}`);
+      router.push(`${dashPrefix}/audits/${latestCompleted.id}?tab=findings&severity=${filter}`);
     }
   };
 
@@ -265,14 +268,14 @@ function DomainAuditsInner({ params }: { params: Promise<{ domain: string }> }) 
             </a>
           )}
           <Link
-            href={`/dashboard/new-audit?url=${encodeURIComponent(productUrl)}`}
+            href={`${dashPrefix}/new-audit?url=${encodeURIComponent(productUrl)}`}
             className="inline-flex items-center gap-1.5 bg-brand text-surface text-xs font-medium px-3.5 py-2 rounded-lg transition-all hover:brightness-110"
           >
             <RefreshCw size={13} />
             Re-audit
           </Link>
           <Link
-            href={`/dashboard/new-audit?url=${encodeURIComponent(productUrl)}&depth=deep`}
+            href={`${dashPrefix}/new-audit?url=${encodeURIComponent(productUrl)}&depth=deep`}
             className="inline-flex items-center gap-1.5 bg-card border border-border text-text text-xs font-medium px-3 py-2 rounded-lg hover:bg-surface-alt transition-colors"
           >
             <Search size={13} />
@@ -328,7 +331,7 @@ function DomainAuditsInner({ params }: { params: Promise<{ domain: string }> }) 
           <h2 className="font-medium text-sm text-text mb-1">No audits for {domain}</h2>
           <p className="text-muted text-xs mb-4 max-w-xs mx-auto">Start an audit to analyze this site.</p>
           <Link
-            href={`/dashboard/new-audit?url=${encodeURIComponent(productUrl || `https://${domain}`)}`}
+            href={`${dashPrefix}/new-audit?url=${encodeURIComponent(productUrl || `https://${domain}`)}`}
             className="inline-flex items-center gap-1.5 bg-brand text-surface text-xs font-medium px-4 py-2 rounded-lg transition-all hover:brightness-110"
           >
             <Sparkles size={13} /> Start audit
@@ -346,7 +349,7 @@ function DomainAuditsInner({ params }: { params: Promise<{ domain: string }> }) 
 
               return (
                 <div key={audit.id} className="flex items-center gap-2 hover:bg-black/[0.02] transition-colors group/row">
-                  <Link href={`/dashboard/audits/${audit.id}`} className="flex-1 min-w-0 px-4 py-3 flex items-center gap-3">
+                  <Link href={`${dashPrefix}/audits/${audit.id}`} className="flex-1 min-w-0 px-4 py-3 flex items-center gap-3">
                     <div className="flex items-center gap-2 text-[11px] text-muted flex-1 min-w-0">
                       <span className="text-text font-medium">{formatDate(audit.created_at)}</span>
                       <span className="text-border">·</span>

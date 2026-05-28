@@ -17,6 +17,7 @@ import {
   ChevronRight,
 } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
+import { useWorkspace } from '@/context/WorkspaceContext';
 import { createBrowserSupabase } from '@/lib/supabase-ssr';
 import { AuditDashboardOverview } from '@/components/dashboard/AuditDashboard';
 import { PILLAR_FOR_CATEGORY } from '@/lib/audit-checkpoints';
@@ -63,6 +64,8 @@ function BrandAuditsInner({ params }: { params: Promise<{ name: string }> }) {
   const { name: rawName } = use(params);
   const brandName = decodeURIComponent(rawName);
   const router = useRouter();
+  const { workspaceSlug } = useWorkspace();
+  const dashPrefix = workspaceSlug ? `/dashboard/${workspaceSlug}` : '/dashboard';
 
   const { user, loading: authLoading } = useAuth();
   const [audits, setAudits] = useState<AuditWithReport[]>([]);
@@ -250,7 +253,7 @@ function BrandAuditsInner({ params }: { params: Promise<{ name: string }> }) {
 
   const handleStatCardClick = (filter: string) => {
     if (latestCompleted && filter !== 'passed') {
-      router.push(`/dashboard/audits/${latestCompleted.id}?tab=findings&severity=${filter}`);
+      router.push(`${dashPrefix}/audits/${latestCompleted.id}?tab=findings&severity=${filter}`);
     }
   };
 
@@ -280,7 +283,7 @@ function BrandAuditsInner({ params }: { params: Promise<{ name: string }> }) {
             </a>
           )}
           <Link
-            href="/dashboard/brand-dna"
+            href={`${dashPrefix}/brand-dna`}
             className="inline-flex items-center gap-1.5 bg-brand text-surface text-xs font-medium px-3.5 py-2 rounded-lg transition-all hover:brightness-110"
           >
             <RefreshCw size={13} />
@@ -319,7 +322,7 @@ function BrandAuditsInner({ params }: { params: Promise<{ name: string }> }) {
           <h2 className="font-medium text-sm text-text mb-1">No audits for {brandName}</h2>
           <p className="text-muted text-xs mb-4 max-w-xs mx-auto">Start a brand identity audit to evaluate your brand materials.</p>
           <Link
-            href="/dashboard/brand-dna"
+            href={`${dashPrefix}/brand-dna`}
             className="inline-flex items-center gap-1.5 bg-brand text-surface text-xs font-medium px-4 py-2 rounded-lg transition-all hover:brightness-110"
           >
             <Sparkles size={13} /> Start audit
@@ -337,7 +340,7 @@ function BrandAuditsInner({ params }: { params: Promise<{ name: string }> }) {
 
               return (
                 <div key={audit.id} className="flex items-center gap-2 hover:bg-black/[0.02] transition-colors group/row">
-                  <Link href={`/dashboard/audits/${audit.id}`} className="flex-1 min-w-0 px-4 py-3 flex items-center gap-3">
+                  <Link href={`${dashPrefix}/audits/${audit.id}`} className="flex-1 min-w-0 px-4 py-3 flex items-center gap-3">
                     <div className="flex items-center gap-2 text-[11px] text-muted flex-1 min-w-0">
                       <span className="text-text font-medium">{formatDate(audit.created_at)}</span>
                       <span className="text-border">·</span>

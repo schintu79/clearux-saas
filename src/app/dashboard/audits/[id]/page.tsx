@@ -61,6 +61,7 @@ import {
   WifiOff,
 } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
+import { useWorkspace } from '@/context/WorkspaceContext';
 import { createBrowserSupabase } from '@/lib/supabase-ssr';
 import Button from '@/components/ui/Button';
 import Card from '@/components/ui/Card';
@@ -297,6 +298,8 @@ function AuditProgressLoader({
   auditId: string;
   onRestart?: () => void;
 }) {
+  const { workspaceSlug: _ws } = useWorkspace();
+  const dashPrefix = _ws ? `/dashboard/${_ws}` : '/dashboard';
   const { data: progressData } = useAuditProgress(auditId, {
     enabled: ['payment_received', 'crawling', 'analysing', 'generating_report'].includes(status),
     interval: 2500,
@@ -465,7 +468,7 @@ function AuditProgressLoader({
 
       {/* Secondary CTA */}
       <Link
-        href="/dashboard/overview"
+        href={`${dashPrefix}/overview`}
         className="inline-flex items-center gap-1.5 text-[12px] font-medium px-3 py-1.5 rounded-md transition-colors"
         style={{
           color: 'var(--ink)',
@@ -598,6 +601,8 @@ function CheckpointHealth({ categoryScores, findings }: {
 /* ── Score Over Time — collapsible line chart, closed by default ── */
 function ScoreOverTime({ productUrl, currentAuditId, currentScore }: { productUrl: string; currentAuditId: string; currentScore?: number }) {
   const router = useRouter();
+  const { workspaceSlug: _ws } = useWorkspace();
+  const dashPrefix = _ws ? `/dashboard/${_ws}` : '/dashboard';
   const [trend, setTrend] = useState<Array<{ auditId: string; date: string; overallScore: number }>>([]);
   const [improvement, setImprovement] = useState(0);
   const [loading, setLoading] = useState(true);
@@ -712,7 +717,7 @@ function ScoreOverTime({ productUrl, currentAuditId, currentScore }: { productUr
                     cx={p.x} cy={p.y} r="14" fill="transparent"
                     onMouseEnter={() => setHoveredIdx(i)}
                     onMouseLeave={() => setHoveredIdx(null)}
-                    onClick={() => router.push(`/dashboard/audits/${p.auditId}`)}
+                    onClick={() => router.push(`${dashPrefix}/audits/${p.auditId}`)}
                     style={{ cursor: 'pointer' }}
                   />
                   <circle
@@ -1335,6 +1340,8 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { user, loading: userLoading } = useAuth();
+  const { workspaceSlug } = useWorkspace();
+  const dashPrefix = workspaceSlug ? `/dashboard/${workspaceSlug}` : '/dashboard';
 
   const [audit, setAudit] = useState<AuditWithReport | null>(null);
   const [findings, setFindings] = useState<AuditFinding[]>([]);
@@ -1627,7 +1634,7 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
           if (s === 'completed' || s === 'failed') {
             if (pollRef.current) clearInterval(pollRef.current);
             if (s === 'completed' && wasWaitingRef.current) {
-              router.push('/dashboard/overview');
+              router.push(`${dashPrefix}/overview`);
             }
           }
         }, 5000);
@@ -1670,7 +1677,7 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
         if (pollRef.current) { clearInterval(pollRef.current); pollRef.current = null; }
         // Auto-redirect to Overview when audit completes while user was waiting
         if (s === 'completed' && wasWaitingRef.current) {
-          router.push('/dashboard/overview');
+          router.push(`${dashPrefix}/overview`);
         }
       }
     }, 4000);
@@ -1737,7 +1744,7 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
       const { error } = await supabase.from('audits').update({ deleted_at: new Date().toISOString() }).eq('id', auditId);
       if (error) throw error;
       // Stay in the same site context — overview will pick up the next audit
-      router.push('/dashboard/overview');
+      router.push(`${dashPrefix}/overview`);
     } catch (err) {
       console.error('Error deleting audit:', err);
       alert('Failed to delete audit');
@@ -1894,7 +1901,7 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
   if (error || !audit) {
     return (
       <div className="max-w-4xl mx-auto py-8 px-4 space-y-4">
-        <Link href="/dashboard/overview" className="inline-flex items-center gap-1.5 text-sm text-m-muted hover:text-ink transition-colors">
+        <Link href={`${dashPrefix}/overview`} className="inline-flex items-center gap-1.5 text-sm text-m-muted hover:text-ink transition-colors">
           <ArrowLeft size={16} />
           Back to overview
         </Link>
@@ -2085,7 +2092,7 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
 
       {/* Back — always return to the dashboard Overview */}
       <Link
-        href="/dashboard/overview"
+        href={`${dashPrefix}/overview`}
         className="inline-flex items-center gap-1.5 text-sm text-m-muted hover:text-ink transition-colors mb-6"
       >
         <ArrowLeft size={16} />
@@ -2171,7 +2178,7 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
                 </>
               )}
               <Link
-                href={`/dashboard/new-audit?url=${encodeURIComponent(audit.product_url || '')}`}
+                href={`${dashPrefix}/new-audit?url=${encodeURIComponent(audit.product_url || '')}`}
                 onClick={() => setMenuOpen(false)}
                 className="w-full flex items-center gap-2.5 px-3.5 py-2 text-xs text-ink hover:bg-paper-2 transition-colors"
               >
@@ -2180,7 +2187,7 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
                 <span className="ml-auto text-[11px] text-m-muted">1 credit</span>
               </Link>
               <Link
-                href={`/dashboard/new-audit?url=${encodeURIComponent(audit.product_url || '')}&depth=deep`}
+                href={`${dashPrefix}/new-audit?url=${encodeURIComponent(audit.product_url || '')}&depth=deep`}
                 onClick={() => setMenuOpen(false)}
                 className="w-full flex items-center gap-2.5 px-3.5 py-2 text-xs text-ink hover:bg-paper-2 transition-colors"
               >
@@ -2448,13 +2455,13 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
                 <Download size={13} /> Word
               </a>
               <Link
-                href={`/dashboard/new-audit?url=${encodeURIComponent(audit.product_url || '')}`}
+                href={`${dashPrefix}/new-audit?url=${encodeURIComponent(audit.product_url || '')}`}
                 className="flex items-center gap-2 border border-ink/20 text-ink text-[11px] font-semibold tracking-[0.03em] uppercase px-4 py-2 rounded-lg hover:bg-paper-2 transition-colors"
               >
                 <RefreshCw size={13} /> Re-audit
               </Link>
               <Link
-                href={`/dashboard/new-audit?url=${encodeURIComponent(audit.product_url || '')}&depth=deep`}
+                href={`${dashPrefix}/new-audit?url=${encodeURIComponent(audit.product_url || '')}&depth=deep`}
                 className="flex items-center gap-2 border border-signal/30 text-signal text-[11px] font-semibold tracking-[0.03em] uppercase px-4 py-2 rounded-lg hover:bg-signal/5 transition-colors"
               >
                 <Search size={13} /> Deep mode
@@ -4314,7 +4321,7 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
                     </div>
                     <div className="flex flex-wrap items-center gap-2 px-5 py-4 border-t border-rule">
                       <Link
-                        href={`/dashboard/new-audit?url=${encodeURIComponent(audit.product_url || '')}`}
+                        href={`${dashPrefix}/new-audit?url=${encodeURIComponent(audit.product_url || '')}`}
                         className="inline-flex items-center gap-1.5 text-[12px] font-semibold px-3 py-1.5 rounded-md whitespace-nowrap"
                         style={{ color: 'var(--ink)', background: 'color-mix(in srgb, var(--ink) 6%, transparent)' }}
                       >
@@ -5364,13 +5371,13 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
                   <Download size={14} strokeWidth={2} /> Word Report
                 </a>
                 <Link
-                  href={`/dashboard/new-audit?url=${encodeURIComponent(audit.product_url || '')}`}
+                  href={`${dashPrefix}/new-audit?url=${encodeURIComponent(audit.product_url || '')}`}
                   className="flex items-center justify-center gap-2 text-[13px] font-semibold text-ink bg-paper border border-rule rounded-lg px-4 py-2.5 hover:bg-paper-2 transition-colors whitespace-nowrap"
                 >
                   <RefreshCw size={14} strokeWidth={2} /> Re-audit
                 </Link>
                 <Link
-                  href={`/dashboard/new-audit?url=${encodeURIComponent(audit.product_url || '')}&depth=deep`}
+                  href={`${dashPrefix}/new-audit?url=${encodeURIComponent(audit.product_url || '')}&depth=deep`}
                   className="flex items-center justify-center gap-2 text-[13px] font-semibold text-signal bg-signal/5 border border-signal/20 rounded-lg px-4 py-2.5 hover:bg-signal/10 transition-colors whitespace-nowrap"
                 >
                   <Search size={14} strokeWidth={2} /> Deep mode

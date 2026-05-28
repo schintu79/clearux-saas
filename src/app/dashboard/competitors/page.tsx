@@ -199,6 +199,8 @@ function AIVisibilityPerceptionCard({
   const chartRef = useRef<HTMLDivElement>(null);
 
   // Build ranked entries: brand + competitors by AI visibility %
+  const { workspaceSlug: _ws } = useWorkspace();
+  const dashPrefix = _ws ? `/dashboard/${_ws}` : '/dashboard';
   // Primary source: LLM probe mention data. Fallback: competitor_benchmarks scores.
   // The audited brand is ALWAYS included so the user can see their position.
   const rankedEntries = useMemo<VisRankedEntry[]>(() => {
@@ -466,7 +468,7 @@ function AIVisibilityPerceptionCard({
       {/* ── Link to AI Perception tab ────────────────── */}
       <div className="mt-4 pt-3" style={{ borderTop: '1px solid var(--rule)' }}>
         <Link
-          href="/dashboard/ai-perception"
+          href={`${dashPrefix}/ai-perception`}
           className="inline-flex items-center gap-1.5 text-[12px] font-medium transition-opacity hover:opacity-70"
           style={{ color: 'var(--m-muted)' }}
         >
@@ -536,7 +538,8 @@ function BrandTrendSparkline({ data, color }: { data: Array<{ date: Date; value:
 
 export default function CompetitorsPage() {
   const { user, loading: authLoading } = useAuth();
-  const { workspace, loading: wsLoading } = useWorkspace();
+  const { workspace, workspaceSlug, loading: wsLoading } = useWorkspace();
+  const dashPrefix = workspaceSlug ? `/dashboard/${workspaceSlug}` : '/dashboard';
   const { bundle, loading: bundleLoading } = useAuditBundle();
   // Show loading during initial load, bundle fetch, or site transition.
   // When bundle is null (site switch in progress), always show loading

@@ -103,7 +103,8 @@ function FilterDropdown({
 
 function FindPageInner() {
   const { loading: authLoading } = useAuth();
-  const { workspace, loading: wsLoading } = useWorkspace();
+  const { workspace, workspaceSlug, loading: wsLoading } = useWorkspace();
+  const dashPrefix = workspaceSlug ? `/dashboard/${workspaceSlug}` : '/dashboard';
   const { bundle, loading: bundleLoading } = useAuditBundle();
   const searchParams = useSearchParams();
   const loading = authLoading || wsLoading || bundleLoading || !bundle;
@@ -394,7 +395,7 @@ function FindPageInner() {
               Clear filters
             </ActionLink>
           ) : (
-            <ActionLink href="/dashboard/new-audit" icon={ArrowRight} className="mt-4">
+            <ActionLink href={`${dashPrefix}/new-audit`} icon={ArrowRight} className="mt-4">
               Run re-audit
             </ActionLink>
           )}
@@ -553,7 +554,7 @@ function FindPageInner() {
                                 View
                               </button>
                               <Link
-                                href={`/dashboard/fix#finding-${f.id}`}
+                                href={`${dashPrefix}/fix#finding-${f.id}`}
                                 className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-[11px] font-medium transition-colors"
                                 style={{ color: 'var(--paper)', background: 'var(--ink)' }}
                                 onClick={(e) => e.stopPropagation()}
@@ -590,7 +591,7 @@ function FindPageInner() {
                                 </div>
                               </div>
                               <div className="col-span-full flex justify-end">
-                                <ActionLink href={`/dashboard/fix#finding-${f.id}`} icon={Wrench}>
+                                <ActionLink href={`${dashPrefix}/fix#finding-${f.id}`} icon={Wrench}>
                                   Open in fix console
                                 </ActionLink>
                               </div>

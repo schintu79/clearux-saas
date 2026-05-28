@@ -85,7 +85,8 @@ function scoreColor(s: number | null): string {
 
 export default function AIReadabilityPage() {
   const { user, loading: authLoading } = useAuth();
-  const { workspace, loading: wsLoading } = useWorkspace();
+  const { workspace, workspaceSlug, loading: wsLoading } = useWorkspace();
+  const dashPrefix = workspaceSlug ? `/dashboard/${workspaceSlug}` : '/dashboard';
   const { bundle, loading: bundleLoading } = useAuditBundle();
   const [pages, setPages] = useState<AuditPageRow[]>([]);
   const [probes, setProbes] = useState<ModelProbe[]>([]);
@@ -173,6 +174,8 @@ function AIReadabilityBody({
   probes: ModelProbe[];
   onProbesRefreshed: () => void;
 }) {
+  const { workspaceSlug: _ws } = useWorkspace();
+  const dashPrefix = _ws ? `/dashboard/${_ws}` : '/dashboard';
   const audit = bundle.audit!;
   const [rescanning, setRescanning] = useState(false);
   const [rescanError, setRescanError] = useState<string | null>(null);
@@ -588,7 +591,7 @@ function AIReadabilityBody({
                       )}
                       {missing.length > 0 && (
                         <Link
-                          href="/dashboard/fix?module=Foundation"
+                          href={`${dashPrefix}/fix?module=Foundation`}
                           className="inline-flex items-center gap-1 mt-3 text-[11px] font-semibold hover:underline"
                           style={{ color: 'var(--ink)' }}
                         >
@@ -608,7 +611,7 @@ function AIReadabilityBody({
         Scores are computed from your latest audit ({audit.product_url ? new URL(audit.product_url).hostname.replace(/^www\./, '') : 'this brand'}).
         Want the raw bot text and structured-data inspector?{' '}
         <Link
-          href={`/dashboard/audits/${audit.id}#ai_xray`}
+          href={`${dashPrefix}/audits/${audit.id}#ai_xray`}
           className="inline-flex items-center gap-1 font-semibold hover:underline"
           style={{ color: 'var(--ink)' }}
         >

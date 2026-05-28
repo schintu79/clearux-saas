@@ -42,6 +42,7 @@ import Card from '@/components/ui/Card';
 import Badge from '@/components/ui/Badge';
 import ScoreRing from '@/components/ui/ScoreRing';
 import { HeuristicRadarChart } from '@/components/dashboard/AuditDashboard';
+import { useWorkspace } from '@/context/WorkspaceContext';
 import type { AuditWithReport, AuditFinding, FindingSeverity, Report } from '@/types/database';
 import { BRAND_AUDIT_CATEGORIES } from '@/lib/brand-audit-modules';
 import clsx from 'clsx';
@@ -433,6 +434,8 @@ export default function BrandAuditDetail({
   user: { id: string };
 }) {
   const router = useRouter();
+  const { workspaceSlug } = useWorkspace();
+  const dashPrefix = workspaceSlug ? `/dashboard/${workspaceSlug}` : '/dashboard';
   const [audit, setAudit] = useState<AuditWithReport | null>(null);
   const [findings, setFindings] = useState<AuditFinding[]>([]);
   const [brandName, setBrandName] = useState<string>('');
@@ -607,7 +610,7 @@ export default function BrandAuditDetail({
     try {
       const supabase = createBrowserSupabase();
       await supabase.from('audits').delete().eq('id', auditId);
-      router.push('/dashboard/audits?type=brand_identity');
+      router.push(`${dashPrefix}/audits?type=brand_identity`);
     } catch (err) {
       console.error('Error deleting:', err);
       alert('Failed to delete audit');
@@ -676,7 +679,7 @@ export default function BrandAuditDetail({
   if (error || !audit) {
     return (
       <div className="max-w-4xl mx-auto py-8 px-4">
-        <Link href="/dashboard/audits?type=brand_identity" className="inline-flex items-center gap-1.5 text-sm text-m-muted hover:text-ink transition-colors mb-6">
+        <Link href={`${dashPrefix}/audits?type=brand_identity`} className="inline-flex items-center gap-1.5 text-sm text-m-muted hover:text-ink transition-colors mb-6">
           <ArrowLeft size={16} /> Back to Audits
         </Link>
         <Card>
@@ -709,7 +712,7 @@ export default function BrandAuditDetail({
     <div className="max-w-4xl mx-auto py-4 px-4">
       {/* Back */}
       <Link
-        href="/dashboard/audits?type=brand_identity"
+        href={`${dashPrefix}/audits?type=brand_identity`}
         className="inline-flex items-center gap-1.5 text-sm text-m-muted hover:text-ink transition-colors mb-6"
       >
         <ArrowLeft size={16} /> Back to Brand Audits
@@ -756,7 +759,7 @@ export default function BrandAuditDetail({
               )}
               {audit.brand_identity_id && (
                 <Link
-                  href="/dashboard/brand-dna"
+                  href={`${dashPrefix}/brand-dna`}
                   onClick={() => setMenuOpen(false)}
                   className="w-full flex items-center gap-2.5 px-3.5 py-2 text-xs text-ink hover:bg-paper-2 transition-colors"
                 >
@@ -931,7 +934,7 @@ export default function BrandAuditDetail({
               </a>
               {audit.brand_identity_id && (
                 <Link
-                  href="/dashboard/brand-dna"
+                  href={`${dashPrefix}/brand-dna`}
                   className="flex items-center gap-2 border border-ink/20 text-ink text-[11px] font-mono tracking-[0.06em] uppercase px-4 py-2 rounded-lg hover:bg-paper-2 transition-colors"
                 >
                   <RefreshCw size={13} /> Re-audit

@@ -24,6 +24,7 @@ import {
 } from 'lucide-react';
 import PageHeader from '@/components/dashboard/v2/PageHeader';
 import { useAuth } from '@/context/AuthContext';
+import { useWorkspace } from '@/context/WorkspaceContext';
 import { createBrowserSupabase } from '@/lib/supabase-ssr';
 
 interface PortfolioBrand {
@@ -60,6 +61,8 @@ type SortKey = 'risk' | 'score' | 'recent';
 
 export default function PortfolioPage() {
   const { user, loading: authLoading } = useAuth();
+  const { workspaceSlug } = useWorkspace();
+  const dashPrefix = workspaceSlug ? `/dashboard/${workspaceSlug}` : '/dashboard';
   const [items, setItems] = useState<PortfolioBrand[]>([]);
   const [loading, setLoading] = useState(true);
   const [sort, setSort] = useState<SortKey>('risk');
@@ -192,7 +195,7 @@ export default function PortfolioPage() {
         subtitle="Which brand or client needs attention first? Ranked by open criticals and lowest score."
       >
         <Link
-          href="/dashboard/new-audit"
+          href={`${dashPrefix}/new-audit`}
           className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg text-[13px] font-semibold transition-all hover:opacity-90 flex-shrink-0"
           style={{ background: 'var(--ink)', color: 'var(--paper)' }}
         >
@@ -213,7 +216,7 @@ export default function PortfolioPage() {
             Add your first brand or site, run an audit, and we will surface where you should look first.
           </p>
           <Link
-            href="/dashboard/new-audit"
+            href={`${dashPrefix}/new-audit`}
             className="inline-flex items-center gap-1.5 mt-4 px-4 py-2 rounded-lg text-[13px] font-semibold"
             style={{ background: 'var(--ink)', color: 'var(--paper)' }}
           >
@@ -260,10 +263,10 @@ export default function PortfolioPage() {
               const d = i.latestScore != null && i.priorScore != null ? i.latestScore - i.priorScore : null;
               const Icon = i.kind === 'brand' ? Fingerprint : Globe;
               const href = i.kind === 'site' && i.latestAuditId
-                ? `/dashboard/audits/${i.latestAuditId}`
+                ? `${dashPrefix}/audits/${i.latestAuditId}`
                 : i.kind === 'brand'
-                  ? `/dashboard/brand-identity/${i.id.replace('brand:', '')}`
-                  : '/dashboard/new-audit';
+                  ? `${dashPrefix}/brand-identity/${i.id.replace('brand:', '')}`
+                  : `${dashPrefix}/new-audit`;
               return (
                 <li key={i.id}>
                   <Link

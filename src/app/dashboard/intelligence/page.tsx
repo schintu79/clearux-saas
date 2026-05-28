@@ -157,7 +157,8 @@ function placementDisplay(p: number | null): { label: string; color: string } {
 
 export default function IntelligencePage() {
   const { user, loading: authLoading } = useAuth();
-  const { workspace, loading: wsLoading } = useWorkspace();
+  const { workspace, workspaceSlug, loading: wsLoading } = useWorkspace();
+  const dashPrefix = workspaceSlug ? `/dashboard/${workspaceSlug}` : '/dashboard';
   const { bundle, loading: bundleLoading } = useAuditBundle();
   const loading = authLoading || wsLoading || bundleLoading || !bundle;
 
@@ -481,7 +482,7 @@ export default function IntelligencePage() {
               <p className="text-[11px] mt-1" style={{ color: 'var(--m-muted)' }}>
                 Run a site audit on the same brand to unlock competitor comparisons.
               </p>
-              <Link href="/dashboard/new-audit" className="inline-flex items-center gap-1 mt-2 text-[11px] font-semibold hover:underline" style={{ color: 'var(--ink)' }}>
+              <Link href={`${dashPrefix}/new-audit`} className="inline-flex items-center gap-1 mt-2 text-[11px] font-semibold hover:underline" style={{ color: 'var(--ink)' }}>
                 Run a site audit <ArrowRight size={10} />
               </Link>
             </div>
@@ -972,6 +973,8 @@ function CompetitorEditor({
 /* ── Fix Recommendation Card ── */
 
 function FixRecommendationCard({ rec, auditId }: { rec: AuditRecommendation; auditId: string }) {
+  const { workspaceSlug: _ws } = useWorkspace();
+  const dashPrefix = _ws ? `/dashboard/${_ws}` : '/dashboard';
   const impactColor = rec.impact === 'high' ? 'var(--severe)' : rec.impact === 'medium' ? 'var(--warn)' : 'var(--m-muted)';
 
   return (
@@ -989,7 +992,7 @@ function FixRecommendationCard({ rec, auditId }: { rec: AuditRecommendation; aud
           </div>
           <p className="text-[11px] leading-relaxed" style={{ color: 'var(--m-muted)' }}>{rec.description}</p>
           {rec.deployable && (
-            <Link href={`/dashboard/fix?audit=${auditId}`} className="inline-flex items-center gap-1 mt-1.5 text-[10px] font-semibold hover:underline" style={{ color: 'var(--ink)' }}>
+            <Link href={`${dashPrefix}/fix?audit=${auditId}`} className="inline-flex items-center gap-1 mt-1.5 text-[10px] font-semibold hover:underline" style={{ color: 'var(--ink)' }}>
               <Wrench size={9} /> Fix from console <ChevronRight size={9} />
             </Link>
           )}

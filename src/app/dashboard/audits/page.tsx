@@ -18,6 +18,7 @@ import {
   Lock,
 } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
+import { useWorkspace } from '@/context/WorkspaceContext';
 import { createBrowserSupabase } from '@/lib/supabase-ssr';
 import Badge from '@/components/ui/Badge';
 import type { Audit, AuditType, Report } from '@/types/database';
@@ -92,6 +93,8 @@ function WebsiteAuditGroup({ domain, audits }: {
   domain: string;
   audits: AuditWithReport[];
 }) {
+  const { workspaceSlug: _ws } = useWorkspace();
+  const _dp = _ws ? `/dashboard/${_ws}` : '/dashboard';
   const hasMultiple = audits.length > 1;
   const latest = audits[0];
   const latestMeta = getStatusMeta(latest.status, 'website');
@@ -109,7 +112,7 @@ function WebsiteAuditGroup({ domain, audits }: {
   if (!hasMultiple) {
     return (
       <div className="rounded-xl overflow-hidden transition-colors group" style={{ border: '1px solid var(--rule)', background: 'var(--paper)' }}>
-        <Link href={`/dashboard/audits/${latest.id}`} className="block px-4 py-3">
+        <Link href={`${_dp}/audits/${latest.id}`} className="block px-4 py-3">
           <div className="flex items-center justify-between gap-3">
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-1.5 mb-0.5">
@@ -144,7 +147,7 @@ function WebsiteAuditGroup({ domain, audits }: {
   return (
     <div className="rounded-xl overflow-hidden transition-colors group" style={{ border: '1px solid var(--rule)', background: 'var(--paper)' }}>
       <Link
-        href={`/dashboard/audits/site/${encodeURIComponent(domain)}`}
+        href={`${_dp}/audits/site/${encodeURIComponent(domain)}`}
         className="block px-4 py-3"
       >
         <div className="flex items-center justify-between gap-3">
@@ -192,6 +195,8 @@ function BrandAuditGroup({ brandName, audits }: {
   brandName: string;
   audits: AuditWithReport[];
 }) {
+  const { workspaceSlug: _ws } = useWorkspace();
+  const _dp = _ws ? `/dashboard/${_ws}` : '/dashboard';
   const hasMultiple = audits.length > 1;
   const latest = audits[0];
   const latestMeta = getStatusMeta(latest.status, 'brand_identity');
@@ -209,7 +214,7 @@ function BrandAuditGroup({ brandName, audits }: {
   if (!hasMultiple) {
     return (
       <div className="rounded-xl overflow-hidden transition-colors group" style={{ border: '1px solid var(--rule)', background: 'var(--paper)' }}>
-        <Link href={`/dashboard/audits/${latest.id}`} className="block px-4 py-3">
+        <Link href={`${_dp}/audits/${latest.id}`} className="block px-4 py-3">
           <div className="flex items-center justify-between gap-3">
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-1.5 mb-0.5">
@@ -244,7 +249,7 @@ function BrandAuditGroup({ brandName, audits }: {
   return (
     <div className="rounded-xl overflow-hidden transition-colors group" style={{ border: '1px solid var(--rule)', background: 'var(--paper)' }}>
       <Link
-        href={`/dashboard/audits/brand/${encodeURIComponent(brandName)}`}
+        href={`${_dp}/audits/brand/${encodeURIComponent(brandName)}`}
         className="block px-4 py-3"
       >
         <div className="flex items-center justify-between gap-3">
@@ -290,6 +295,8 @@ function BrandAuditGroup({ brandName, audits }: {
 
 function AuditsPageInner() {
   const { user, loading: authLoading } = useAuth();
+  const { workspaceSlug } = useWorkspace();
+  const dashPrefix = workspaceSlug ? `/dashboard/${workspaceSlug}` : '/dashboard';
   const searchParams = useSearchParams();
   const router = useRouter();
   const [audits, setAudits] = useState<AuditWithReport[]>([]);
@@ -311,7 +318,7 @@ function AuditsPageInner() {
       params.set('type', tab);
     }
     const qs = params.toString();
-    window.history.replaceState(null, '', `/dashboard/audits${qs ? `?${qs}` : ''}`);
+    window.history.replaceState(null, '', `${dashPrefix}/audits${qs ? `?${qs}` : ''}`);
   }, []);
 
   const fetchAudits = useCallback(async (userId: string) => {
@@ -438,7 +445,7 @@ function AuditsPageInner() {
             {audits.length} audit{audits.length !== 1 ? 's' : ''} total
           </p>
         </div>
-        <Link href="/dashboard/new-audit" className="inline-flex items-center gap-1.5 text-[13px] font-medium px-3.5 py-2 rounded-lg transition-all hover:opacity-90" style={{ background: 'var(--ink)', color: 'var(--paper)' }}>
+        <Link href={`${dashPrefix}/new-audit`} className="inline-flex items-center gap-1.5 text-[13px] font-medium px-3.5 py-2 rounded-lg transition-all hover:opacity-90" style={{ background: 'var(--ink)', color: 'var(--paper)' }}>
           <Sparkles size={13} />
           New audit
         </Link>
@@ -502,7 +509,7 @@ function AuditsPageInner() {
               : 'Run a brand identity audit to evaluate your brand materials.'}
           </p>
           <Link
-            href={activeTab === 'brand_identity' ? '/dashboard/brand-dna' : '/dashboard/new-audit'}
+            href={activeTab === 'brand_identity' ? `${dashPrefix}/brand-dna` : `${dashPrefix}/new-audit`}
             className="inline-flex items-center gap-1.5 text-[13px] font-medium px-4 py-2 rounded-lg transition-all hover:opacity-90"
             style={{ background: 'var(--ink)', color: 'var(--paper)' }}
           >

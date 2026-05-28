@@ -11,6 +11,7 @@
 import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useAuth } from '@/context/AuthContext';
+import { useWorkspace } from '@/context/WorkspaceContext';
 import { ArrowRight, FileText, Share2 } from 'lucide-react';
 import PageHeader from '@/components/dashboard/v2/PageHeader';
 import DashCard from '@/components/dashboard/v2/DashCard';
@@ -29,6 +30,8 @@ interface ReportRow {
 
 export default function ReportsPage() {
   const { user, loading: authLoading } = useAuth();
+  const { workspaceSlug } = useWorkspace();
+  const dashPrefix = workspaceSlug ? `/dashboard/${workspaceSlug}` : '/dashboard';
   const [rows, setRows] = useState<ReportRow[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -91,7 +94,7 @@ export default function ReportsPage() {
             Reports appear here once an audit completes. Download as PDF, share with your team, or export findings for your workflow.
           </p>
           <div className="mt-4">
-            <ActionLink href="/dashboard/new-audit" icon={ArrowRight}>
+            <ActionLink href={`${dashPrefix}/new-audit`} icon={ArrowRight}>
               Run an audit
             </ActionLink>
           </div>
@@ -102,7 +105,7 @@ export default function ReportsPage() {
             <li key={r.id}>
               <DashCard padding="none">
                 <Link
-                  href={`/dashboard/audits/${r.id}`}
+                  href={`${dashPrefix}/audits/${r.id}`}
                   className="p-4 flex items-center gap-4 transition-all hover:opacity-90"
                 >
                   <FileText size={16} style={{ color: 'var(--m-muted)' }} />

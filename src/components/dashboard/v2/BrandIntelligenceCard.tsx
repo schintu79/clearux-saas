@@ -4,6 +4,7 @@ import React, { useCallback, useState } from 'react'
 import Link from 'next/link'
 import { Radio, ChevronRight, RefreshCw, Eye, SmilePlus, BookOpen, Cpu } from 'lucide-react'
 import ScoreCircle from '@/components/ui/ScoreCircle'
+import { useWorkspace } from '@/context/WorkspaceContext'
 import type { BrandIntelligenceSummary } from '@/lib/audit-engine/brand-intelligence'
 
 /* ── Props ─────────────────────────────────────────── */
@@ -51,6 +52,8 @@ export default function BrandIntelligenceCard({
   probes = [],
   onXRayRefreshed,
 }: BrandIntelligenceCardProps) {
+  const { workspaceSlug } = useWorkspace()
+  const dashPrefix = workspaceSlug ? `/dashboard/${workspaceSlug}` : '/dashboard'
   const [refreshing, setRefreshing] = useState(false)
   const [refreshOk, setRefreshOk] = useState(false)
 
@@ -121,7 +124,7 @@ export default function BrandIntelligenceCard({
 
   return (
     <Link
-      href="/dashboard/intelligence"
+      href={`${dashPrefix}/intelligence`}
       className="rounded-xl p-4 sm:p-5 flex flex-col h-full transition-all hover:shadow-md hover:-translate-y-0.5 group"
       style={{ background: 'var(--card)', border: '1px solid var(--rule)' }}
       aria-label="Open Brand Intelligence"

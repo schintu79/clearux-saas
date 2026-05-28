@@ -13,6 +13,7 @@ import {
 } from 'lucide-react';
 import PageHeader from '@/components/dashboard/v2/PageHeader';
 import { useAuth } from '@/context/AuthContext';
+import { useWorkspace } from '@/context/WorkspaceContext';
 import Button from '@/components/ui/Button';
 
 interface BrandFile {
@@ -43,6 +44,8 @@ function getFileTypeLabel(name: string): string {
 
 const BrandIdentityPage: React.FC = () => {
   const { user, loading: userLoading } = useAuth();
+  const { workspaceSlug } = useWorkspace();
+  const dashPrefix = workspaceSlug ? `/dashboard/${workspaceSlug}` : '/dashboard';
   const [identities, setIdentities] = useState<BrandIdentity[]>([]);
   const [dataLoading, setDataLoading] = useState(true);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
@@ -112,7 +115,7 @@ const BrandIdentityPage: React.FC = () => {
         title="Brand identity"
         subtitle="Manage brand identities to audit websites against your brand guidelines."
       >
-        <Link href="/dashboard/brand-identity/new">
+        <Link href={`${dashPrefix}/brand-identity/new`}>
           <Button variant="primary" size="md">
             <Plus size={14} className="mr-1.5" />
             New Brand
@@ -133,7 +136,7 @@ const BrandIdentityPage: React.FC = () => {
           {identities.map((bi) => (
             <Link
               key={bi.id}
-              href={`/dashboard/brand-identity/${bi.id}`}
+              href={`${dashPrefix}/brand-identity/${bi.id}`}
               className="block rounded-xl hover:bg-surface transition-all group"
               style={{ border: '1px solid var(--rule)', background: 'var(--paper)' }}
             >
@@ -193,7 +196,7 @@ const BrandIdentityPage: React.FC = () => {
             <p className="text-sm text-muted mb-5 max-w-md mx-auto">
               Create a brand identity and upload your brand documents. When running an audit, select it to check brand consistency.
             </p>
-            <Link href="/dashboard/brand-identity/new">
+            <Link href={`${dashPrefix}/brand-identity/new`}>
               <Button variant="primary" size="md">
                 <Plus size={14} className="mr-1.5" />
                 Create Your First Brand

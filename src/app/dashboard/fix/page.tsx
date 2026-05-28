@@ -484,7 +484,8 @@ function ActiveFindingDetail({
 
 function FixPageInner() {
   const { user, loading: authLoading } = useAuth();
-  const { workspace, loading: wsLoading } = useWorkspace();
+  const { workspace, workspaceSlug, loading: wsLoading } = useWorkspace();
+  const dashPrefix = workspaceSlug ? `/dashboard/${workspaceSlug}` : '/dashboard';
   const { bundle, loading: bundleLoading, updateFindingLocally, updateReportScore, invalidate } = useAuditBundle();
   const searchParams = useSearchParams();
   const loading = authLoading || wsLoading || bundleLoading || !bundle;
@@ -848,7 +849,7 @@ function FixPageInner() {
             Re-audit to surface new findings and confirm your fixes landed.
           </p>
           <Link
-            href="/dashboard/new-audit"
+            href={`${dashPrefix}/new-audit`}
             className="inline-flex items-center gap-1.5 mt-4 px-4 py-2 rounded-md text-[13px] font-semibold"
             style={{ background: 'var(--ink)', color: 'var(--paper)' }}
           >

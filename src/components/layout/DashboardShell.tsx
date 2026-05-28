@@ -523,7 +523,7 @@ const DashboardShell: React.FC<DashboardShellProps> = ({ children }) => {
 
           {/* Settings */}
           <Link
-            href="/dashboard/settings"
+            href={`${navBase}/settings`}
             onClick={() => setSidebarOpen(false)}
             title={collapsed ? 'Settings' : undefined}
             aria-current={pathname?.startsWith('/dashboard/settings') ? 'page' : undefined}
@@ -543,7 +543,7 @@ const DashboardShell: React.FC<DashboardShellProps> = ({ children }) => {
 
           {/* Buy credits */}
           <Link
-            href="/dashboard/buy-credits"
+            href={`${navBase}/buy-credits`}
             onClick={() => setSidebarOpen(false)}
             title={collapsed ? 'Buy credits' : undefined}
             aria-current={pathname === '/dashboard/buy-credits' ? 'page' : undefined}
@@ -646,7 +646,7 @@ const DashboardShell: React.FC<DashboardShellProps> = ({ children }) => {
 
           <div className="flex items-center gap-1">
             <Link
-              href="/dashboard/notifications"
+              href={`${navBase}/notifications`}
               className="relative w-9 h-9 rounded-md inline-flex items-center justify-center transition-colors hover:bg-black/[0.04]"
               aria-label={
                 unreadNotifications > 0
