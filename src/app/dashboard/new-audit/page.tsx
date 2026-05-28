@@ -44,7 +44,6 @@ const NewAuditInner: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [generalError, setGeneralError] = useState('');
   const [credits, setCredits] = useState<number | null>(null);
-  const [packageTier, setPackageTier] = useState<string>('starter');
   const [firstAuditFree, setFirstAuditFree] = useState(false);
 
   // Module selection (slug-based) — website audits only
@@ -78,7 +77,6 @@ const NewAuditInner: React.FC = () => {
       .then((r) => r.json())
       .then((d) => {
         setCredits(d.credits ?? 0);
-        if (d.package_tier) setPackageTier(d.package_tier);
         if (d.first_audit_free) setFirstAuditFree(true);
       })
       .catch(() => setCredits(0));
@@ -331,6 +329,10 @@ const NewAuditInner: React.FC = () => {
       const targetWorkspaceId = resolvedWs?.id || workspace?.id || null;
       const targetSlug = resolvedWs?.slug || workspaceSlug;
 
+      if (!targetWorkspaceId) {
+        throw new Error('Could not resolve a workspace for this domain. Please try again.');
+      }
+
       const insertPayload: Record<string, any> = {
         user_id: user.id,
         status: hasCredits ? 'payment_received' : 'pending_payment',
@@ -397,7 +399,7 @@ const NewAuditInner: React.FC = () => {
         if (!creditRes.ok) {
           throw new Error(creditData.error || 'Failed to apply credit');
         }
-        router.push(`/dashboard/${targetSlug}/overview`);
+        window.location.href = `/dashboard/${targetSlug}/overview`;
         return;
       }
 

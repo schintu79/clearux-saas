@@ -13,7 +13,7 @@
 
 import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import Link from 'next/link';
-import { usePathname, useRouter } from 'next/navigation';
+import { usePathname } from 'next/navigation';
 import {
   PlusCircle,
   Settings,
@@ -78,7 +78,6 @@ function extractSlugFromPath(pathname: string | null): string | null {
 
 const DashboardShell: React.FC<DashboardShellProps> = ({ children }) => {
   const pathname = usePathname();
-  const router = useRouter();
   const { user, profile, signOut, loading } = useAuth();
 
   // Extract workspace slug from URL
