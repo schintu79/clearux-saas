@@ -302,11 +302,11 @@ const DashboardShell: React.FC<DashboardShellProps> = ({ children }) => {
                 aria-label="Switch workspace"
               >
                 <span
-                  className="w-7 h-7 rounded-md flex items-center justify-center flex-shrink-0"
-                  style={{ background: 'var(--ink)', color: 'var(--paper)' }}
+                  className="w-7 h-7 rounded-md flex items-center justify-center flex-shrink-0 overflow-hidden"
+                  style={{ background: 'var(--paper-2)', border: '1px solid var(--rule)', color: 'var(--m-muted)' }}
                 >
                   {currentWorkspace?.primary_domain
-                    ? <SiteFavicon hostname={currentWorkspace.primary_domain} size={13} />
+                    ? <SiteFavicon key={currentWorkspace.primary_domain} hostname={currentWorkspace.primary_domain} size={15} />
                     : <FolderOpen size={13} strokeWidth={1.75} />}
                 </span>
                 <span className="flex-1 min-w-0 text-left">
@@ -403,7 +403,7 @@ const DashboardShell: React.FC<DashboardShellProps> = ({ children }) => {
               style={{ color: 'var(--ink)', border: '1px solid var(--rule)' }}
             >
               {currentWorkspace?.primary_domain
-                ? <SiteFavicon hostname={currentWorkspace.primary_domain} size={17} />
+                ? <SiteFavicon key={currentWorkspace.primary_domain} hostname={currentWorkspace.primary_domain} size={17} />
                 : <FolderOpen size={17} strokeWidth={1.75} />}
             </button>
           </div>
