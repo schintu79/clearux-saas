@@ -1380,6 +1380,8 @@ function AuditHistoryCard({
   currentAuditId: string;
   onDeleted: (deletedAuditId: string) => void;
 }) {
+  const { workspaceSlug: _ws } = useWorkspace();
+  const _dp = _ws ? `/dashboard/${_ws}` : '/dashboard';
   const PREVIEW = 8;
   const showingAll = showAllHistory || auditCount <= PREVIEW;
   const rows = showingAll ? history : history.slice(0, PREVIEW);
@@ -1466,7 +1468,7 @@ function AuditHistoryCard({
               className="flex items-center hover:bg-black/[0.02] transition-colors group/row"
             >
               <Link
-                href={`${dashPrefix}/audits/${a.id}`}
+                href={`${_dp}/audits/${a.id}`}
                 className="flex-1 min-w-0 px-4 py-2.5 flex items-center gap-3"
               >
                 <div className="flex items-center gap-2 text-[11px] flex-1 min-w-0 flex-wrap">
@@ -1627,6 +1629,8 @@ function CheckpointHealthCard({
   findings: AuditFinding[];
   auditId: string;
 }) {
+  const { workspaceSlug: _ws } = useWorkspace();
+  const _dp = _ws ? `/dashboard/${_ws}` : '/dashboard';
   const [expanded, setExpanded] = useState<string | null>(null);
 
   // Map findings to categories (explicit category_index first, keyword fallback).
@@ -1756,7 +1760,7 @@ function CheckpointHealthCard({
                             </p>
                             {finding && (
                               <Link
-                                href={`${dashPrefix}/fix#finding-${finding.id}`}
+                                href={`${_dp}/fix#finding-${finding.id}`}
                                 className="text-[11px] mt-0.5 line-clamp-1 hover:underline"
                                 style={{ color: 'var(--m-muted)' }}
                               >
@@ -1798,6 +1802,8 @@ function AlertOrSummary({
   latestAuditId: string;
   completedAt: string;
 }) {
+  const { workspaceSlug: _ws } = useWorkspace();
+  const _dp = _ws ? `/dashboard/${_ws}` : '/dashboard';
   if (critical > 0) {
     return (
       <div
@@ -1818,7 +1824,7 @@ function AlertOrSummary({
           </p>
         </div>
         <Link
-          href={`${dashPrefix}/fix?severity=critical`}
+          href={`${_dp}/fix?severity=critical`}
           className="flex-shrink-0 inline-flex items-center gap-1 text-[12px] font-semibold px-3 py-1.5 rounded-lg"
           style={{ background: 'var(--severe)', color: '#fff' }}
         >
@@ -1955,6 +1961,8 @@ function InProgressOverview({
   brandName: string | null;
   workspace: Workspace | null;
 }) {
+  const { workspaceSlug: _ws } = useWorkspace();
+  const _dp = _ws ? `/dashboard/${_ws}` : '/dashboard';
   let domain: string | null = null;
   try { domain = new URL(audit.product_url || '').hostname.replace(/^www\./, ''); } catch {}
   const displayTitle = !workspace?.primary_domain && brandName
