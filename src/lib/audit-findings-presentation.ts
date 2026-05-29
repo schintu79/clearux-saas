@@ -142,3 +142,111 @@ export function weaknessLabel(score: number): string | null {
   if (score < 60) return 'Needs attention';
   return null;
 }
+
+/**
+ * Brand Clarity Signals — fallback mode detection.
+ *
+ * When Brand Consistency module (indices 20-23) is NOT included in the audit,
+ * the canonical `brand` category still receives findings from category 1
+ * (Value Proposition & Messaging). This helper flags that the brand score
+ * is based on limited signals so the UI can show an appropriate qualifier.
+ *
+ * @param auditedModuleSlugs - module slugs that were included (null = all)
+ * @returns true if brand scoring is based on partial data only
+ */
+export function isBrandScorePartial(auditedModuleSlugs: string[] | null): boolean {
+  if (!auditedModuleSlugs) return false; // all modules included
+  return !auditedModuleSlugs.includes('brand_consistency');
+}
+
+/* ── Reconciliation-Aware Sort ─────────────────────────────── */
+
+/**
+ * Sort priority for reconciliation status.
+ * Spec order: regressions → still-active → net-new → improved/fixed → recommendations.
+ */
+const STATUS_SORT_RANK: Record<string, number> = {
+  regressed: 6,
+  still_present: 5,
+  new: 4,
+  improved: 2,
+  fixed: 1,
+  duplicate: 0,
+  superseded: 0,
+  invalidated: 0,
+};
+
+/**
+ * Combined sort for reconciliation-aware display.
+ * Primary: reconciliation status rank (regressions first)
+ * Secondary: severity within each status group
+ * Falls back to severity-only when no status_in_audit is set (first audits).
+ */
+export function reconciliationAwareSort(a: GroupedFinding, b: GroupedFinding): number {
+  const aStatus = (a.primary as any).status_in_audit || '';
+  const bStatus = (b.primary as any).status_in_audit || '';
+
+  // If neither has a reconciliation status, sort by severity only
+  const aRank = STATUS_SORT_RANK[aStatus] ?? 4; // default to 'new' rank
+  const bRank = STATUS_SORT_RANK[bStatus] ?? 4;
+
+  if (aRank !== bRank) return bRank - aRank;
+
+  // Within same status group, sort by severity
+  const sevA = SEVERITY_WEIGHT[a.primary.severity] || 0;
+  const sevB = SEVERITY_WEIGHT[b.primary.severity] || 0;
+  return sevB - sevA;
+}
+
+/**
+ * Group findings by reconciliation status for section-based display.
+ * Returns groups in spec order with only non-empty groups.
+ */
+export interface ReconciliationGroup {
+  key: string;
+  label: string;
+  findings: GroupedFinding[];
+  variant: 'danger' | 'warning' | 'info' | 'success' | 'muted';
+}
+
+export function groupByReconciliationStatus(groups: GroupedFinding[]): ReconciliationGroup[] {
+  const sections: Array<{ key: string; label: string; variant: ReconciliationGroup['variant'] }> = [
+    { key: 'regressed', label: 'Regressions', variant: 'danger' },
+    { key: 'still_present', label: 'Still active', variant: 'warning' },
+    { key: 'new', label: 'New findings', variant: 'info' },
+    { key: 'improved', label: 'Improved', variant: 'success' },
+    { key: 'fixed', label: 'Fixed', variant: 'success' },
+  ];
+
+  const result: ReconciliationGroup[] = [];
+
+  for (const section of sections) {
+    const items = groups.filter(g => {
+      const status = (g.primary as any).status_in_audit || 'new';
+      return status === section.key;
+    });
+
+    if (items.length > 0) {
+      // Sort within each group by severity
+      items.sort((a, b) => {
+        const sevA = SEVERITY_WEIGHT[a.primary.severity] || 0;
+        const sevB = SEVERITY_WEIGHT[b.primary.severity] || 0;
+        return sevB - sevA;
+      });
+
+      result.push({ ...section, findings: items });
+    }
+  }
+
+  // Catch any findings with unexpected statuses (duplicate, superseded, etc.)
+  const knownStatuses = new Set(sections.map(s => s.key));
+  const other = groups.filter(g => {
+    const status = (g.primary as any).status_in_audit || 'new';
+    return !knownStatuses.has(status);
+  });
+  if (other.length > 0) {
+    result.push({ key: 'other', label: 'Other', variant: 'muted', findings: other });
+  }
+
+  return result;
+}

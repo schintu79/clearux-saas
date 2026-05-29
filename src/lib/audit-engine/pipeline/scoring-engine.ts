@@ -81,6 +81,7 @@ function computeCategoryScore(acc: CategoryAccumulator): {
   adjusted: number
   weightedTotal: number
   resolvedCredit: number
+  cappedRecPenalty: number
 } {
   const weightedTotal = acc.activePenalties.reduce((sum, p) => sum + p.final_penalty, 0)
   const resolvedCredit = Math.min(
@@ -88,13 +89,19 @@ function computeCategoryScore(acc: CategoryAccumulator): {
     MAX_RESOLVED_CREDIT,
   )
 
-  // Raw score: 100 minus penalties
-  const raw = Math.max(0, Math.min(100, 100 - weightedTotal))
+  // Cap recommendation penalty: recommendations can only deduct up to 15% of the score
+  const cappedRecPenalty = Math.min(
+    acc.recommendationPenalty,
+    100 * RECOMMENDATION_MULTIPLIER_CAP,
+  )
+
+  // Raw score: 100 minus verified penalties minus capped recommendation penalty
+  const raw = Math.max(0, Math.min(100, 100 - weightedTotal - cappedRecPenalty))
 
   // Adjusted: add resolved credit (reward for fixes)
-  const adjusted = Math.max(0, Math.min(100, 100 - weightedTotal + resolvedCredit))
+  const adjusted = Math.max(0, Math.min(100, 100 - weightedTotal - cappedRecPenalty + resolvedCredit))
 
-  return { raw, adjusted, weightedTotal, resolvedCredit }
+  return { raw, adjusted, weightedTotal, resolvedCredit, cappedRecPenalty }
 }
 
 /* ── Main Scoring ────────────────────────────────────────────── */

@@ -43,7 +43,7 @@ import FixConsole, { inferFixType } from '@/components/dashboard/v2/FixConsole';
 import { prepareFindingsForExport, buildExportMeta, renderMarkdown, processExportPipeline } from '@/lib/export/findings-formatter';
 import FindingText from '@/components/dashboard/v2/FindingText';
 import CustomSelect from '@/components/ui/CustomSelect';
-import { groupFindingsForDisplay, type GroupedFinding } from '@/lib/audit-findings-presentation';
+import { groupFindingsForDisplay, reconciliationAwareSort, type GroupedFinding } from '@/lib/audit-findings-presentation';
 import type { AuditFinding, FindingStatus } from '@/types/database';
 
 const STATUS_META: Record<string, { label: string; color: string; bg: string; dot: string }> = {
@@ -565,7 +565,7 @@ function FixPageInner() {
     if (!bundle) return [];
     const fixable = bundle.findings.filter((f) => (f as AuditFinding & { finding_type?: string }).finding_type !== 'strategic');
     const grouped = groupFindingsForDisplay(fixable, (f) => moduleIndexForFinding(f));
-    return [...grouped].sort((a, b) => fixPriority(b.primary) - fixPriority(a.primary));
+    return [...grouped].sort(reconciliationAwareSort);
   }, [bundle]);
 
   // All unique crawled pages across the entire audit — used for batch fixes

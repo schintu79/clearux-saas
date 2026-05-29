@@ -27,6 +27,7 @@ import type {
   ReconciliationSummaryV2,
   IssueCategoryKey,
 } from '@/types/canonical-issues'
+import { RECOMMENDATION_MULTIPLIER_CAP } from '@/types/canonical-issues'
 import {
   normalizeDetection,
   buildCanonicalKey,
@@ -379,15 +380,30 @@ export function reconcileV2(
       })
     } else {
       // Apply deep audit gate: new findings need stricter evidence on re-audits
-      if (ctx.isDeepAudit && ctx.previousAuditId) {
-        const passesDeepGate = detection.confidence >= 0.7 &&
+      // Spec: "New finding should be promoted only if clearly distinct,
+      // clearly evidenced, materially important, not a reframing."
+      if (ctx.previousAuditId) {
+        const isDeepOrReaudit = true // all re-audits need a higher bar for net-new
+        const passesGate =
+          detection.confidence >= 0.7 &&
           detection.issue_type !== 'nice_to_have' &&
-          detection.issue_type !== 'recommendation'
+          detection.issue_type !== 'recommendation' &&
+          detection.business_relevance >= 0.85 &&
+          detection.evidence.length >= 1
 
-        if (!passesDeepGate) {
+        // On deep audits, also check semantic distinctness against existing families
+        const isReframing = ctx.isDeepAudit && prior.openIssueFamilies.some(fam => {
+          if (fam.category_key !== detection.category_key) return false
+          const famWords = new Set((fam.title_canonical || '').toLowerCase().split(/\s+/))
+          const detWords = new Set(detection.title.toLowerCase().split(/\s+/))
+          const intersection = [...famWords].filter(w => detWords.has(w) && w.length > 3)
+          return intersection.length >= 3 // high word overlap = likely reframing
+        })
+
+        if (!passesGate || isReframing) {
           // Downgrade to recommendation instead of verified issue
           detection.issue_type = 'recommendation'
-          detection.score_impact = detection.score_impact * 0.15
+          detection.score_impact = detection.score_impact * RECOMMENDATION_MULTIPLIER_CAP
         }
       }
 

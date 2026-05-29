@@ -177,11 +177,19 @@ export async function persistIssueFamilies(
   // Update families for issues verified as fixed
   for (const unmatched of result.unmatchedOldIssues) {
     if (unmatched.resolution === 'fixed') {
+      // Transition fix_status: pending_verification → validated_fixed
+      const wasPending = unmatched.family.fix_status === 'pending_verification' ||
+        unmatched.family.fix_status === 'implemented'
+
       const { error } = await supabase
         .from('issue_families')
         .update({
           current_lifecycle_state: 'resolved',
           last_seen_audit_id: ctx.currentAuditId,
+          ...(wasPending ? {
+            fix_status: 'validated_fixed',
+            fix_updated_at: new Date().toISOString(),
+          } : {}),
         })
         .eq('id', unmatched.family.id)
 

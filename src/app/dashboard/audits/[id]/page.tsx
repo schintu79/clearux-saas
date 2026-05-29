@@ -84,7 +84,7 @@ import { getUILabels, getReportLabels, getCategoryNames, getPillarNames, getScor
 import { CHECKPOINT_LABELS } from '@/lib/audit-checkpoints';
 import BrandAuditDetail from '@/components/dashboard/BrandAuditDetail';
 import { type CockpitSeverity, type ModuleScore } from '@/components/dashboard/AuditCockpit';
-import { groupFindingsForDisplay, type GroupedFinding } from '@/lib/audit-findings-presentation';
+import { groupFindingsForDisplay, reconciliationAwareSort, groupByReconciliationStatus, isBrandScorePartial, type GroupedFinding, type ReconciliationGroup } from '@/lib/audit-findings-presentation';
 import clsx from 'clsx';
 import { matchFindingToCategory } from '@/lib/audit-engine/pipeline/category-keywords';
 import { WcagOverview } from '@/components/dashboard/v2/WcagChecklist';
@@ -3229,8 +3229,107 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
                     Clear filters
                   </button>
                 </div>
-              ) : (
-                (['critical', 'high', 'medium', 'low'] as const).map((severity) => {
+              ) : (() => {
+                /* ── Shared renderer for a list of GroupedFinding items ── */
+                const renderFindingGroup = (group: GroupedFinding) => {
+                  const finding = group.primary;
+                  return (
+                    <div key={finding.id} id={`finding-${finding.id}`} className="rounded-xl transition-shadow">
+                      {group.isConsolidated && (
+                        <div
+                          className="rounded-t-xl px-4 py-2.5 flex items-center gap-2 flex-wrap text-[11px]"
+                          style={{
+                            background: 'color-mix(in srgb, var(--signal) 5%, transparent)',
+                            border: '1px solid color-mix(in srgb, var(--signal) 18%, transparent)',
+                            borderBottom: 'none',
+                          }}
+                          data-testid="consolidated-finding-banner"
+                        >
+                          <span className="font-semibold tracking-[0.04em] uppercase text-signal">
+                            Affects {group.affectedModuleIndices.length} module
+                            {group.affectedModuleIndices.length === 1 ? '' : 's'}
+                          </span>
+                          {group.affectedModuleIndices.map((idx) => {
+                            const mod = cockpitModules[idx];
+                            if (!mod) return null;
+                            return (
+                              <span
+                                key={idx}
+                                className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-card border border-rule/40 text-m-muted font-medium"
+                              >
+                                <span className="w-1.5 h-1.5 rounded-full" style={{ background: mod.dot }} />
+                                {mod.name}
+                              </span>
+                            );
+                          })}
+                          <span className="ml-auto text-m-muted font-medium tracking-[0.03em] uppercase">
+                            {group.members.length} similar finding
+                            {group.members.length === 1 ? '' : 's'} grouped
+                            {group.affectedPages.length > 1
+                              ? ` · ${group.affectedPages.length} pages`
+                              : ''}
+                          </span>
+                        </div>
+                      )}
+                      <FindingCard
+                        finding={finding}
+                        pillarColor="text-signal"
+                        sevConfig={severityConfig}
+                        onScoreUpdate={() => fetchAuditDetail(true)}
+                      />
+                    </div>
+                  );
+                };
+
+                /* ── Check if this is a re-audit with reconciliation data ── */
+                const hasReconciliation = rawJson?.canonicalReconciliation &&
+                  groupedFilteredFindings.some(g => (g.primary as any).status_in_audit &&
+                    (g.primary as any).status_in_audit !== 'new');
+
+                if (hasReconciliation) {
+                  /* ── Re-audit: group by reconciliation status ── */
+                  const reconSections = groupByReconciliationStatus(groupedFilteredFindings);
+
+                  const sectionStyle: Record<string, { icon: React.ReactNode; color: string; dot: string }> = {
+                    regressed: { icon: <AlertTriangle size={12} />, color: 'text-severe', dot: 'bg-severe' },
+                    still_present: { icon: <Clock size={12} />, color: 'text-warn', dot: 'bg-warn' },
+                    new: { icon: <Zap size={12} />, color: 'text-signal', dot: 'bg-signal' },
+                    improved: { icon: <TrendingUp size={12} />, color: 'text-ok', dot: 'bg-ok' },
+                    fixed: { icon: <CheckCircle2 size={12} />, color: 'text-ok', dot: 'bg-ok' },
+                    other: { icon: <Info size={12} />, color: 'text-m-muted', dot: 'bg-m-muted' },
+                  };
+
+                  return reconSections.map((section) => {
+                    const style = sectionStyle[section.key] || sectionStyle.other;
+                    const totalMembers = section.findings.reduce((s, g) => s + g.members.length, 0);
+                    return (
+                      <div key={section.key} className="mb-5">
+                        <div className="flex items-center gap-2 mb-2.5 px-1">
+                          <span
+                            className={clsx(
+                              'inline-flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-[0.04em] px-2 py-0.5 rounded-full',
+                              style.color,
+                            )}
+                            style={{ background: 'color-mix(in srgb, currentColor 10%, transparent)' }}
+                          >
+                            <span className={`w-1.5 h-1.5 rounded-full ${style.dot}`} />
+                            {section.label}
+                          </span>
+                          <span className="text-[11px] text-m-muted font-medium tracking-[0.03em] uppercase">
+                            {section.findings.length} issue{section.findings.length !== 1 ? 's' : ''}
+                            {totalMembers > section.findings.length ? ` · ${totalMembers} records` : ''}
+                          </span>
+                        </div>
+                        <div className="space-y-2">
+                          {section.findings.map(renderFindingGroup)}
+                        </div>
+                      </div>
+                    );
+                  });
+                }
+
+                /* ── First audit: group by severity (original behaviour) ── */
+                return (['critical', 'high', 'medium', 'low'] as const).map((severity) => {
                   const items = groupedFilteredFindings.filter((g) => g.primary.severity === severity);
                   if (items.length === 0) return null;
                   const config = severityConfig[severity];
@@ -3254,60 +3353,12 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
                         </span>
                       </div>
                       <div className="space-y-2">
-                        {items.map((group) => {
-                          const finding = group.primary;
-                          return (
-                            <div key={finding.id} id={`finding-${finding.id}`} className="rounded-xl transition-shadow">
-                              {group.isConsolidated && (
-                                <div
-                                  className="rounded-t-xl px-4 py-2.5 flex items-center gap-2 flex-wrap text-[11px]"
-                                  style={{
-                                    background: 'color-mix(in srgb, var(--signal) 5%, transparent)',
-                                    border: '1px solid color-mix(in srgb, var(--signal) 18%, transparent)',
-                                    borderBottom: 'none',
-                                  }}
-                                  data-testid="consolidated-finding-banner"
-                                >
-                                  <span className="font-semibold tracking-[0.04em] uppercase text-signal">
-                                    Affects {group.affectedModuleIndices.length} module
-                                    {group.affectedModuleIndices.length === 1 ? '' : 's'}
-                                  </span>
-                                  {group.affectedModuleIndices.map((idx) => {
-                                    const mod = cockpitModules[idx];
-                                    if (!mod) return null;
-                                    return (
-                                      <span
-                                        key={idx}
-                                        className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-card border border-rule/40 text-m-muted font-medium"
-                                      >
-                                        <span className="w-1.5 h-1.5 rounded-full" style={{ background: mod.dot }} />
-                                        {mod.name}
-                                      </span>
-                                    );
-                                  })}
-                                  <span className="ml-auto text-m-muted font-medium tracking-[0.03em] uppercase">
-                                    {group.members.length} similar finding
-                                    {group.members.length === 1 ? '' : 's'} grouped
-                                    {group.affectedPages.length > 1
-                                      ? ` · ${group.affectedPages.length} pages`
-                                      : ''}
-                                  </span>
-                                </div>
-                              )}
-                              <FindingCard
-                                finding={finding}
-                                pillarColor="text-signal"
-                                sevConfig={severityConfig}
-                                onScoreUpdate={() => fetchAuditDetail(true)}
-                              />
-                            </div>
-                          );
-                        })}
+                        {items.map(renderFindingGroup)}
                       </div>
                     </div>
                   );
-                })
-              )}
+                });
+              })()}
             </div>
           )}
 
