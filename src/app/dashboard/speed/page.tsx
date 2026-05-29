@@ -834,7 +834,7 @@ export default function WebsiteSpeedPage() {
           )}
 
           {/* ── No findings state ── */}
-          {findings.length === 0 && result && (
+          {findings.length === 0 && problemCount === 0 && result && (
             <div
               className="rounded-xl border p-4 flex items-center gap-3"
               style={{ background: 'color-mix(in srgb, var(--ok) 4%, var(--card))', borderColor: 'var(--rule)' }}
