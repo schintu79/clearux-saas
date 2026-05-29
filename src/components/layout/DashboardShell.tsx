@@ -87,6 +87,17 @@ const DashboardShell: React.FC<DashboardShellProps> = ({ children }) => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [collapsed, setCollapsed] = useState(false);
 
+  // Full-screen loading overlay shown during workspace switches
+  // (covers the 1-2s blank flash from the hard reload).
+  // Child pages can also trigger it by dispatching a 'clearux:navigating' event.
+  const [navigating, setNavigating] = useState(false);
+
+  useEffect(() => {
+    const handler = () => setNavigating(true);
+    window.addEventListener('clearux:navigating', handler);
+    return () => window.removeEventListener('clearux:navigating', handler);
+  }, []);
+
   // Credit data
   const [creditData, setCreditData] = useState<{
     credits: number;
@@ -341,10 +352,10 @@ const DashboardShell: React.FC<DashboardShellProps> = ({ children }) => {
                           onClick={() => {
                             setWsMenuOpen(false);
                             if (!selected) {
-                              // Hard navigation to the new workspace's overview.
-                              // Using window.location ensures a full React remount
-                              // so WorkspaceContext, AuditBundleContext, and all
-                              // child state reset cleanly — no stale closures.
+                              // Show loading overlay instantly, then hard-navigate.
+                              // The overlay covers the blank flash while the full
+                              // React remount (WorkspaceContext etc.) completes.
+                              setNavigating(true);
                               window.location.href = `/dashboard/${ws.slug}/overview`;
                             }
                           }}
@@ -672,6 +683,22 @@ const DashboardShell: React.FC<DashboardShellProps> = ({ children }) => {
           <div className="p-5 sm:p-6 lg:p-8">{children}</div>
         </main>
       </div>
+
+      {/* Workspace-switch loading overlay — shown instantly to cover the
+          blank flash while window.location.href triggers a full reload. */}
+      {navigating && (
+        <div
+          className="fixed inset-0 z-[9999] flex flex-col items-center justify-center gap-4"
+          style={{ background: 'var(--paper)' }}
+          aria-live="polite"
+          role="status"
+        >
+          <Iconmark size={32} className="animate-pulse opacity-70" />
+          <p className="text-sm font-medium" style={{ color: 'var(--m-muted)' }}>
+            Switching workspace…
+          </p>
+        </div>
+      )}
     </div>
   );
 };

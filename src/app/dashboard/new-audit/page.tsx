@@ -399,6 +399,8 @@ const NewAuditInner: React.FC = () => {
         if (!creditRes.ok) {
           throw new Error(creditData.error || 'Failed to apply credit');
         }
+        // Trigger the shell loading overlay before hard-navigating
+        window.dispatchEvent(new Event('clearux:navigating'));
         window.location.href = `/dashboard/${targetSlug}/overview`;
         return;
       }
