@@ -169,7 +169,7 @@ const SettingsPage: React.FC = () => {
         const data = await res.json();
         throw new Error(data.error || 'Refresh failed');
       }
-      setAiModelsMessage({ type: 'success', text: 'Model list refreshed from OpenRouter' });
+      setAiModelsMessage({ type: 'success', text: 'AI models refreshed' });
       setTimeout(() => setAiModelsMessage(null), 3000);
     } catch (err) {
       setAiModelsMessage({ type: 'error', text: err instanceof Error ? err.message : 'Refresh failed' });
@@ -638,7 +638,7 @@ const SettingsPage: React.FC = () => {
                           )}
                           <div className="flex-1">
                             <p className="text-sm font-medium text-text">{model.displayName}</p>
-                            <p className="text-xs text-muted">{model.productName || `${model.provider} via OpenRouter`}</p>
+                            <p className="text-xs text-muted">{model.productName || model.provider}</p>
                           </div>
                           {/* Master toggle */}
                           <button
@@ -683,7 +683,7 @@ const SettingsPage: React.FC = () => {
                           <div className="mt-3 flex items-center gap-2 p-2 rounded-lg" style={{ background: 'color-mix(in srgb, var(--warn) 8%, transparent)' }}>
                             <AlertTriangle size={14} style={{ color: 'var(--warn)' }} />
                             <p className="text-xs" style={{ color: 'var(--warn)' }}>
-                              All OpenRouter models are disabled. Only Claude will be used for benchmarking.
+                              All external models are disabled. Only Claude will be used for benchmarking.
                             </p>
                           </div>
                         )}
