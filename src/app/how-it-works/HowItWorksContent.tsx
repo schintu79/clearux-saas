@@ -657,9 +657,9 @@ function FeatureSection({ marker, label, title, titleAccent, desc, features, vis
    ═══════════════════════════════════════════════════════════════ */
 
 const STEPS = [
-  { num: '01', title: 'Paste your URL', desc: 'Enter your website address. That is it. We also support brand audits — just upload your brand guidelines.' },
-  { num: '02', title: 'We scan everything', desc: 'We check 96 things across design, content, accessibility, and AI. Multiple pages, real browsers, AI models — all at once. Done in minutes.' },
-  { num: '03', title: 'Fix what matters', desc: 'You get a list of issues ranked by importance. Each one tells you what is wrong, why it matters, and exactly how to fix it.' },
+  { num: '01', title: 'Enter your URL', desc: 'Paste your website address. Fixpath crawls every page, checks 96 things across six modules, and delivers results in minutes.' },
+  { num: '02', title: 'See what matters', desc: 'Real issues ranked by severity. Each finding includes evidence from your actual site, affected pages, and a concrete fix recommendation.' },
+  { num: '03', title: 'Fix and track', desc: 'Apply fixes directly, export recommendations, or hand off to your team. Re-audit to verify improvements and track progress over time.' },
 ]
 
 
@@ -717,12 +717,14 @@ export default function HowItWorksContent() {
       {/* ── Product Hero ──────────────────────────────────────── */}
       <section className="py-[100px] border-b border-rule max-sm:py-16">
         <div className="max-w-mkt mx-auto px-8 max-sm:px-5">
-          <SectionMarker number="00" label="Product" />
+          <SectionMarker number="00" label="How it works" />
           <h1 className="font-serif font-normal text-ink leading-[0.94] tracking-[-0.025em] mb-8" style={{ fontSize: 'clamp(48px, 7vw, 96px)' }}>
-            The complete<br className="max-sm:hidden" /> <em className="italic text-signal">UX audit platform.</em>
+            From URL to{' '}<br className="max-sm:hidden" /><em className="italic text-signal">useful truth.</em>
           </h1>
           <p className="text-[19px] leading-[1.55] text-ink-2 max-w-[640px] font-sans mb-10">
-            Find out what is wrong with your website — and exactly how to fix it. We check 96 things across design, usability, accessibility, and AI visibility. You get a ranked list of issues with clear fixes, ready in minutes.
+            Enter your URL. Fixpath detects real issues hurting trust and clarity, ranks them by
+            impact, gives you concrete fix guidance, and tracks improvement over time. Most audits
+            complete in under ten minutes.
           </p>
           <div className="flex gap-3.5 max-sm:flex-col max-sm:items-stretch">
             <Button href="/register">

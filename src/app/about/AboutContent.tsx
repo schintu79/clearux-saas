@@ -14,10 +14,14 @@ export default function AboutContent() {
         <div className="max-w-mkt mx-auto px-8 max-sm:px-5">
           <SectionMarker number="01" label="About" />
           <h1 className="font-serif font-normal text-ink leading-[0.94] tracking-[-0.025em] mb-6" style={{ fontSize: 'clamp(44px, 6vw, 80px)' }}>
-            Full clarity, <em className="italic text-signal">at your fingertips.</em>
+            Built around truth,{' '}
+            <em className="italic text-signal">not noise.</em>
           </h1>
           <p className="text-[18px] leading-[1.6] text-ink-2 max-w-[600px] font-sans">
-            Fixpath exists because great user experience shouldn&apos;t require a six-figure consultancy budget. We help teams find the issues hurting their site, fix them directly from the dashboard, and track improvement over time — giving every team access to professional-grade website audits in minutes.
+            Fixpath exists because too many teams get generic reports full of low-signal
+            findings instead of useful truth they can act on. We built a decision engine
+            around clarity, honest scoring, and real progress tracking — so every team can
+            identify what matters, fix it, and prove improvement over time.
           </p>
         </div>
       </section>
@@ -33,7 +37,7 @@ export default function AboutContent() {
           {/* Pull quote */}
           <div className="mb-14 border-l-[3px] border-signal pl-8 py-2">
             <p className="font-serif italic text-[24px] text-ink leading-[1.4] max-w-[640px]">
-              &ldquo;What if the depth of a senior consultant&apos;s review could be available to anyone, in minutes, at a fraction of the cost?&rdquo;
+              &ldquo;What if teams could get useful truth about their website — not noise, not inflated scores — and actually track whether things are getting better?&rdquo;
             </p>
           </div>
 
@@ -41,15 +45,15 @@ export default function AboutContent() {
             {[
               {
                 title: 'The problem we saw',
-                desc: 'The pattern was always the same: the companies that needed UX audits the most couldn\'t afford them. Enterprise got $15K consultants. Everyone else was left guessing.',
+                desc: 'Most audit tools create noise. Teams get 200 findings and no way to tell which ten matter. Scores lose meaning. Reports feel generic. Progress is invisible.',
               },
               {
-                title: 'What kept going wrong',
-                desc: 'Dark patterns eroding trust. Inaccessible interfaces excluding real users. Products invisible to AI models. These cost businesses revenue and cost users their dignity.',
+                title: 'What teams actually need',
+                desc: 'Not more findings — better answers. Clear priority. Concrete fixes. Progress evidence. Honest assessment. Useful categories beyond just SEO checklists.',
               },
               {
                 title: 'What we built instead',
-                desc: 'Not a checklist tool. A structured audit framework — six modules, 96 checkpoints — that gives teams 360° clarity on their user experience. Senior UX rigor, in minutes.',
+                desc: 'A decision engine for real website and brand issues. Six modules, 96 checkpoints, severity-ranked findings with fix guidance and progress tracking. Truth, not noise.',
               },
             ].map((item, i) => (
               <div
@@ -116,24 +120,24 @@ export default function AboutContent() {
         <div className="max-w-mkt mx-auto px-8 max-sm:px-5">
           <SectionMarker number="04" label="Values" />
           <h2 className="font-serif font-normal text-ink leading-[0.94] tracking-[-0.025em] mb-5" style={{ fontSize: 'clamp(36px, 5vw, 64px)' }}>
-            Clarity. Rigour. <em className="italic text-signal">Speed.</em>
+            Truth. Trust. <em className="italic text-signal">Usefulness.</em>
           </h2>
           <p className="text-[17px] text-ink-2 leading-[1.55] max-w-[520px] mb-14 font-sans">
-            We hold ourselves to the same standard we measure others by.
+            Three principles guide every decision we make — from how we score to how we charge.
           </p>
 
           <div className="grid sm:grid-cols-3 gap-0 border border-ink">
             {[
               {
-                title: 'Ethical by default',
-                desc: 'Every audit checks for dark patterns, manipulative design, and cognitive overload. We refuse to use them ourselves — no subscription traps, no pressure tactics, no hidden costs.',
+                title: 'Truth over noise',
+                desc: 'Every finding is backed by evidence from your actual site. Scores come from measurable checkpoints, not subjective opinion. We show what matters and skip what doesn\'t.',
               },
               {
-                title: 'Evidence over opinion',
-                desc: 'Scores are backed by measurable checkpoints across six modules. No subjective hand-waving. Every finding links to evidence you can verify.',
+                title: 'Trust by design',
+                desc: 'We audit for dark patterns, manipulative design, and cognitive overload — and refuse to use them ourselves. No subscription traps, no pressure tactics, no hidden costs.',
               },
               {
-                title: 'Accessible to all',
+                title: 'Useful to everyone',
                 desc: 'Audits from $9.90 deliver what used to cost $5K-15K from a consultant. Quality UX review shouldn\'t be a luxury reserved for well-funded teams.',
               },
             ].map((item, i) => (

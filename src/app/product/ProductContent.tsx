@@ -28,7 +28,7 @@ const AUDIT_MODULES: { name: string; Icon: LucideIcon; categories: string[] }[] 
 
 /* ── FAQ data ── */
 const PRODUCT_FAQS = [
-  { q: 'How does the AI audit work?', a: 'Fixpath crawls your website, captures every page, and analyses the content against 96 checkpoints across six modules. Each checkpoint is evaluated by AI that looks at real page content, not just metadata. Findings are ranked by severity with evidence and affected pages.' },
+  { q: 'How does Fixpath work?', a: 'Fixpath crawls your website, analyses every page against 96 checkpoints across six modules, and surfaces only the issues that matter. Findings are ranked by severity with real evidence — no noise, no inflated findings.' },
   { q: 'Can I fix issues directly through Fixpath?', a: 'Yes. Every finding includes a concrete fix. For code-level issues, Fixpath generates a surgical fix you can preview, edit, and deploy directly to your server via FTP or SFTP. For content and strategy issues, you get clear recommendations to share with your team.' },
   { q: 'What is the Website Health Score?', a: 'Your Website Health Score is a composite metric across all six audit modules. It gives your team a single number to track over time. Re-audit after making fixes and see exactly how your score improves.' },
   { q: 'Does Fixpath check AI visibility?', a: 'Yes. The Future Readiness module checks how LLMs interpret your pages, validates structured data for AI consumption, probes multiple AI models for accuracy, and audits your llms.txt and AI discovery files.' },
@@ -217,12 +217,12 @@ export function ProductContent() {
           <div className="max-w-[680px]">
             <p className="font-mono text-[11px] tracking-[0.12em] uppercase text-signal mb-6">The product</p>
             <h1 className="font-serif font-normal text-ink leading-[0.94] tracking-[-0.025em] mb-6" style={{ fontSize: 'clamp(44px, 6vw, 80px)' }}>
-              The complete path from{' '}
-              <em className="italic text-signal">audit to improvement.</em>
+              From real issues to{' '}
+              <em className="italic text-signal">real improvement.</em>
             </h1>
             <p className="text-[18px] leading-[1.6] text-ink-2 font-sans mb-9">
-              Fixpath is not just an audit tool. It finds every issue hurting your site, gives you
-              the tools to fix them, and tracks your progress over time. Here is how it works.
+              Fixpath is not just an audit tool. It is the complete system from issue detection
+              to fix guidance to progress verification — built around truth, not noise.
             </p>
             <Button href="/register" size="large">
               Start free audit
@@ -239,14 +239,13 @@ export function ProductContent() {
             <div>
               <SectionMarker number="01" label="Find" />
               <h2 className="font-serif font-normal text-ink leading-[0.94] tracking-[-0.025em] mb-5" style={{ fontSize: 'clamp(36px, 5vw, 64px)' }}>
-                Audit your entire site{' '}
-                <em className="italic text-signal">in minutes.</em>
+                See what is actually{' '}
+                <em className="italic text-signal">hurting your site.</em>
               </h2>
               <p className="text-[18px] leading-[1.6] text-ink-2 font-sans mb-8">
                 Enter your URL. Fixpath crawls every page, runs 96 checkpoints across six modules,
-                and delivers severity-ranked findings with real evidence from your site content. Each
-                finding shows affected pages, what went wrong, and a concrete recommendation. Most
-                audits complete in under ten minutes.
+                and surfaces only the issues that matter — ranked by severity with real evidence.
+                No noise. No inflated findings. Just useful truth about your site, in under ten minutes.
               </p>
               <h3 className="font-sans text-[16px] font-semibold text-ink mb-5">What the audit covers</h3>
               <div className="grid sm:grid-cols-2 gap-3 mb-8">
@@ -378,12 +377,12 @@ export function ProductContent() {
         <div className="max-w-mkt mx-auto px-8 max-sm:px-5">
           <SectionMarker number="04" label="AI readiness" />
           <h2 className="font-serif font-normal text-ink leading-[0.94] tracking-[-0.025em] mb-5" style={{ fontSize: 'clamp(36px, 5vw, 64px)' }}>
-            From audit findings to{' '}
-            <em className="italic text-signal">actionable next steps.</em>
+            How AI sees{' '}
+            <em className="italic text-signal">your site.</em>
           </h2>
           <p className="text-[18px] leading-[1.6] text-ink-2 max-w-[600px] mb-12 font-sans">
             AI agents are already reading your site for their users. Fixpath checks whether they
-            get it right, connects findings to structured fixes, and tracks improvement over time — all inside one workflow.
+            get it right, and gives you concrete steps to fix what they get wrong.
           </p>
           <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
             {[

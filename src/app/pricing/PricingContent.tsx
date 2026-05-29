@@ -42,7 +42,7 @@ export default function PricingContent() {
             Plans that <em className="italic text-signal">scale with you.</em>
           </h1>
           <p className="text-[18px] leading-[1.6] text-ink-2 max-w-[600px] mb-10 font-sans">
-            Every plan runs the full 96-checkpoint audit, lets you fix issues directly from the dashboard, and tracks improvement over time. Subscribe for ongoing audits or buy credit packs for project work. First audit free, always.
+            Every plan includes the full 96-checkpoint audit across six modules, concrete fix guidance, and progress tracking. Subscribe for ongoing monitoring or buy credit packs for project work. First audit free, always.
           </p>
 
           {/* Mode toggle */}

@@ -5,9 +5,9 @@ import { Footer } from '@/components/marketing/Footer'
 import { ProductContent } from './ProductContent'
 
 export const metadata: Metadata = {
-  title: 'Product — Fixpath',
+  title: 'Product — A decision engine for real website issues | Fixpath',
   description:
-    'See how Fixpath audits your website across 96 checkpoints, helps you fix issues directly, and tracks improvement over time.',
+    'Fixpath finds real issues hurting trust and clarity, prioritises by impact, provides concrete fix guidance, and tracks improvement over time. 96 checkpoints across 6 modules.',
 }
 
 export default function ProductPage() {

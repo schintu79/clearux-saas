@@ -5,8 +5,8 @@ import { Footer } from '@/components/marketing/Footer'
 import AboutContent from './AboutContent'
 
 export const metadata: Metadata = {
-  title: 'About — Fixpath',
-  description: 'Fixpath helps teams find what is hurting their website, fix it directly, and track improvement over time. Learn why we built it.',
+  title: 'About — Why Fixpath exists | Fixpath',
+  description: 'Fixpath exists because too many teams get noise instead of useful truth. Built around truth, trust, and usefulness — a decision engine for real website and brand issues.',
 }
 
 export default function AboutPage() {
