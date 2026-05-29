@@ -215,12 +215,18 @@ export async function GET(
     // Verify the user owns the parent audit
     const { data: audit } = await db
       .from('audits')
-      .select('user_id, product_url, brand_identity_id')
+      .select('user_id, product_url, brand_identity_id, workspace_id')
       .eq('id', (finding as any).audit_id)
       .single()
 
     if (!audit || (audit as any).user_id !== user.id) {
       return NextResponse.json({ error: 'Not authorized' }, { status: 403 })
+    }
+
+    // Defense-in-depth: if workspace_id is provided, verify the audit belongs to that workspace
+    const workspaceId = _request.nextUrl.searchParams.get('workspace_id')
+    if (workspaceId && (audit as any).workspace_id && (audit as any).workspace_id !== workspaceId) {
+      return NextResponse.json({ error: 'Finding does not belong to the specified workspace' }, { status: 403 })
     }
 
     return NextResponse.json({
@@ -262,12 +268,18 @@ export async function PATCH(
 
     const { data: audit } = await db
       .from('audits')
-      .select('user_id, product_url')
+      .select('user_id, product_url, workspace_id')
       .eq('id', (finding as any).audit_id)
       .single()
 
     if (!audit || (audit as any).user_id !== user.id)
       return NextResponse.json({ error: 'Not authorized' }, { status: 403 })
+
+    // Defense-in-depth: if workspace_id is provided, verify the audit belongs to that workspace
+    const workspaceId = request.nextUrl.searchParams.get('workspace_id')
+    if (workspaceId && (audit as any).workspace_id && (audit as any).workspace_id !== workspaceId) {
+      return NextResponse.json({ error: 'Finding does not belong to the specified workspace' }, { status: 403 })
+    }
 
     // Handle dismissal
     if (dismiss) {

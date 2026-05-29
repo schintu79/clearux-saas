@@ -21,14 +21,23 @@ export async function GET(request: NextRequest) {
 
     const db = createServiceSupabase()
 
+    // Optional workspace scoping
+    const workspaceId = request.nextUrl.searchParams.get('workspace_id')
+
     // Get all completed, non-deleted website audits for this domain by this user
-    const { data: audits } = await db
+    let auditsQuery = db
       .from('audits')
       .select('id, product_url, status, completed_at, created_at, audit_type, deleted_at')
       .eq('user_id', user.id)
       .eq('status', 'completed')
       .is('deleted_at', null)
       .order('completed_at', { ascending: true })
+
+    if (workspaceId) {
+      auditsQuery = auditsQuery.eq('workspace_id', workspaceId)
+    }
+
+    const { data: audits } = await auditsQuery
 
     // Filter to matching domain — site audits only (no brand identity audits)
     const domainAudits = (audits || []).filter((a: any) => {

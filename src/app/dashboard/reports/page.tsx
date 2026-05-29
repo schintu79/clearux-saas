@@ -12,7 +12,7 @@ import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useAuth } from '@/context/AuthContext';
 import { useWorkspace } from '@/context/WorkspaceContext';
-import { ArrowRight, FileText, Share2 } from 'lucide-react';
+import { ArrowRight, Download, FileSpreadsheet, FileText, Share2 } from 'lucide-react';
 import PageHeader from '@/components/dashboard/v2/PageHeader';
 import DashCard from '@/components/dashboard/v2/DashCard';
 import ActionLink from '@/components/dashboard/v2/ActionLink';
@@ -30,7 +30,7 @@ interface ReportRow {
 
 export default function ReportsPage() {
   const { user, loading: authLoading } = useAuth();
-  const { workspaceSlug } = useWorkspace();
+  const { workspaceSlug, workspaceId } = useWorkspace();
   const dashPrefix = workspaceSlug ? `/dashboard/${workspaceSlug}` : '/dashboard';
   const [rows, setRows] = useState<ReportRow[]>([]);
   const [loading, setLoading] = useState(true);
@@ -42,13 +42,16 @@ export default function ReportsPage() {
     }
     (async () => {
       const supabase = createBrowserSupabase();
-      const { data: audits } = await supabase
+      let query = supabase
         .from('audits')
         .select('id, product_url, completed_at, share_enabled, share_token')
         .eq('user_id', user.id)
         .eq('status', 'completed')
-        .is('deleted_at', null)
-        .order('completed_at', { ascending: false });
+        .is('deleted_at', null);
+      if (workspaceId) {
+        query = query.eq('workspace_id', workspaceId);
+      }
+      const { data: audits } = await query.order('completed_at', { ascending: false });
       const audIds = (audits || []).map((a: any) => a.id);
       const scoreMap = new Map<string, number | null>();
       if (audIds.length) {
@@ -68,7 +71,59 @@ export default function ReportsPage() {
       })));
       setLoading(false);
     })();
-  }, [authLoading, user]);
+  }, [authLoading, user, workspaceId]);
+
+  const handleDownload = async (auditId: string, format: 'pdf' | 'docx', e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    try {
+      const res = await fetch(`/api/reports/${auditId}/${format}`);
+      if (!res.ok) throw new Error('Download failed');
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `audit-report.${format}`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      console.error(`Failed to download ${format}:`, err);
+    }
+  };
+
+  const handleCSVExport = async (auditId: string, e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    try {
+      const supabase = createBrowserSupabase();
+      const { data: findings } = await supabase
+        .from('audit_findings')
+        .select('title, description, severity, status, recommendation, page_url, category_index, action_mode, fix_status')
+        .eq('audit_id', auditId)
+        .order('severity', { ascending: true })
+        .order('sort_order', { ascending: true });
+      if (!findings || findings.length === 0) return;
+      const headers = ['Title', 'Severity', 'Status', 'Page URL', 'Recommendation', 'Action', 'Fix Status', 'Description'];
+      const rows = (findings as any[]).map((f) => [
+        f.title, f.severity, f.status, f.page_url || '', f.recommendation || '',
+        f.action_mode || '', f.fix_status || '', (f.description || '').replace(/[\n\r]+/g, ' '),
+      ]);
+      const csv = [headers, ...rows].map((r) => r.map((c: string) => `"${(c || '').replace(/"/g, '""')}"`).join(',')).join('\n');
+      const blob = new Blob([csv], { type: 'text/csv' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `findings-${auditId.slice(0, 8)}.csv`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      console.error('CSV export failed:', err);
+    }
+  };
 
   if (authLoading || loading) {
     return (
@@ -104,29 +159,56 @@ export default function ReportsPage() {
           {rows.map((r) => (
             <li key={r.id}>
               <DashCard padding="none">
-                <Link
-                  href={`${dashPrefix}/audits/${r.id}`}
-                  className="p-4 flex items-center gap-4 transition-all hover:opacity-90"
-                >
-                  <FileText size={16} style={{ color: 'var(--m-muted)' }} />
-                  <div className="flex-1 min-w-0">
-                    <p className="text-[13px] font-semibold truncate" style={{ color: 'var(--ink)' }}>
-                      {hostOf(r.product_url) ?? '—'}
-                    </p>
-                    <p className="text-[11px]" style={{ color: 'var(--m-muted)' }}>
-                      {formatDate(r.completed_at)}
-                      {r.share_enabled && (
-                        <span className="ml-2 inline-flex items-center gap-0.5" style={{ color: 'var(--signal)' }}>
-                          <Share2 size={9} /> Shared
-                        </span>
-                      )}
-                    </p>
+                <div className="p-4 flex items-center gap-4">
+                  <Link href={`${dashPrefix}/audits/${r.id}`} className="flex items-center gap-4 flex-1 min-w-0 transition-all hover:opacity-90">
+                    <FileText size={16} style={{ color: 'var(--m-muted)' }} />
+                    <div className="flex-1 min-w-0">
+                      <p className="text-[13px] font-semibold truncate" style={{ color: 'var(--ink)' }}>
+                        {hostOf(r.product_url) ?? '—'}
+                      </p>
+                      <p className="text-[11px]" style={{ color: 'var(--m-muted)' }}>
+                        {formatDate(r.completed_at)}
+                        {r.share_enabled && (
+                          <span className="ml-2 inline-flex items-center gap-0.5" style={{ color: 'var(--signal)' }}>
+                            <Share2 size={9} /> Shared
+                          </span>
+                        )}
+                      </p>
+                    </div>
+                    <span className="text-[16px] font-semibold tabular-nums" style={{ color: scoreColor(r.overall_score) }}>
+                      {r.overall_score ?? '—'}
+                    </span>
+                  </Link>
+                  <div className="flex items-center gap-1 ml-2">
+                    <button
+                      onClick={(e) => handleDownload(r.id, 'pdf', e)}
+                      className="p-1.5 rounded-md transition-all hover:bg-black/[0.04]"
+                      title="Download PDF"
+                      style={{ color: 'var(--m-muted)' }}
+                    >
+                      <Download size={14} />
+                    </button>
+                    <button
+                      onClick={(e) => handleDownload(r.id, 'docx', e)}
+                      className="p-1.5 rounded-md transition-all hover:bg-black/[0.04]"
+                      title="Download DOCX"
+                      style={{ color: 'var(--m-muted)' }}
+                    >
+                      <FileText size={14} />
+                    </button>
+                    <button
+                      onClick={(e) => handleCSVExport(r.id, e)}
+                      className="p-1.5 rounded-md transition-all hover:bg-black/[0.04]"
+                      title="Export findings as CSV"
+                      style={{ color: 'var(--m-muted)' }}
+                    >
+                      <FileSpreadsheet size={14} />
+                    </button>
                   </div>
-                  <span className="text-[16px] font-semibold tabular-nums" style={{ color: scoreColor(r.overall_score) }}>
-                    {r.overall_score ?? '—'}
-                  </span>
-                  <ArrowRight size={13} style={{ color: 'var(--m-muted)' }} />
-                </Link>
+                  <Link href={`${dashPrefix}/audits/${r.id}`}>
+                    <ArrowRight size={13} style={{ color: 'var(--m-muted)' }} />
+                  </Link>
+                </div>
               </DashCard>
             </li>
           ))}

@@ -14,6 +14,42 @@ export async function GET(request: NextRequest) {
 
     const db = createServiceSupabase()
 
+    // Optional workspace scoping
+    const workspaceId = request.nextUrl.searchParams.get('workspace_id')
+
+    // Helper: build a base audit query with user + soft-delete + optional workspace filtering
+    const auditQuery = () => {
+      let q = db.from('audits').select('id').eq('user_id', user.id).is('deleted_at', null)
+      if (workspaceId) q = q.eq('workspace_id', workspaceId)
+      return q
+    }
+
+    // Pre-fetch audit IDs for sub-queries (findings need them)
+    const { data: userAudits } = await auditQuery()
+    const auditIds = (userAudits || []).map((a: any) => a.id)
+
+    // Build workspace-aware queries
+    let totalAuditsQuery = db.from('audits').select('id', { count: 'exact', head: true }).eq('user_id', user.id).is('deleted_at', null)
+    let completedAuditsQuery = db.from('audits').select('id', { count: 'exact', head: true }).eq('user_id', user.id).eq('status', 'completed').is('deleted_at', null)
+    let avgScoreQuery = db.from('reports').select('overall_score').eq('user_id', user.id).not('overall_score', 'is', null)
+    let recentScoresQuery = db.from('audits')
+      .select('id, product_url, completed_at')
+      .eq('user_id', user.id)
+      .eq('status', 'completed')
+      .is('deleted_at', null)
+      .order('completed_at', { ascending: false })
+      .limit(5)
+
+    if (workspaceId) {
+      totalAuditsQuery = totalAuditsQuery.eq('workspace_id', workspaceId)
+      completedAuditsQuery = completedAuditsQuery.eq('workspace_id', workspaceId)
+      recentScoresQuery = recentScoresQuery.eq('workspace_id', workspaceId)
+      // avgScoreQuery: filter by audit_ids that belong to the workspace
+      if (auditIds.length > 0) {
+        avgScoreQuery = avgScoreQuery.in('audit_id', auditIds)
+      }
+    }
+
     // Run all queries in parallel
     const [
       totalAuditsRes,
@@ -24,28 +60,22 @@ export async function GET(request: NextRequest) {
       recentScoresRes,
     ] = await Promise.all([
       // Total audits (exclude soft-deleted)
-      db.from('audits').select('id', { count: 'exact', head: true }).eq('user_id', user.id).is('deleted_at', null),
+      totalAuditsQuery,
       // Completed audits (exclude soft-deleted)
-      db.from('audits').select('id', { count: 'exact', head: true }).eq('user_id', user.id).eq('status', 'completed').is('deleted_at', null),
+      completedAuditsQuery,
       // Average score from reports
-      db.from('reports').select('overall_score').eq('user_id', user.id).not('overall_score', 'is', null),
-      // Total findings (exclude soft-deleted audits)
+      avgScoreQuery,
+      // Total findings (scoped to user's audit IDs, workspace-filtered if applicable)
       db.from('audit_findings')
         .select('id, severity, status', { count: 'exact' })
-        .in('audit_id', (await db.from('audits').select('id').eq('user_id', user.id).is('deleted_at', null)).data?.map((a: any) => a.id) || []),
-      // Fixed findings (exclude soft-deleted audits)
+        .in('audit_id', auditIds.length > 0 ? auditIds : ['']),
+      // Fixed findings (scoped to user's audit IDs, workspace-filtered if applicable)
       db.from('audit_findings')
         .select('id', { count: 'exact', head: true })
         .eq('status', 'fixed')
-        .in('audit_id', (await db.from('audits').select('id').eq('user_id', user.id).is('deleted_at', null)).data?.map((a: any) => a.id) || []),
+        .in('audit_id', auditIds.length > 0 ? auditIds : ['']),
       // Recent scores for trend (last 5 completed audits, exclude soft-deleted)
-      db.from('audits')
-        .select('id, product_url, completed_at')
-        .eq('user_id', user.id)
-        .eq('status', 'completed')
-        .is('deleted_at', null)
-        .order('completed_at', { ascending: false })
-        .limit(5),
+      recentScoresQuery,
     ])
 
     // Calculate average score

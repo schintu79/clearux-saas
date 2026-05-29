@@ -18,6 +18,7 @@ const createAuditSchema = z.object({
   plan: z.enum(['starter', 'deep_dive'], {
     errorMap: () => ({ message: 'Plan must be starter or deep_dive' }),
   }),
+  workspace_id: z.string().uuid().optional().nullable(),
 })
 
 type CreateAuditRequest = z.infer<typeof createAuditSchema>
@@ -60,6 +61,7 @@ export async function POST(request: NextRequest) {
       ux_concern,
       notes,
       plan,
+      workspace_id,
     }: CreateAuditRequest = validationResult.data
 
     // Auto-link existing brand identity by matching hostname
@@ -102,6 +104,7 @@ export async function POST(request: NextRequest) {
         plan,
         progress_percent: 0,
         ...(brandIdentityId ? { brand_identity_id: brandIdentityId } : {}),
+        ...(workspace_id ? { workspace_id } : {}),
       })
       .select()
       .single()
@@ -154,7 +157,10 @@ export async function GET(request: NextRequest) {
     }
 
     // Fetch user's audits with report summaries
-    const { data: audits, error: fetchError } = await supabase
+    const { searchParams } = new URL(request.url)
+    const workspaceId = searchParams.get('workspace_id')
+
+    let query = supabase
       .from('audits')
       .select(
         `
@@ -169,6 +175,13 @@ export async function GET(request: NextRequest) {
       `,
       )
       .eq('user_id', user.id)
+      .is('deleted_at', null)
+
+    if (workspaceId) {
+      query = query.eq('workspace_id', workspaceId)
+    }
+
+    const { data: audits, error: fetchError } = await query
       .order('created_at', { ascending: false })
 
     if (fetchError) {
