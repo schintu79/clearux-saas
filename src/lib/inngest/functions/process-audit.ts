@@ -228,6 +228,54 @@ export const processAuditFn = inngest.createFunction(
     concurrency: {
       limit: 3, // Lower concurrency to avoid API rate limits across parallel audits
     },
+    onFailure: async ({ event }: { event: { data: { event: { data: { auditId: string } } } } }) => {
+      // CRITICAL: This handler fires even when the serverless process is killed.
+      // It runs as a SEPARATE invocation, so it isn't affected by the 300s timeout
+      // that killed the main function.
+      try {
+        const auditId = event.data.event.data.auditId
+        const db = createServiceSupabase()
+        const { data } = await db
+          .from('audits')
+          .select('status, progress_percent')
+          .eq('id', auditId)
+          .single()
+
+        if (!data) return
+
+        const status = (data as any).status as string
+        const progress = (data as any).progress_percent as number
+        const terminalStatuses = ['completed', 'failed', 'completed_with_warnings', 'stalled']
+
+        if (terminalStatuses.includes(status)) return // Already resolved
+
+        // If we got past the report step (progress >= 82%), the audit has useful data
+        const hasReport = progress >= 82
+        const forcedStatus = hasReport ? 'completed_with_warnings' : 'failed'
+
+        console.warn(`[inngest/onFailure] Audit ${auditId} stuck at status=${status} progress=${progress}%. Forcing to ${forcedStatus}.`)
+
+        await db.from('audits').update({
+          status: forcedStatus,
+          progress_percent: hasReport ? 100 : progress,
+          audit_stage: hasReport ? 'complete' : 'failed',
+          completed_at: hasReport ? new Date().toISOString() : undefined,
+          crawl_error: hasReport ? undefined : 'Pipeline timed out during enrichment. Your audit results are still available.',
+          updated_at: new Date().toISOString(),
+        } as any).eq('id', auditId)
+
+        // Refund credit if audit truly failed (no usable report)
+        if (!hasReport) {
+          await refundCredit(auditId)
+        }
+
+        await logActivity(auditId, hasReport
+          ? 'Audit completed with some enrichment steps skipped due to timeout.'
+          : 'Audit failed due to pipeline timeout. Credit refunded.')
+      } catch (err) {
+        console.error('[inngest/onFailure] Recovery error:', err)
+      }
+    },
     triggers: [{ event: 'audit/process' as const }],
   },
   async ({ event, step }: { event: { data: { auditId: string } }; step: any }) => {
@@ -3150,7 +3198,7 @@ RULES FOR RE-AUDIT:
 
       // Master deadline for the entire enrichment step.
       // If all enrichments together exceed this, we bail and complete the audit.
-      const ENRICHMENT_DEADLINE_MS = 90_000 // 90s hard limit
+      const ENRICHMENT_DEADLINE_MS = 60_000 // 60s hard limit (leaves 240s headroom in 300s Vercel timeout)
       const enrichmentBody = async () => {
 
       // ── 1. Snapshot industry benchmark ──
@@ -3549,9 +3597,9 @@ RULES FOR RE-AUDIT:
       // Run enrichment in two waves so progress updates mid-step.
       // Wave 1 (fast, data-only): benchmark, minimum findings, pipeline learn, predictive recs
       // Wave 2 (slower, external calls): brand intel, human perception, screenshots
-      const FAST_TIMEOUT  = 30_000  // 30s for fast tasks
-      const SLOW_TIMEOUT  = 45_000  // 45s for external API tasks
-      const SCREENSHOT_TIMEOUT = 20_000 // 20s — screenshots are nice-to-have
+      const FAST_TIMEOUT  = 20_000  // 20s for fast tasks
+      const SLOW_TIMEOUT  = 30_000  // 30s for external API tasks
+      const SCREENSHOT_TIMEOUT = 15_000 // 15s — screenshots are nice-to-have
 
       // Wave 1 — fast enrichments (use allSettled so one failure doesn't block the rest)
       await Promise.allSettled([
