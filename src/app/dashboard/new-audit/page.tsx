@@ -34,7 +34,11 @@ const NewAuditInner: React.FC = () => {
   const isDigDeeperMode = auditMode === 'dig-deeper';
 
   // Website audit state
-  const [url, setUrl] = useState(searchParams.get('url') || '');
+  // Pre-fill URL from workspace domain so users don't re-enter it
+  const workspaceDomain = workspace?.primary_domain || '';
+  const initialUrl = searchParams.get('url') || (workspaceDomain ? `https://${workspaceDomain}` : '');
+  const [url, setUrl] = useState(initialUrl);
+  const domainPreFilled = !!workspaceDomain && auditMode === 'new-brand' && !searchParams.get('url');
   const depthParam = searchParams.get('depth');
   const [hasExistingAudit, setHasExistingAudit] = useState(depthParam === 'deep' || isReAuditMode || isDigDeeperMode);
   const isReAudit = hasExistingAudit;
@@ -56,11 +60,18 @@ const NewAuditInner: React.FC = () => {
   const [workspaceBrandHasFiles, setWorkspaceBrandHasFiles] = useState(false);
   const [includeBrandConsistency, setIncludeBrandConsistency] = useState(false);
 
+  // When workspace loads with a primary_domain, auto-fill url if still empty
   useEffect(() => {
-    if (!userLoading && user && urlInputRef.current && auditType === 'website' && auditMode === 'new-brand') {
+    if (workspaceDomain && !url && auditMode === 'new-brand' && !searchParams.get('url')) {
+      setUrl(`https://${workspaceDomain}`);
+    }
+  }, [workspaceDomain]);
+
+  useEffect(() => {
+    if (!userLoading && user && urlInputRef.current && auditType === 'website' && auditMode === 'new-brand' && !domainPreFilled) {
       urlInputRef.current.focus();
     }
-  }, [userLoading, user, auditType, auditMode]);
+  }, [userLoading, user, auditType, auditMode, domainPreFilled]);
 
   // Redirect brand_identity requests to Brand DNA page
   useEffect(() => {
@@ -443,13 +454,15 @@ const NewAuditInner: React.FC = () => {
       {/* Hero */}
       <div className="text-center mb-10">
         <h1 className="text-xl font-medium font-sans mb-2" style={{ color: 'var(--ink)' }}>
-          {isReAuditMode ? 'Re-run Website Audit' : isDigDeeperMode ? 'Dig deeper' : 'Add new site or brand'}
+          {isReAuditMode ? 'Re-run Website Audit' : isDigDeeperMode ? 'Dig deeper' : domainPreFilled ? 'Run audit' : 'Add new site or brand'}
         </h1>
         <p className="text-[14px]" style={{ color: 'var(--m-muted)' }}>
           {isReAuditMode
             ? 'Run a fresh audit on this brand to check for improvements and new issues.'
             : isDigDeeperMode
             ? 'Run a deeper analysis with extended modules and additional checks.'
+            : domainPreFilled
+            ? 'Choose your modules and start the audit.'
             : 'Paste your URL and our AI does a deep analysis across all 96 checkpoints.'}
         </p>
       </div>
@@ -472,8 +485,19 @@ const NewAuditInner: React.FC = () => {
             </div>
           )}
 
-          {/* URL Input — only shown in new-brand mode */}
-          {auditMode === 'new-brand' && (
+          {/* Domain pre-filled from workspace — show banner, not input */}
+          {domainPreFilled && url && (
+            <div className="mb-6 px-4 py-3 rounded-xl" style={{ background: 'var(--paper-2)', border: '1px solid var(--rule)' }}>
+              <p className="text-sm font-medium" style={{ color: 'var(--ink)' }}>
+                <Globe size={13} className="inline mr-1.5 -mt-0.5" />
+                Auditing:{' '}
+                <span className="font-semibold">{workspaceDomain}</span>
+              </p>
+            </div>
+          )}
+
+          {/* URL Input — only shown in new-brand mode when domain is NOT pre-filled */}
+          {auditMode === 'new-brand' && !domainPreFilled && (
           <div className="mb-6">
             <label htmlFor="audit-url" className="block text-sm font-medium text-text mb-2">
               <Globe size={14} className="inline mr-1.5 -mt-0.5" />

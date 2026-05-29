@@ -89,7 +89,6 @@ import clsx from 'clsx';
 import { matchFindingToCategory } from '@/lib/audit-engine/pipeline/category-keywords';
 import { WcagOverview } from '@/components/dashboard/v2/WcagChecklist';
 import { ACCURACY_TOOLTIP, AccuracyTooltip } from '@/components/dashboard/AIXRayComparison';
-import { useAuditProgress, type AuditProgressData } from '@/hooks/useAuditProgress';
 import AuditActivityFeed from '@/components/dashboard/AuditActivityFeed';
 
 /* ── Helpers ─────────────────────────────────────────────── */
@@ -241,265 +240,7 @@ function buildStatusMeta(L: UILabels): Record<
   };
 }
 
-/* ── Stage labels for the minimal progress loader ──────── */
-const STAGE_LABEL: Record<string, string> = {
-  payment_received: 'Starting audit',
-  crawling: 'Crawling pages',
-  analysing: 'Analyzing content',
-  generating_report: 'Generating report',
-  completed: 'Complete',
-};
-
-/* ── Progressive stage pipeline labels ──────────────────── */
-const PIPELINE_STAGES: Array<{ key: string; label: string; description: string }> = [
-  { key: 'preflight', label: 'Preflight', description: 'Validating URL and preparing scan' },
-  { key: 'crawling', label: 'Crawling', description: 'Discovering and scanning pages' },
-  { key: 'checking', label: 'Speed & WCAG', description: 'Running performance and accessibility tests' },
-  { key: 'probing', label: 'AI probe', description: 'Testing how AI models perceive your site' },
-  { key: 'analysing', label: 'Analysis', description: 'Evaluating UX across 24 categories' },
-  { key: 'reporting', label: 'Report', description: 'Generating scores and recommendations' },
-  { key: 'enriching', label: 'Enrichment', description: 'Adding benchmarks and intelligence' },
-  { key: 'complete', label: 'Done', description: 'Audit complete' },
-];
-
-
-/* ── Stage icon — shows the icon for the currently active pipeline stage ── */
-const STAGE_ICONS: Record<string, React.ReactNode> = {
-  preflight: <Scan size={24} strokeWidth={1.5} />,
-  crawling: <Globe size={24} strokeWidth={1.5} />,
-  checking: <Gauge size={24} strokeWidth={1.5} />,
-  probing: <Brain size={24} strokeWidth={1.5} />,
-  analysing: <FileSearch size={24} strokeWidth={1.5} />,
-  reporting: <FileText size={24} strokeWidth={1.5} />,
-  enriching: <Sparkles size={24} strokeWidth={1.5} />,
-  complete: <CheckCircle2 size={24} strokeWidth={1.5} />,
-};
-
-function StageIcon({ stage }: { stage: string }) {
-  const icon = STAGE_ICONS[stage] || STAGE_ICONS.preflight;
-  return (
-    <div
-      className="mx-auto w-10 h-10 flex items-center justify-center rounded-full animate-pulse"
-      style={{ color: 'var(--ink)', opacity: 0.4 }}
-    >
-      {icon}
-    </div>
-  );
-}
-
-/* ── Audit progress loader — progressive stage pipeline ──── */
-function AuditProgressLoader({
-  status,
-  percent,
-  auditId,
-  onRestart,
-}: {
-  status: string;
-  percent: number | null | undefined;
-  auditId: string;
-  onRestart?: () => void;
-}) {
-  const { workspaceSlug: _ws } = useWorkspace();
-  const dashPrefix = _ws ? `/dashboard/${_ws}` : '/dashboard';
-  const { data: progressData } = useAuditProgress(auditId, {
-    enabled: ['payment_received', 'crawling', 'analysing', 'generating_report'].includes(status),
-    interval: 2500,
-  });
-
-  // ── Stuck audit detection ──
-  // Track the last time progress actually changed. If it hasn't changed for
-  // STUCK_THRESHOLD_MS, show a restart button so the user isn't trapped.
-  const STUCK_THRESHOLD_MS = 3 * 60 * 1000 // 3 minutes
-  const [lastProgressChange, setLastProgressChange] = useState(Date.now())
-  const [isStuck, setIsStuck] = useState(false)
-  const prevProgressRef = useRef<number | null>(null)
-
-  // Update the "last changed" timestamp whenever progress actually moves
-  useEffect(() => {
-    const currentProgress = progressData?.progress ?? percent ?? null
-    if (currentProgress !== null && currentProgress !== prevProgressRef.current) {
-      prevProgressRef.current = currentProgress
-      setLastProgressChange(Date.now())
-      setIsStuck(false)
-    }
-  }, [progressData?.progress, percent])
-
-  // Check every 10s if we've exceeded the stuck threshold
-  useEffect(() => {
-    const check = setInterval(() => {
-      if (Date.now() - lastProgressChange > STUCK_THRESHOLD_MS) {
-        setIsStuck(true)
-      }
-    }, 10_000)
-    return () => clearInterval(check)
-  }, [lastProgressChange])
-
-  const stageFallback: Record<string, number> = {
-    payment_received: 0,
-    crawling: 5,
-    analysing: 50,
-    generating_report: 85,
-    completed: 100,
-  };
-
-  // Use progress endpoint data if available, otherwise fallback
-  const rawTarget = progressData?.progress ?? (typeof percent === 'number' ? percent : stageFallback[status] ?? 0);
-  const target = Math.max(0, Math.min(100, rawTarget));
-
-  const [display, setDisplay] = useState<number>(target);
-  useEffect(() => {
-    let raf: number;
-    const tick = () => {
-      setDisplay((cur) => {
-        const diff = target - cur;
-        if (Math.abs(diff) < 0.5) return target;
-        raf = requestAnimationFrame(tick);
-        return cur + diff * 0.15;
-      });
-    };
-    raf = requestAnimationFrame(tick);
-    return () => cancelAnimationFrame(raf);
-  }, [target]);
-
-  // Current active stage from progress data
-  const currentStage = progressData?.stage || 'preflight';
-  const stages = progressData?.stages;
-  const pData = progressData?.data;
-
-  return (
-    <div
-      className="py-8 px-6 flex flex-col items-center gap-5"
-      role="progressbar"
-      aria-valuemin={0}
-      aria-valuemax={100}
-      aria-valuenow={Math.round(display)}
-      aria-label="Audit progress"
-    >
-      {/* Active stage icon */}
-      <StageIcon stage={currentStage} />
-
-      {/* Percentage */}
-      <span className="text-4xl font-semibold tabular-nums tracking-tight" style={{ color: 'var(--ink)' }}>
-        {Math.round(display)}%
-      </span>
-
-      {/* Thin progress bar */}
-      <div className="w-full max-w-[320px]">
-        <div
-          className="h-[2px] rounded-full overflow-hidden"
-          style={{ background: 'color-mix(in srgb, var(--ink) 8%, transparent)' }}
-        >
-          <div
-            className="h-full rounded-full"
-            style={{
-              width: `${display}%`,
-              background: 'var(--ink)',
-              transition: 'width 200ms ease-out',
-            }}
-          />
-        </div>
-      </div>
-
-      {/* Stage pipeline — vertical list */}
-      <div className="w-full max-w-[320px] mt-2">
-        {PIPELINE_STAGES.map((stage, idx) => {
-          const isDone = stages?.[stage.key as keyof typeof stages] ?? false;
-          const isActive = currentStage === stage.key && !isDone;
-          const isPending = !isDone && !isActive;
-
-          return (
-            <div
-              key={stage.key}
-              className="flex items-center gap-3 py-1.5"
-            >
-              {/* Status indicator */}
-              <div className="w-4 h-4 flex items-center justify-center flex-shrink-0">
-                {isDone ? (
-                  <CheckCircle2 size={13} style={{ color: 'var(--ok)' }} />
-                ) : isActive ? (
-                  <Loader2 size={13} className="animate-spin" style={{ color: 'var(--ink)' }} />
-                ) : (
-                  <div className="w-2 h-2 rounded-full" style={{ background: 'color-mix(in srgb, var(--ink) 15%, transparent)' }} />
-                )}
-              </div>
-
-              {/* Label */}
-              <span
-                className="text-[12px] font-medium flex-1"
-                style={{
-                  color: isDone ? 'var(--m-muted)' : isActive ? 'var(--ink)' : 'color-mix(in srgb, var(--ink) 30%, transparent)',
-                }}
-              >
-                {stage.label}
-              </span>
-
-              {/* Partial results indicator */}
-              {isDone && stage.key === 'crawling' && pData && pData.pagesCrawled > 0 && (
-                <span className="text-[11px] tabular-nums" style={{ color: 'var(--m-muted)' }}>
-                  {pData.pagesCrawled} pages
-                </span>
-              )}
-              {isDone && stage.key === 'checking' && pData?.hasSpeedData && (
-                <span className="text-[11px]" style={{ color: 'var(--m-muted)' }}>
-                  Speed tested
-                </span>
-              )}
-              {isDone && stage.key === 'analysing' && pData && pData.findingsCount > 0 && (
-                <span className="text-[11px] tabular-nums" style={{ color: 'var(--m-muted)' }}>
-                  {pData.findingsCount} findings
-                </span>
-              )}
-              {isDone && stage.key === 'reporting' && pData?.overallScore != null && (
-                <span className="text-[11px] font-medium tabular-nums" style={{ color: 'var(--ink)' }}>
-                  Score: {pData.overallScore}
-                </span>
-              )}
-            </div>
-          );
-        })}
-      </div>
-
-      {/* Active stage description */}
-      <p
-        className="text-[12px] leading-[1.6] text-center max-w-sm mt-1"
-        style={{ color: 'var(--m-muted)' }}
-      >
-        {PIPELINE_STAGES.find(s => s.key === currentStage)?.description || 'Processing your audit'}
-      </p>
-
-      {/* Secondary CTA */}
-      <Link
-        href={`${dashPrefix}/overview`}
-        className="inline-flex items-center gap-1.5 text-[12px] font-medium px-3 py-1.5 rounded-md transition-colors"
-        style={{
-          color: 'var(--ink)',
-          border: '1px solid var(--rule)',
-          background: 'transparent',
-        }}
-      >
-        Go to Overview
-        <ArrowRight size={11} />
-      </Link>
-
-      {/* Stuck audit escape hatch */}
-      {isStuck && onRestart && (
-        <div className="mt-4 px-4 py-3 rounded-lg text-center" style={{ background: 'color-mix(in srgb, var(--warn) 8%, transparent)', border: '1px solid color-mix(in srgb, var(--warn) 20%, transparent)' }}>
-          <p className="text-[12px] font-medium mb-2" style={{ color: 'var(--ink)' }}>
-            This audit appears to be stuck. No progress in the last 3 minutes.
-          </p>
-          <button
-            onClick={onRestart}
-            className="inline-flex items-center gap-1.5 text-[12px] font-semibold px-4 py-2 rounded-md transition-colors"
-            style={{ background: 'var(--ink)', color: 'var(--paper)' }}
-          >
-            <RefreshCw size={12} />
-            Restart audit
-          </button>
-        </div>
-      )}
-    </div>
-  );
-}
+/* ── (AuditProgressLoader removed — merged into AuditActivityFeed) ── */
 
 /* ── Collapsible Finding Card ─────────────────────────────── */
 /* ── Checkpoint Health — pass/fail per category ─────────── */
@@ -2254,34 +1995,17 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
         </Card>
       )}
 
-      {/* ── In progress: minimal loader ──────────────────── */}
-      {isInProgress && !verifying && (
-        <div
-          className="mb-6 rounded-lg"
-          style={{ background: 'var(--card)', border: '1px solid var(--rule)' }}
-        >
-          <AuditProgressLoader
-            status={audit.status}
-            percent={(audit as any).progress_percent}
-            auditId={audit.id}
-            onRestart={handleRestart}
-          />
-
-          <div className="px-5 pb-5 text-center">
-            <p className="text-[10.5px]" style={{ color: 'var(--m-muted)' }}>
-              This page updates automatically
-            </p>
-          </div>
-        </div>
-      )}
-
-      {/* ── Live activity feed during audit ──────────────── */}
+      {/* ── In progress: unified live activity + progress ── */}
       {isInProgress && !verifying && (
         <div className="mb-6">
           <AuditActivityFeed
             auditId={audit.id}
             isRunning={isInProgress}
-            maxHeight={280}
+            status={audit.status}
+            percent={(audit as any).progress_percent}
+            overviewHref={`${dashPrefix}/overview`}
+            onRestart={handleRestart}
+            maxHeight={340}
           />
         </div>
       )}
