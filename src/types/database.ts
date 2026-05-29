@@ -33,6 +33,8 @@ export type AuditStatus =
   | 'generating_report'
   | 'completed'
   | 'failed'
+  | 'completed_with_warnings'
+  | 'stalled'
 
 export type PaymentStatus =
   | 'pending'
@@ -144,6 +146,8 @@ export interface Audit {
   audit_stage:      AuditStage | null
   // Workspace scoping
   workspace_id:     string | null
+  // Pipeline version (v1, v2, etc.) — null for legacy audits
+  pipeline_version: string | null
 }
 
 /** Pipeline stage for progressive frontend loading */

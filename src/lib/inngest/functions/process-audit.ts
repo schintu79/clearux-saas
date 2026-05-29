@@ -56,6 +56,16 @@ import { checkWcagAutomated, buildWcagResults, parseHeuristicResponse, formatWca
 import type { AuditFinding } from '@/types/database'
 import { resolveCapability, inferDeployableType } from '@/lib/fix-action-model'
 import { reconcileFindings, type ReconciliationResult } from '@/lib/audit-engine/pipeline/reconciliation'
+import { PIPELINE_VERSION, stageProgress, getStage } from '@/lib/audit-engine/pipeline-spec'
+import {
+  logPipelineStarted,
+  logPipelineCompleted,
+  logPipelineFailed,
+  logStageStarted,
+  logStageCompleted,
+  logStageFailed,
+  logActivity,
+} from '@/lib/audit-engine/activity-logger'
 
 /* ── Timeout helper — prevents enrichment promises from hanging forever ── */
 /* CRITICAL: This rejects on timeout rather than resolving to null.
@@ -222,6 +232,7 @@ export const processAuditFn = inngest.createFunction(
   },
   async ({ event, step }: { event: { data: { auditId: string } }; step: any }) => {
     const auditId = event.data.auditId
+    const pipelineStartTime = Date.now()
 
     try {
     // ── Transparency: track audit limitations for user-facing alerts ──
@@ -275,6 +286,19 @@ export const processAuditFn = inngest.createFunction(
         selectedPillars, // legacy fallback
         brandIdentityId, // for brand consistency module
       }
+    })
+
+    // ── Pipeline v1: stamp audit row and log start ──
+    await step.run('pipeline-init', async () => {
+      const db = getDb()
+      await db.from('audits').update({
+        pipeline_version: PIPELINE_VERSION,
+        audit_stage: 'preflight',
+        progress_percent: 1,
+        updated_at: new Date().toISOString(),
+      } as any).eq('id', auditId)
+      await logPipelineStarted(auditId, PIPELINE_VERSION)
+      await logActivity(auditId, `Audit pipeline ${PIPELINE_VERSION} started for ${auditDetails.productUrl}`)
     })
 
     // ══════════════════════════════════════════════════════════
@@ -548,8 +572,10 @@ Return 2-6 findings. Be specific and evidence-based. Reference specific files/co
     // Detects blocked/unreachable domains BEFORE the full crawl starts.
     // ──────────────────────────────────────────────────────────
     await step.run('crawl-preflight', async () => {
-      await setStatus(auditId, 'crawling', 2)
-      await setProgress(auditId, 2, 'preflight')
+      await logStageStarted(auditId, 'preflight', 'Running preflight checks...')
+      await logActivity(auditId, `Validating site accessibility for ${auditDetails.productUrl}`)
+      await setStatus(auditId, 'crawling', stageProgress('preflight', 0))
+      await setProgress(auditId, stageProgress('preflight', 0), 'preflight')
       await auditLog(auditId, 'preflight_started', 'info', `Pre-flight check on ${auditDetails.productUrl}`)
 
       const preflight = await runCrawlPreflight(auditDetails.productUrl)
@@ -586,14 +612,16 @@ Return 2-6 findings. Be specific and evidence-based. Reference specific files/co
 
       // status === 'accessible' or 'partial' — advance stage immediately
       // so the UI doesn't stay stuck on "Preflight" during Inngest step overhead
-      await setProgress(auditId, 4, 'crawling')
+      await logStageCompleted(auditId, 'preflight', 'Preflight checks passed')
+      await setProgress(auditId, stageProgress('preflight', 1), 'crawling')
     })
 
     // STEP 2: Crawl pages
     // ──────────────────────────────────────────────────────────
     const crawlResult = await step.run('crawl-pages', async () => {
-      await setStatus(auditId, 'crawling', 5)
-      await setProgress(auditId, 5, 'crawling')
+      await logStageStarted(auditId, 'crawling', 'Discovering site pages...')
+      await setStatus(auditId, 'crawling', stageProgress('crawling', 0))
+      await setProgress(auditId, stageProgress('crawling', 0), 'crawling')
       await auditLog(auditId, 'crawl_started', 'info', `Crawling ${auditDetails.productUrl}`)
 
       const maxPages = auditDetails.plan === 'free_preview' ? 5 : auditDetails.plan === 'starter' ? 8 : 25
@@ -829,6 +857,7 @@ Return 2-6 findings. Be specific and evidence-based. Reference specific files/co
         })
         .join('\n---\n')
 
+      await logStageCompleted(auditId, 'crawling', `Crawled ${crawledPages.length} pages`, { pageCount: crawledPages.length })
       await auditLog(auditId, 'crawl_completed', 'success', `Crawled ${crawledPages.length} page(s)`)
 
       // Collect head tags for downstream structured data validation
@@ -874,7 +903,9 @@ Return 2-6 findings. Be specific and evidence-based. Reference specific files/co
     // ~25-60s of sequential execution + 2 cold starts.
     // ──────────────────────────────────────────────────────────
     const parallelChecks = await step.run('parallel-site-checks', async () => {
-      await setProgress(auditId, 15, 'checking')
+      await logStageStarted(auditId, 'checking', 'Running site checks...')
+      await logActivity(auditId, 'Testing page speed, responsive design, and accessibility...')
+      await setProgress(auditId, stageProgress('checking', 0), 'checking')
 
       // ── Responsive Design Check ──
       const responsivePromise = (async () => {
@@ -1144,6 +1175,7 @@ Return 2-6 findings. Be specific and evidence-based. Reference specific files/co
         })
       }
 
+      await logStageCompleted(auditId, 'checking', 'Site checks complete')
       return { responsive, wcag }
     })
 
@@ -1158,7 +1190,9 @@ Return 2-6 findings. Be specific and evidence-based. Reference specific files/co
     // ~40-60s vs sequential execution.
     // ──────────────────────────────────────────────────────────
     const probeResults = await step.run('parallel-probes', async () => {
-      await setProgress(auditId, 18, 'probing')
+      await logStageStarted(auditId, 'probing', 'Probing AI models for brand knowledge...')
+      await logActivity(auditId, 'Testing search visibility and AI perception...')
+      await setProgress(auditId, stageProgress('probing', 0), 'probing')
 
       // ── AI Discovery probe ──
       const aiDiscoveryPromise = (async () => {
@@ -1470,7 +1504,8 @@ Return 2-6 findings. Be specific and evidence-based. Reference specific files/co
         ] as any
       })
 
-      await setProgress(auditId, 25)
+      await setProgress(auditId, stageProgress('probing', 1))
+      await logStageCompleted(auditId, 'probing', 'AI visibility probes complete')
 
       return {
         aiDiscovery: aiDisc,
@@ -1595,8 +1630,10 @@ Return 2-6 findings. Be specific and evidence-based. Reference specific files/co
     // on /about" prevents false positive on homepage)
     // ──────────────────────────────────────────────────────────
     const siteContext = await step.run('build-site-context', async () => {
-      await setStatus(auditId, 'analysing', 30)
-      await setProgress(auditId, 30, 'analysing')
+      await logStageStarted(auditId, 'analysing', 'Analysing content...')
+      await logActivity(auditId, 'Building site context map for cross-page awareness...')
+      await setStatus(auditId, 'analysing', stageProgress('analysing', 0))
+      await setProgress(auditId, stageProgress('analysing', 0), 'analysing')
 
       // Build a structured map of what each page contains
       const lines: string[] = []
@@ -2441,7 +2478,8 @@ RULES FOR RE-AUDIT:
     // Combined into one step to eliminate Inngest cold-start overhead
     // ──────────────────────────────────────────────────────────
     await step.run('quality-gates', async () => {
-      await setProgress(auditId, 65)
+      await logStageStarted(auditId, 'quality_gates', 'Running quality checks on findings...')
+      await setProgress(auditId, stageProgress('quality_gates', 0))
       const db = getDb()
 
       // ══════════════════════════════════════════════════════════
@@ -2729,7 +2767,8 @@ RULES FOR RE-AUDIT:
       } else {
         await auditLog(auditId, 'findings_verified', 'success', `${findings.length} findings verified`)
       }
-      await setProgress(auditId, 75)
+      await setProgress(auditId, stageProgress('quality_gates', 1))
+      await logStageCompleted(auditId, 'quality_gates', 'Quality gates passed')
     })
 
     // ──────────────────────────────────────────────────────────
@@ -2738,6 +2777,7 @@ RULES FOR RE-AUDIT:
     let reconciliationData: ReconciliationResult | null = null
     if (siteContext.previousRawFindings.length > 0) {
       reconciliationData = await step.run('reconcile-findings', async () => {
+        await logStageStarted(auditId, 'reconciliation', 'Deduplicating and reconciling findings...')
         const db = getDb()
 
         // Fetch current findings from DB
@@ -2806,6 +2846,7 @@ RULES FOR RE-AUDIT:
           await Promise.all(updates)
         }
 
+        await logStageCompleted(auditId, 'reconciliation', 'Findings reconciled', result.summary as any)
         await auditLog(auditId, 'reconciliation_completed', 'success',
           `Reconciliation: ${result.summary.verifiedFixed} fixed, ${result.summary.stillOpen} open, ${result.summary.newFindings} new, ${result.summary.regressed} regressed`, {
             ...result.summary,
@@ -2819,8 +2860,10 @@ RULES FOR RE-AUDIT:
     // STEP 8: Generate report (screenshots moved to enrichment)
     // ──────────────────────────────────────────────────────────
     await step.run('generate-report', async () => {
-      await setStatus(auditId, 'generating_report', 85)
-      await setProgress(auditId, 85, 'reporting')
+      await logStageStarted(auditId, 'reporting', 'Generating report...')
+      await logActivity(auditId, 'Writing executive summary and calculating scores...')
+      await setStatus(auditId, 'generating_report', stageProgress('reporting', 0))
+      await setProgress(auditId, stageProgress('reporting', 0), 'reporting')
 
       const db = getDb()
 
@@ -2969,6 +3012,11 @@ RULES FOR RE-AUDIT:
         } : null,
       } as any)
 
+      await logStageCompleted(auditId, 'reporting', 'Report generated', {
+        total_issues: findings.length,
+        ...severityCount,
+        has_pdf: !!pdfUrl,
+      })
       await auditLog(auditId, 'report_generated', 'success', 'Report generated', {
         total_issues: findings.length,
         ...severityCount,
@@ -2983,7 +3031,9 @@ RULES FOR RE-AUDIT:
     // predictive recommendations concurrently in one step.
     // ──────────────────────────────────────────────────────────
     await step.run('post-report-enrichment', async () => {
-      await setProgress(auditId, 90, 'enriching')
+      await logStageStarted(auditId, 'enriching', 'Enriching results...')
+      await logActivity(auditId, 'Running industry benchmarks and generating fix playbooks...')
+      await setProgress(auditId, stageProgress('enriching', 0), 'enriching')
 
       // Master deadline for the entire enrichment step.
       // If all enrichments together exceed this, we bail and complete the audit.
@@ -3397,7 +3447,8 @@ RULES FOR RE-AUDIT:
         withTimeout(pipelineLearnPromise, FAST_TIMEOUT, 'pipeline-learn'),
         withTimeout(predictivePromise, FAST_TIMEOUT, 'predictive-recs'),
       ])
-      await setProgress(auditId, 94)
+      await setProgress(auditId, stageProgress('enriching', 0.5))
+      await logActivity(auditId, 'Running brand intelligence and capturing screenshots...')
 
       // Wave 2 — external API calls (brand intel, human perception, screenshots)
       await Promise.allSettled([
@@ -3405,7 +3456,8 @@ RULES FOR RE-AUDIT:
         withTimeout(humanPerceptionPromise, SLOW_TIMEOUT, 'human-perception'),
         withTimeout(screenshotPromise, SCREENSHOT_TIMEOUT, 'screenshots'),
       ])
-      await setProgress(auditId, 98)
+      await setProgress(auditId, stageProgress('enriching', 0.9))
+      await logStageCompleted(auditId, 'enriching', 'Results enriched')
 
       } // end enrichmentBody
 
@@ -3420,7 +3472,8 @@ RULES FOR RE-AUDIT:
       const db = getDb()
 
       await setStatus(auditId, 'completed', 100)
-      await setProgress(auditId, 100, 'complete')
+      await setProgress(auditId, stageProgress('complete', 1), 'complete')
+      await logPipelineCompleted(auditId, Date.now() - pipelineStartTime)
       await db
         .from('audits')
         .update({ completed_at: new Date().toISOString(), updated_at: new Date().toISOString() } as any)
@@ -3462,11 +3515,59 @@ RULES FOR RE-AUDIT:
             updated_at: new Date().toISOString(),
           } as any)
           .eq('id', auditId)
+        await logPipelineFailed(auditId, errorMsg.slice(0, 300))
         await auditLog(auditId, 'audit_failed', 'error', `Audit failed: ${errorMsg.slice(0, 200)}. Credit refunded.`)
       } catch (failErr) {
         console.error(`[inngest] Failed to handle audit failure for ${auditId}:`, failErr)
       }
       throw err // Re-throw so Inngest marks the run as failed
+    } finally {
+      // ── GUARANTEED COMPLETION SAFETY NET ──
+      // If the audit is still in a non-terminal state after the pipeline
+      // finishes (success or failure), force it to a terminal state.
+      // This prevents audits from being stuck at 90-94% forever.
+      try {
+        const db = getDb()
+        const { data: finalCheck } = await db
+          .from('audits')
+          .select('status, progress_percent')
+          .eq('id', auditId)
+          .single()
+
+        if (finalCheck) {
+          const status = (finalCheck as any).status as string
+          const progress = (finalCheck as any).progress_percent as number
+          const terminalStatuses = ['completed', 'failed', 'completed_with_warnings', 'stalled']
+
+          if (!terminalStatuses.includes(status)) {
+            // Audit is stuck in a non-terminal state — force complete
+            // If we got past the report step (progress >= 82%), mark as completed_with_warnings
+            // Otherwise mark as failed
+            const hasReport = progress >= 82
+            const forcedStatus = hasReport ? 'completed_with_warnings' : 'failed'
+            const forcedProgress = hasReport ? 100 : progress
+
+            console.warn(`[inngest] Safety net: audit ${auditId} stuck at status=${status} progress=${progress}%. Forcing to ${forcedStatus}.`)
+
+            await db.from('audits').update({
+              status: forcedStatus,
+              progress_percent: forcedProgress,
+              audit_stage: hasReport ? 'complete' : undefined,
+              completed_at: hasReport ? new Date().toISOString() : undefined,
+              updated_at: new Date().toISOString(),
+            } as any).eq('id', auditId)
+
+            if (hasReport) {
+              await logPipelineCompleted(auditId, Date.now() - pipelineStartTime)
+              await logActivity(auditId, 'Audit completed with some enrichment steps skipped.')
+            } else {
+              await logPipelineFailed(auditId, `Pipeline exited with non-terminal status: ${status}`)
+            }
+          }
+        }
+      } catch (safetyErr) {
+        console.error(`[inngest] Safety net error for ${auditId}:`, safetyErr)
+      }
     }
   },
 )

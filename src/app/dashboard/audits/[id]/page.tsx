@@ -90,6 +90,7 @@ import { matchFindingToCategory } from '@/lib/audit-engine/pipeline/category-key
 import { WcagOverview } from '@/components/dashboard/v2/WcagChecklist';
 import { ACCURACY_TOOLTIP, AccuracyTooltip } from '@/components/dashboard/AIXRayComparison';
 import { useAuditProgress, type AuditProgressData } from '@/hooks/useAuditProgress';
+import AuditActivityFeed from '@/components/dashboard/AuditActivityFeed';
 
 /* ── Helpers ─────────────────────────────────────────────── */
 
@@ -2271,6 +2272,17 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
               This page updates automatically
             </p>
           </div>
+        </div>
+      )}
+
+      {/* ── Live activity feed during audit ──────────────── */}
+      {isInProgress && !verifying && (
+        <div className="mb-6">
+          <AuditActivityFeed
+            auditId={audit.id}
+            isRunning={isInProgress}
+            maxHeight={280}
+          />
         </div>
       )}
 

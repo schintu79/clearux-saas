@@ -76,6 +76,8 @@ export async function POST(
       .update({
         status: 'payment_received',
         crawl_error: null,
+        progress_percent: 1,
+        audit_stage: 'preflight',
         updated_at: new Date().toISOString(),
       } as any)
       .eq('id', auditId)

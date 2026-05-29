@@ -201,6 +201,8 @@ export async function POST(request: NextRequest) {
         language: 'en',
         is_free_preview: true,
         free_audit_email: rateLimitKey,
+        progress_percent: 1,
+        audit_stage: 'preflight',
       })
       .select('id')
       .single()

@@ -177,7 +177,7 @@ export async function POST(request: NextRequest) {
       // Update audit status
       const { error: auditError } = await supabase
         .from('audits')
-        .update({ status: 'payment_received', updated_at: new Date().toISOString() } as any)
+        .update({ status: 'payment_received', progress_percent: 1, audit_stage: 'preflight', updated_at: new Date().toISOString() } as any)
         .eq('id', auditId)
 
       if (auditError) {

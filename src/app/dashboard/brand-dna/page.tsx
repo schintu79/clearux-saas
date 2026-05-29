@@ -506,6 +506,8 @@ export default function BrandDnaPage() {
           audit_type: 'brand_identity',
           brand_identity_id: identity.id,
           depth_mode: 'deep',
+          progress_percent: canAudit ? 1 : 0,
+          audit_stage: canAudit ? 'preflight' : null,
         })
         .select('id, status, created_at, updated_at, brand_identity_id')
         .single();

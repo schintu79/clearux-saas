@@ -59,10 +59,10 @@ export async function POST(
       .from('audits')
       .update({
         status: 'payment_received',
-        audit_stage: null,
+        audit_stage: 'preflight',
         crawl_error: null,
         pages_crawled: 0,
-        progress_percent: 0,
+        progress_percent: 1,
         updated_at: new Date().toISOString(),
       } as any)
       .eq('id', auditId)

@@ -333,9 +333,10 @@ const NewAuditInner: React.FC = () => {
         throw new Error('Could not resolve a workspace for this domain. Please try again.');
       }
 
+      const isStarting = hasCredits;
       const insertPayload: Record<string, any> = {
         user_id: user.id,
-        status: hasCredits ? 'payment_received' : 'pending_payment',
+        status: isStarting ? 'payment_received' : 'pending_payment',
         product_type: 'auto_detect',
         ux_concern: 'General UX audit',
         notes: null,
@@ -343,6 +344,9 @@ const NewAuditInner: React.FC = () => {
         language: language,
         audit_type: auditType,
         workspace_id: targetWorkspaceId,
+        // Set initial progress so the UI shows activity immediately (no refresh needed)
+        progress_percent: isStarting ? 1 : 0,
+        audit_stage: isStarting ? 'preflight' : null,
       };
 
       if (auditType === 'website') {

@@ -162,7 +162,7 @@ export async function POST(request: NextRequest) {
     // Update audit status
     await db
       .from('audits')
-      .update({ status: 'payment_received', updated_at: new Date().toISOString() } as any)
+      .update({ status: 'payment_received', progress_percent: 1, audit_stage: 'preflight', updated_at: new Date().toISOString() } as any)
       .eq('id', audit_id)
 
     // Log it
