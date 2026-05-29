@@ -6,6 +6,7 @@
 // ============================================================
 
 import type { AuditPage } from '@/types/database'
+import { isFirecrawlConfigured, firecrawlScrape, firecrawlMap } from '@/lib/crawl/firecrawl-client'
 
 /* ── Hostname normalization ───────────────────────────────── */
 
@@ -88,7 +89,7 @@ export interface CrawledPage {
   blockedByBot?: boolean
   /** Human-readable description of the blocking mechanism detected */
   blockReason?: string
-  /** Which fetch strategy succeeded: 'direct' | 'jina' | 'google_cache' | null */
+  /** Which fetch strategy succeeded: 'firecrawl' | 'direct' | 'jina' | 'google_cache' | null */
   fetchStrategy?: string
 }
 
@@ -105,6 +106,7 @@ export interface CrawlStats {
     sitemap: number
     htmlLinks: number
     commonPaths: number
+    firecrawlMap: number
   }
   excludedUrls: Array<{ url: string; reason: string }>
   crawlStartedAt: string
@@ -631,15 +633,149 @@ async function jinaFetch(url: string, timeoutMs: number = 10000): Promise<Crawle
   }
 }
 
-/* ── Multi-strategy fetch (parallel direct + Jina) ────────── */
+/* ── Strategy 0: Firecrawl (primary when configured) ──────── */
+
+async function firecrawlFetch(url: string): Promise<CrawledPage | null> {
+  if (!isFirecrawlConfigured()) return null
+
+  const fetchStart = Date.now()
+  try {
+    const result = await firecrawlScrape(url, {
+      formats: ['markdown', 'html', 'links'],
+      onlyMainContent: false,
+      timeout: 25000,
+    })
+
+    if (!result) return null
+
+    const loadTimeMs = Date.now() - fetchStart
+    const html = result.html || result.rawHtml || null
+    const markdown = result.markdown || null
+    const statusCode = result.metadata?.statusCode ?? 200
+
+    // Use markdown for content text (cleaner than HTML extraction)
+    let contentText = markdown
+    if (contentText) {
+      contentText = contentText
+        .replace(/!\[.*?\]\(.*?\)/g, '')
+        .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '$1')
+        .replace(/#{1,6}\s/g, '')
+        .replace(/\*\*/g, '')
+        .replace(/\*/g, '')
+        .replace(/`{1,3}/g, '')
+        .replace(/\n{3,}/g, '\n\n')
+        .trim()
+        .substring(0, 12000)
+    }
+
+    // If content is too thin, let other strategies try
+    if (!contentText || contentText.length < 100) {
+      console.warn(`[crawler] Firecrawl returned thin content for ${url} (${contentText?.length || 0} chars)`)
+      return null
+    }
+
+    // Extract head tags from HTML if available
+    const headTags = html ? extractHeadTags(html) : null
+
+    // Parse title + meta from Firecrawl metadata (more reliable than re-parsing)
+    const title = result.metadata?.title || (html ? extractTitle(html) : null)
+    const metaDescription = result.metadata?.description || (html ? extractMetaDescription(html) : null)
+    const h1 = html ? extractH1(html) : null
+
+    // Internal links from Firecrawl's links array
+    const discoveredUrls: string[] = []
+    if (result.links && result.links.length > 0) {
+      const baseHost = new URL(url).hostname
+      for (const href of result.links) {
+        try {
+          const resolved = new URL(href, url)
+          if (isSameHost(resolved.hostname, baseHost)) {
+            discoveredUrls.push(resolved.toString())
+          }
+        } catch { /* skip invalid */ }
+      }
+    }
+
+    // Also extract links from HTML for better coverage
+    let linksFound = discoveredUrls.length
+    if (html) {
+      const htmlLinks = extractLinks(html, url)
+      linksFound = Math.max(linksFound, htmlLinks.count)
+      // Merge HTML-extracted links into discoveredUrls
+      for (const link of htmlLinks.links) {
+        const str = link.toString()
+        if (!discoveredUrls.includes(str)) discoveredUrls.push(str)
+      }
+    }
+
+    // Check for bot blocking via the HTML
+    if (html) {
+      const blockReason = detectBlockReason(html, statusCode)
+      if (blockReason) {
+        console.warn(`[crawler] Firecrawl detected blocking for ${url}: ${blockReason}`)
+        return {
+          url,
+          title: null,
+          h1: null,
+          metaDescription: null,
+          contentText: null,
+          linksFound: 0,
+          statusCode,
+          loadTimeMs,
+          crawledAt: new Date().toISOString(),
+          blockedByBot: true,
+          blockReason,
+          fetchStrategy: 'firecrawl',
+        }
+      }
+    }
+
+    console.log(`[crawler] Firecrawl succeeded for ${url} (${contentText.length} chars, ${discoveredUrls.length} links, ${loadTimeMs}ms)`)
+
+    return {
+      url,
+      title,
+      h1,
+      metaDescription,
+      contentText,
+      rawHtml: html,
+      headTags,
+      discoveredUrls,
+      linksFound,
+      statusCode,
+      loadTimeMs,
+      crawledAt: new Date().toISOString(),
+      fetchStrategy: 'firecrawl',
+    }
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err)
+    console.warn(`[crawler] Firecrawl fetch failed for ${url}: ${msg}`)
+    return null
+  }
+}
+
+/* ── Multi-strategy fetch (Firecrawl → direct + Jina) ────── */
 
 const PAGE_FETCH_TIMEOUT_MS = 30_000 // 30s hard budget per page fetch
 
 async function fetchPageRobust(url: string): Promise<CrawledPage | null> {
-  // Run direct fetch and Jina in PARALLEL — use whichever succeeds first.
-  // Google Cache was removed (Google discontinued it in 2024).
+  // Strategy priority: Firecrawl (when configured) → direct + Jina (parallel fallback).
   // Wrapped in a hard timeout to prevent any single page from blocking the crawl.
   const fetchBody = async (): Promise<CrawledPage | null> => {
+
+  // Try Firecrawl first (best quality: handles JS rendering, returns markdown + HTML + links)
+  if (isFirecrawlConfigured()) {
+    const fcResult = await firecrawlFetch(url)
+    if (fcResult && fcResult.contentText && fcResult.contentText.length >= 100) {
+      return fcResult
+    }
+    // If Firecrawl returned a blocked stub, still propagate it
+    if (fcResult?.blockedByBot) return fcResult
+    // Otherwise fall through to direct + Jina
+    console.log(`[crawler] Firecrawl insufficient for ${url} — falling back to direct + Jina`)
+  }
+
+  // Fallback: Run direct fetch and Jina in PARALLEL
   const directPromise = directFetch(url).catch(() => null)
   const jinaPromise = jinaFetch(url).catch(() => null)
 
@@ -1025,7 +1161,7 @@ export async function crawlPages(
   const visited = new Set<string>()
   const crawlStartedAt = new Date().toISOString()
   const excludedUrls: Array<{ url: string; reason: string }> = []
-  let discoverySources = { sitemap: 0, htmlLinks: 0, commonPaths: 0 }
+  let discoverySources = { sitemap: 0, htmlLinks: 0, commonPaths: 0, firecrawlMap: 0 }
   let totalDiscovered = 0
   let jsPagesDetected = 0
   let pagesBlocked = 0
@@ -1099,11 +1235,13 @@ export async function crawlPages(
       // Use resolved hostname for discovery (so probed URLs match the actual site)
       const resolvedOrigin = `${baseUrl.protocol}//${baseHostname}`
 
-      // ── Run all 3 discovery strategies in parallel with a global 20s cap ──
-      const discoveryTimeout = new Promise<[URL[], URL[], URL[]]>((resolve) =>
-        setTimeout(() => resolve([[], [], []]), 15000)
+      // ── Run all discovery strategies in parallel with a global 20s cap ──
+      // Strategy 0 (Firecrawl map) runs alongside the existing 3 strategies.
+      // When Firecrawl is configured, its map results are highest priority.
+      const discoveryTimeout = new Promise<[URL[], URL[], URL[], URL[]]>((resolve) =>
+        setTimeout(() => resolve([[], [], [], []]), 15000)
       )
-      const [sitemapUrls, commonPathUrls, htmlLinks] = await Promise.race([discoveryTimeout, Promise.all([
+      const [sitemapUrls, commonPathUrls, htmlLinks, firecrawlMapUrls] = await Promise.race([discoveryTimeout, Promise.all([
         // Strategy A: Sitemap discovery (try both original and resolved origins)
         (async () => {
           const urls = await discoverSitemapUrls(resolvedOrigin, baseHostname).catch(() => [] as URL[])
@@ -1125,9 +1263,9 @@ export async function crawlPages(
             allLinks.push(...htmlExtracted)
           }
 
-          // C2: If Jina already extracted links (stored before cleanup), add those
+          // C2: If Firecrawl or Jina already extracted links (stored before cleanup), add those
           if (firstPage.discoveredUrls && firstPage.discoveredUrls.length > 0) {
-            console.log(`[crawler] Using ${firstPage.discoveredUrls.length} pre-extracted Jina links`)
+            console.log(`[crawler] Using ${firstPage.discoveredUrls.length} pre-extracted links`)
             for (const u of firstPage.discoveredUrls) {
               try { allLinks.push(new URL(u)) } catch { /* skip */ }
             }
@@ -1145,6 +1283,24 @@ export async function crawlPages(
           // Deduplicate
           return [...new Map(allLinks.map((l) => [normalizeUrlForDedup(l.toString()), l])).values()]
         })(),
+        // Strategy D: Firecrawl map (when configured — fastest + most comprehensive URL discovery)
+        (async (): Promise<URL[]> => {
+          if (!isFirecrawlConfigured()) return []
+          try {
+            const mapLinks = await firecrawlMap(resolvedOrigin, { limit: 200 })
+            const urls: URL[] = []
+            for (const href of mapLinks) {
+              try {
+                const u = new URL(href)
+                if (isSameHost(u.hostname, baseHostname)) urls.push(u)
+              } catch { /* skip invalid */ }
+            }
+            console.log(`[crawler] Firecrawl map: ${urls.length} same-host URLs`)
+            return urls
+          } catch {
+            return []
+          }
+        })(),
       ])])
 
       // Track discovery source counts for transparency
@@ -1152,10 +1308,12 @@ export async function crawlPages(
         sitemap: sitemapUrls.length,
         htmlLinks: htmlLinks.length,
         commonPaths: commonPathUrls.length,
+        firecrawlMap: firecrawlMapUrls.length,
       }
 
-      console.log(`[crawler] Discovery results — sitemap: ${sitemapUrls.length}, common paths: ${commonPathUrls.length}, HTML links: ${htmlLinks.length}`)
+      console.log(`[crawler] Discovery results — firecrawl: ${firecrawlMapUrls.length}, sitemap: ${sitemapUrls.length}, common paths: ${commonPathUrls.length}, HTML links: ${htmlLinks.length}`)
       await onProgress?.(8, 'crawling') // Discovery complete
+      if (firecrawlMapUrls.length > 0) console.log(`[crawler] Firecrawl map URLs: ${firecrawlMapUrls.slice(0, 5).map(u => u.pathname).join(', ')}${firecrawlMapUrls.length > 5 ? '...' : ''}`)
       if (sitemapUrls.length > 0) console.log(`[crawler] Sitemap URLs: ${sitemapUrls.slice(0, 5).map(u => u.pathname).join(', ')}${sitemapUrls.length > 5 ? '...' : ''}`)
       if (commonPathUrls.length > 0) console.log(`[crawler] Common paths found: ${commonPathUrls.slice(0, 5).map(u => u.pathname).join(', ')}${commonPathUrls.length > 5 ? '...' : ''}`)
       if (htmlLinks.length > 0) console.log(`[crawler] HTML links found: ${htmlLinks.slice(0, 5).map(u => u.pathname).join(', ')}${htmlLinks.length > 5 ? '...' : ''}`)
@@ -1163,8 +1321,13 @@ export async function crawlPages(
       // ── Merge and deduplicate all discovered URLs ──
       const allDiscoveredMap = new Map<string, URL>()
 
-      // Sitemap URLs first (highest quality — these are pages the site wants indexed)
-      for (const u of sitemapUrls) allDiscoveredMap.set(normalizeUrlForDedup(u.toString()), u)
+      // Firecrawl map URLs first (most comprehensive — crawl + sitemap + link graph)
+      for (const u of firecrawlMapUrls) allDiscoveredMap.set(normalizeUrlForDedup(u.toString()), u)
+      // Sitemap URLs next (high quality — pages the site wants indexed)
+      for (const u of sitemapUrls) {
+        const key = normalizeUrlForDedup(u.toString())
+        if (!allDiscoveredMap.has(key)) allDiscoveredMap.set(key, u)
+      }
       // Then HTML-extracted links (direct evidence of navigation)
       for (const u of htmlLinks) {
         const key = normalizeUrlForDedup(u.toString())

@@ -762,6 +762,9 @@ Return 2-6 findings. Be specific and evidence-based. Reference specific files/co
       if (crawlStats.discoverySources.sitemap > 0) {
         crawlSummary.coverage_notes.push(`Sitemap found with ${crawlStats.discoverySources.sitemap} URLs`)
       }
+      if ((crawlStats.discoverySources as any).firecrawlMap > 0) {
+        crawlSummary.coverage_notes.push(`Firecrawl map discovered ${(crawlStats.discoverySources as any).firecrawlMap} URLs`)
+      }
 
       await db
         .from('audits')
