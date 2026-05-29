@@ -14,12 +14,17 @@ const FIRECRAWL_BASE = 'https://api.firecrawl.dev/v1'
 /* ── API key ──────────────────────────────────────────────── */
 
 function getFirecrawlKey(): string | null {
-  return process.env.FIRE_CRAWL_API_KEY || null
+  // Support both env var naming conventions (Vercel may have either)
+  return process.env.FIRE_CRAWL_API_KEY || process.env.FIRECRAWL_API_KEY || null
 }
 
 /** Check whether Firecrawl is configured (key present). */
 export function isFirecrawlConfigured(): boolean {
-  return Boolean(getFirecrawlKey())
+  const hasKey = Boolean(getFirecrawlKey())
+  if (!hasKey) {
+    console.log('[firecrawl] Not configured — neither FIRE_CRAWL_API_KEY nor FIRECRAWL_API_KEY is set')
+  }
+  return hasKey
 }
 
 /* ── Types ────────────────────────────────────────────────── */
