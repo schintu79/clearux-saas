@@ -219,7 +219,8 @@ function AIVisibilityPerceptionCard({
     }
 
     // Primary: competitor entries from LLM probe mention rates
-    if (competitorMentions.totalPrompts > 0) {
+    const hasProbeCompetitors = competitorMentions.totalPrompts > 0 && competitorMentions.competitors.length > 0;
+    if (hasProbeCompetitors) {
       // Always include the brand when probe data exists
       entries.push({
         name: brandName,
@@ -241,13 +242,14 @@ function AIVisibilityPerceptionCard({
         });
       });
     } else if (drafts.length > 0) {
-      // Fallback: use competitor_benchmarks scores when no probe data exists yet.
-      // Include the brand with its overall score for a fair comparison.
-      if (brandOverallScore != null) {
+      // Fallback: use competitor_benchmarks scores when no probe competitor data exists.
+      // Prefer AI visibility score if probes ran, otherwise fall back to overall score.
+      const brandVis = effectiveBrandVis ?? brandOverallScore;
+      if (brandVis != null) {
         entries.push({
           name: brandName,
           domain: brandDomain || '',
-          visibility: Math.min(brandOverallScore, 100),
+          visibility: Math.min(brandVis, 100),
           isBrand: true,
           color: CHART_COLORS[0],
         });
