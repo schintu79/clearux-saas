@@ -79,6 +79,13 @@ async function withRetry<T>(
 /**
  * Send a chat completion request through OpenRouter.
  * Throws if the API key is missing or the request fails after retries.
+ *
+ * When `fallbackModels` is provided, OpenRouter will automatically try the
+ * next model in the list if the primary model's provider is down or rate-
+ * limited — no retry delay needed. The response's `model` field tells you
+ * which model actually served the request. Leave `fallbackModels` empty
+ * (the default) for model-specific probes where you need a particular
+ * provider's answer.
  */
 export async function openRouterChat(opts: {
   model: string
@@ -86,6 +93,10 @@ export async function openRouterChat(opts: {
   maxTokens?: number
   temperature?: number
   timeoutMs?: number
+  /** Optional fallback models for automatic provider-level failover.
+   *  When set, OpenRouter tries each model in order until one succeeds.
+   *  Only use for general tasks — never for model-specific benchmarks. */
+  fallbackModels?: string[]
 }): Promise<{
   content: string
   model: string
@@ -98,6 +109,19 @@ export async function openRouterChat(opts: {
 
   const timeoutMs = opts.timeoutMs ?? 20_000
 
+  // Build request body — add fallback routing when fallbackModels are provided
+  const requestBody: Record<string, unknown> = {
+    model: opts.model,
+    messages: opts.messages,
+    max_tokens: opts.maxTokens ?? 1000,
+    temperature: opts.temperature ?? 0,
+  }
+
+  if (opts.fallbackModels && opts.fallbackModels.length > 0) {
+    requestBody.models = [opts.model, ...opts.fallbackModels]
+    requestBody.route = 'fallback'
+  }
+
   return withRetry(async () => {
     const resp = await fetch(`${OPENROUTER_BASE_URL}/chat/completions`, {
       method: 'POST',
@@ -107,12 +131,7 @@ export async function openRouterChat(opts: {
         'HTTP-Referer': 'https://fixpath.co',
         'X-Title': 'Fixpath',
       },
-      body: JSON.stringify({
-        model: opts.model,
-        messages: opts.messages,
-        max_tokens: opts.maxTokens ?? 1000,
-        temperature: opts.temperature ?? 0,
-      }),
+      body: JSON.stringify(requestBody),
       signal: AbortSignal.timeout(timeoutMs),
     })
 

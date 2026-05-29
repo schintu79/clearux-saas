@@ -10,7 +10,7 @@
 // ============================================================
 
 import { openRouterChat, type OpenRouterMessage } from './openrouter-client'
-import { findModelBySlug } from './model-catalog'
+import { findModelBySlug, DEFAULT_MODEL_CATALOG } from './model-catalog'
 import Anthropic from '@anthropic-ai/sdk'
 
 export type AITaskType =
@@ -72,25 +72,38 @@ export async function aiGateway(opts: {
     return { content: result.content, model: result.model, provider: 'anthropic' }
   }
 
-  // OpenRouter path
+  // OpenRouter path — use fallback routing for general tasks so a provider
+  // outage doesn't block the pipeline. Picks the next 2 catalog models by
+  // priority as automatic fallbacks (same response shape, zero app changes).
   const messages: OpenRouterMessage[] = []
   if (opts.systemPrompt) {
     messages.push({ role: 'system', content: opts.systemPrompt })
   }
   messages.push({ role: 'user', content: opts.userPrompt })
 
+  // Build fallback list: other enabled models from the catalog, excluding
+  // the primary model, sorted by priority, capped at 2 fallbacks.
+  const primarySlug = opts.model!
+  const fallbackModels = DEFAULT_MODEL_CATALOG
+    .filter((m) => m.defaultEnabled && m.slug !== primarySlug)
+    .sort((a, b) => a.priorityOrder - b.priorityOrder)
+    .slice(0, 2)
+    .map((m) => m.slug)
+
   const result = await openRouterChat({
-    model: opts.model!,
+    model: primarySlug,
     messages,
     maxTokens: opts.maxTokens,
     temperature: opts.temperature,
+    fallbackModels,
   })
 
-  const modelDef = findModelBySlug(opts.model!)
+  // result.model tells us which model actually served the request
+  const actualModelDef = findModelBySlug(result.model) || findModelBySlug(primarySlug)
   return {
     content: result.content,
     model: result.model,
-    provider: modelDef?.provider || 'unknown',
+    provider: actualModelDef?.provider || 'unknown',
   }
 }
 
