@@ -148,6 +148,12 @@ export interface Audit {
   workspace_id:     string | null
   // Pipeline version (v1, v2, etc.) — null for legacy audits
   pipeline_version: string | null
+  // Canonical issue reconciliation (migration 050)
+  audit_run_type:           AuditRunType
+  trigger_source:           AuditTriggerSource
+  coverage_summary_json:    Record<string, unknown> | null
+  score_version:            string | null
+  reconciliation_summary:   Record<string, unknown> | null
 }
 
 /** Pipeline stage for progressive frontend loading */
@@ -428,6 +434,15 @@ export interface AIPageReadability {
 }
 
 export type FindingStatus = 'open' | 'in_progress' | 'fixed' | 'backlog'
+
+/** Status of a finding within a specific audit run (system-determined via reconciliation) */
+export type FindingStatusInAudit = 'new' | 'still_present' | 'improved' | 'fixed' | 'regressed' | 'duplicate' | 'superseded' | 'invalidated'
+
+/** Audit run type classification */
+export type AuditRunType = 'first_audit' | 'reaudit' | 'deep_audit' | 'post_fix_verification'
+
+/** Audit trigger source */
+export type AuditTriggerSource = 'manual' | 'scheduled' | 'post_fix' | 'api' | 'webhook'
 export type SiteNoteType = 'context' | 'dismissal' | 'discussion'
 
 export interface SiteNote {
@@ -538,6 +553,14 @@ export interface AuditFinding {
   /** Role-based: structured handoff payload for team export */
   handoff_payload:     HandoffPayload | null
   created_at:        string
+  // Canonical issue reconciliation (migration 050)
+  issue_family_id:     string | null
+  status_in_audit:     FindingStatusInAudit
+  score_impact:        number
+  scope_json:          Record<string, unknown> | null
+  page_count_affected: number
+  confidence_score:    number
+  business_relevance:  number
 }
 
 export interface FindingActionHistory {
@@ -941,6 +964,27 @@ export interface Database {
         Row: PredictiveRecommendationRow
         Insert: Partial<PredictiveRecommendationRow> & Pick<PredictiveRecommendationRow, 'audit_id' | 'action' | 'category'>
         Update: Partial<PredictiveRecommendationRow>
+      }
+      // Canonical issue system (migration 050)
+      issue_families: {
+        Row: import('@/types/canonical-issues').IssueFamily
+        Insert: Partial<import('@/types/canonical-issues').IssueFamily> & Pick<import('@/types/canonical-issues').IssueFamily, 'workspace_id' | 'category_key' | 'issue_key' | 'title_canonical'>
+        Update: Partial<import('@/types/canonical-issues').IssueFamily>
+      }
+      finding_evidence: {
+        Row: import('@/types/canonical-issues').FindingEvidence
+        Insert: Partial<import('@/types/canonical-issues').FindingEvidence> & Pick<import('@/types/canonical-issues').FindingEvidence, 'audit_finding_id' | 'evidence_type'>
+        Update: Partial<import('@/types/canonical-issues').FindingEvidence>
+      }
+      issue_lifecycle_events: {
+        Row: import('@/types/canonical-issues').IssueLifecycleEvent
+        Insert: Partial<import('@/types/canonical-issues').IssueLifecycleEvent> & Pick<import('@/types/canonical-issues').IssueLifecycleEvent, 'issue_family_id' | 'event_type'>
+        Update: Partial<import('@/types/canonical-issues').IssueLifecycleEvent>
+      }
+      score_snapshots: {
+        Row: import('@/types/canonical-issues').ScoreSnapshot
+        Insert: Partial<import('@/types/canonical-issues').ScoreSnapshot> & Pick<import('@/types/canonical-issues').ScoreSnapshot, 'audit_id' | 'workspace_id'>
+        Update: Partial<import('@/types/canonical-issues').ScoreSnapshot>
       }
     }
     Views: {

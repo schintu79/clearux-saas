@@ -169,3 +169,62 @@ export type {
   WcagFinding,
   WcagAuditResult,
 } from './wcag-checker'
+
+// ── Step 10: Canonical Issue Identity ──────────────────────
+export {
+  normalizeDetection,
+  extractIssueFamily,
+  generateScopeSignature,
+  buildCanonicalKey,
+  classifyIssueType,
+  estimateBusinessRelevance,
+  getScopeMultiplier,
+  getConfidenceMultiplier,
+  calculateScoreImpact,
+} from './canonical-identity'
+
+// ── Step 11: Reconciliation v2 (Canonical) ─────────────────
+export {
+  reconcileV2,
+  normalizeDetections,
+} from './reconciliation-v2'
+export type {
+  ReconciliationContext,
+  PriorContext,
+  ReconciliationMatch,
+  UnmatchedIssue,
+  ReconciliationResult,
+} from './reconciliation-v2'
+
+// ── Step 12: Scoring Engine ────────────────────────────────
+export {
+  computeScores,
+  computeScoreDelta,
+  validateScoreBehavior,
+} from './scoring-engine'
+export type {
+  ScoringInput,
+  ScoringResult,
+} from './scoring-engine'
+
+// ── Step 13: Reconciliation Persistence ────────────────────
+export {
+  loadPriorContext,
+  persistIssueFamilies,
+  updateFindingsWithReconciliation,
+  writeLifecycleEvents,
+  persistScoreSnapshots,
+  updateAuditWithReconciliation,
+  runFullReconciliation,
+} from './reconciliation-persist'
+
+// ── Step 10-11 (Legacy): Original Reconciliation ───────────
+export {
+  reconcileFindings,
+} from './reconciliation'
+export type {
+  ReconciliationStatus,
+  ReconciliationItem,
+  ReconciliationSummary,
+  ReconciliationResult as LegacyReconciliationResult,
+} from './reconciliation'

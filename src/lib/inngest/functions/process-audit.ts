@@ -2860,6 +2860,114 @@ RULES FOR RE-AUDIT:
     }
 
     // ──────────────────────────────────────────────────────────
+    // STEP 7c: Canonical Issue Reconciliation
+    // Creates/updates issue families, writes lifecycle events,
+    // computes and persists score snapshots via the canonical
+    // issue system. Runs for ALL audits (first + re-audit).
+    // Non-fatal — if it fails, the audit continues with legacy
+    // scoring from the report generation step.
+    // ──────────────────────────────────────────────────────────
+    let canonicalScoring: {
+      overallScore: number
+      categoryScores: Record<string, number>
+      summary: {
+        matched_count: number
+        new_count: number
+        fixed_count: number
+        regressed_count: number
+        still_present_count: number
+        improved_count: number
+        score_delta: number | null
+      }
+    } | null = null
+
+    canonicalScoring = await step.run('canonical-reconciliation', async () => {
+      try {
+        const db = getDb()
+
+        // Fetch workspace_id from audit
+        const { data: auditRow } = await db
+          .from('audits')
+          .select('workspace_id')
+          .eq('id', auditId)
+          .single()
+
+        const workspaceId = (auditRow as any)?.workspace_id
+        if (!workspaceId) {
+          console.warn(`[inngest] No workspace_id on audit ${auditId} — skipping canonical reconciliation`)
+          await auditLog(auditId, 'canonical_recon_skipped', 'warning',
+            'No workspace_id — canonical issue tracking requires workspace-based audits')
+          return null
+        }
+
+        // Fetch current findings (post quality gates)
+        const { data: currentFindings } = await db
+          .from('audit_findings')
+          .select('*')
+          .eq('audit_id', auditId)
+          .order('sort_order', { ascending: true })
+
+        const findings = (currentFindings || []) as AuditFinding[]
+        if (findings.length === 0) {
+          await auditLog(auditId, 'canonical_recon_skipped', 'info',
+            'No findings — skipping canonical reconciliation')
+          return null
+        }
+
+        // Dynamic import to avoid circular deps and reduce cold start size
+        const { runFullReconciliation } = await import(
+          '@/lib/audit-engine/pipeline/reconciliation-persist'
+        )
+
+        // Build crawled URL set
+        const crawledUrlSet = new Set<string>()
+        if (crawlResult.firstPageUrl) crawledUrlSet.add(crawlResult.firstPageUrl)
+        for (const u of (crawlResult.crawledUrls || [])) crawledUrlSet.add(u)
+
+        const ctx = {
+          currentAuditId: auditId,
+          workspaceId,
+          previousAuditId: siteContext.previousAuditId,
+          siteUrl: auditDetails.productUrl,
+          isDeepAudit: effectiveDepthMode === 'deep',
+          crawledUrls: crawledUrlSet,
+        }
+
+        const { result, scoring } = await runFullReconciliation(findings, ctx)
+
+        await auditLog(auditId, 'canonical_reconciliation_completed', 'success',
+          `Canonical: ${result.summary.matched_count} matched, ${result.summary.new_count} new, ` +
+          `${result.summary.fixed_count} fixed. Score: ${scoring.overallScore}/100`, {
+            matched_count: result.summary.matched_count,
+            new_count: result.summary.new_count,
+            fixed_count: result.summary.fixed_count,
+            regressed_count: result.summary.regressed_count,
+            improved_count: result.summary.improved_count,
+            canonical_score: scoring.overallScore,
+          })
+
+        return {
+          overallScore: scoring.overallScore,
+          categoryScores: scoring.categoryScores,
+          summary: {
+            matched_count: result.summary.matched_count,
+            new_count: result.summary.new_count,
+            fixed_count: result.summary.fixed_count,
+            regressed_count: result.summary.regressed_count,
+            still_present_count: result.summary.still_present_count,
+            improved_count: result.summary.improved_count,
+            score_delta: result.summary.score_delta,
+          },
+        }
+      } catch (err) {
+        console.error('[inngest] Canonical reconciliation failed (non-fatal):', err)
+        await auditLog(auditId, 'canonical_recon_error', 'warning',
+          `Canonical reconciliation failed: ${err instanceof Error ? err.message : String(err)}. Audit continues with legacy scoring.`)
+        return null
+      }
+    })
+
+    // ──────────────────────────────────────────────────────────
     // STEP 8: Generate report (screenshots moved to enrichment)
     // ──────────────────────────────────────────────────────────
     await step.run('generate-report', async () => {
@@ -2981,6 +3089,8 @@ RULES FOR RE-AUDIT:
         aiVisibilityBreakdown: aiVisibility,
         auditLimitations: auditLimitations.length > 0 ? auditLimitations : undefined,
         reconciliationSummary: reconciliationData?.summary || null,
+        canonicalScoring: canonicalScoring || null,
+        canonicalReconciliation: canonicalScoring?.summary || null,
       }
 
       // Insert report
