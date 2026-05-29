@@ -31,6 +31,8 @@ import {
   Crown,
   BarChart3,
   ArrowRight,
+  Bot,
+  MessageSquare,
 } from 'lucide-react';
 import Link from 'next/link';
 import { useAuth } from '@/context/AuthContext';
@@ -289,32 +291,29 @@ function AIVisibilityPerceptionCard({
     return snaps.length >= 2 ? snaps : null;
   }, [trendSnapshots]);
 
-  // Derive insight sentence
+  // Derive insight sentence — rewritten to explain mention share, not "ranking"
   const insightText = useMemo(() => {
-    if (rankedEntries.length < 2) return null;
-    const brandEntry = rankedEntries.find(e => e.isBrand);
-    if (!brandEntry) return null;
-    const brandIdx = rankedEntries.indexOf(brandEntry);
+    const competitorEntries = rankedEntries.filter(e => !e.isBrand);
+    if (competitorEntries.length === 0) return null;
+    const topCompetitor = competitorEntries[0];
+    if (!topCompetitor) return null;
 
-    if (brandIdx === 0) {
-      const secondPlace = rankedEntries[1];
-      const leadGap = brandEntry.visibility - secondPlace.visibility;
-      if (leadGap === 0) {
-        return `${brandName} leads with ${brandEntry.visibility}% AI visibility, tied with ${secondPlace.name}.`;
-      }
-      return `${brandName} leads with ${brandEntry.visibility}% AI visibility, ${leadGap} points ahead of ${secondPlace.name}.`;
+    if (competitorEntries.length === 1) {
+      return `When asked about ${brandName}, AI models mention ${topCompetitor.name} ${topCompetitor.visibility}% of the time.`;
     }
-    const leader = rankedEntries[0];
-    const gap = leader.visibility - brandEntry.visibility;
-    return `${brandName} ranks #${brandIdx + 1} at ${brandEntry.visibility}% — ${gap} points behind ${leader.name}.`;
+    const bottomCompetitor = competitorEntries[competitorEntries.length - 1];
+    if (topCompetitor.visibility > 50) {
+      return `${topCompetitor.name} is the most referenced competitor at ${topCompetitor.visibility}% — AI strongly associates it with your market.`;
+    }
+    return `${topCompetitor.name} comes up most at ${topCompetitor.visibility}%, while ${bottomCompetitor.name} is only mentioned ${bottomCompetitor.visibility}% of the time.`;
   }, [rankedEntries, brandName]);
 
   // Skeleton loading
   if (loading) {
     return (
       <DashCard>
-        <SectionTitle>AI visibility perception</SectionTitle>
-        <SectionDesc>Ranking of the added brands based on AI visibility</SectionDesc>
+        <SectionTitle>Who does AI mention about you?</SectionTitle>
+        <SectionDesc>Checking which competitors AI brings up when asked about your brand</SectionDesc>
         <div className="space-y-3 mt-4">
           {[1, 2, 3].map(i => (
             <div key={i} className="flex items-center gap-3">
@@ -328,129 +327,163 @@ function AIVisibilityPerceptionCard({
     );
   }
 
-  // Empty state — show when there are no entries at all, or only the brand with no competitors
+  // Empty state
   const hasCompetitorEntries = rankedEntries.some(e => !e.isBrand);
   if (rankedEntries.length === 0 || (!hasCompetitorEntries && rankedEntries.length < 2)) {
     const hasCompetitors = drafts.length > 0;
     return (
       <DashCard>
-        <SectionTitle>AI visibility perception</SectionTitle>
-        <SectionDesc>How your brand ranks against competitors in AI responses</SectionDesc>
+        <SectionTitle>Who does AI mention about you?</SectionTitle>
+        <SectionDesc>We ask multiple AI models about your brand and track which competitors they reference</SectionDesc>
         <div className="text-center py-10">
-          <BarChart3 size={28} strokeWidth={1.5} style={{ color: 'var(--m-muted)' }} className="mx-auto mb-3" />
+          <MessageSquare size={28} strokeWidth={1.5} style={{ color: 'var(--m-muted)' }} className="mx-auto mb-3" />
           <p className="text-[13px] font-medium" style={{ color: 'var(--ink)' }}>
-            {hasCompetitors ? 'AI visibility data is being computed' : 'Not enough data yet'}
+            {hasCompetitors ? 'AI mention data is being computed' : 'Not enough data yet'}
           </p>
           <p className="text-[12px] mt-1" style={{ color: 'var(--m-muted)' }}>
             {hasCompetitors
-              ? 'Competitor data has been uploaded. Run an audit with AI probes enabled to generate visibility scores.'
+              ? 'Competitor data uploaded. Run an audit with AI probes enabled to see who AI mentions alongside your brand.'
               : drafts.length === 0
-                ? 'Run an audit with AI probes enabled, then add competitors to compare AI visibility.'
-                : 'Add at least one competitor to see how your brand compares in AI visibility.'}
+                ? 'Run an audit with AI probes enabled, then add competitors to see how often AI brings them up.'
+                : 'Add at least one competitor to see who AI associates with your brand.'}
           </p>
         </div>
       </DashCard>
     );
   }
 
-  const maxVis = Math.max(...rankedEntries.map(e => e.visibility), 1);
+  // Separate brand and competitor entries for display
+  const brandEntry = rankedEntries.find(e => e.isBrand);
+  const competitorEntries = rankedEntries.filter(e => !e.isBrand);
+  const maxCompetitorVis = Math.max(...competitorEntries.map(e => e.visibility), 1);
 
   return (
     <DashCard>
       <div className="flex items-start justify-between mb-1">
         <div>
-          <SectionTitle>AI visibility perception</SectionTitle>
-          <SectionDesc>How your brand ranks against competitors in AI responses</SectionDesc>
+          <SectionTitle>Who does AI mention about you?</SectionTitle>
+          <SectionDesc>We asked multiple AI models about your brand. Here&apos;s who they referenced.</SectionDesc>
         </div>
-        {rankedEntries.find(e => e.isBrand) && (
+      </div>
+
+      {/* ── Methodology explainer ────────────────────── */}
+      <div
+        className="mt-3 px-3.5 py-3 rounded-lg flex items-start gap-3"
+        style={{ background: 'color-mix(in srgb, var(--signal) 5%, transparent)', border: '1px solid color-mix(in srgb, var(--signal) 12%, transparent)' }}
+      >
+        {/* Mini flow: Bot → Questions → Mentions */}
+        <div className="flex items-center gap-1.5 flex-shrink-0 pt-0.5">
           <div
-            className="flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[11px] font-semibold"
-            style={{
-              background: rankedEntries.findIndex(e => e.isBrand) === 0
-                ? 'color-mix(in srgb, var(--ok) 10%, transparent)'
-                : 'color-mix(in srgb, var(--warn) 10%, transparent)',
-              color: rankedEntries.findIndex(e => e.isBrand) === 0 ? 'var(--ok)' : 'var(--warn)',
-            }}
+            className="w-6 h-6 rounded-md flex items-center justify-center"
+            style={{ background: 'color-mix(in srgb, var(--signal) 12%, transparent)' }}
           >
-            {rankedEntries.findIndex(e => e.isBrand) === 0 ? (
-              <><Crown size={11} /> Leader</>
-            ) : (
-              <>#{rankedEntries.findIndex(e => e.isBrand) + 1} of {rankedEntries.length}</>
-            )}
+            <Bot size={13} style={{ color: 'var(--signal)' }} />
           </div>
-        )}
+          <svg width="16" height="8" viewBox="0 0 16 8" fill="none" style={{ flexShrink: 0 }}>
+            <path d="M0 4h12M10 1l3 3-3 3" stroke="var(--m-muted)" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" opacity="0.5" />
+          </svg>
+          <div
+            className="w-6 h-6 rounded-md flex items-center justify-center"
+            style={{ background: 'color-mix(in srgb, var(--signal) 12%, transparent)' }}
+          >
+            <MessageSquare size={13} style={{ color: 'var(--signal)' }} />
+          </div>
+        </div>
+        <p className="text-[11.5px] leading-[1.5]" style={{ color: 'var(--ink)', opacity: 0.75 }}>
+          We asked <strong>Claude, GPT-4, Gemini</strong>, and <strong>Perplexity</strong> about <strong>{brandName}</strong>.
+          The % below shows how often each competitor was mentioned in AI responses — not a global ranking.
+        </p>
       </div>
 
-      {/* ── Ranked bar chart ─────────────────────────── */}
-      <div ref={chartRef} className="mt-4 space-y-2.5">
-        {rankedEntries.map((entry, idx) => {
-          const barWidth = maxVis > 0 ? (entry.visibility / maxVis) * 100 : 0;
-          return (
-            <div key={entry.domain + idx} className="flex items-center gap-3 group">
-              {/* Rank number */}
-              <span
-                className="w-5 text-[11px] font-bold tabular-nums text-center flex-shrink-0"
-                style={{ color: entry.isBrand ? entry.color : 'var(--m-muted)' }}
-              >
-                {idx + 1}
-              </span>
+      {/* ── Brand mention rate (context row) ──────── */}
+      {brandEntry && (
+        <div
+          className="mt-4 px-3.5 py-2.5 rounded-lg flex items-center justify-between"
+          style={{ background: 'color-mix(in srgb, var(--ink) 3%, transparent)' }}
+        >
+          <div className="flex items-center gap-2.5">
+            <SiteFavicon hostname={brandEntry.domain} size={16} />
+            <span className="text-[12px] font-semibold" style={{ color: 'var(--ink)' }}>
+              {brandEntry.name}
+            </span>
+            <span
+              className="text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded"
+              style={{ background: 'color-mix(in srgb, var(--ink) 8%, transparent)', color: 'var(--m-muted)' }}
+            >
+              Your brand
+            </span>
+          </div>
+          <div className="flex items-center gap-1.5">
+            <span className="text-[12px] font-bold tabular-nums" style={{ color: 'var(--ink)' }}>{brandEntry.visibility}%</span>
+            <span className="text-[10px]" style={{ color: 'var(--m-muted)' }}>mention rate</span>
+          </div>
+        </div>
+      )}
 
-              {/* Brand marker + bar */}
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2 mb-1">
-                  <SiteFavicon hostname={entry.domain} size={14} />
+      {/* ── Competitor mention chart ─────────────────── */}
+      {competitorEntries.length > 0 && (
+        <div className="mt-2 mb-1">
+          <p className="text-[10px] font-semibold uppercase tracking-wider mb-2.5 mt-3" style={{ color: 'var(--m-muted)' }}>
+            Competitors mentioned in AI responses
+          </p>
+          <div ref={chartRef} className="space-y-2.5">
+            {competitorEntries.map((entry, idx) => {
+              const barWidth = maxCompetitorVis > 0 ? (entry.visibility / maxCompetitorVis) * 100 : 0;
+              return (
+                <div key={entry.domain + idx} className="flex items-center gap-3 group">
                   <span
-                    className="text-[12px] font-medium truncate"
-                    style={{ color: entry.isBrand ? 'var(--ink)' : 'color-mix(in srgb, var(--ink) 80%, transparent)' }}
+                    className="w-5 text-[11px] font-bold tabular-nums text-center flex-shrink-0"
+                    style={{ color: 'var(--m-muted)' }}
                   >
-                    {entry.name}
+                    {idx + 1}
                   </span>
-                  {entry.isBrand && (
-                    <span
-                      className="text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded"
-                      style={{ background: 'color-mix(in srgb, var(--ink) 6%, transparent)', color: 'var(--m-muted)' }}
-                    >
-                      You
-                    </span>
-                  )}
+
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 mb-1">
+                      <SiteFavicon hostname={entry.domain} size={14} />
+                      <span
+                        className="text-[12px] font-medium truncate"
+                        style={{ color: 'color-mix(in srgb, var(--ink) 80%, transparent)' }}
+                      >
+                        {entry.name}
+                      </span>
+                    </div>
+                    <div className="w-full h-[22px] rounded-md overflow-hidden relative" style={{ background: 'color-mix(in srgb, var(--ink) 4%, transparent)' }}>
+                      <div
+                        className="h-full rounded-md transition-all duration-700 ease-out"
+                        style={{
+                          width: `${Math.max(barWidth, 2)}%`,
+                          background: `color-mix(in srgb, ${entry.color} 50%, transparent)`,
+                          opacity: 0.7,
+                        }}
+                      />
+                      <span
+                        className="absolute top-0 h-full flex items-center text-[11px] font-bold tabular-nums"
+                        style={{
+                          left: barWidth > 20 ? undefined : `${Math.max(barWidth, 3)}%`,
+                          right: barWidth > 20 ? `max(4px, ${100 - barWidth + 1}%)` : undefined,
+                          color: barWidth > 20 ? '#fff' : 'var(--ink)',
+                          paddingLeft: barWidth > 20 ? undefined : '6px',
+                          paddingRight: barWidth > 20 ? '8px' : undefined,
+                          textShadow: barWidth > 20 ? '0 1px 2px rgba(0,0,0,0.3)' : 'none',
+                        }}
+                      >
+                        {entry.visibility}%
+                      </span>
+                    </div>
+                  </div>
                 </div>
-                <div className="w-full h-[22px] rounded-md overflow-hidden relative" style={{ background: 'color-mix(in srgb, var(--ink) 4%, transparent)' }}>
-                  <div
-                    className="h-full rounded-md transition-all duration-700 ease-out"
-                    style={{
-                      width: `${Math.max(barWidth, 2)}%`,
-                      background: entry.isBrand
-                        ? `linear-gradient(90deg, ${entry.color}, color-mix(in srgb, ${entry.color} 70%, white))`
-                        : `color-mix(in srgb, ${entry.color} 50%, transparent)`,
-                      opacity: entry.isBrand ? 1 : 0.7,
-                    }}
-                  />
-                  {/* Value label inside bar if wide enough, otherwise outside */}
-                  <span
-                    className="absolute top-0 h-full flex items-center text-[11px] font-bold tabular-nums"
-                    style={{
-                      left: barWidth > 20 ? undefined : `${Math.max(barWidth, 3)}%`,
-                      right: barWidth > 20 ? `max(4px, ${100 - barWidth + 1}%)` : undefined,
-                      color: barWidth > 20 ? '#fff' : 'var(--ink)',
-                      paddingLeft: barWidth > 20 ? undefined : '6px',
-                      paddingRight: barWidth > 20 ? '8px' : undefined,
-                      textShadow: barWidth > 20 ? '0 1px 2px rgba(0,0,0,0.3)' : 'none',
-                    }}
-                  >
-                    {entry.visibility}%
-                  </span>
-                </div>
-              </div>
-            </div>
-          );
-        })}
-      </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
 
       {/* ── Trend sparkline (if historical data exists) ── */}
       {brandTrend && (
         <div className="mt-5 pt-4" style={{ borderTop: '1px solid var(--rule)' }}>
           <p className="text-[11px] font-semibold uppercase tracking-wider mb-3" style={{ color: 'var(--m-muted)' }}>
-            {brandName} visibility trend
+            {brandName} mention trend
           </p>
           <BrandTrendSparkline data={brandTrend} color={CHART_COLORS[0]} />
         </div>
@@ -474,7 +507,7 @@ function AIVisibilityPerceptionCard({
           className="inline-flex items-center gap-1.5 text-[12px] font-medium transition-opacity hover:opacity-70"
           style={{ color: 'var(--m-muted)' }}
         >
-          Want to improve AI visibility? Go to AI Perception
+          See full AI perception breakdown
           <ArrowRight size={12} />
         </Link>
       </div>
