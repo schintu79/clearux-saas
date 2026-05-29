@@ -199,11 +199,8 @@ export async function fetchOpenRouterModels(): Promise<
 }
 
 /**
- * Check whether OpenRouter is available.
- * Currently disabled — all AI calls route through Claude direct.
- * The function and client are kept intact so multi-model benchmarking
- * can be re-enabled later by flipping this back to `Boolean(getApiKey())`.
+ * Check whether an OpenRouter API key is configured.
  */
 export function isOpenRouterConfigured(): boolean {
-  return false // OpenRouter disabled — all AI goes through Claude direct
+  return Boolean(getApiKey())
 }

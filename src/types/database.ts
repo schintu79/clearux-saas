@@ -609,7 +609,7 @@ export interface ModelBenchmarksSummary {
 
 /**
  * AI model identifiers. Now a string to support dynamic user-enabled
- * models (OpenRouter currently disabled — all AI via Claude). Legacy short IDs ('claude', 'gpt4o', 'gemini',
+ * models via OpenRouter. Legacy short IDs ('claude', 'gpt4o', 'gemini',
  * 'perplexity') remain valid for backwards compatibility with existing DB data.
  */
 export type AIModelId = string

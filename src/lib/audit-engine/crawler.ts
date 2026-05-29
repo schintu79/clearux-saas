@@ -708,11 +708,27 @@ async function firecrawlFetch(url: string): Promise<CrawledPage | null> {
       }
     }
 
-    // NOTE: Do NOT run detectBlockReason on Firecrawl results.
-    // Firecrawl handles bot bypass (JS rendering, Cloudflare challenges) internally.
-    // If Firecrawl returned content, the page was successfully rendered — running our
-    // pattern-based block detection on Firecrawl HTML causes false positives when
-    // legitimate pages mention "cloudflare", "captcha", etc. in their content.
+    // Check for bot blocking via the HTML
+    if (html) {
+      const blockReason = detectBlockReason(html, statusCode)
+      if (blockReason) {
+        console.warn(`[crawler] Firecrawl detected blocking for ${url}: ${blockReason}`)
+        return {
+          url,
+          title: null,
+          h1: null,
+          metaDescription: null,
+          contentText: null,
+          linksFound: 0,
+          statusCode,
+          loadTimeMs,
+          crawledAt: new Date().toISOString(),
+          blockedByBot: true,
+          blockReason,
+          fetchStrategy: 'firecrawl',
+        }
+      }
+    }
 
     console.log(`[crawler] Firecrawl succeeded for ${url} (${contentText.length} chars, ${discoveredUrls.length} links, ${loadTimeMs}ms)`)
 

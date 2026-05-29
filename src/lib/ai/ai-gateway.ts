@@ -1,10 +1,16 @@
 // ============================================================
 // Fixpath AI Gateway — Unified Routing Layer
 // ============================================================
-// All AI calls route through Claude direct (Anthropic SDK).
-// OpenRouter has been removed — all tasks use Claude Haiku.
+// One function to call any model for any task.
+//
+// - crawler, analyzer, grading, surgical_fix -> always Claude direct
+// - Everything else -> OpenRouter with the specified model
+//
+// Claude stays on the direct Anthropic SDK for prompt caching.
 // ============================================================
 
+import { openRouterChat, type OpenRouterMessage } from './openrouter-client'
+import { findModelBySlug, DEFAULT_MODEL_CATALOG } from './model-catalog'
 import Anthropic from '@anthropic-ai/sdk'
 
 export type AITaskType =
@@ -30,32 +36,82 @@ function getAnthropicClient(): Anthropic {
   return _anthropic
 }
 
+/* ── Tasks that always go to Claude direct ──────────────────── */
+
+const CLAUDE_ONLY_TASKS = new Set<AITaskType>([
+  'crawler',
+  'analyzer',
+  'grading',
+  'surgical_fix',
+])
+
 /* ── Main gateway ───────────────────────────────────────────── */
 
 /**
- * Route an AI call — all tasks go through Claude direct.
+ * Route an AI call based on task type.
+ * - 'crawler', 'analyzer', 'grading', 'surgical_fix' -> always Claude direct
+ * - Everything else -> OpenRouter with the specified model
  */
 export async function aiGateway(opts: {
   task: AITaskType
-  model?: string  // Ignored — all calls go to Claude
+  model?: string  // OpenRouter model slug, or 'claude' for direct
   systemPrompt?: string
   userPrompt: string
   maxTokens?: number
   temperature?: number
 }): Promise<{ content: string; model: string; provider: string }> {
-  const result = await claudeDirect({
-    systemPrompt: opts.systemPrompt,
-    userPrompt: opts.userPrompt,
+  const isClaude = CLAUDE_ONLY_TASKS.has(opts.task) || opts.model === 'claude' || !opts.model
+
+  if (isClaude) {
+    const result = await claudeDirect({
+      systemPrompt: opts.systemPrompt,
+      userPrompt: opts.userPrompt,
+      maxTokens: opts.maxTokens,
+      temperature: opts.temperature,
+    })
+    return { content: result.content, model: result.model, provider: 'anthropic' }
+  }
+
+  // OpenRouter path — use fallback routing for general tasks so a provider
+  // outage doesn't block the pipeline. Picks the next 2 catalog models by
+  // priority as automatic fallbacks (same response shape, zero app changes).
+  const messages: OpenRouterMessage[] = []
+  if (opts.systemPrompt) {
+    messages.push({ role: 'system', content: opts.systemPrompt })
+  }
+  messages.push({ role: 'user', content: opts.userPrompt })
+
+  // Build fallback list: other enabled models from the catalog, excluding
+  // the primary model, sorted by priority, capped at 2 fallbacks.
+  const primarySlug = opts.model!
+  const fallbackModels = DEFAULT_MODEL_CATALOG
+    .filter((m) => m.defaultEnabled && m.slug !== primarySlug)
+    .sort((a, b) => a.priorityOrder - b.priorityOrder)
+    .slice(0, 2)
+    .map((m) => m.slug)
+
+  const result = await openRouterChat({
+    model: primarySlug,
+    messages,
     maxTokens: opts.maxTokens,
     temperature: opts.temperature,
+    fallbackModels,
   })
-  return { content: result.content, model: result.model, provider: 'anthropic' }
+
+  // result.model tells us which model actually served the request
+  const actualModelDef = findModelBySlug(result.model) || findModelBySlug(primarySlug)
+  return {
+    content: result.content,
+    model: result.model,
+    provider: actualModelDef?.provider || 'unknown',
+  }
 }
 
 /* ── Claude direct path ─────────────────────────────────────── */
 
 /**
- * Claude-direct path — uses the Anthropic SDK with prompt caching support.
+ * Claude-direct path (for crawler/scanner/analyzer flows only).
+ * Uses the Anthropic SDK with prompt caching support.
  */
 export async function claudeDirect(opts: {
   systemPrompt?: string
@@ -100,12 +156,11 @@ export async function claudeDirect(opts: {
   return { content, model: resp.model }
 }
 
-/* ── Probe convenience (uses Claude direct) ───────────────────── */
+/* ── Probe convenience ──────────────────────────────────────── */
 
 /**
- * Probe a question against Claude.
+ * Probe a question against a specific OpenRouter model.
  * Returns a clean result with status for the multi-model benchmark.
- * (Previously routed through OpenRouter — now all Claude.)
  */
 export async function probeModel(opts: {
   modelSlug: string
@@ -119,9 +174,13 @@ export async function probeModel(opts: {
   error?: string
 }> {
   try {
-    const result = await claudeDirect({
-      systemPrompt: opts.systemPrompt,
-      userPrompt: opts.question,
+    const messages: OpenRouterMessage[] = [
+      { role: 'system', content: opts.systemPrompt },
+      { role: 'user', content: opts.question },
+    ]
+    const result = await openRouterChat({
+      model: opts.modelSlug,
+      messages,
       maxTokens: opts.maxTokens ?? 400,
       temperature: 0,
     })
