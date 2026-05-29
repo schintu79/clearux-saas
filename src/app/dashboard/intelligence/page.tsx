@@ -17,7 +17,6 @@ import Link from 'next/link';
 import {
   Radio,
   BarChart3,
-  LineChart,
   Sparkles,
   ArrowRight,
   ExternalLink,
@@ -39,15 +38,12 @@ import {
   Target,
   Zap,
   Wrench,
-  FileText,
-  Code,
-  Star,
-  Globe,
   Users,
   CheckCircle2,
   ThumbsUp,
   ThumbsDown,
   Minus,
+  Bot,
 } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { useAuditBundle } from '@/context/AuditBundleContext';
@@ -236,6 +232,12 @@ export default function IntelligencePage() {
   const productUrl = bundle?.audit?.product_url || '';
   const isBrandAudit = bundle?.audit && (bundle.audit as any).audit_type === 'brand_identity';
   const overallScore = bundle?.report?.overall_score ?? 0;
+
+  // Brand identity
+  let domain: string | null = null;
+  try { domain = new URL(productUrl || '').hostname.replace(/^www\./, ''); } catch {}
+  const brandName = (bundle?.audit as any)?.brand_name || workspace?.name || domain || 'your brand';
+  const isNewBrand = modelProbes.length > 0 && modelProbes.every(p => p.accuracy_score < 15);
 
   const userPillarScores = useMemo(() => {
     const report = bundle?.report;
@@ -428,14 +430,47 @@ export default function IntelligencePage() {
 
         {/* ── Card 1: AI Master Overview (full-width hero) ── */}
         <DashCard className="lg:col-span-2">
-          <CardHeader title="AI Master Overview" subtitle="Your brand's presence, accuracy, and perception across AI models" />
-          {biSummary || overallScore > 0 ? (
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-4">
-              <MetricDonut label="Performance Score" value={overallScore} />
-              <MetricDonut label="AI Visibility" value={visibilityScore} suffix="%" />
-              <MetricDonut label="Avg. Placement" value={avgPlacement} isPlacement />
-              <MetricDonut label="Sentiment Score" value={sentimentScore} />
+          <CardHeader title="AI Master Overview" subtitle="How AI models understand, rank, and describe your brand" />
+
+          {/* Methodology explainer */}
+          <div
+            className="mt-3 px-3.5 py-3 rounded-lg flex items-center gap-3"
+            style={{ background: 'color-mix(in srgb, var(--signal) 5%, transparent)', border: '1px solid color-mix(in srgb, var(--signal) 12%, transparent)' }}
+          >
+            <div className="flex items-center gap-1.5 flex-shrink-0">
+              <div className="w-6 h-6 rounded-md flex items-center justify-center" style={{ background: 'color-mix(in srgb, var(--signal) 12%, transparent)' }}>
+                <Bot size={13} style={{ color: 'var(--signal)' }} />
+              </div>
+              <svg width="16" height="8" viewBox="0 0 16 8" fill="none" style={{ flexShrink: 0 }}>
+                <path d="M0 4h12M10 1l3 3-3 3" stroke="var(--m-muted)" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" opacity="0.5" />
+              </svg>
+              <div className="w-6 h-6 rounded-md flex items-center justify-center" style={{ background: 'color-mix(in srgb, var(--signal) 12%, transparent)' }}>
+                <Target size={13} style={{ color: 'var(--signal)' }} />
+              </div>
             </div>
+            <p className="text-[12.5px] leading-[1.5]" style={{ color: 'var(--ink)', opacity: 0.75 }}>
+              We queried <strong>Claude, GPT-4, Gemini</strong>, and <strong>Perplexity</strong> about <strong>{brandName}</strong> with no prior context. These scores show how accurately AI represents you, where it ranks you, and how it describes your reputation.
+            </p>
+          </div>
+
+          {biSummary || overallScore > 0 ? (
+            <>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-4">
+                <MetricDonut label="Performance Score" value={overallScore} />
+                <MetricDonut label="AI Visibility" value={visibilityScore} suffix="%" />
+                <MetricDonut label="Avg. Placement" value={avgPlacement} isPlacement />
+                <MetricDonut label="Sentiment Score" value={sentimentScore} />
+              </div>
+
+              {/* Brand too new / unknown notice */}
+              {isNewBrand && (
+                <div className="mt-3 px-3.5 py-2.5 rounded-lg" style={{ background: 'color-mix(in srgb, var(--warn) 6%, transparent)', border: '1px solid color-mix(in srgb, var(--warn) 12%, transparent)' }}>
+                  <p className="text-[12px] leading-[1.5]" style={{ color: 'var(--ink)', opacity: 0.8 }}>
+                    <strong>AI models have limited knowledge of {brandName}.</strong> This is common for newer or niche brands. As your online presence grows through content, reviews, and external mentions, AI will learn more about you and these scores will improve.
+                  </p>
+                </div>
+              )}
+            </>
           ) : (
             <EmptyCardBody message="Run an audit with the Brand module enabled to generate AI performance metrics." />
           )}
@@ -443,7 +478,16 @@ export default function IntelligencePage() {
 
         {/* ── Card 2: AI Model Performance ── */}
         <DashCard>
-          <CardHeader title="AI Model Performance" subtitle="How each AI model perceives your brand" />
+          <CardHeader title="AI Model Performance" subtitle="What each AI model knows about you" />
+
+          {/* Methodology explainer */}
+          <div className="mt-2.5 px-3 py-2 rounded-md flex items-center gap-2.5" style={{ background: 'color-mix(in srgb, var(--signal) 4%, transparent)' }}>
+            <Bot size={12} style={{ color: 'var(--signal)', flexShrink: 0 }} />
+            <p className="text-[11.5px] leading-[1.45]" style={{ color: 'var(--ink)', opacity: 0.65 }}>
+              Each model was asked identical questions about <strong>{brandName}</strong>. Accuracy = how well answers match your actual site content.
+            </p>
+          </div>
+
           {modelProbes.length > 0 ? (
             <div className="mt-3 space-y-2">
               {modelProbes.map((probe) => (
@@ -463,7 +507,7 @@ export default function IntelligencePage() {
         {/* ── Card 3: Competitive Benchmark ── */}
         <DashCard>
           <div className="flex items-center justify-between">
-            <CardHeader title="Competitive Benchmark" subtitle="Where you stand vs competitors" />
+            <CardHeader title="Competitive Benchmark" subtitle="Your site vs competitors — audited scores" />
             {!isBrandAudit && scoredDrafts.length > 0 && (
               <button
                 type="button"
@@ -474,6 +518,14 @@ export default function IntelligencePage() {
                 {showCompetitorEditor ? 'Hide editor' : 'Edit'}
               </button>
             )}
+          </div>
+
+          {/* Methodology explainer */}
+          <div className="mt-2.5 px-3 py-2 rounded-md flex items-center gap-2.5" style={{ background: 'color-mix(in srgb, var(--signal) 4%, transparent)' }}>
+            <BarChart3 size={12} style={{ color: 'var(--signal)', flexShrink: 0 }} />
+            <p className="text-[11.5px] leading-[1.45]" style={{ color: 'var(--ink)', opacity: 0.65 }}>
+              Scores reflect overall audit results — content quality, technical structure, AI readiness, and UX. Higher = better optimized.
+            </p>
           </div>
 
           {isBrandAudit ? (
@@ -590,8 +642,19 @@ export default function IntelligencePage() {
         <DashCard>
           <CardHeader
             title="Sentiment & Signals"
-            subtitle={hasRealHumanData ? "How AI and humans feel about your brand" : "How AI models perceive and represent your brand"}
+            subtitle={hasRealHumanData ? "What AI and the web say about your reputation" : "How AI models describe and perceive your brand"}
           />
+
+          {/* Methodology explainer */}
+          <div className="mt-2.5 px-3 py-2 rounded-md flex items-center gap-2.5" style={{ background: 'color-mix(in srgb, var(--signal) 4%, transparent)' }}>
+            <MessageSquare size={12} style={{ color: 'var(--signal)', flexShrink: 0 }} />
+            <p className="text-[11.5px] leading-[1.45]" style={{ color: 'var(--ink)', opacity: 0.65 }}>
+              {hasRealHumanData
+                ? <>Sentiment from AI responses + public mentions (Reddit, reviews, web). Themes show what people and AI praise or criticize.</>
+                : <>Extracted from how AI describes <strong>{brandName}</strong> in its responses. Positive and negative themes show how AI perceives your reputation.</>
+              }
+            </p>
+          </div>
 
           {biSummary || hasRealHumanData ? (
             <div className="mt-3">
@@ -702,16 +765,42 @@ export default function IntelligencePage() {
       </div>
 
       {/* ═══════════════════════════════════════════════════════════
-          Fix & Improve — below the grid when data exists
+          How to Improve — only when real recommendations exist
          ═══════════════════════════════════════════════════════════ */}
       {recommendations.length > 0 && (
-        <DashCard className="mb-4">
-          <CardHeader title="Fix and improve" subtitle="Prioritized actions to improve how AI and humans see your brand" />
-          <div className="mt-3 space-y-2">
-            {recommendations.map((rec, i) => (
-              <FixRecommendationCard key={i} rec={rec} auditId={bundle.audit!.id} />
-            ))}
+        <DashCard className="mb-4 space-y-3">
+          <div className="flex items-center gap-2">
+            <TrendingUp size={15} strokeWidth={1.75} style={{ color: 'var(--ok)' }} />
+            <h2 className="text-[15px] font-semibold" style={{ color: 'var(--ink)' }}>How to improve your brand intelligence</h2>
           </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            {recommendations.slice(0, 4).map((rec, i) => {
+              const impactColor = rec.impact === 'high' ? 'var(--severe)' : rec.impact === 'medium' ? 'var(--warn)' : 'var(--m-muted)';
+              return (
+                <div key={i} className="rounded-lg p-4" style={{ background: 'rgba(34,197,94,0.04)', border: '1px solid var(--rule)' }}>
+                  <div className="flex items-center gap-2 mb-1.5">
+                    <p className="text-[14px] font-semibold flex-1" style={{ color: 'var(--ink)' }}>{rec.title}</p>
+                    <span className="text-[9px] font-semibold uppercase tracking-[0.06em] px-1.5 py-0.5 rounded-full flex-shrink-0" style={{ color: impactColor, background: `color-mix(in srgb, ${impactColor} 10%, transparent)` }}>
+                      {rec.impact}
+                    </span>
+                  </div>
+                  <p className="text-[12.5px] leading-relaxed" style={{ color: 'var(--m-muted)' }}>{rec.description}</p>
+                  {rec.deployable && (
+                    <Link href={`${dashPrefix}/fix?audit=${bundle.audit!.id}`} className="inline-flex items-center gap-1 mt-2 text-[11px] font-semibold hover:underline" style={{ color: 'var(--ink)' }}>
+                      <Wrench size={10} /> Fix from console <ChevronRight size={9} />
+                    </Link>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+
+          {recommendations.length > 4 && (
+            <p className="text-[11px] text-center pt-1" style={{ color: 'var(--m-muted)' }}>
+              +{recommendations.length - 4} more recommendations available
+            </p>
+          )}
         </DashCard>
       )}
 
@@ -970,34 +1059,3 @@ function CompetitorEditor({
   );
 }
 
-/* ── Fix Recommendation Card ── */
-
-function FixRecommendationCard({ rec, auditId }: { rec: AuditRecommendation; auditId: string }) {
-  const { workspaceSlug: _ws } = useWorkspace();
-  const dashPrefix = _ws ? `/dashboard/${_ws}` : '/dashboard';
-  const impactColor = rec.impact === 'high' ? 'var(--severe)' : rec.impact === 'medium' ? 'var(--warn)' : 'var(--m-muted)';
-
-  return (
-    <div className="rounded-lg p-3" style={{ background: 'color-mix(in srgb, var(--ink) 2%, transparent)', border: '1px solid var(--rule)' }}>
-      <div className="flex items-start gap-2.5">
-        <span className="w-5 h-5 rounded flex items-center justify-center flex-shrink-0 mt-0.5" style={{ background: 'color-mix(in srgb, var(--ink) 6%, transparent)', color: 'var(--ink)' }}>
-          {rec.deployable ? <Code size={10} /> : <FileText size={10} />}
-        </span>
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2 mb-0.5">
-            <h4 className="text-[12px] font-semibold" style={{ color: 'var(--ink)' }}>{rec.title}</h4>
-            <span className="text-[9px] font-semibold uppercase tracking-[0.06em] px-1.5 py-0.5 rounded-full" style={{ color: impactColor, background: `color-mix(in srgb, ${impactColor} 10%, transparent)` }}>
-              {rec.impact}
-            </span>
-          </div>
-          <p className="text-[11px] leading-relaxed" style={{ color: 'var(--m-muted)' }}>{rec.description}</p>
-          {rec.deployable && (
-            <Link href={`${dashPrefix}/fix?audit=${auditId}`} className="inline-flex items-center gap-1 mt-1.5 text-[10px] font-semibold hover:underline" style={{ color: 'var(--ink)' }}>
-              <Wrench size={9} /> Fix from console <ChevronRight size={9} />
-            </Link>
-          )}
-        </div>
-      </div>
-    </div>
-  );
-}

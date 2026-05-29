@@ -368,11 +368,11 @@ function AIVisibilityPerceptionCard({
 
       {/* ── Methodology explainer ────────────────────── */}
       <div
-        className="mt-3 px-3.5 py-3 rounded-lg flex items-start gap-3"
+        className="mt-3 px-3.5 py-3 rounded-lg flex items-center gap-3"
         style={{ background: 'color-mix(in srgb, var(--signal) 5%, transparent)', border: '1px solid color-mix(in srgb, var(--signal) 12%, transparent)' }}
       >
         {/* Mini flow: Bot → Questions → Mentions */}
-        <div className="flex items-center gap-1.5 flex-shrink-0 pt-0.5">
+        <div className="flex items-center gap-1.5 flex-shrink-0">
           <div
             className="w-6 h-6 rounded-md flex items-center justify-center"
             style={{ background: 'color-mix(in srgb, var(--signal) 12%, transparent)' }}
@@ -389,7 +389,7 @@ function AIVisibilityPerceptionCard({
             <MessageSquare size={13} style={{ color: 'var(--signal)' }} />
           </div>
         </div>
-        <p className="text-[11.5px] leading-[1.5]" style={{ color: 'var(--ink)', opacity: 0.75 }}>
+        <p className="text-[12.5px] leading-[1.5]" style={{ color: 'var(--ink)', opacity: 0.75 }}>
           We asked <strong>Claude, GPT-4, Gemini</strong>, and <strong>Perplexity</strong> about <strong>{brandName}</strong>.
           The % below shows how often each competitor was mentioned in AI responses — not a global ranking.
         </p>
