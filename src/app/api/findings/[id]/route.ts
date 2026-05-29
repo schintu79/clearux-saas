@@ -204,7 +204,7 @@ export async function GET(
 
     const { data: finding, error } = await db
       .from('audit_findings')
-      .select('id, audit_id, title, description, severity, status, recommendation, estimated_impact, page_url, sort_order, dismissed, dismissal_reason, action_mode, fix_status, fix_format, is_editable, is_deployable, approval_required, deployable_type, default_owner, fix_payload')
+      .select('id, audit_id, title, description, severity, status, recommendation, estimated_impact, page_url, sort_order, dismissed, dismissal_reason, action_mode, fix_status, fix_format, is_editable, is_deployable, approval_required, deployable_type, default_owner, fix_payload, issue_family_id')
       .eq('id', findingId)
       .single()
 
@@ -260,7 +260,7 @@ export async function PATCH(
     // Fetch finding (no verification_status — column may not exist)
     const { data: finding } = await db
       .from('audit_findings')
-      .select('audit_id, title, severity, recommendation, status, action_mode, fix_status')
+      .select('audit_id, title, severity, recommendation, status, action_mode, fix_status, issue_family_id')
       .eq('id', findingId)
       .single()
 
@@ -366,6 +366,22 @@ export async function PATCH(
         scoreUpdate = await recalculateFromFindings(db, (finding as any).audit_id)
       }
 
+      // ── CANONICAL ISSUE: Mark issue family as pending verification ──
+      if (status === 'fixed' && (finding as any).issue_family_id) {
+        try {
+          await db
+            .from('issue_families')
+            .update({
+              fix_status: 'pending_verification',
+              fix_source: 'user',
+              fix_updated_at: new Date().toISOString(),
+            })
+            .eq('id', (finding as any).issue_family_id)
+        } catch (famErr) {
+          console.error('[findings-api] Issue family update error (non-fatal):', famErr)
+        }
+      }
+
       // ── LEARNING FEEDBACK: Record status change in pipeline ──
       if (statusChanged && (status === 'fixed' || status === 'open')) {
         try {
@@ -453,6 +469,22 @@ export async function PATCH(
       let scoreUpdate = null
       if (updates.status === 'fixed' || (finding as any).status === 'fixed') {
         scoreUpdate = await recalculateFromFindings(db, (finding as any).audit_id)
+      }
+
+      // ── CANONICAL ISSUE: Mark issue family as pending verification ──
+      if (updates.status === 'fixed' && (finding as any).issue_family_id) {
+        try {
+          await db
+            .from('issue_families')
+            .update({
+              fix_status: 'pending_verification',
+              fix_source: 'user',
+              fix_updated_at: new Date().toISOString(),
+            })
+            .eq('id', (finding as any).issue_family_id)
+        } catch (famErr) {
+          console.error('[findings-api] Issue family update error (non-fatal):', famErr)
+        }
       }
 
       return NextResponse.json({

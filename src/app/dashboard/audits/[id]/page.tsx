@@ -630,6 +630,26 @@ function FindingCard({ finding, pillarColor, categoryName, pillarName, pillarInd
                 {categoryName}
               </span>
             )}
+            {(finding as any).status_in_audit === 'still_present' && (
+              <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-m-muted bg-paper-2 px-1.5 py-0.5 rounded-full tracking-[0.03em] uppercase">
+                Still present
+              </span>
+            )}
+            {(finding as any).status_in_audit === 'improved' && (
+              <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-ok bg-ok/10 px-1.5 py-0.5 rounded-full tracking-[0.03em] uppercase">
+                <TrendingUp size={9} /> Improved
+              </span>
+            )}
+            {(finding as any).status_in_audit === 'regressed' && (
+              <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-severe bg-severe/10 px-1.5 py-0.5 rounded-full tracking-[0.03em] uppercase">
+                <AlertTriangle size={9} /> Regressed
+              </span>
+            )}
+            {(finding as any).status_in_audit === 'fixed' && (
+              <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-ok bg-ok/10 px-1.5 py-0.5 rounded-full tracking-[0.03em] uppercase">
+                <CheckCircle2 size={9} /> Fixed
+              </span>
+            )}
             {(finding as any).verification_status === 'likely_fixed' && (
               <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-ok bg-ok/10 px-1.5 py-0.5 rounded-full tracking-[0.03em] uppercase">
                 <Eye size={9} /> Likely fixed
@@ -2404,24 +2424,49 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
                 </>
               )}
 
-              {/* Reconciliation delta — re-audit lifecycle summary */}
-              {rawJson?.reconciliationSummary && (() => {
-                const recon = rawJson.reconciliationSummary;
-                const { verifiedFixed, regressed, newFindings, stillOpen, notReverified } = recon;
+              {/* Canonical reconciliation summary — re-audit lifecycle */}
+              {(rawJson?.canonicalReconciliation || rawJson?.reconciliationSummary) && (() => {
+                const cr = rawJson.canonicalReconciliation;
+                const lr = rawJson.reconciliationSummary;
+                // Prefer canonical reconciliation if available
+                const fixed = cr?.fixed_count ?? lr?.verifiedFixed ?? 0;
+                const improved = cr?.improved_count ?? 0;
+                const stillPresent = cr?.still_present_count ?? lr?.stillOpen ?? 0;
+                const regressed = cr?.regressed_count ?? lr?.regressed ?? 0;
+                const newFindings = cr?.new_count ?? lr?.newFindings ?? 0;
+                const scoreDelta = cr?.score_delta ?? null;
+                const notChecked = lr?.notReverified ?? 0;
+
+                if (fixed === 0 && improved === 0 && stillPresent === 0 && regressed === 0 && newFindings === 0) return null;
+
                 return (
                   <div className="mb-4 p-4 rounded-xl border flex items-start gap-3" style={{ background: 'color-mix(in srgb, var(--signal) 3%, var(--card))', borderColor: 'color-mix(in srgb, var(--signal) 15%, var(--rule))' }}>
                     <RefreshCw size={16} className="flex-shrink-0 mt-0.5" style={{ color: 'var(--signal)' }} />
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium mb-1" style={{ color: 'var(--ink)' }}>Re-audit reconciliation</p>
-                      <div className="flex flex-wrap gap-x-4 gap-y-1 text-[12px]">
-                        {verifiedFixed > 0 && (
-                          <span className="inline-flex items-center gap-1">
-                            <CheckCircle2 size={11} className="text-ok" />
-                            <span style={{ color: 'var(--ink)' }}>{verifiedFixed} verified fixed</span>
+                      <div className="flex items-center gap-2 mb-1">
+                        <p className="text-sm font-medium" style={{ color: 'var(--ink)' }}>Re-audit reconciliation</p>
+                        {scoreDelta != null && scoreDelta !== 0 && (
+                          <span className={`inline-flex items-center gap-0.5 text-[11px] font-semibold ${scoreDelta > 0 ? 'text-ok' : 'text-severe'}`}>
+                            {scoreDelta > 0 ? <ArrowUp size={10} /> : <ArrowDown size={10} />}
+                            {scoreDelta > 0 ? '+' : ''}{scoreDelta} pts
                           </span>
                         )}
-                        {stillOpen > 0 && (
-                          <span style={{ color: 'var(--m-muted)' }}>{stillOpen} still open</span>
+                      </div>
+                      <div className="flex flex-wrap gap-x-4 gap-y-1 text-[12px]">
+                        {fixed > 0 && (
+                          <span className="inline-flex items-center gap-1">
+                            <CheckCircle2 size={11} className="text-ok" />
+                            <span style={{ color: 'var(--ink)' }}>{fixed} fixed</span>
+                          </span>
+                        )}
+                        {improved > 0 && (
+                          <span className="inline-flex items-center gap-1">
+                            <TrendingUp size={11} className="text-ok" />
+                            <span style={{ color: 'var(--ink)' }}>{improved} improved</span>
+                          </span>
+                        )}
+                        {stillPresent > 0 && (
+                          <span style={{ color: 'var(--m-muted)' }}>{stillPresent} still present</span>
                         )}
                         {newFindings > 0 && (
                           <span className="inline-flex items-center gap-1">
@@ -2435,8 +2480,8 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
                             <span style={{ color: 'var(--ink)' }}>{regressed} regressed</span>
                           </span>
                         )}
-                        {notReverified > 0 && (
-                          <span style={{ color: 'var(--m-muted)' }}>{notReverified} not re-checked</span>
+                        {notChecked > 0 && !cr && (
+                          <span style={{ color: 'var(--m-muted)' }}>{notChecked} not re-checked</span>
                         )}
                       </div>
                     </div>

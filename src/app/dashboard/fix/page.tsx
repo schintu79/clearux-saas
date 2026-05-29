@@ -188,6 +188,18 @@ function SidebarItem({
             >
               {badgeLabel}
             </span>
+            {(finding as any).status_in_audit === 'still_present' && (
+              <span className="text-[9px] font-semibold text-m-muted bg-paper-2 px-1 py-0.5 rounded tracking-[0.03em] uppercase">Returning</span>
+            )}
+            {(finding as any).status_in_audit === 'improved' && (
+              <span className="text-[9px] font-semibold text-ok bg-ok/10 px-1 py-0.5 rounded tracking-[0.03em] uppercase">Improved</span>
+            )}
+            {(finding as any).status_in_audit === 'regressed' && (
+              <span className="text-[9px] font-semibold text-severe bg-severe/10 px-1 py-0.5 rounded tracking-[0.03em] uppercase">Regressed</span>
+            )}
+            {(finding as any).status_in_audit === 'fixed' && (
+              <span className="text-[9px] font-semibold text-ok bg-ok/10 px-1 py-0.5 rounded tracking-[0.03em] uppercase">Fixed</span>
+            )}
             {host && (
               <>
                 <span style={{ color: 'var(--m-muted)' }} aria-hidden>·</span>
