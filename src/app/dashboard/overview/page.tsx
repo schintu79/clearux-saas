@@ -983,41 +983,49 @@ function OverviewInner() {
               />
             );
           })}
+
+          {/* Brand Consistency — inline "not included" card matching the grid */}
+          {!pillarScores.some(p => p.name === 'Brand Consistency') && (
+            <div
+              className="rounded-xl overflow-hidden flex flex-col"
+              style={{ background: MODULE_TINTS[5].bg, border: `1px dashed ${MODULE_TINTS[5].border}` }}
+            >
+              <div className="flex items-start gap-2 px-3 pt-3 pb-2">
+                <div
+                  className="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0"
+                  style={{ background: `${MODULE_TINTS[5].dot}15` }}
+                >
+                  <Eye size={14} style={{ color: MODULE_TINTS[5].dot }} />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <h3 className="font-sans font-semibold text-[12.5px] leading-tight truncate" style={{ color: 'var(--ink)' }}>
+                    Brand Consistency
+                  </h3>
+                  <p className="text-[10px] leading-tight mt-0.5" style={{ color: 'var(--m-muted)' }}>
+                    Not included
+                  </p>
+                </div>
+              </div>
+
+              <div className="px-3 pb-2">
+                <span className="text-[28px] font-bold tabular-nums leading-none" style={{ color: 'var(--m-muted)', opacity: 0.3 }}>—</span>
+              </div>
+
+              <div
+                className="mt-auto px-3 py-1.5 flex items-center gap-1 text-[10px] font-medium"
+                style={{ borderTop: `1px solid ${MODULE_TINTS[5].border}`, color: MODULE_TINTS[5].dot }}
+              >
+                <Link href={`${dashPrefix}/brand-dna`} className="inline-flex items-center gap-1 hover:gap-1.5 transition-all">
+                  <span>Set up Brand DNA</span>
+                  <ArrowRight size={10} />
+                </Link>
+              </div>
+            </div>
+          )}
         </div>
       )}
 
-      {/* ── Brand Consistency upsell — shown when module wasn't included ── */}
-      {pillarScores.length > 0 && !pillarScores.some(p => p.name === 'Brand Consistency') && (
-        <div
-          className="mb-4 px-4 py-3 rounded-xl flex items-center gap-3"
-          style={{
-            background: MODULE_TINTS[5].bg,
-            border: `1px dashed ${MODULE_TINTS[5].border}`,
-          }}
-        >
-          <div
-            className="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0"
-            style={{ background: `${MODULE_TINTS[5].dot}15` }}
-          >
-            <Eye size={14} style={{ color: MODULE_TINTS[5].dot }} />
-          </div>
-          <div className="flex-1 min-w-0">
-            <p className="text-[13px] font-semibold leading-tight" style={{ color: 'var(--ink)' }}>
-              Brand Consistency not included
-            </p>
-            <p className="text-[11px] mt-0.5" style={{ color: 'var(--m-muted)' }}>
-              Upload your brand guidelines to unlock voice, visual identity, and consistency checks.
-            </p>
-          </div>
-          <Link
-            href={`${dashPrefix}/brand-dna`}
-            className="inline-flex items-center gap-1 text-[11px] font-semibold px-3 py-1.5 rounded-lg border flex-shrink-0 transition-colors hover:opacity-80"
-            style={{ borderColor: MODULE_TINTS[5].border, color: MODULE_TINTS[5].dot }}
-          >
-            Set up Brand DNA <ArrowRight size={10} />
-          </Link>
-        </div>
-      )}
+      {/* Brand Consistency upsell is rendered inline inside the grid above */}
 
       {/* ── Row 3: Issues · Speed · Brand Intelligence (unified) ─ */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4 auto-rows-fr">
