@@ -57,20 +57,26 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    // Coerce recommendation to string — JSON body may deliver an object
+    // or array from malformed findings, which would crash .split() later.
+    const rec = typeof recommendation === 'string'
+      ? recommendation
+      : String(recommendation ?? '')
+
     // ── Classify operation ──────────────────────────────────
-    const operation = classifyOperation(recommendation, findingTitle, findingDescription, filePath)
+    const operation = classifyOperation(rec, findingTitle, findingDescription, filePath)
 
     // ── Handle "create" — no need to read existing file ────
     if (operation === 'create') {
       const result: SurgicalFixResult = {
         operation: 'create',
         originalContent: '',
-        patchedContent: recommendation,
+        patchedContent: rec,
         changes: [{
           startLineOriginal: 1,
           startLinePatched: 1,
           linesRemoved: [],
-          linesAdded: recommendation.split('\n'),
+          linesAdded: rec.split('\n'),
           contextBefore: [],
           contextAfter: [],
         }],
@@ -99,12 +105,12 @@ export async function POST(request: NextRequest) {
       const result: SurgicalFixResult = {
         operation: 'create',
         originalContent: '',
-        patchedContent: recommendation,
+        patchedContent: rec,
         changes: [{
           startLineOriginal: 1,
           startLinePatched: 1,
           linesRemoved: [],
-          linesAdded: recommendation.split('\n'),
+          linesAdded: rec.split('\n'),
           contextBefore: [],
           contextAfter: [],
         }],
@@ -127,7 +133,7 @@ export async function POST(request: NextRequest) {
     const findingMeta = {
       title: findingTitle || '',
       description: findingDescription || '',
-      recommendation: recommendation || '',
+      recommendation: rec || '',
     }
 
     // Check if the file already has the correct value
@@ -166,7 +172,7 @@ export async function POST(request: NextRequest) {
     const prompt = buildPrompt(
       operation,
       originalContent,
-      recommendation,
+      rec,
       findingTitle,
       findingDescription,
       language,

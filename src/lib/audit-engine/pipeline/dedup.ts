@@ -101,6 +101,7 @@ export const SYNONYM_GROUPS: string[][] = [
   ['seo', 'search', 'crawl', 'index', 'indexing', 'ranking'],
   ['sitemap', 'robots', 'crawlability', 'discoverability'],
   ['page', 'screen', 'view', 'route', 'section'],
+  ['across', 'throughout', 'multiple', 'various', 'several', 'every'],
 ]
 
 // ── Topic fingerprints ───────────────────────────────────────
@@ -163,12 +164,34 @@ function normalizeTitle(title: string): string {
     .trim()
 }
 
+/**
+ * Normalize a word to its stem-like form by stripping common suffixes.
+ * Not a full stemmer — just handles the most common plural/verb forms
+ * that cause false negatives in dedup.
+ */
+function normalizeSuffix(word: string): string {
+  // Already short — don't strip
+  if (word.length <= 5) return word
+  // -ies → -y (e.g. "categories" → "category" — but only > 6 chars to avoid "dies" → "dy")
+  if (word.length > 6 && word.endsWith('ies')) return word.slice(0, -3) + 'y'
+  // -es → strip (e.g. "pages" → "page", "fixes" → "fix")
+  if (word.length > 5 && word.endsWith('es')) return word.slice(0, -2)
+  // -s → strip (e.g. "headlines" → "headline", "users" → "user")
+  if (word.endsWith('s') && !word.endsWith('ss')) return word.slice(0, -1)
+  return word
+}
+
 function extractWords(text: string): Set<string> {
   return new Set(
     normalizeTitle(text)
       .split(' ')
       .filter((w) => w.length >= 4)
-      .map((w) => synonymMap[w] || w)
+      .map((w) => {
+        // Apply synonym map first, then normalize suffix for anything not in the map
+        if (synonymMap[w]) return synonymMap[w]
+        const stemmed = normalizeSuffix(w)
+        return synonymMap[stemmed] || stemmed
+      })
   )
 }
 

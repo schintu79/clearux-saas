@@ -73,7 +73,8 @@ export type DeployableFixType =
   | 'viewport_meta'
   | 'canonical_url'
   | 'meta_charset'
-  | 'og_tags';
+  | 'og_tags'
+  | 'copy_content';
 
 /* ── Patch format ──────────────────────────────────────── */
 
@@ -213,6 +214,16 @@ const DEPLOYABLE_CAPABILITIES: Record<string, FixCapability> = {
     aiAssistAvailable: true, approvalRequired: true, patchFormat: 'text',
     deployableType: 'ai_summary', defaultOwner: 'marketing',
   },
+
+  // ── Tier 2: Copy content — text improvements on existing elements ──
+  // Covers copy improvements on existing div, p, span, h elements:
+  // service descriptions, body text, value props, button labels, etc.
+  // These are safe because we modify existing element content, not structure.
+  copy_content: {
+    selfFixable: true, teamHandoff: true, editable: true, deployable: true,
+    aiAssistAvailable: true, approvalRequired: true, patchFormat: 'html',
+    deployableType: 'copy_content', defaultOwner: 'marketing',
+  },
 };
 
 /** Capability for fixable findings that don't map to a deployable type */
@@ -281,6 +292,46 @@ export function inferDeployableType(
   if (/meta\s+desc/i.test(text)) return 'meta_description';
   if (/title\s+tag|page\s+title/i.test(text)) return 'meta_title';
 
+  // ── Copy content: text improvements on existing HTML elements ──
+  // Matches copy fixes on existing blocks (div, p, span, h, li, a, button,
+  // label, blockquote, figcaption, td, th) — anything where AI can improve
+  // the text in-place without creating new DOM structure.
+  //
+  // Grounding rules (from product spec):
+  //   ✓ Copy improvement on existing component → fixable via console + AI
+  //   ✓ HTML code fix or code addition → fixable
+  //   ✓ Script or JSON from code → fixable
+  //   ✗ New design elements → NOT fixable, must be team handoff
+  if (finding.fix_type === 'copy') {
+    // Any copy-typed finding that wasn't already caught by heading_copy above
+    return 'copy_content';
+  }
+
+  // Pattern-match copy improvement language in title/description even
+  // when fix_type isn't explicitly 'copy' — the pipeline doesn't always
+  // set fix_type correctly for AI-generated findings.
+  const isCopyImprovement =
+    // Direct copy improvement signals
+    /\b(improv|rewrit|reword|rephras|clarif|strengthen|sharpen|expand|enhanc)\w*\s+(the\s+)?(copy|text|wording|content|messag|description|paragraph|body|label|tagline)/i.test(text) ||
+    // Existing element modification signals
+    /\b(update|change|modify|edit|revise|refine)\s+(the\s+)?(copy|text|wording|content|description|heading|title|paragraph|button\s+text|label|cta\s+text)/i.test(text) ||
+    // Service/feature description improvements
+    /\b(service|feature|product|benefit|value\s+prop)\s+(description|text|copy|content)\b/i.test(text) ||
+    // Vague/unclear/weak copy signals (common finding patterns)
+    /\b(vague|unclear|generic|weak|bland|ambiguous)\s+(copy|text|wording|content|description|messag)/i.test(text) ||
+    // "Add more detail/context to" existing content
+    /\badd\s+(more\s+)?(detail|context|specificity|clarity)\s+(to\s+)?(the\s+)?(existing|current)?\s*(copy|text|content|description|section|paragraph)/i.test(text) ||
+    // Recommendation contains inline HTML with text content (AI suggesting replacement text in tags)
+    /<(p|span|div|h[1-6]|li|a|button|label|figcaption|td|th|blockquote|strong|em)\b[^>]*>[^<]+<\//i.test(finding.recommendation || '');
+
+  // Exclude findings about new design elements — those need team handoff
+  const isNewDesignElement =
+    /\b(add|create|build|implement|design|introduce)\s+(a\s+|an?\s+|new\s+)*(section|component|widget|modal|banner|sidebar|drawer|panel|carousel|slider|accordion|tab|card|layout|grid|column|row|flex|feature\s+block)/i.test(text);
+
+  if (isCopyImprovement && !isNewDesignElement) {
+    return 'copy_content';
+  }
+
   return null;
 }
 
@@ -304,6 +355,14 @@ export function resolveCapability(
   const deployableType = inferDeployableType(finding);
 
   if (deployableType && DEPLOYABLE_CAPABILITIES[deployableType]) {
+    // copy_content bypasses the concrete-data gate — these are AI-assisted
+    // text rewrites where the recommendation is advisory context for the AI,
+    // not a literal code patch. The pattern matching in inferDeployableType
+    // already validated this is a real copy improvement finding.
+    if (deployableType === 'copy_content') {
+      return DEPLOYABLE_CAPABILITIES[deployableType];
+    }
+
     // Secondary gate: the recommendation must contain concrete fix data
     // (HTML tags, JSON, code snippets, etc.) — not just advisory text.
     // Without this, broad text-pattern matches on words like "structured data"
