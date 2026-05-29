@@ -1,24 +1,31 @@
 import { Logo } from './Logo'
 import Link from 'next/link'
 
+/**
+ * Footer — structured and clean per the brief.
+ * Four columns: Product, Company, Resources, Legal.
+ * "Do not make the footer the place where all unresolved messaging goes to die."
+ */
+
 const productLinks = [
   { label: 'Product', href: '/product' },
-  { label: 'WordPress plugin', href: '/wordpress' },
+  { label: 'How it works', href: '/how-it-works' },
   { label: 'Pricing', href: '/pricing' },
+  { label: 'WordPress plugin', href: '/wordpress' },
   { label: 'Changelog', href: '/changelog' },
 ]
 
 const companyLinks = [
   { label: 'About', href: '/about' },
-  { label: 'Resources', href: '/resources' },
+  { label: 'Why Fixpath', href: '/why-fixpath' },
   { label: 'Contact', href: '/contact' },
-  { label: 'FAQ', href: '/faq' },
 ]
 
-const learnLinks = [
+const resourceLinks = [
+  { label: 'Resources', href: '/resources' },
+  { label: 'FAQ', href: '/faq' },
   { label: 'What is a UX audit?', href: '/what-is-a-ux-audit' },
   { label: 'UX audit checklist', href: '/ux-audit-checklist' },
-  { label: 'Best UX audit tools', href: '/best-ux-audit-tools' },
 ]
 
 const legalLinks = [
@@ -35,7 +42,7 @@ export function Footer() {
           <div>
             <Logo height={64} className="mb-[18px]" />
             <p className="text-[14px] text-m-muted max-w-[320px] leading-[1.6] font-sans">
-              Find what is hurting your website. Fix the right issues first. Track whether things are improving.
+              A decision engine for real website and brand issues. Find what matters, fix it, and track improvement.
             </p>
           </div>
 
@@ -62,9 +69,9 @@ export function Footer() {
           </div>
 
           <div>
-            <h4 className="font-mono text-[10px] font-semibold tracking-[0.12em] uppercase text-ink mb-[18px]">Learn</h4>
+            <h4 className="font-mono text-[10px] font-semibold tracking-[0.12em] uppercase text-ink mb-[18px]">Resources</h4>
             <ul className="list-none">
-              {learnLinks.map((l) => (
+              {resourceLinks.map((l) => (
                 <li key={l.label} className="mb-2.5">
                   <Link href={l.href} className="text-ink-2 no-underline text-[14px] hover:text-signal transition-colors font-sans">{l.label}</Link>
                 </li>

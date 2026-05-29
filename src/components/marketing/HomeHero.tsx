@@ -7,25 +7,26 @@ export function HomeHero() {
       <div className="max-w-mkt mx-auto px-8 max-sm:px-5">
         <div className="max-w-[780px]">
           <p className="font-mono text-[11px] tracking-[0.12em] uppercase text-signal mb-6">
-            AI-powered website audits
+            A decision engine for real website issues
           </p>
           <h1
             className="font-serif font-normal text-ink leading-[0.94] tracking-[-0.025em] mb-7"
             style={{ fontSize: 'clamp(48px, 6.5vw, 88px)' }}
           >
-            Find the issues hurting your site.{' '}
-            <em className="italic text-signal">Follow the path to fix them.</em>
+            See what is actually hurting trust.{' '}
+            <em className="italic text-signal">Fix what matters.</em>
           </h1>
           <p className="text-[19px] leading-[1.6] text-ink-2 max-w-[600px] mb-10 font-sans">
-            Fixpath audits your website across 96 checkpoints, turns every issue into a clear
-            action, and tracks improvement over time. Your first audit is free.
+            Fixpath finds real issues across clarity, trust, accessibility, and technical quality
+            — prioritizes them by impact, gives you fix guidance, and tracks whether
+            things improve. No noise. No inflated scores. Just useful truth.
           </p>
           <div className="flex gap-3.5 max-sm:flex-col max-sm:items-stretch">
             <Button href="/register" size="large">
               Start free audit
               <ArrowRightIcon size={14} />
             </Button>
-            <Button href="/product" variant="ghost" size="large">
+            <Button href="/how-it-works" variant="ghost" size="large">
               See how it works
             </Button>
           </div>
@@ -132,22 +133,6 @@ export function HomeHero() {
                 </div>
               ))}
             </div>
-          </div>
-        </div>
-
-        {/* Stats row */}
-        <div className="grid grid-cols-3 gap-4 sm:gap-9 pt-10 mt-10 border-t border-rule font-mono text-[11px] text-m-muted tracking-[0.06em] uppercase">
-          <div>
-            <strong className="block font-serif text-[28px] sm:text-[36px] text-ink font-normal tracking-[-0.02em] normal-case mb-0.5">96</strong>
-            Checkpoints per audit
-          </div>
-          <div>
-            <strong className="block font-serif text-[28px] sm:text-[36px] text-ink font-normal tracking-[-0.02em] normal-case mb-0.5">&lt; 10 min</strong>
-            Audit delivery
-          </div>
-          <div>
-            <strong className="block font-serif text-[28px] sm:text-[36px] text-ink font-normal tracking-[-0.02em] normal-case mb-0.5">Free</strong>
-            First audit, no card
           </div>
         </div>
       </div>

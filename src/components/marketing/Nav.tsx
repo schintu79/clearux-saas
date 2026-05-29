@@ -9,10 +9,11 @@ import { useAuth } from '@/context/AuthContext'
 
 const NAV_LINKS = [
   { label: 'Product', href: '/product' },
-  { label: 'WordPress', href: '/wordpress' },
+  { label: 'How it Works', href: '/how-it-works' },
+  { label: 'Why Fixpath', href: '/why-fixpath' },
   { label: 'Pricing', href: '/pricing' },
+  { label: 'About', href: '/about' },
   { label: 'Resources', href: '/resources' },
-  { label: 'Changelog', href: '/changelog' },
 ]
 
 function getInitials(name: string): string {
@@ -141,7 +142,7 @@ export function Nav() {
             ) : (
               /* Logged-out: show login + register */
               <>
-                <Button href="/login" variant="ghost" className="max-lg:hidden">Login</Button>
+                <Button href="/login" variant="ghost" className="max-lg:hidden">Sign in</Button>
                 <Button href="/register" className="max-sm:hidden">
                   Start free audit
                   <ArrowRightIcon />
@@ -194,7 +195,7 @@ export function Nav() {
                 </>
               ) : (
                 <div className="flex gap-3">
-                  <Button href="/login" variant="ghost" className="flex-1 justify-center">Login</Button>
+                  <Button href="/login" variant="ghost" className="flex-1 justify-center">Sign in</Button>
                   <Button href="/register" className="flex-1 justify-center">
                     Start free audit
                     <ArrowRightIcon />

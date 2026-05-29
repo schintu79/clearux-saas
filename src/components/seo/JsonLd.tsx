@@ -44,7 +44,7 @@ export function HomeJsonLd() {
         '@type': 'WebSite',
         name: 'Fixpath',
         url: siteUrl,
-        description: 'Fixpath audits your website across 96 checkpoints, turns every issue into a clear fix path, and tracks improvement over time. First audit free.',
+        description: 'Fixpath is a decision engine for real website and brand issues. Find what matters, get fix guidance, and track improvement over time. First audit free.',
         potentialAction: {
           '@type': 'SearchAction',
           target: `${siteUrl}/dashboard/new-audit?url={search_term_string}`,
@@ -61,7 +61,7 @@ export function HomeJsonLd() {
           width: 512,
           height: 512,
         },
-        description: 'AI-powered UX audit platform. 96 checkpoints across 6 modules with severity-ranked, evidence-backed findings and shippable fixes.',
+        description: 'A decision engine for real website and brand issues. Truth, trust, and usefulness — with severity-ranked findings, fix guidance, and progress tracking.',
         contactPoint: {
           '@type': 'ContactPoint',
           email: 'support@fixpath.ai',
@@ -79,7 +79,7 @@ export function HomeJsonLd() {
         url: siteUrl,
         applicationCategory: 'BusinessApplication',
         operatingSystem: 'Web',
-        description: 'AI-powered UX audit platform. 96 checkpoints across 6 modules — Foundation, Human Experience, Inclusive Design, Future Readiness, Brand Consistency, SEO Structure. Severity-ranked findings with evidence-backed, shippable fixes.',
+        description: 'A decision engine for real website and brand issues. 96 checkpoints across 6 modules — Foundation, Human Experience, Inclusive Design, Future Readiness, Brand Consistency, SEO Structure. Severity-ranked findings, concrete fix guidance, and progress tracking.',
         featureList: [
           'Foundation: The structural and technical baseline a great experience is built on',
           'Human Experience: How the product feels to use — clarity, flow, cognitive load, wellbeing',
@@ -155,10 +155,12 @@ export function HomeJsonLd() {
         '@type': 'BreadcrumbList',
         itemListElement: [
           { '@type': 'ListItem', position: 1, name: 'Home', item: siteUrl },
-          { '@type': 'ListItem', position: 2, name: 'Pricing', item: `${siteUrl}/pricing` },
-          { '@type': 'ListItem', position: 3, name: 'About', item: `${siteUrl}/about` },
-          { '@type': 'ListItem', position: 4, name: 'Contact', item: `${siteUrl}/contact` },
-          { '@type': 'ListItem', position: 5, name: 'FAQ', item: `${siteUrl}/faq` },
+          { '@type': 'ListItem', position: 2, name: 'Product', item: `${siteUrl}/product` },
+          { '@type': 'ListItem', position: 3, name: 'How it Works', item: `${siteUrl}/how-it-works` },
+          { '@type': 'ListItem', position: 4, name: 'Why Fixpath', item: `${siteUrl}/why-fixpath` },
+          { '@type': 'ListItem', position: 5, name: 'Pricing', item: `${siteUrl}/pricing` },
+          { '@type': 'ListItem', position: 6, name: 'About', item: `${siteUrl}/about` },
+          { '@type': 'ListItem', position: 7, name: 'Contact', item: `${siteUrl}/contact` },
         ],
       },
     ],

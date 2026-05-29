@@ -2,22 +2,35 @@ import type { Metadata } from 'next'
 import { MarketingBody } from '@/components/marketing/MarketingBody'
 import { Nav } from '@/components/marketing/Nav'
 import { HomeHero } from '@/components/marketing/HomeHero'
+import { HomeTrustStrip } from '@/components/marketing/HomeTrustStrip'
+import { HomeIdentity } from '@/components/marketing/HomeIdentity'
 import { HomeWorkflow } from '@/components/marketing/HomeWorkflow'
+import { HomeDifferentiator } from '@/components/marketing/HomeDifferentiator'
 import { HomeModules } from '@/components/marketing/HomeModules'
-import { HomeAdvantage } from '@/components/marketing/HomeAdvantage'
-import { HomeWordPress } from '@/components/marketing/HomeWordPress'
-import { Pricing } from '@/components/marketing/Pricing'
-import { HomeFaq } from '@/components/marketing/HomeFaq'
+import { HomeAudience } from '@/components/marketing/HomeAudience'
 import { HomeCta } from '@/components/marketing/HomeCta'
 import { Footer } from '@/components/marketing/Footer'
 import { HomeJsonLd } from '@/components/seo/JsonLd'
 
 export const metadata: Metadata = {
-  title: 'Fixpath — Find the issues hurting your site. Follow the path to fix them.',
+  title: 'Fixpath — See what is hurting trust. Fix what matters.',
   description:
-    'Fixpath is an AI-powered website audit tool that scans your site across 96 checkpoints in 6 modules, identifies UX, accessibility, and SEO issues with severity-ranked findings, and gives you a step-by-step fix path. First audit free, no credit card required.',
+    'Fixpath is a decision engine for real website and brand issues. It finds problems across clarity, trust, accessibility, and technical quality — prioritizes by impact, gives fix guidance, and tracks improvement. First audit free.',
 }
 
+/**
+ * Homepage — structured as the brief's recommended sequence:
+ * 1. Header (Nav)
+ * 2. Hero
+ * 3. Trust strip
+ * 4. What Fixpath is
+ * 5. How it works
+ * 6. Why we are different
+ * 7. Categories we cover (product proof)
+ * 8. Who it is for / not for
+ * 9. Final CTA
+ * 10. Footer
+ */
 export default function HomePage() {
   return (
     <MarketingBody>
@@ -25,12 +38,12 @@ export default function HomePage() {
       <Nav />
       <main>
         <HomeHero />
+        <HomeTrustStrip />
+        <HomeIdentity />
         <HomeWorkflow />
+        <HomeDifferentiator />
         <HomeModules />
-        <HomeAdvantage />
-        <HomeWordPress />
-        <Pricing />
-        <HomeFaq />
+        <HomeAudience />
         <HomeCta />
       </main>
       <Footer />

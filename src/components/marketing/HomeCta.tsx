@@ -4,6 +4,10 @@ import { Button } from './Button'
 import { ArrowRightIcon } from './icons'
 import { useTheme } from '@/context/ThemeContext'
 
+/**
+ * HomeCta — final CTA section. Simple, clean, not a long footer sermon.
+ * One clear action per the brief.
+ */
 export function HomeCta() {
   const { theme } = useTheme()
   const isDark = theme === 'dark'
@@ -26,22 +30,27 @@ export function HomeCta() {
               color: isDark ? 'var(--ink)' : 'var(--paper)',
             }}
           >
-            Find the issue. Follow the fix path.{' '}
+            See what is hurting trust.{' '}
             <em className="italic" style={{ color: isDark ? 'var(--signal)' : '#A4B26A' }}>
-              Track improvement.
+              Start fixing it today.
             </em>
           </h2>
           <p
             className="text-[18px] leading-[1.6] mb-10 font-sans"
             style={{ color: isDark ? 'var(--m-muted)' : 'color-mix(in srgb, var(--paper) 75%, transparent)' }}
           >
-            Your first audit is free, no credit card required. Find every issue, fix it
-            from the dashboard, and track your Website Health Score over time.
+            Your first audit is free. No credit card. No commitment. Get severity-ranked
+            findings, concrete fix guidance, and a clear path to improvement.
           </p>
-          <Button href="/register" size="large" className={isDark ? '' : '!bg-signal !border-signal !text-white hover:!opacity-90'}>
-            Start free audit
-            <ArrowRightIcon size={14} />
-          </Button>
+          <div className="flex gap-3.5 justify-center max-sm:flex-col max-sm:items-stretch">
+            <Button href="/register" size="large" className={isDark ? '' : '!bg-signal !border-signal !text-white hover:!opacity-90'}>
+              Start free audit
+              <ArrowRightIcon size={14} />
+            </Button>
+            <Button href="/contact" variant="ghost" size="large" className={isDark ? '' : '!text-white/80 !border-white/20 hover:!border-white/50 hover:!text-white'}>
+              Book a demo
+            </Button>
+          </div>
         </div>
 
         <div
@@ -51,8 +60,8 @@ export function HomeCta() {
             color: isDark ? 'var(--m-muted)' : 'color-mix(in srgb, var(--paper) 45%, transparent)',
           }}
         >
-          <span>24 categories · 6 modules</span>
-          <span>Free first audit</span>
+          <span>96 checkpoints · 6 modules</span>
+          <span>Free first audit · No credit card</span>
         </div>
       </div>
     </section>

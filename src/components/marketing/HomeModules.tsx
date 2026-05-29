@@ -54,7 +54,7 @@ export function HomeModules() {
   return (
     <section className="py-[100px] border-b border-rule max-sm:py-16">
       <div className="max-w-mkt mx-auto px-8 max-sm:px-5">
-        <SectionMarker number="02" label="What we audit" />
+        <SectionMarker number="04" label="Categories we cover" />
         <h2
           className="font-serif font-normal text-ink leading-[0.94] tracking-[-0.025em] mb-5"
           style={{ fontSize: 'clamp(36px, 5vw, 64px)' }}
