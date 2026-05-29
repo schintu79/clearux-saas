@@ -400,7 +400,7 @@ const UI_LABELS: Record<string, UILabels> = {
     overallScore: 'Overall Score',
     issuesFound: 'issues found',
     noIssuesFound: 'No issues found',
-    noIssuesDescription: 'Your site passed all checks.',
+    noIssuesDescription: 'No actionable issues were found in the audited categories.',
     pagesCrawled: 'page(s) crawled and analysed during this audit',
     categoriesEvaluated: 'categories evaluated',
     notIncludedInAudit: 'Not included in this audit',

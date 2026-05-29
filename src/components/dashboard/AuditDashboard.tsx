@@ -193,8 +193,8 @@ export function TopIssuesPanel({ findings, auditId }: {
           <div className="w-12 h-12 rounded-xl bg-emerald-500/10 flex items-center justify-center mb-3">
             <CheckCircle2 size={22} className="[color:var(--ok)]" />
           </div>
-          <p className="text-base font-medium text-text mb-1">No issues found</p>
-          <p className="text-sm text-muted">Great job! Your site passed all checks.</p>
+          <p className="text-base font-medium text-text mb-1">No open issues</p>
+          <p className="text-sm text-muted">All findings have been addressed or dismissed.</p>
         </div>
       </div>
     );

@@ -97,7 +97,7 @@ const AuditCockpit: React.FC<AuditCockpitProps> = ({
             {sevTotal === 0 ? (
               <div className="rounded-lg border border-rule/40 px-3 py-3 flex items-center gap-2">
                 <ShieldCheck size={13} className="text-ok" />
-                <p className="text-[12px] text-ink">No issues detected. Strong result.</p>
+                <p className="text-[12px] text-ink">No open issues remaining.</p>
               </div>
             ) : (
               <>

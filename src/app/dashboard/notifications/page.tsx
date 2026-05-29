@@ -47,11 +47,15 @@ export default function NotificationsPage() {
   }, []);
 
   const markAsRead = async (id: string) => {
-    await fetch('/api/notifications', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ notification_id: id }),
-    });
+    try {
+      await fetch('/api/notifications', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ notification_id: id }),
+      });
+    } catch {
+      // Silently fail — optimistic UI update below still runs
+    }
     setNotifications(prev => prev.map(n => n.id === id ? { ...n, is_read: true } : n));
     setUnreadCount(prev => Math.max(0, prev - 1));
     window.dispatchEvent(new Event('focus')); // triggers sidebar to re-fetch unread count

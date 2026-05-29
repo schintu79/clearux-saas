@@ -1617,7 +1617,7 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
             body: JSON.stringify({ audit_id: auditId }),
           });
           const data = await res.json();
-          console.log('[AuditDetail] Verify result:', data);
+          // Verify result received — status check only
           if (active) await fetchAuditDetail();
         } catch (err) {
           console.error('[AuditDetail] Verify error:', err);
