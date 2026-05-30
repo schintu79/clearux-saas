@@ -29,6 +29,7 @@ import {
   Accessibility,
   Brain,
   FileSearch,
+  ShieldCheck,
   Lightbulb,
   Search as SearchIcon,
   X,
@@ -68,7 +69,7 @@ function fixTypeLabel(finding: any): { text: string; console: boolean } | null {
 }
 
 // Module-aligned icons. Order must match PHASE1_MODULES in latest-audit.ts.
-const MODULE_ICONS: React.ElementType[] = [Scale, Heart, Accessibility, Brain, FileSearch, Eye];
+const MODULE_ICONS: React.ElementType[] = [Scale, Heart, Accessibility, Brain, FileSearch, ShieldCheck, Eye];
 
 interface ModuleBucket {
   index: number;

@@ -220,14 +220,14 @@ export function moduleNameForFinding(f: AuditFinding): string {
   const idx = f.category_index
   if (idx == null) return 'General'
   const moduleIdx = Math.floor(idx / 4)
-  const names = ['Foundation', 'Human Experience', 'Inclusive Design', 'Future Readiness', 'SEO Structure', 'Brand Consistency']
+  const names = ['Foundation', 'Human Experience', 'Inclusive Design', 'Future Readiness', 'SEO Structure & Rules', 'Accessibility Readiness', 'Brand Consistency']
   return names[moduleIdx] || 'General'
 }
 
 export function moduleIndexForFinding(f: AuditFinding): number {
   const idx = f.category_index
   if (idx == null) return -1
-  return Math.max(0, Math.min(5, Math.floor(idx / 4)))
+  return Math.max(0, Math.min(6, Math.floor(idx / 4)))
 }
 
 export const MODULE_TINTS = [
@@ -235,7 +235,8 @@ export const MODULE_TINTS = [
   { dot: '#EC4899', bg: 'rgba(236, 72, 153, 0.08)', border: 'rgba(236, 72, 153, 0.18)' },  // Human Experience
   { dot: '#8B5CF6', bg: 'rgba(139, 92, 246, 0.08)', border: 'rgba(139, 92, 246, 0.18)' },  // Inclusive Design
   { dot: '#F59E0B', bg: 'rgba(245, 158, 11, 0.08)', border: 'rgba(245, 158, 11, 0.18)' },  // Future Readiness
-  { dot: '#10B981', bg: 'rgba(16, 185, 129, 0.08)', border: 'rgba(16, 185, 129, 0.18)' },  // SEO Structure
+  { dot: '#10B981', bg: 'rgba(16, 185, 129, 0.08)', border: 'rgba(16, 185, 129, 0.18)' },  // SEO Structure & Rules
+  { dot: '#14B8A6', bg: 'rgba(20, 184, 166, 0.08)', border: 'rgba(20, 184, 166, 0.18)' },  // Accessibility Readiness
   { dot: '#06B6D4', bg: 'rgba(6, 182, 212, 0.08)', border: 'rgba(6, 182, 212, 0.18)' },    // Brand Consistency
 ] as const
 
@@ -244,7 +245,8 @@ export const PHASE1_MODULES = [
   'Human Experience',
   'Inclusive Design',
   'Future Readiness',
-  'SEO Structure',
+  'SEO Structure & Rules',
+  'Accessibility Readiness',
   'Brand Consistency',
 ] as const
 
@@ -266,11 +268,10 @@ export function moduleScoresFromReport(
     { name: 'Human Experience', score: report.ux_score ?? null },
     { name: 'Inclusive Design', score: report.mobile_score ?? null },
     { name: 'Future Readiness', score: report.ai_discoverability_score ?? null },
-    { name: 'SEO Structure', score: report.conversion_score ?? null },
-    // Brand Consistency has no legacy score column — only show it when
-    // the raw_json categoryScores include indices 20-23 with real data.
-    // Using overall_score was wrong: it made Brand Consistency appear
-    // even when the module was never run.
+    { name: 'SEO Structure & Rules', score: report.conversion_score ?? null },
+    // Accessibility Readiness and Brand Consistency have no legacy score columns —
+    // only show them when findings with the correct category_index exist.
+    { name: 'Accessibility Readiness', score: null },
     { name: 'Brand Consistency', score: null },
   ]
 
