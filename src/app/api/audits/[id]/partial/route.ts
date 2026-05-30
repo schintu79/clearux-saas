@@ -23,12 +23,18 @@ const PHASE1_MODULES = [
   'Brand Consistency',
 ] as const
 
-const SEVERITY_PENALTY: Record<string, number> = {
-  critical: 8,
-  high: 5,
-  medium: 3,
-  low: 1.5,
+/**
+ * Severity deductions — MUST match analyzer.ts generateReport() exactly.
+ * Using different penalties here caused interim scores to be 10-15 points
+ * higher than the final report, making the score appear to "drop" on completion.
+ */
+const SEVERITY_DEDUCTION: Record<string, number> = {
+  critical: 18,
+  high: 12,
+  medium: 6,
+  low: 2,
 }
+const BASE_SCORE = 92
 
 export async function GET(
   req: NextRequest,
@@ -109,36 +115,42 @@ export async function GET(
   let interimOverallScore: number | null = null
 
   if (findingsCount > 0) {
-    const loadByModule = new Array(PHASE1_MODULES.length).fill(0) as number[]
-    const countByModule = new Array(PHASE1_MODULES.length).fill(0) as number[]
+    // Group findings by category (0-27) — same structure as analyzer.ts
+    const categoryDeductions = new Array(28).fill(0) as number[]
+    const categoryHasFindings = new Array(28).fill(false) as boolean[]
     let anyCategorized = false
 
     for (const f of findings) {
       if (f.category_index == null) continue
+      if (f.category_index < 0 || f.category_index >= 28) continue
       anyCategorized = true
-      const moduleIdx = Math.max(0, Math.min(PHASE1_MODULES.length - 1, Math.floor(f.category_index / 4)))
-      loadByModule[moduleIdx] += SEVERITY_PENALTY[f.severity] ?? 3
-      countByModule[moduleIdx] += 1
+      categoryDeductions[f.category_index] += SEVERITY_DEDUCTION[f.severity] ?? 6
+      categoryHasFindings[f.category_index] = true
     }
 
     if (anyCategorized) {
       interimModuleScores = {}
-      let scoreSum = 0
-      let scoreCount = 0
+      const allCatScores: number[] = []
 
       for (let i = 0; i < PHASE1_MODULES.length; i++) {
-        if (countByModule[i] === 0) continue // Don't show modules with no findings yet
-        const raw = 100 - loadByModule[i]
-        const clamped = Math.max(0, Math.min(100, raw))
-        const score = Math.round(clamped)
+        const start = i * 4
+        const end = start + 4
+        let sum = 0
+        let count = 0
+        for (let ci = start; ci < end; ci++) {
+          if (!categoryHasFindings[ci]) continue
+          const score = Math.max(0, Math.min(100, BASE_SCORE - categoryDeductions[ci]))
+          sum += score
+          count++
+          allCatScores.push(score)
+        }
+        if (count === 0) continue // Don't show modules with no findings yet
         const key = PHASE1_MODULES[i]
-        interimModuleScores[key] = score
-        scoreSum += score
-        scoreCount++
+        interimModuleScores[key] = Math.round(sum / count)
       }
 
-      if (scoreCount > 0) {
-        interimOverallScore = Math.round(scoreSum / scoreCount)
+      if (allCatScores.length > 0) {
+        interimOverallScore = Math.round(allCatScores.reduce((s, v) => s + v, 0) / allCatScores.length)
       }
     }
   }

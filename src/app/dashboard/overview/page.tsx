@@ -527,7 +527,6 @@ function OverviewInner() {
   /* ── Derived data ────────────────────────────────────── */
   const audit = bundle.audit as Audit;
   const report = bundle.report as Report;
-  const overallScore = report.overall_score ?? 0;
   const auditCount = bundle.history.length;
 
   let domain: string | null = null;
@@ -552,11 +551,18 @@ function OverviewInner() {
   };
 
   // Pillar/module scores for radar + Brand Health module dots.
+  // SCORE INTEGRITY: derive overallScore from the SAME category data
+  // that produces module scores — never read report.overall_score separately.
   let pillarScores: Array<{ name: string; score: number }>;
+  let overallScore: number;
   if (categoryScores.length > 0) {
+    // Primary path: compute from raw_json.categoryScores
+    const analyzedCats = categoryScores.filter((c) => c.score >= 0);
+    overallScore = analyzedCats.length > 0
+      ? Math.round(analyzedCats.reduce((s, c) => s + c.score, 0) / analyzedCats.length)
+      : (report.overall_score ?? 0);
     pillarScores = PILLAR_NAMES.map((name, i) => {
       const [start, end] = PILLAR_RANGES[i];
-      // Filter by positional index AND skip unanalyzed categories (score = -1)
       const cats = categoryScores.filter((c, idx) => idx >= start && idx < end && c.score >= 0);
       return {
         name,
@@ -564,8 +570,16 @@ function OverviewInner() {
       };
     }).filter(p => p.score >= 0);
   } else {
-    pillarScores = moduleScoresFromReport(report, findings)
+    // Fallback: use findings-based scoring (same formula as analyzer)
+    const moduleResults = moduleScoresFromReport(report, findings);
+    pillarScores = moduleResults
       .filter((m): m is { name: string; score: number } => m.score != null);
+    // Derive overall from the module scores — never read report.overall_score
+    // independently, because report.overall_score was computed with a potentially
+    // different set of findings (pre-fix/dismiss) and a different formula.
+    overallScore = pillarScores.length > 0
+      ? Math.round(pillarScores.reduce((s, p) => s + p.score, 0) / pillarScores.length)
+      : (report.overall_score ?? 0);
   }
 
   // Findings per pillar (used by Row 2 audit-style category cards).

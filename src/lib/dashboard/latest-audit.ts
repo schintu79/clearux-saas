@@ -250,12 +250,21 @@ export const PHASE1_MODULES = [
   'Brand Consistency',
 ] as const
 
-const SEVERITY_PENALTY: Record<string, number> = {
-  critical: 8,
-  high: 5,
-  medium: 3,
-  low: 1.5,
+/**
+ * Severity deductions — MUST match analyzer.ts generateReport() exactly.
+ * Using different penalties here was the root cause of score mismatches
+ * between the overview gauge and the module cards.
+ *
+ * OLD (broken): { critical: 8, high: 5, medium: 3, low: 1.5 } with base 100
+ * NEW (unified): { critical: 18, high: 12, medium: 6, low: 2 } with base 92
+ */
+const SEVERITY_DEDUCTION: Record<string, number> = {
+  critical: 18,
+  high: 12,
+  medium: 6,
+  low: 2,
 }
+const BASE_SCORE = 92
 
 export function moduleScoresFromReport(
   report: Report | null,
@@ -269,40 +278,43 @@ export function moduleScoresFromReport(
     { name: 'Inclusive Design', score: report.mobile_score ?? null },
     { name: 'Future Readiness', score: report.ai_discoverability_score ?? null },
     { name: 'SEO Structure & Rules', score: report.conversion_score ?? null },
-    // Accessibility Readiness and Brand Consistency have no legacy score columns —
-    // only show them when findings with the correct category_index exist.
     { name: 'Accessibility Readiness', score: null },
     { name: 'Brand Consistency', score: null },
   ]
 
   if (!findings || findings.length === 0) return legacy()
 
-  const loadByModule = new Array(PHASE1_MODULES.length).fill(0) as number[]
-  const countByModule = new Array(PHASE1_MODULES.length).fill(0) as number[]
+  // Group findings by category (0-27) mirroring analyzer.ts exactly
+  const categoryDeductions = new Array(28).fill(0) as number[]
+  const categoryHasFindings = new Array(28).fill(false) as boolean[]
   let anyCategorized = false
 
   for (const f of findings) {
     if (f.dismissed) continue
     if (f.status === 'fixed') continue
     if (f.category_index == null) continue
+    if (f.category_index < 0 || f.category_index >= 28) continue
     anyCategorized = true
-    const moduleIdx = Math.max(0, Math.min(PHASE1_MODULES.length - 1, Math.floor(f.category_index / 4)))
-    loadByModule[moduleIdx] += SEVERITY_PENALTY[f.severity] ?? 3
-    countByModule[moduleIdx] += 1
+    categoryDeductions[f.category_index] += SEVERITY_DEDUCTION[f.severity] ?? 6
+    categoryHasFindings[f.category_index] = true
   }
 
   if (!anyCategorized) return legacy()
 
-  const baseline = typeof report.overall_score === 'number' ? report.overall_score : 100
+  // Per-module score = average of its 4 category scores (same as analyzer.ts)
+  // NO blending with overall_score — each category stands on its own
   return PHASE1_MODULES.map((name, i) => {
-    // If no findings exist for this module, it wasn't analyzed — return null.
-    // This prevents Brand Consistency (and any other module) from showing a
-    // fabricated high score when it was never run.
-    if (countByModule[i] === 0) return { name, score: null }
-    const load = loadByModule[i]
-    const raw = 100 - load
-    const clamped = Math.max(0, Math.min(100, raw))
-    const blended = Math.round(clamped * 0.7 + baseline * 0.3)
-    return { name, score: Math.max(0, Math.min(100, blended)) }
+    const start = i * 4
+    const end = start + 4
+    let sum = 0
+    let count = 0
+    for (let ci = start; ci < end; ci++) {
+      if (!categoryHasFindings[ci]) continue
+      const score = Math.max(0, Math.min(100, BASE_SCORE - categoryDeductions[ci]))
+      sum += score
+      count++
+    }
+    if (count === 0) return { name, score: null }
+    return { name, score: Math.round(sum / count) }
   })
 }

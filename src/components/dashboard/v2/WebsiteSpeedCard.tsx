@@ -44,8 +44,18 @@ export default function WebsiteSpeedCard({
   const activeSpeedData = localSpeedData ?? speedData
   const hasUsableData = activeSpeedData != null && (activeSpeedData.mobile != null || activeSpeedData.desktop != null)
 
+  // Auto-resolve strategy: if selected strategy has no data, switch to one that does.
+  // This prevents showing an empty card when only desktop (or only mobile) data exists.
+  const resolvedStrategy: 'mobile' | 'desktop' = hasUsableData
+    ? (strategy === 'mobile' && !activeSpeedData!.mobile && activeSpeedData!.desktop
+        ? 'desktop'
+        : strategy === 'desktop' && !activeSpeedData!.desktop && activeSpeedData!.mobile
+          ? 'mobile'
+          : strategy)
+    : strategy
+
   const result: SpeedStrategyResult | null = hasUsableData
-    ? (strategy === 'mobile' ? activeSpeedData!.mobile : activeSpeedData!.desktop)
+    ? (resolvedStrategy === 'mobile' ? activeSpeedData!.mobile : activeSpeedData!.desktop)
     : null
 
   const handleRunTest = async () => {
@@ -95,19 +105,23 @@ export default function WebsiteSpeedCard({
         </div>
         {hasUsableData && (
           <div className="flex rounded-lg overflow-hidden flex-shrink-0" style={{ border: '1px solid var(--rule)' }}>
-            {(['mobile', 'desktop'] as const).map((s) => (
-              <button
-                key={s}
-                onClick={() => setStrategy(s)}
-                className="px-2.5 py-1 text-[10px] font-medium capitalize transition-colors"
-                style={{
-                  background: strategy === s ? 'var(--ink)' : 'transparent',
-                  color: strategy === s ? 'var(--card)' : 'var(--m-muted)',
-                }}
-              >
-                {s}
-              </button>
-            ))}
+            {(['mobile', 'desktop'] as const).map((s) => {
+              const hasData = activeSpeedData != null && activeSpeedData[s] != null
+              return (
+                <button
+                  key={s}
+                  onClick={() => hasData && setStrategy(s)}
+                  className="px-2.5 py-1 text-[10px] font-medium capitalize transition-colors"
+                  style={{
+                    background: resolvedStrategy === s ? 'var(--ink)' : 'transparent',
+                    color: resolvedStrategy === s ? 'var(--card)' : hasData ? 'var(--m-muted)' : 'color-mix(in srgb, var(--m-muted) 40%, transparent)',
+                    cursor: hasData ? 'pointer' : 'default',
+                  }}
+                >
+                  {s}
+                </button>
+              )
+            })}
           </div>
         )}
       </div>
