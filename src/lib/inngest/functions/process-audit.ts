@@ -3190,15 +3190,49 @@ RULES FOR RE-AUDIT:
     })
 
     // ──────────────────────────────────────────────────────────
-    // STEP 9a: POST-REPORT ENRICHMENT — all run in parallel
-    // Saves ~30-50s by running benchmark, brand intelligence,
-    // human perception, minimum findings, pipeline learn, and
-    // predictive recommendations concurrently in one step.
+    // STEP 10: COMPLETE AUDIT — runs BEFORE enrichment
+    // The audit reaches a terminal state regardless of whether
+    // enrichment succeeds, stalls, or gets killed by Vercel.
+    // This is the ROOT FIX for audits stalling at 90%.
     // ──────────────────────────────────────────────────────────
+    await step.run('complete', async () => {
+      const db = getDb()
+
+      await setStatus(auditId, 'completed', 100)
+      await setProgress(auditId, stageProgress('complete', 1), 'complete')
+      await logPipelineCompleted(auditId, Date.now() - pipelineStartTime)
+      await db
+        .from('audits')
+        .update({ completed_at: new Date().toISOString(), updated_at: new Date().toISOString() } as any)
+        .eq('id', auditId)
+
+      if (auditDetails.userEmail) {
+        try {
+          const emailAuditType = (auditDetails.auditType || 'website') as 'website' | 'brand_identity' | 'design'
+          const isFreeAudit = auditDetails.plan === 'free_preview'
+          if (isFreeAudit) {
+            await sendFreeAuditReady(auditDetails.userEmail, auditId, auditDetails.productUrl, emailAuditType)
+          } else {
+            await sendAuditComplete(auditDetails.userEmail, auditId, auditDetails.productUrl, emailAuditType)
+          }
+        } catch (emailErr) {
+          console.error('[inngest] Email error (non-fatal):', emailErr)
+        }
+      }
+
+      await auditLog(auditId, 'audit_completed', 'success', 'Audit completed')
+      console.log(`[inngest] Audit ${auditId} completed`)
+    })
+
+    // ──────────────────────────────────────────────────────────
+    // STEP 11: BEST-EFFORT ENRICHMENT (post-completion)
+    // Audit is already complete. Adds benchmarks, screenshots,
+    // brand intel, etc. Failures are non-fatal — wrapped in
+    // try/catch so errors never propagate to the outer handler.
+    // ──────────────────────────────────────────────────────────
+    try {
     await step.run('post-report-enrichment', async () => {
-      await logStageStarted(auditId, 'enriching', 'Enriching results...')
-      await logActivity(auditId, 'Running industry benchmarks and generating fix playbooks...')
-      await setProgress(auditId, stageProgress('enriching', 0), 'enriching')
+      await logActivity(auditId, 'Running best-effort enrichment (benchmarks, screenshots)...')
 
       // Master deadline for the entire enrichment step.
       // If all enrichments together exceed this, we bail and complete the audit.
@@ -3206,7 +3240,7 @@ RULES FOR RE-AUDIT:
       const enrichmentBody = async () => {
 
       // ── 1. Snapshot industry benchmark ──
-      const benchmarkPromise = (async () => {
+      const benchmarkFn = async () => {
         try {
           const db = getDb()
           const [{ data: report }, { data: audit }] = await Promise.all([
@@ -3242,7 +3276,7 @@ RULES FOR RE-AUDIT:
           await auditLog(auditId, 'benchmark_snapshot_failed', 'warning',
             `Benchmark snapshot failed: ${err instanceof Error ? err.message : 'unknown'}`)
         }
-      })()
+      }
 
       // ── 2. Brand Intelligence (LAZY — started in Wave 2 only) ──
       // CRITICAL: Do NOT use IIFE here. These must be lazy functions, not
@@ -3357,7 +3391,7 @@ RULES FOR RE-AUDIT:
       }
 
       // ── 4. Minimum findings enforcement ──
-      const minimumFindingsPromise = (async () => {
+      const minimumFindingsFn = async () => {
         try {
           const db = getDb()
           const { data: report } = await db
@@ -3470,10 +3504,10 @@ RULES FOR RE-AUDIT:
           await auditLog(auditId, 'minimum_findings_error', 'warning',
             `Minimum findings enforcement failed: ${err instanceof Error ? err.message : String(err)}`)
         }
-      })()
+      }
 
       // ── 5. Pipeline learn ──
-      const pipelineLearnPromise = (async () => {
+      const pipelineLearnFn = async () => {
         try {
           const db = getDb()
           const { data: finalFindings } = await db
@@ -3484,10 +3518,13 @@ RULES FOR RE-AUDIT:
 
           if (!finalFindings || finalFindings.length === 0) return
 
-          // Record finding patterns in parallel instead of sequentially
-          await Promise.all(
-            (finalFindings as any[]).map((f: any) => recordFindingShown(db, f.title, f.severity))
-          )
+          // Record finding patterns in batches to avoid saturating DB connections
+          const allFindings = finalFindings as any[]
+          const BATCH_SIZE = 10
+          for (let i = 0; i < allFindings.length; i += BATCH_SIZE) {
+            const batch = allFindings.slice(i, i + BATCH_SIZE)
+            await Promise.all(batch.map((f: any) => recordFindingShown(db, f.title, f.severity)))
+          }
           await recordAuditStats(db, auditId)
           const titles = (finalFindings as any[]).map((f: any) => f.title)
           const learningResult = await postAuditLearn(db, titles)
@@ -3499,10 +3536,10 @@ RULES FOR RE-AUDIT:
           await auditLog(auditId, 'pipeline_learn_error', 'warning',
             `Learning step failed: ${learnErr instanceof Error ? learnErr.message : String(learnErr)}`)
         }
-      })()
+      }
 
       // ── 6. Predictive recommendations ──
-      const predictivePromise = (async () => {
+      const predictiveFn = async () => {
         try {
           const db = getDb()
           const { data: report } = await db
@@ -3539,7 +3576,7 @@ RULES FOR RE-AUDIT:
           await auditLog(auditId, 'predictive_recommendations_failed', 'warning',
             `Predictive recommendations failed: ${err instanceof Error ? err.message : String(err)}`)
         }
-      })()
+      }
 
       // ── 7. Screenshots (LAZY — started in Wave 2 only) ──
       const screenshotFn = async () => {
@@ -3611,12 +3648,11 @@ RULES FOR RE-AUDIT:
 
       // Wave 1 — fast enrichments (use allSettled so one failure doesn't block the rest)
       await Promise.allSettled([
-        withTimeout(benchmarkPromise, FAST_TIMEOUT, 'benchmark'),
-        withTimeout(minimumFindingsPromise, FAST_TIMEOUT, 'minimum-findings'),
-        withTimeout(pipelineLearnPromise, FAST_TIMEOUT, 'pipeline-learn'),
-        withTimeout(predictivePromise, FAST_TIMEOUT, 'predictive-recs'),
+        withTimeout(benchmarkFn(), FAST_TIMEOUT, 'benchmark'),
+        withTimeout(minimumFindingsFn(), FAST_TIMEOUT, 'minimum-findings'),
+        withTimeout(pipelineLearnFn(), FAST_TIMEOUT, 'pipeline-learn'),
+        withTimeout(predictiveFn(), FAST_TIMEOUT, 'predictive-recs'),
       ])
-      await setProgress(auditId, stageProgress('enriching', 0.5))
       await logActivity(auditId, 'Running brand intelligence and capturing screenshots...')
 
       // Wave 2 — external API calls (brand intel, human perception, screenshots)
@@ -3629,67 +3665,50 @@ RULES FOR RE-AUDIT:
         withTimeout(humanPerceptionFn(), SLOW_TIMEOUT, 'human-perception'),
         withTimeout(screenshotFn(), SCREENSHOT_TIMEOUT, 'screenshots'),
       ])
-      await setProgress(auditId, stageProgress('enriching', 0.9))
-      await logStageCompleted(auditId, 'enriching', 'Results enriched')
+      await auditLog(auditId, 'enrichment_completed', 'success', 'Post-completion enrichment finished')
 
       } // end enrichmentBody
 
       // Run under master deadline — if enrichment takes too long, skip it entirely
       await withTimeout(enrichmentBody(), ENRICHMENT_DEADLINE_MS, 'enrichment-all')
     })
-
-    // ──────────────────────────────────────────────────────────
-    // STEP 11: Complete audit and send email
-    // ──────────────────────────────────────────────────────────
-    await step.run('complete', async () => {
-      const db = getDb()
-
-      await setStatus(auditId, 'completed', 100)
-      await setProgress(auditId, stageProgress('complete', 1), 'complete')
-      await logPipelineCompleted(auditId, Date.now() - pipelineStartTime)
-      await db
-        .from('audits')
-        .update({ completed_at: new Date().toISOString(), updated_at: new Date().toISOString() } as any)
-        .eq('id', auditId)
-
-      // Send email notification
-      if (auditDetails.userEmail) {
-        try {
-          const emailAuditType = (auditDetails.auditType || 'website') as 'website' | 'brand_identity' | 'design'
-          const isFreeAudit = auditDetails.plan === 'free_preview'
-          if (isFreeAudit) {
-            await sendFreeAuditReady(auditDetails.userEmail, auditId, auditDetails.productUrl, emailAuditType)
-          } else {
-            await sendAuditComplete(auditDetails.userEmail, auditId, auditDetails.productUrl, emailAuditType)
-          }
-        } catch (emailErr) {
-          console.error('[inngest] Email error (non-fatal):', emailErr)
-        }
-      }
-
-      await auditLog(auditId, 'audit_completed', 'success', 'Audit completed')
-      console.log(`[inngest] Audit ${auditId} completed`)
-    })
+    } catch (enrichErr) {
+      // Enrichment is best-effort — audit is already marked complete above.
+      // Swallow ALL errors so they never reach the outer catch (which would refund credits).
+      console.warn(`[inngest] Enrichment step failed (non-fatal, audit already complete):`, enrichErr)
+    }
 
     return { success: true, auditId }
 
     } catch (err) {
-      // Top-level failure handler: refund credit and mark audit as failed
+      // Top-level failure handler: refund credit and mark audit as failed.
+      // But skip if the audit was already completed (error came from enrichment).
       console.error(`[inngest] Audit ${auditId} FAILED:`, err)
       try {
-        await refundCredit(auditId)
         const db = getDb()
-        const errorMsg = err instanceof Error ? err.message : String(err)
-        await db
+        const { data: auditCheck } = await db
           .from('audits')
-          .update({
-            status: 'failed',
-            crawl_error: errorMsg.length > 500 ? errorMsg.slice(0, 500) : errorMsg,
-            updated_at: new Date().toISOString(),
-          } as any)
+          .select('status')
           .eq('id', auditId)
-        await logPipelineFailed(auditId, errorMsg.slice(0, 300))
-        await auditLog(auditId, 'audit_failed', 'error', `Audit failed: ${errorMsg.slice(0, 200)}. Credit refunded.`)
+          .single()
+        const currentStatus = (auditCheck as any)?.status as string
+        if (currentStatus === 'completed' || currentStatus === 'completed_with_warnings') {
+          // Audit already completed — this error is from post-completion enrichment, non-fatal
+          console.warn(`[inngest] Audit ${auditId} already ${currentStatus} — ignoring post-completion error`)
+        } else {
+          await refundCredit(auditId)
+          const errorMsg = err instanceof Error ? err.message : String(err)
+          await db
+            .from('audits')
+            .update({
+              status: 'failed',
+              crawl_error: errorMsg.length > 500 ? errorMsg.slice(0, 500) : errorMsg,
+              updated_at: new Date().toISOString(),
+            } as any)
+            .eq('id', auditId)
+          await logPipelineFailed(auditId, errorMsg.slice(0, 300))
+          await auditLog(auditId, 'audit_failed', 'error', `Audit failed: ${errorMsg.slice(0, 200)}. Credit refunded.`)
+        }
       } catch (failErr) {
         console.error(`[inngest] Failed to handle audit failure for ${auditId}:`, failErr)
       }
