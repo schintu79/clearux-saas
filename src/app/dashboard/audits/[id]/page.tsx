@@ -984,7 +984,8 @@ function PillarSection({
 }) {
   const [expanded, setExpanded] = useState(defaultExpanded);
   const L = getUILabels(lang);
-  const pillarCats = categoryScores.filter((_, idx) => idx >= pillar.range[0] && idx < pillar.range[1]);
+  // Filter out sentinel -1 values (unanalyzed categories)
+  const pillarCats = categoryScores.filter((c, idx) => idx >= pillar.range[0] && idx < pillar.range[1] && c.score >= 0);
   const avgScore = pillarCats.length > 0
     ? Math.round(pillarCats.reduce((sum, c) => sum + c.score, 0) / pillarCats.length)
     : 0;
@@ -1724,17 +1725,21 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
     : (auditSelectedPillars ? Math.min(auditSelectedPillars.length, pillarsWithData) : pillarsWithData);
   const isPartialAudit = activeModuleCount < totalModuleCount;
 
-  // ALWAYS calculate overall score from category data (don't trust stored value)
-  const calculatedOverallScore = categoryScores.length > 0
-    ? Math.round(categoryScores.reduce((s, c) => s + c.score, 0) / categoryScores.length)
+  // ALWAYS calculate overall score from category data (don't trust stored value).
+  // CRITICAL: filter out sentinel -1 values (unanalyzed categories like Brand
+  // Consistency without Brand DNA). Including -1 drags the average down ~13 pts.
+  const analyzedCategories = categoryScores.filter(c => c.score >= 0);
+  const calculatedOverallScore = analyzedCategories.length > 0
+    ? Math.round(analyzedCategories.reduce((s, c) => s + c.score, 0) / analyzedCategories.length)
     : (report?.overall_score ?? 0);
 
-  // Severity counts
+  // Severity counts — only active findings (consistent with Find/Fix pages)
+  const activeFindings = findings.filter((f) => !f.dismissed && f.status !== 'fixed' && (f as any).verification_status !== 'verified_fixed');
   const severityCounts = {
-    critical: findings.filter((f) => f.severity === 'critical').length,
-    high: findings.filter((f) => f.severity === 'high').length,
-    medium: findings.filter((f) => f.severity === 'medium').length,
-    low: findings.filter((f) => f.severity === 'low').length,
+    critical: activeFindings.filter((f) => f.severity === 'critical').length,
+    high: activeFindings.filter((f) => f.severity === 'high').length,
+    medium: activeFindings.filter((f) => f.severity === 'medium').length,
+    low: activeFindings.filter((f) => f.severity === 'low').length,
   };
 
   // Assign findings to modules — use explicit category_index, fall back to keyword matching
@@ -1744,7 +1749,15 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
 
     const catNames = categoryScores.map(c => c.name);
 
-    for (const f of findings) {
+    // Only include findings that also appear on Find/Fix pages for consistency.
+    // Exclude dismissed, fixed, and verified_fixed findings.
+    const activeFindings = findings.filter((f) =>
+      !f.dismissed &&
+      f.status !== 'fixed' &&
+      (f as any).verification_status !== 'verified_fixed'
+    );
+
+    for (const f of activeFindings) {
       let bestCatIdx: number;
       if ((f as any).category_index != null) {
         bestCatIdx = (f as any).category_index;
@@ -1783,7 +1796,7 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
   }
 
   const cockpitModules: ModuleScore[] = PILLAR_CONFIG.map((pillar, idx) => {
-    const cats = categoryScores.filter((_, i) => i >= pillar.range[0] && i < pillar.range[1]);
+    const cats = categoryScores.filter((c, i) => i >= pillar.range[0] && i < pillar.range[1] && c.score >= 0);
     const audited = cats.length > 0 && (!isPartialAudit || (auditSelectedModules ? auditSelectedModules.includes(MODULE_SLUG_ORDER[idx]) : (auditSelectedPillars?.includes(idx) ?? true)));
     const avg = cats.length > 0
       ? Math.round(cats.reduce((s, c) => s + c.score, 0) / cats.length)
@@ -1835,7 +1848,7 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
               </div>
               <div className="hidden sm:flex items-center gap-3">
                 {PILLAR_CONFIG.map((pillar, pIdx) => {
-                  const pillarCats = categoryScores.filter((_, idx) => idx >= pillar.range[0] && idx < pillar.range[1]);
+                  const pillarCats = categoryScores.filter((c, idx) => idx >= pillar.range[0] && idx < pillar.range[1] && c.score >= 0);
                   const avg = pillarCats.length > 0
                     ? Math.round(pillarCats.reduce((s, c) => s + c.score, 0) / pillarCats.length)
                     : 0;
@@ -2181,7 +2194,7 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
                   {categoryScores.length > 0 && (
                     <div className="flex flex-wrap gap-x-5 gap-y-1.5 mt-3">
                       {PILLAR_CONFIG.map((pillar, idx) => {
-                        const cats = categoryScores.filter((_, i) => i >= pillar.range[0] && i < pillar.range[1]);
+                        const cats = categoryScores.filter((c, i) => i >= pillar.range[0] && i < pillar.range[1] && c.score >= 0);
                         if (cats.length === 0) return null;
                         const avg = Math.round(cats.reduce((s, c) => s + c.score, 0) / cats.length);
                         return (
@@ -2583,7 +2596,7 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
               {categoryScores.length > 0 && (
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
                   {PILLAR_CONFIG.map((pillar, pillarIdx) => {
-                    const pillarCats = categoryScores.filter((_, idx) => idx >= pillar.range[0] && idx < pillar.range[1]);
+                    const pillarCats = categoryScores.filter((c, idx) => idx >= pillar.range[0] && idx < pillar.range[1] && c.score >= 0);
                     if (pillarCats.length === 0) return null;
                     const avgScore = Math.round(pillarCats.reduce((sum, c) => sum + c.score, 0) / pillarCats.length);
                     const tint = MODULE_TINTS[pillarIdx] || MODULE_TINTS[0];
@@ -2646,8 +2659,8 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
                 </div>
               )}
 
-              {/* Checkpoint Health — category-level pass/fail summary */}
-              <CheckpointHealth categoryScores={categoryScores} findings={findings} />
+              {/* Checkpoint Health — category-level pass/fail summary (exclude -1 sentinel) */}
+              <CheckpointHealth categoryScores={categoryScores.filter(c => c.score >= 0)} findings={findings} />
 
               {/* Crawl Coverage — audit scope transparency */}
               {(() => {

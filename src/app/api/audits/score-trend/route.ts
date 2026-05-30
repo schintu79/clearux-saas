@@ -54,11 +54,11 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ domain, trend: [], totalAudits: 0 })
     }
 
-    // Get reports for those audits
+    // Get reports for those audits (include raw_json for category-level recomputation)
     const auditIds = domainAudits.map((a: any) => a.id)
     const { data: reports } = await db
       .from('reports')
-      .select('audit_id, overall_score, ux_score, conversion_score, mobile_score, ai_discoverability_score, content_score, total_issues, critical_count, high_count, ai_visibility_breakdown')
+      .select('audit_id, overall_score, ux_score, conversion_score, mobile_score, ai_discoverability_score, content_score, total_issues, critical_count, high_count, ai_visibility_breakdown, raw_json')
       .in('audit_id', auditIds)
 
     const reportsMap: Record<string, any> = {}
@@ -67,10 +67,23 @@ export async function GET(request: NextRequest) {
     const trend = domainAudits.map((a: any) => {
       const r = reportsMap[a.id]
       const aiVis = r?.ai_visibility_breakdown as any
+
+      // Recompute overall score from categoryScores, filtering out -1 sentinel
+      // values (unanalyzed categories like Brand Consistency without Brand DNA).
+      // The stored overall_score may include -1 values, dragging the average down.
+      let overallScore: number | null = r?.overall_score ?? null
+      const rawJson = r?.raw_json as any
+      if (rawJson?.categoryScores && Array.isArray(rawJson.categoryScores)) {
+        const analyzed = (rawJson.categoryScores as Array<{ score: number }>).filter(c => c.score >= 0)
+        if (analyzed.length > 0) {
+          overallScore = Math.round(analyzed.reduce((s, c) => s + c.score, 0) / analyzed.length)
+        }
+      }
+
       return {
         auditId: a.id,
         date: a.completed_at || a.created_at,
-        overallScore: r?.overall_score ?? null,
+        overallScore,
         uxScore: r?.ux_score ?? null,
         conversionScore: r?.conversion_score ?? null,
         mobileScore: r?.mobile_score ?? null,
@@ -85,12 +98,12 @@ export async function GET(request: NextRequest) {
 
     // Improvement = latest score vs previous audit (not vs first ever)
     const improvement = trend.length >= 2
-      ? trend[trend.length - 1].overallScore - trend[trend.length - 2].overallScore
+      ? (trend[trend.length - 1].overallScore ?? 0) - (trend[trend.length - 2].overallScore ?? 0)
       : 0
 
     // Also track total change from baseline
     const totalChange = trend.length >= 2
-      ? trend[trend.length - 1].overallScore - trend[0].overallScore
+      ? (trend[trend.length - 1].overallScore ?? 0) - (trend[0].overallScore ?? 0)
       : 0
 
     // AI visibility improvement

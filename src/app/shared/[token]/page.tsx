@@ -327,7 +327,8 @@ export default function SharedAuditPage({ params }: { params: Promise<{ token: s
   const isPartialAudit = activeModuleCount < totalModuleCount;
 
   // Calculate overall from category averages (same as dashboard)
-  const scoredCats = categoryScores.filter(c => c.score > 0 || c.summary);
+  // Filter -1 sentinel (unanalyzed categories) — use >= 0 not > 0 since 0 is valid
+  const scoredCats = categoryScores.filter(c => c.score >= 0);
   const calculatedOverallScore = scoredCats.length > 0
     ? Math.round(scoredCats.reduce((s, c) => s + c.score, 0) / scoredCats.length)
     : (report.overall_score ?? 0);
@@ -350,7 +351,7 @@ export default function SharedAuditPage({ params }: { params: Promise<{ token: s
   const findingsByPillar: Record<string, AuditFinding[]> = {};
   for (const name of PILLAR_NAMES) findingsByPillar[name] = [];
   for (const f of findings) {
-    if (f.dismissed) continue;
+    if (f.dismissed || f.status === 'fixed' || (f as any).verification_status === 'verified_fixed') continue;
     const catIdx = (f as any).category_index;
     if (catIdx != null) {
       const pillarIdx = Math.floor(catIdx / 4);
@@ -426,7 +427,7 @@ export default function SharedAuditPage({ params }: { params: Promise<{ token: s
                     <div className="flex flex-wrap gap-x-5 gap-y-1.5 mt-3">
                       {PILLAR_NAMES.map((name, idx) => {
                         const [start, end] = PILLAR_RANGES[idx];
-                        const cats = categoryScores.filter((_, i) => i >= start && i < end);
+                        const cats = categoryScores.filter((c, i) => i >= start && i < end && c.score >= 0);
                         if (cats.length === 0) return null;
                         const avg = Math.round(cats.reduce((s, c) => s + c.score, 0) / cats.length);
                         return (
@@ -522,7 +523,7 @@ export default function SharedAuditPage({ params }: { params: Promise<{ token: s
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6 print:grid-cols-2">
               {PILLAR_NAMES.map((name, pillarIdx) => {
                 const [start, end] = PILLAR_RANGES[pillarIdx];
-                const pillarCats = categoryScores.filter((_, idx) => idx >= start && idx < end);
+                const pillarCats = categoryScores.filter((c, idx) => idx >= start && idx < end && c.score >= 0);
                 if (pillarCats.length === 0) return null;
                 const avgScore = Math.round(pillarCats.reduce((sum, c) => sum + c.score, 0) / pillarCats.length);
                 const tint = MODULE_TINTS[pillarIdx] || MODULE_TINTS[0];
