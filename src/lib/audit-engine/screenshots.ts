@@ -80,7 +80,7 @@ async function captureViaScreenshotOne(
     console.log(`[screenshots] ScreenshotOne request: ${url} | selector: ${_selector || 'none'} | mode: ${highlightMode}`)
 
     const res = await fetch(requestUrl, {
-      signal: AbortSignal.timeout(30_000),
+      signal: AbortSignal.timeout(15_000), // 15s — must complete within Wave 2 screenshot budget
     })
 
     if (!res.ok) {
@@ -114,7 +114,7 @@ async function captureViaPageSpeed(url: string): Promise<Buffer | null> {
     if (apiKey) params.set('key', apiKey)
 
     const res = await fetch(`${base}?${params}`, {
-      signal: AbortSignal.timeout(30_000),
+      signal: AbortSignal.timeout(15_000), // 15s — must fit within Wave 2 screenshot budget
     })
 
     if (!res.ok) return null
@@ -153,7 +153,7 @@ async function captureViaPuppeteer(
         'x-screenshot-key': process.env.SCREENSHOT_INTERNAL_KEY || '',
       },
       body: JSON.stringify(body),
-      signal: AbortSignal.timeout(55_000),
+      signal: AbortSignal.timeout(15_000), // 15s — must fit within Wave 2 screenshot budget
     })
 
     if (!res.ok) {

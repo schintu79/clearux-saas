@@ -113,7 +113,8 @@ export async function extractModelSentiment(
           content: `Brand: "${brandName}"\n\nAI responses about this brand:\n\n${responsesText}\n\n${SENTIMENT_PLACEMENT_PROMPT}`,
         },
       ],
-    })
+      signal: AbortSignal.timeout(20_000), // 20s hard timeout — prevents hanging on slow API
+    } as any)
 
     const text = msg.content[0]?.type === 'text' ? msg.content[0].text : ''
     const parsed = JSON.parse(text)

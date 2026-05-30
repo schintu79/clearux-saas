@@ -1709,6 +1709,8 @@ IMPORTANT CROSS-PAGE CONTEXT:
 The content below is from the ENTIRE site, not just one page. Before flagging something as "missing" (e.g., "no founder credentials", "no pricing transparency", "no FAQ"), check if it exists on ANY of the pages listed above. Many sites spread content across dedicated pages (About, Pricing, FAQ, Contact). Only flag something as missing if it genuinely doesn't exist ANYWHERE on the site.`
 
       // Fetch user's site notes + FULL previous audit baseline
+      // Wrapped in withTimeout to prevent Supabase cold-start / pool stalls from blocking the step
+      const CONTEXT_DB_TIMEOUT = 30_000 // 30s — generous but prevents 2+ min hangs
       const noteDb = getDb()
       let domain = ''
       try { domain = new URL(auditDetails.productUrl).hostname.replace(/^www\./, '') } catch {}
@@ -1730,8 +1732,8 @@ The content below is from the ENTIRE site, not just one page. Before flagging so
       let previousReportJson: any = null
       let prevAuditId: string | null = null
       if (domain && userId) {
-        // Fetch site notes + previous audit ID in parallel
-        const [siteNotesRes, prevAuditsRes] = await Promise.all([
+        // Fetch site notes + previous audit ID in parallel (with timeout to prevent stalls)
+        const contextResult = await withTimeout(Promise.all([
           noteDb.from('site_notes')
             .select('note_type, title, content, category, finding_ref')
             .eq('user_id', userId).eq('domain', domain).eq('is_active', true)
@@ -1740,7 +1742,8 @@ The content below is from the ENTIRE site, not just one page. Before flagging so
             .select('id, product_url').eq('user_id', userId).neq('id', auditId)
             .eq('status', 'completed').ilike('product_url', `%${domain}%`)
             .order('completed_at', { ascending: false }).limit(1),
-        ])
+        ]), CONTEXT_DB_TIMEOUT, 'site-context-db')
+        const [siteNotesRes, prevAuditsRes] = contextResult || [{ data: null }, { data: null }]
 
         // Site notes (dismissals, context, discussions)
         if (siteNotesRes.data && siteNotesRes.data.length > 0) {
@@ -1761,13 +1764,14 @@ The content below is from the ENTIRE site, not just one page. Before flagging so
             .eq('id', auditId)
 
           // Fetch previous report scores + all findings (FULL data for baseline copy)
-          const [prevReportRes, prevFindingsRes] = await Promise.all([
+          const prevDataResult = await withTimeout(Promise.all([
             noteDb.from('reports').select('overall_score, executive_summary, raw_json').eq('audit_id', prevAuditId).single(),
             noteDb.from('audit_findings')
               .select('id, title, severity, description, recommendation, estimated_impact, target_element, page_url, sort_order, status, dismissed, dismissal_reason, category_index, fix_status, finding_type, checklist_item_id')
               .eq('audit_id', prevAuditId)
               .order('sort_order', { ascending: true }).limit(60),
-          ])
+          ]), CONTEXT_DB_TIMEOUT, 'prev-audit-db')
+          const [prevReportRes, prevFindingsRes] = prevDataResult || [{ data: null }, { data: null }]
 
           // Previous category scores + full report as baseline
           if (prevReportRes.data) {
@@ -3240,8 +3244,12 @@ RULES FOR RE-AUDIT:
         }
       })()
 
-      // ── 2. Brand Intelligence ──
-      const brandIntelPromise = (async () => {
+      // ── 2. Brand Intelligence (LAZY — started in Wave 2 only) ──
+      // CRITICAL: Do NOT use IIFE here. These must be lazy functions, not
+      // immediately-invoked promises. If they start at t=0 with the fast
+      // Wave 1 tasks, they run in the background consuming Vercel time,
+      // and withTimeout can only abandon the await — not stop the work.
+      const brandIntelFn = async () => {
         try {
           const db = getDb()
           const { data: probes } = await db
@@ -3303,10 +3311,10 @@ RULES FOR RE-AUDIT:
           await auditLog(auditId, 'brand_intelligence_failed', 'warning',
             `Brand intelligence failed: ${err instanceof Error ? err.message : 'unknown'}`)
         }
-      })()
+      }
 
-      // ── 3. Human Perception ──
-      const humanPerceptionPromise = (async () => {
+      // ── 3. Human Perception (LAZY — started in Wave 2 only) ──
+      const humanPerceptionFn = async () => {
         try {
           const { runHumanPerceptionPipeline } = await import('@/lib/human-perception')
           const db = getDb()
@@ -3346,7 +3354,7 @@ RULES FOR RE-AUDIT:
           await auditLog(auditId, 'human_perception_failed', 'warning',
             `Human perception failed: ${err instanceof Error ? err.message : 'unknown'}`)
         }
-      })()
+      }
 
       // ── 4. Minimum findings enforcement ──
       const minimumFindingsPromise = (async () => {
@@ -3533,8 +3541,8 @@ RULES FOR RE-AUDIT:
         }
       })()
 
-      // ── 7. Screenshots (moved from standalone step to enrichment) ──
-      const screenshotPromise = (async () => {
+      // ── 7. Screenshots (LAZY — started in Wave 2 only) ──
+      const screenshotFn = async () => {
         try {
           const db = getDb()
           const { data: findingsWithTargets } = await db
@@ -3592,14 +3600,14 @@ RULES FOR RE-AUDIT:
           console.error('[inngest] Screenshot capture error (non-fatal):', errMsg)
           await auditLog(auditId, 'screenshots_error', 'warning', `Screenshot capture failed: ${errMsg.slice(0, 300)}`)
         }
-      })()
+      }
 
       // Run enrichment in two waves so progress updates mid-step.
       // Wave 1 (fast, data-only): benchmark, minimum findings, pipeline learn, predictive recs
       // Wave 2 (slower, external calls): brand intel, human perception, screenshots
       const FAST_TIMEOUT  = 20_000  // 20s for fast tasks
-      const SLOW_TIMEOUT  = 30_000  // 30s for external API tasks
-      const SCREENSHOT_TIMEOUT = 15_000 // 15s — screenshots are nice-to-have
+      const SLOW_TIMEOUT  = 25_000  // 25s for external API tasks
+      const SCREENSHOT_TIMEOUT = 25_000 // 25s — must be > individual captureScreenshot timeout (20s internal)
 
       // Wave 1 — fast enrichments (use allSettled so one failure doesn't block the rest)
       await Promise.allSettled([
@@ -3612,10 +3620,14 @@ RULES FOR RE-AUDIT:
       await logActivity(auditId, 'Running brand intelligence and capturing screenshots...')
 
       // Wave 2 — external API calls (brand intel, human perception, screenshots)
+      // CRITICAL: Functions are called here (not at t=0) so their full runtime
+      // falls within the withTimeout window. Previously they were IIFEs that
+      // started immediately, ran through Wave 1, and the timeouts couldn't
+      // actually stop the already-running work.
       await Promise.allSettled([
-        withTimeout(brandIntelPromise, SLOW_TIMEOUT, 'brand-intelligence'),
-        withTimeout(humanPerceptionPromise, SLOW_TIMEOUT, 'human-perception'),
-        withTimeout(screenshotPromise, SCREENSHOT_TIMEOUT, 'screenshots'),
+        withTimeout(brandIntelFn(), SLOW_TIMEOUT, 'brand-intelligence'),
+        withTimeout(humanPerceptionFn(), SLOW_TIMEOUT, 'human-perception'),
+        withTimeout(screenshotFn(), SCREENSHOT_TIMEOUT, 'screenshots'),
       ])
       await setProgress(auditId, stageProgress('enriching', 0.9))
       await logStageCompleted(auditId, 'enriching', 'Results enriched')
