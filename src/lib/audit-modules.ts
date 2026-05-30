@@ -50,6 +50,14 @@ export const AUDIT_MODULES: AuditModule[] = [
     includedInComplete: true,
   },
   {
+    slug: 'accessibility_readiness',
+    name: 'Accessibility Readiness',
+    description: 'WCAG compliance, keyboard access, screen reader support, and EAA readiness signals.',
+    legacyPillarIndex: null,
+    requiresBrandIdentity: false,
+    includedInComplete: true,
+  },
+  {
     slug: 'brand_consistency',
     name: 'Brand Consistency',
     description: 'Checks website alignment with your brand voice, visual identity, and guidelines.',

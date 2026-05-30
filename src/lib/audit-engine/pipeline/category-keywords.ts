@@ -4,13 +4,14 @@
 // Used for assigning findings to the correct category/module
 // in both the report renderer and the dashboard UI.
 //
-// Must match the 24-category structure in analyzer.ts:
+// Must match the 28-category structure in analyzer.ts:
 //   0-3:   Foundation
 //   4-7:   Human Experience
 //   8-11:  Inclusive Design
 //   12-15: Future Readiness
 //   16-19: SEO Structure & Rules
-//   20-23: Brand Consistency
+//   20-23: Accessibility Readiness
+//   24-27: Brand Consistency
 // ============================================================
 
 /**
@@ -49,11 +50,17 @@ export const CATEGORY_KEYWORDS: Record<number, string[]> = {
   18: ['rich snippet', 'open graph', 'social media', 'twitter card', 'og:', 'rich result'],
   19: ['keyword', 'search intent', 'content gap', 'long-tail', 'topic cluster', 'semantic', 'link strategy', 'anchor text', 'backlink'],
 
-  // ── Brand Consistency (20-23) ─────────────────────────────
-  20: ['brand consistency', 'brand identity', 'logo', 'brand color', 'brand voice', 'brand guideline', 'visual identity'],
-  21: ['brand experience', 'brand story', 'mission', 'about page', 'company value', 'voice', 'tone alignment'],
-  22: ['brand visual', 'icon style', 'illustration', 'imagery', 'photo style', 'brand asset'],
-  23: ['brand communication', 'brand tone', 'brand language', 'brand message', 'tagline'],
+  // ── Accessibility Readiness (20-23) ────────────────────
+  20: ['alt text', 'image alt', 'missing alt', 'decorative image', 'color contrast', 'contrast ratio', 'wcag', 'perceivable', 'text alternative', 'caption', 'audio description', 'media alternative'],
+  21: ['keyboard', 'focus', 'tab order', 'focus indicator', 'focus trap', 'skip link', 'keyboard trap', 'operable', 'touch target', 'pointer', 'timing', 'seizure', 'flashing'],
+  22: ['form label', 'input label', 'error message', 'error identification', 'help text', 'instructions', 'predictable', 'understandable', 'language', 'lang attribute', 'page title', 'heading hierarchy'],
+  23: ['aria', 'aria-label', 'aria-role', 'semantic html', 'landmark', 'nav element', 'main element', 'robust', 'compatibility', 'assistive technology', 'screen reader', 'valid html'],
+
+  // ── Brand Consistency (24-27) ─────────────────────────
+  24: ['brand consistency', 'brand identity', 'logo', 'brand color', 'brand voice', 'brand guideline', 'visual identity'],
+  25: ['brand experience', 'brand story', 'mission', 'about page', 'company value', 'voice', 'tone alignment'],
+  26: ['brand visual', 'icon style', 'illustration', 'imagery', 'photo style', 'brand asset'],
+  27: ['brand communication', 'brand tone', 'brand language', 'brand message', 'tagline'],
 }
 
 /**
@@ -69,7 +76,7 @@ export function matchFindingToCategory(
   let bestCatIdx = 0
   let bestScore = -1
 
-  for (let catIdx = 0; catIdx < 24; catIdx++) {
+  for (let catIdx = 0; catIdx < 28; catIdx++) {
     let score = 0
 
     // Match against category keywords

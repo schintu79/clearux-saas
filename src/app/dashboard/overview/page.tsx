@@ -53,6 +53,10 @@ import {
   Scale,
   WifiOff,
   Loader2,
+  Keyboard,
+  FileText,
+  Code2,
+  ShieldCheck,
 } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { useAuditBundle } from '@/context/AuditBundleContext';
@@ -80,17 +84,18 @@ import SiteFavicon from '@/components/ui/SiteFavicon';
 import OverviewTabs from '@/components/dashboard/OverviewTabs';
 
 /* ── Pillar / module config (mirrors audit detail page) ─── */
-const PILLAR_NAMES = ['Foundation', 'Human Experience', 'Inclusive Design', 'Future Readiness', 'SEO Structure & Rules', 'Brand Consistency'];
-const PILLAR_RANGES: [number, number][] = [[0, 4], [4, 8], [8, 12], [12, 16], [16, 20], [20, 24]];
-const PILLAR_ICONS: React.ElementType[] = [Scale, Heart, Accessibility, Brain, FileSearch, Eye];
+const PILLAR_NAMES = ['Foundation', 'Human Experience', 'Inclusive Design', 'Future Readiness', 'SEO Structure & Rules', 'Accessibility Readiness', 'Brand Consistency'];
+const PILLAR_RANGES: [number, number][] = [[0, 4], [4, 8], [8, 12], [12, 16], [16, 20], [20, 24], [24, 28]];
+const PILLAR_ICONS: React.ElementType[] = [Scale, Heart, Accessibility, Brain, FileSearch, ShieldCheck, Eye];
 
-/** Category icons in 24-index order — matches analyzer.ts. */
+/** Category icons in 28-index order — matches analyzer.ts. */
 const CATEGORY_ICONS: React.ElementType[] = [
   Eye, Target, MapIcon, Type,
   MousePointerClick, Shield, AlertTriangle, Heart,
   Accessibility, Brain, Sparkles, Smartphone,
   Gauge, Search, Zap, Globe,
   FileSearch, LinkIcon, Share2, Scale,
+  Eye, Keyboard, FileText, Code2,
   Eye, MessageSquare, Target, CheckCircle2,
 ];
 
@@ -101,6 +106,7 @@ const MODULE_TINTS = [
   { dot: '#8B5CF6', bg: 'rgba(139, 92, 246, 0.04)', border: 'rgba(139, 92, 246, 0.12)' },  // Inclusive Design — violet
   { dot: '#F59E0B', bg: 'rgba(245, 158, 11, 0.04)', border: 'rgba(245, 158, 11, 0.12)' },  // Future Readiness — amber
   { dot: '#10B981', bg: 'rgba(16, 185, 129, 0.04)', border: 'rgba(16, 185, 129, 0.12)' },  // SEO — emerald
+  { dot: '#14B8A6', bg: 'rgba(20, 184, 166, 0.04)', border: 'rgba(20, 184, 166, 0.12)' },  // Accessibility Readiness — teal
   { dot: '#06B6D4', bg: 'rgba(6, 182, 212, 0.04)', border: 'rgba(6, 182, 212, 0.12)' },    // Brand — cyan
 ];
 

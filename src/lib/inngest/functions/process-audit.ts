@@ -2039,7 +2039,7 @@ RULES FOR RE-AUDIT:
       // Detect those gaps and run fresh AI analysis on just the
       // missing categories so re-audits include full coverage.
       // ════════════════════════════════════════════════════════════
-      const MODULE_SLUG_ORDER_BL = ['foundation', 'human_experience', 'inclusive_design', 'future_readiness', 'seo_structure', 'brand_consistency']
+      const MODULE_SLUG_ORDER_BL = ['foundation', 'human_experience', 'inclusive_design', 'future_readiness', 'seo_structure', 'accessibility_readiness', 'brand_consistency']
 
       // Determine which modules should be active for this audit
       let activeSlugsBl: string[]
@@ -2110,7 +2110,7 @@ RULES FOR RE-AUDIT:
 
         // Handle brand context for brand_consistency gap fill
         let brandContentBl = contentWithContextBl
-        const brandCategoryNamesBl = new Set(UX_CATEGORY_NAMES.slice(20, 24))
+        const brandCategoryNamesBl = new Set(UX_CATEGORY_NAMES.slice(24, 28))
         if (missingModuleSlugs.includes('brand_consistency') && auditDetails.brandIdentityId) {
           try {
             const db = getDb()
@@ -2312,8 +2312,8 @@ RULES FOR RE-AUDIT:
       // ── Determine which modules (and thus categories) to analyze ──
       // Module slug → category index mapping (each module = 4 categories):
       //   foundation → 0-3, human_experience → 4-7, inclusive_design → 8-11,
-      //   future_readiness → 12-15, seo_structure → 16-19, brand_consistency → 20-23
-      const MODULE_SLUG_ORDER = ['foundation', 'human_experience', 'inclusive_design', 'future_readiness', 'seo_structure', 'brand_consistency']
+      //   future_readiness → 12-15, seo_structure → 16-19, accessibility_readiness → 20-23, brand_consistency → 24-27
+      const MODULE_SLUG_ORDER = ['foundation', 'human_experience', 'inclusive_design', 'future_readiness', 'seo_structure', 'accessibility_readiness', 'brand_consistency']
 
       let activeSlugs: string[]
       if (auditDetails.selectedModules) {
@@ -2408,9 +2408,9 @@ RULES FOR RE-AUDIT:
       const brandContentWithContext = brandContext
         ? `=== BRAND IDENTITY GUIDELINES ===\n${brandContext}\n\n=== WEBSITE CONTENT ===\n${contentWithContext}`
         : contentWithContext
-      // Brand consistency category names (indices 20-23)
+      // Brand consistency category names (indices 24-27)
       const brandCategoryNames = new Set(
-        UX_CATEGORY_NAMES.slice(20, 24)
+        UX_CATEGORY_NAMES.slice(24, 28)
       )
 
       let totalFindingsCount = 0

@@ -26,6 +26,14 @@ import {
   ChevronDown,
   User,
   ExternalLink,
+  FileSearch,
+  LinkIcon,
+  Share2,
+  Keyboard,
+  FileText,
+  Code2,
+  MessageSquare,
+  ShieldCheck,
 } from 'lucide-react'
 import ScoreRing from '@/components/ui/ScoreRing'
 import type { AuditFinding, Report } from '@/types/database'
@@ -69,6 +77,9 @@ const CATEGORY_ICONS: React.ElementType[] = [
   MousePointerClick, Shield, AlertTriangle, Heart,
   Accessibility, Brain, Sparkles, Smartphone,
   Gauge, Search, Zap, Globe,
+  FileSearch, LinkIcon, Share2, Scale,
+  Eye, Keyboard, FileText, Code2,
+  Eye, MessageSquare, Target, CheckCircle2,
 ]
 
 const PILLAR_STYLE = [
@@ -76,6 +87,9 @@ const PILLAR_STYLE = [
   { name: 'Human Experience', color: '#EC4899', gradient: 'from-pink-500 to-pink-600', bg: 'bg-pink-500/10', text: 'text-pink-500', Icon: Heart, range: [4, 8] as [number, number] },
   { name: 'Inclusive Design', color: '#F59E0B', gradient: 'from-amber-500 to-amber-600', bg: 'bg-amber-500/10', text: 'text-amber-500', Icon: Accessibility, range: [8, 12] as [number, number] },
   { name: 'Future Readiness', color: 'var(--ok)', gradient: 'from-emerald-500 to-emerald-700', bg: 'bg-emerald-500/10', text: '[color:var(--ok)]', Icon: Brain, range: [12, 16] as [number, number] },
+  { name: 'SEO Structure & Rules', color: '#10B981', gradient: 'from-emerald-500 to-emerald-600', bg: 'bg-emerald-500/10', text: 'text-emerald-500', Icon: FileSearch, range: [16, 20] as [number, number] },
+  { name: 'Accessibility Readiness', color: '#14B8A6', gradient: 'from-teal-500 to-teal-600', bg: 'bg-teal-500/10', text: 'text-teal-500', Icon: ShieldCheck, range: [20, 24] as [number, number] },
+  { name: 'Brand Consistency', color: '#06B6D4', gradient: 'from-cyan-500 to-cyan-600', bg: 'bg-cyan-500/10', text: 'text-cyan-500', Icon: Eye, range: [24, 28] as [number, number] },
 ]
 
 const SEVERITY_CONFIG = {
@@ -231,7 +245,7 @@ export default function AdminAuditDetailPage({ params }: { params: Promise<{ id:
                 )}
                 {isPartialAudit && (
                   <span className="text-[11px] bg-[var(--paper-2)] dark:bg-white/[0.06] px-2 py-0.5 rounded-full">
-                    {selectedPillars!.length} of 6 modules
+                    {selectedPillars!.length} of {PILLAR_STYLE.length} modules
                   </span>
                 )}
               </div>

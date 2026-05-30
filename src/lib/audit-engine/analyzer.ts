@@ -65,7 +65,7 @@ export interface AnalysisFinding {
   estimatedImpact?: string
   targetElement?: string | null
   pageUrl?: string | null
-  categoryIndex?: number              // 0-23 explicit category — set by runFullAnalysis
+  categoryIndex?: number              // 0-27 explicit category — set by runFullAnalysis
   /** 'fixable' = concrete, deployable from console. 'strategic' = broader observation. */
   findingType?: FindingType
   /** For fixable findings: deployment mechanism (html, meta, schema, copy, file, config). */
@@ -108,13 +108,14 @@ export interface ReportData {
 }
 
 // ── The UX categories we evaluate ────────────────────────────
-// Grouped into 6 modules (4 categories each):
+// Grouped into 7 modules (4 categories each = 28 categories):
 //   FOUNDATION (0-3): Does the site look right?
 //   HUMAN EXPERIENCE (4-7): Does the site feel right?
 //   INCLUSIVE DESIGN (8-11): Does the site work for everyone?
 //   FUTURE READINESS (12-15): Is the site ready for what's next?
 //   SEO STRUCTURE & RULES (16-19): Is the site search-engine friendly?
-//   BRAND CONSISTENCY (20-23): Does the site match the brand? (requires brand files)
+//   ACCESSIBILITY READINESS (20-23): Is the site accessible to all users?
+//   BRAND CONSISTENCY (24-27): Does the site match the brand? (requires brand files)
 export const UX_CATEGORIES = [
   // ═══ PILLAR 1: FOUNDATION ═══════════════════════════════════
   // Core visual design, messaging, navigation, and content quality
@@ -331,7 +332,50 @@ export const UX_CATEGORIES = [
     ],
   },
 
-  // ═══ MODULE 6: BRAND CONSISTENCY ═══════════════════════════
+  // ═══ MODULE 6: ACCESSIBILITY READINESS ═══════════════════════
+  // WCAG 2.1 AA compliance, keyboard access, screen reader support, EAA readiness
+  {
+    name: 'Perceivable — Text Alternatives & Contrast',
+    pillar: 'Accessibility Readiness',
+    items: [
+      'ALT TEXT COMPLETENESS: Do ALL meaningful images have descriptive alt text that conveys the image\'s purpose? Check every <img> tag: informational images need descriptive alt (what the image shows and why it matters), decorative images need alt="" (empty), functional images (links, buttons) need alt describing the action. Quote actual alt text found and flag missing or unhelpful alt (e.g., "image1.jpg", "photo", "banner"). Missing alt text on informational images is a WCAG 2.1 Level A failure (1.1.1).',
+      'COLOUR CONTRAST: Does all text meet WCAG AA contrast ratios — 4.5:1 for normal text (<18pt / <14pt bold) and 3:1 for large text (≥18pt / ≥14pt bold)? Check: body text, headings, link text, button labels, placeholder text, and text over images/gradients. Also check non-text contrast (3:1) for UI components like form borders, icons, and focus indicators. Quote specific failures with actual ratios where possible. This is WCAG 2.1 Level AA (1.4.3, 1.4.11).',
+      'MEDIA ALTERNATIVES: Do videos have captions and audio descriptions? Does audio content have transcripts? Check for <track> elements on video, caption/subtitle availability, and whether auto-play media can be paused. Also check that information conveyed through audio alone (e.g., podcast embeds) has a text alternative. This covers WCAG 2.1 Level A (1.2.1-1.2.3) and Level AA (1.2.5).',
+      'NON-TEXT CONTENT LABELS: Is information conveyed by more than just colour, shape, or position? Check: error states that rely only on red colour (needs icon + text too), charts/graphs that use colour alone to distinguish data series, instructions like "click the green button" or "see the sidebar." Also check that CSS background images carrying meaning have text alternatives. WCAG 2.1 Level A (1.3.3, 1.4.1).',
+    ],
+  },
+  {
+    name: 'Operable — Keyboard & Navigation',
+    pillar: 'Accessibility Readiness',
+    items: [
+      'KEYBOARD ACCESSIBILITY: Can ALL interactive elements (links, buttons, form fields, menus, modals, tabs, accordions, sliders, custom widgets) be reached and operated using only the keyboard? Check for: elements only accessible via mouse hover, click handlers on non-focusable elements (div, span without tabindex), and custom components that don\'t support Enter/Space activation. Every mouse action must have a keyboard equivalent. WCAG 2.1 Level A (2.1.1).',
+      'FOCUS MANAGEMENT: Is there a visible focus indicator on all interactive elements? Check: do focused elements show a clear outline/ring (not just browser default that may be removed by CSS outline:none)? Is focus order logical (follows visual layout)? After modal/dialog opens, does focus move into it? After it closes, does focus return to the trigger? Are there any keyboard traps where Tab gets stuck? WCAG 2.1 Level A (2.4.3, 2.4.7, 2.1.2).',
+      'SKIP LINKS & BYPASS BLOCKS: Does the page have a "Skip to main content" link as the first focusable element? Users who navigate by keyboard or screen reader shouldn\'t have to Tab through the entire header/nav on every page. Check: is the skip link present, does it become visible on focus, does it actually move focus to the main content area? Also check for proper use of landmark regions (<main>, <nav>) that enable screen reader users to jump between sections. WCAG 2.1 Level A (2.4.1).',
+      'TOUCH TARGET SIZING: Are all interactive elements at least 44×44 CSS pixels with adequate spacing between them? Check: navigation links, buttons, form inputs, checkboxes, radio buttons, close buttons on modals, and icon-only buttons. Targets smaller than 44px cause usability issues on mobile and for users with motor impairments. Also check that targets don\'t overlap and have at least 8px spacing between them. WCAG 2.1 Level AAA (2.5.5) but widely adopted as best practice.',
+    ],
+  },
+  {
+    name: 'Understandable — Labels & Errors',
+    pillar: 'Accessibility Readiness',
+    items: [
+      'FORM LABEL ASSOCIATION: Does every form input have a programmatically associated <label> element (using for/id or wrapping)? Check: text inputs, selects, checkboxes, radio buttons, textareas, and file inputs. Placeholder text is NOT a substitute for labels — it disappears when typing and isn\'t reliably read by screen readers. Also check that related inputs are grouped with <fieldset> and <legend> (e.g., radio button groups, address fields). WCAG 2.1 Level A (1.3.1, 3.3.2).',
+      'ERROR IDENTIFICATION: When form validation fails, are errors clearly identified in text (not just colour), associated with the specific field, and announced to screen readers? Check: does the error message explain WHAT went wrong and HOW to fix it? Is error text placed near the relevant field (not just at the top of the form)? Are required fields indicated BEFORE submission (not just after failure)? Use aria-describedby or aria-errormessage to associate errors with inputs. WCAG 2.1 Level A (3.3.1, 3.3.3).',
+      'HELP TEXT & INSTRUCTIONS: Are complex form fields accompanied by help text, input format hints, or examples? Check: date fields (expected format), password fields (requirements), phone/postal code fields (format). Are instructions provided BEFORE the form, not just in error messages after? Is help text programmatically associated with the field via aria-describedby? WCAG 2.1 Level A (3.3.2) and Level AA (3.3.5).',
+      'CONSISTENT NAVIGATION: Is navigation consistent across all pages — same order, same labels, same structure? Does the site behave predictably — no unexpected context changes on focus or input (like auto-submitting forms, auto-navigating on select change)? Check that the page language is declared (html lang="xx") and that any language changes within the page are marked with lang attributes. WCAG 2.1 Level AA (3.2.3, 3.2.4, 3.1.1, 3.1.2).',
+    ],
+  },
+  {
+    name: 'Robust — ARIA & Semantic HTML',
+    pillar: 'Accessibility Readiness',
+    items: [
+      'ARIA USAGE CORRECTNESS: Is ARIA used correctly and only when necessary? Check the "First Rule of ARIA" — don\'t use ARIA if a native HTML element exists (use <button> not <div role="button">). Verify: aria-label values are meaningful (not empty or redundant), aria-hidden="true" isn\'t used on visible interactive elements, role values are valid and match the element\'s behaviour, and required ARIA attributes are present (e.g., aria-expanded on disclosure widgets). Incorrect ARIA is WORSE than no ARIA. WCAG 2.1 Level A (4.1.2).',
+      'LANDMARK REGIONS: Does the page use HTML5 landmark elements to define its structure — <header>, <nav>, <main>, <aside>, <footer>? There should be exactly ONE <main> element. Check that landmarks aren\'t nested incorrectly (no <main> inside <main>), and that multiple landmarks of the same type have aria-label to distinguish them (e.g., two <nav> elements should be labeled "Primary navigation" and "Footer navigation"). Screen reader users rely on landmarks to jump between page sections. WCAG 2.1 Level A (1.3.1).',
+      'SEMANTIC ELEMENT STRUCTURE: Is the page built with semantic HTML — <article>, <section>, <figure>, <figcaption>, <time>, <address>, <details>, <summary> — or is it a sea of <div> and <span> elements? Check: are lists marked up as <ul>/<ol>/<li>, are tables used for tabular data (with <th> and scope), are headings used for structure (not styling), and is <strong>/<em> used for emphasis (not <b>/<i>)? Semantic HTML provides inherent accessibility. WCAG 2.1 Level A (1.3.1).',
+      'ASSISTIVE TECHNOLOGY SUPPORT: Does the site work with screen readers and other assistive technologies? Check: do custom widgets (tabs, accordions, dropdowns, modals) follow WAI-ARIA authoring practices with correct roles, states, and properties? Are live regions (aria-live) used for dynamic content updates (toast notifications, loading states, chat messages)? Is the document outline logical when headings are extracted? Do all interactive elements have accessible names? WCAG 2.1 Level A (4.1.2, 4.1.3).',
+    ],
+  },
+
+  // ═══ MODULE 7: BRAND CONSISTENCY ═══════════════════════════
   // Website alignment with brand identity (requires brand files)
   {
     name: 'Visual Identity Alignment',
@@ -839,8 +883,8 @@ Analyze this category and return the JSON array now.`
     // for the final report generation where writing quality matters more.
     //
     // Prompt caching: the static system instructions (~4 000 words) are cached
-    // with cache_control.  Within one audit's 24 parallel category calls, calls
-    // 2-24 will hit the 5-minute cache and pay only 10% of the input cost for
+    // with cache_control.  Within one audit's 28 parallel category calls, calls
+    // 2-28 will hit the 5-minute cache and pay only 10% of the input cost for
     // that prefix.  The variable user message (category + page content) is
     // never cached since it changes every call.
     //
@@ -889,7 +933,7 @@ Analyze this category and return the JSON array now.`
 /**
  * Run full analysis across UX categories in parallel batches.
  * Processes categories one at a time to avoid rate limits.
- * Skips Brand Consistency (20-23) unless brand identity files are attached.
+ * Skips Brand Consistency (24-27) unless brand identity files are attached.
  * Respects selected_modules if provided.
  */
 export async function runFullAnalysis(
@@ -909,7 +953,8 @@ export async function runFullAnalysis(
     inclusive_design: [8, 12],
     future_readiness: [12, 16],
     seo_structure: [16, 20],
-    brand_consistency: [20, 24],
+    accessibility_readiness: [20, 24],
+    brand_consistency: [24, 28],
   }
 
   // Determine which categories to analyze
@@ -917,8 +962,8 @@ export async function runFullAnalysis(
   const hasBrandIdentity = !!(audit as any).brand_identity_id
 
   function shouldAnalyze(categoryIndex: number): boolean {
-    // Brand Consistency (20-23) requires brand identity files
-    if (categoryIndex >= 20 && categoryIndex < 24 && !hasBrandIdentity) return false
+    // Brand Consistency (24-27) requires brand identity files
+    if (categoryIndex >= 24 && categoryIndex < 28 && !hasBrandIdentity) return false
 
     // If selected_modules specified, only analyze those modules
     if (selectedModules && selectedModules.length > 0) {
@@ -1056,7 +1101,8 @@ export async function generateReport(
 
     const MODULE_RANGES_BL: Record<string, [number, number]> = {
       foundation: [0, 4], human_experience: [4, 8], inclusive_design: [8, 12],
-      future_readiness: [12, 16], seo_structure: [16, 20], brand_consistency: [20, 24],
+      future_readiness: [12, 16], seo_structure: [16, 20], accessibility_readiness: [20, 24],
+      brand_consistency: [24, 28],
     }
 
     // Determine which category indices should be active for this audit
@@ -1171,15 +1217,16 @@ export async function generateReport(
   const allTranslatedNames = getCategoryNames(language)
 
   // Only ask the AI to score categories that were actually analyzed
-  // Brand Consistency (20-23) is excluded when no brand identity is attached
+  // Brand Consistency (24-27) is excluded when no brand identity is attached
   const hasBrandIdentity = !!(auditData as any).brand_identity_id
   const selectedModules: string[] | null = (auditData as any).selected_modules ?? null
   const MODULE_RANGES: Record<string, [number, number]> = {
     foundation: [0, 4], human_experience: [4, 8], inclusive_design: [8, 12],
-    future_readiness: [12, 16], seo_structure: [16, 20], brand_consistency: [20, 24],
+    future_readiness: [12, 16], seo_structure: [16, 20], accessibility_readiness: [20, 24],
+    brand_consistency: [24, 28],
   }
   function wasAnalyzed(idx: number): boolean {
-    if (idx >= 20 && idx < 24 && !hasBrandIdentity) return false
+    if (idx >= 24 && idx < 28 && !hasBrandIdentity) return false
     if (selectedModules && selectedModules.length > 0) {
       for (const mod of selectedModules) {
         const r = MODULE_RANGES[mod]
@@ -1369,8 +1416,8 @@ ${language !== 'en' ? `\nFINAL REMINDER — LANGUAGE: The executiveSummary, topR
         ? [report.keyRecommendation]
         : []
 
-    // Parse category scores from AI and map back to global 24-category positions
-    // The AI only scored the categories we asked about (which may be < 24)
+    // Parse category scores from AI and map back to global 28-category positions
+    // The AI only scored the categories we asked about (which may be < 28)
     // We need to rebuild the full array with correct global positions
     const aiCategoryScores = Array.isArray(report.categoryScores)
       ? report.categoryScores.map((c: any) => ({
@@ -1380,10 +1427,10 @@ ${language !== 'en' ? `\nFINAL REMINDER — LANGUAGE: The executiveSummary, topR
         }))
       : []
 
-    // Map AI scores back to the FULL 24-category array preserving global indices.
+    // Map AI scores back to the FULL 28-category array preserving global indices.
     // Unanalyzed categories get score = -1 so the frontend can filter them out.
     // This ensures positional indices in the stored array always match global
-    // category indices (0-3 = Foundation, 4-7 = Human Experience, ..., 20-23 = Brand Consistency).
+    // category indices (0-3 = Foundation, ..., 20-23 = Accessibility Readiness, 24-27 = Brand Consistency).
     const allCategoryNames = getCategoryNames(language)
     const categoryScores: CategoryScore[] = []
     let analyzedCount = 0 // tracks position in the AI response

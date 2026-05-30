@@ -79,7 +79,7 @@ export function getReportLabels(code: string): ReportLabels {
   return REPORT_LABELS[code] || REPORT_LABELS['en']
 }
 
-/** Translated UX category names — order must match UX_CATEGORIES in analyzer.ts (24 categories, 4 per pillar) */
+/** Translated UX category names — order must match UX_CATEGORIES in analyzer.ts (28 categories, 4 per module) */
 const CATEGORY_NAMES: Record<string, string[]> = {
   en: [
     // Foundation (0-3)
@@ -107,7 +107,12 @@ const CATEGORY_NAMES: Record<string, string[]> = {
     'Technical SEO & Crawlability',
     'Structured Data & Rich Results',
     'SEO Content & Link Strategy',
-    // Brand Consistency (20-23)
+    // Accessibility Readiness (20-23)
+    'Perceivable — Text Alternatives & Contrast',
+    'Operable — Keyboard & Navigation',
+    'Understandable — Labels & Errors',
+    'Robust — ARIA & Semantic HTML',
+    // Brand Consistency (24-27)
     'Visual Identity Alignment',
     'Voice & Tone Alignment',
     'Messaging & Value Prop Alignment',
@@ -119,6 +124,7 @@ const CATEGORY_NAMES: Record<string, string[]> = {
     'Accesibilidad y Cumplimiento WCAG', 'Accesibilidad Cognitiva y Neurodiversidad', 'Bienestar Digital y Diseño Responsable', 'Experiencia Móvil y Diseño Responsivo',
     'Rendimiento y Salud Técnica', 'Descubribilidad por IA y Preparación para LLM', 'Preparación para Agentes de IA', 'Sensibilidad Cultural y Preparación Global',
     'SEO On-Page Fundamental', 'SEO Técnico y Rastreabilidad', 'Datos Estructurados y Resultados Enriquecidos', 'Contenido SEO y Estrategia de Enlaces',
+    'Perceptible — Alternativas de Texto y Contraste', 'Operable — Teclado y Navegación', 'Comprensible — Etiquetas y Errores', 'Robusto — ARIA y HTML Semántico',
     'Alineación de Identidad Visual', 'Alineación de Voz y Tono', 'Alineación de Mensajes y Propuesta de Valor', 'Cumplimiento de Estándares de Marca',
   ],
   fr: [
@@ -127,6 +133,7 @@ const CATEGORY_NAMES: Record<string, string[]> = {
     'Accessibilité et Conformité WCAG', 'Accessibilité Cognitive et Neurodiversité', 'Bien-être Numérique et Design Responsable', 'Expérience Mobile et Design Adaptatif',
     'Performance et Santé Technique', 'Découvrabilité IA et Préparation LLM', 'Préparation aux Agents IA', 'Sensibilité Culturelle et Préparation Mondiale',
     'SEO On-Page Fondamental', 'SEO Technique et Crawlabilité', 'Données Structurées et Résultats Enrichis', 'Contenu SEO et Stratégie de Liens',
+    'Perceptible — Alternatives Textuelles et Contraste', 'Utilisable — Clavier et Navigation', 'Compréhensible — Libellés et Erreurs', 'Robuste — ARIA et HTML Sémantique',
     'Alignement de l\'Identité Visuelle', 'Alignement de la Voix et du Ton', 'Alignement des Messages et Proposition de Valeur', 'Conformité aux Standards de Marque',
   ],
   de: [
@@ -135,6 +142,7 @@ const CATEGORY_NAMES: Record<string, string[]> = {
     'Barrierefreiheit und WCAG-Konformität', 'Kognitive Barrierefreiheit und Neurodiversität', 'Digitales Wohlbefinden und Verantwortungsvolles Design', 'Mobile Erfahrung und Responsives Design',
     'Leistung und Technische Gesundheit', 'KI-Auffindbarkeit und LLM-Bereitschaft', 'KI-Agenten-Bereitschaft', 'Kulturelle Sensibilität und Globale Bereitschaft',
     'On-Page SEO Grundlagen', 'Technisches SEO und Crawlbarkeit', 'Strukturierte Daten und Rich Results', 'SEO-Inhalte und Linkstrategie',
+    'Wahrnehmbar — Textalternativen und Kontrast', 'Bedienbar — Tastatur und Navigation', 'Verständlich — Beschriftungen und Fehler', 'Robust — ARIA und Semantisches HTML',
     'Visuelle Identitätsausrichtung', 'Stimme und Tonausrichtung', 'Nachrichten- und Wertversprechen-Ausrichtung', 'Markenstandard-Konformität',
   ],
   it: [
@@ -143,6 +151,7 @@ const CATEGORY_NAMES: Record<string, string[]> = {
     'Accessibilità e Conformità WCAG', 'Accessibilità Cognitiva e Neurodiversità', 'Benessere Digitale e Design Responsabile', 'Esperienza Mobile e Design Responsivo',
     'Prestazioni e Salute Tecnica', 'Scopribilità IA e Preparazione LLM', 'Preparazione per Agenti IA', 'Sensibilità Culturale e Preparazione Globale',
     'SEO On-Page Fondamentale', 'SEO Tecnico e Scansionabilità', 'Dati Strutturati e Risultati Arricchiti', 'Contenuti SEO e Strategia di Link',
+    'Percepibile — Alternative Testuali e Contrasto', 'Utilizzabile — Tastiera e Navigazione', 'Comprensibile — Etichette ed Errori', 'Robusto — ARIA e HTML Semantico',
     'Allineamento dell\'Identità Visiva', 'Allineamento di Voce e Tono', 'Allineamento dei Messaggi e Proposta di Valore', 'Conformità agli Standard del Brand',
   ],
   pt: [
@@ -151,6 +160,7 @@ const CATEGORY_NAMES: Record<string, string[]> = {
     'Acessibilidade e Conformidade WCAG', 'Acessibilidade Cognitiva e Neurodiversidade', 'Bem-estar Digital e Design Responsável', 'Experiência Mobile e Design Responsivo',
     'Desempenho e Saúde Técnica', 'Descobribilidade por IA e Preparação para LLM', 'Preparação para Agentes de IA', 'Sensibilidade Cultural e Preparação Global',
     'SEO On-Page Fundamental', 'SEO Técnico e Rastreabilidade', 'Dados Estruturados e Resultados Enriquecidos', 'Conteúdo SEO e Estratégia de Links',
+    'Perceptível — Alternativas de Texto e Contraste', 'Operável — Teclado e Navegação', 'Compreensível — Rótulos e Erros', 'Robusto — ARIA e HTML Semântico',
     'Alinhamento da Identidade Visual', 'Alinhamento de Voz e Tom', 'Alinhamento de Mensagens e Proposta de Valor', 'Conformidade com Padrões da Marca',
   ],
 }
@@ -303,6 +313,7 @@ export interface UILabels {
   pillarFutureReadiness: string
   pillarSeoStructure: string
   pillarBrandConsistency: string
+  pillarAccessibilityReadiness: string
   // Severity
   severityCritical: string
   severityHigh: string
@@ -366,6 +377,7 @@ const UI_LABELS: Record<string, UILabels> = {
     pillarFutureReadiness: 'Future Readiness',
     pillarSeoStructure: 'SEO Structure & Rules',
     pillarBrandConsistency: 'Brand Consistency',
+    pillarAccessibilityReadiness: 'Accessibility Readiness',
     severityCritical: 'Critical',
     severityHigh: 'High',
     severityMedium: 'Medium',
@@ -418,6 +430,7 @@ const UI_LABELS: Record<string, UILabels> = {
     pillarFutureReadiness: 'Preparacion para el Futuro',
     pillarSeoStructure: 'Estructura SEO y Reglas',
     pillarBrandConsistency: 'Consistencia de Marca',
+    pillarAccessibilityReadiness: 'Preparación de Accesibilidad',
     severityCritical: 'Critico',
     severityHigh: 'Alto',
     severityMedium: 'Medio',
@@ -470,6 +483,7 @@ const UI_LABELS: Record<string, UILabels> = {
     pillarFutureReadiness: 'Preparation au Futur',
     pillarSeoStructure: 'Structure SEO et Regles',
     pillarBrandConsistency: 'Coherence de Marque',
+    pillarAccessibilityReadiness: 'Préparation Accessibilité',
     severityCritical: 'Critique',
     severityHigh: 'Eleve',
     severityMedium: 'Moyen',
@@ -522,6 +536,7 @@ const UI_LABELS: Record<string, UILabels> = {
     pillarFutureReadiness: 'Zukunftsbereitschaft',
     pillarSeoStructure: 'SEO-Struktur und Regeln',
     pillarBrandConsistency: 'Markenkonsistenz',
+    pillarAccessibilityReadiness: 'Barrierefreiheit-Bereitschaft',
     severityCritical: 'Kritisch',
     severityHigh: 'Hoch',
     severityMedium: 'Mittel',
@@ -574,6 +589,7 @@ const UI_LABELS: Record<string, UILabels> = {
     pillarFutureReadiness: 'Preparazione al Futuro',
     pillarSeoStructure: 'Struttura SEO e Regole',
     pillarBrandConsistency: 'Coerenza del Brand',
+    pillarAccessibilityReadiness: 'Preparazione Accessibilità',
     severityCritical: 'Critico',
     severityHigh: 'Alto',
     severityMedium: 'Medio',
@@ -626,6 +642,7 @@ const UI_LABELS: Record<string, UILabels> = {
     pillarFutureReadiness: 'Preparacao para o Futuro',
     pillarSeoStructure: 'Estrutura SEO e Regras',
     pillarBrandConsistency: 'Consistencia de Marca',
+    pillarAccessibilityReadiness: 'Preparação de Acessibilidade',
     severityCritical: 'Critico',
     severityHigh: 'Alto',
     severityMedium: 'Medio',
@@ -681,7 +698,7 @@ export function getUILabels(code: string): UILabels {
 /** Translated pillar names as array (order: Foundation, Human, Inclusive, Future) */
 export function getPillarNames(code: string): string[] {
   const L = getUILabels(code)
-  return [L.pillarFoundation, L.pillarHumanExperience, L.pillarInclusiveDesign, L.pillarFutureReadiness, L.pillarSeoStructure || 'SEO Structure & Rules', L.pillarBrandConsistency || 'Brand Consistency']
+  return [L.pillarFoundation, L.pillarHumanExperience, L.pillarInclusiveDesign, L.pillarFutureReadiness, L.pillarSeoStructure || 'SEO Structure & Rules', L.pillarAccessibilityReadiness || 'Accessibility Readiness', L.pillarBrandConsistency || 'Brand Consistency']
 }
 
 /** Translated score label */

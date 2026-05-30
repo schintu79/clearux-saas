@@ -1,6 +1,6 @@
 // ============================================================
 // ClearUX — Audit Checkpoint Labels (client-safe)
-// Short labels for the 96 checkpoints, grouped by category.
+// Short labels for the 112 checkpoints (28 categories, 7 modules × 4 categories × 4 checkpoints), grouped by category.
 // Used in the audit detail page to show pass/fail checklist.
 // ============================================================
 
@@ -30,6 +30,11 @@ export const CHECKPOINT_LABELS: Record<string, string[]> = {
   'Technical SEO & Crawlability': ['Robots.txt & sitemap.xml', 'Canonical URLs', 'Page speed & Core Web Vitals', 'Mobile-first indexing'],
   'Structured Data & Rich Results': ['Schema.org markup', 'JSON-LD implementation', 'Rich snippet eligibility', 'Knowledge graph signals'],
   'SEO Content & Link Strategy': ['Keyword targeting & density', 'Internal link architecture', 'Content depth & authority', 'External link profile'],
+  // Accessibility Readiness
+  'Perceivable — Text Alternatives & Contrast': ['Alt text completeness', 'Colour contrast (WCAG AA)', 'Media alternatives', 'Non-text content labels'],
+  'Operable — Keyboard & Navigation': ['Keyboard accessibility', 'Focus management', 'Skip links & bypass', 'Touch target sizing'],
+  'Understandable — Labels & Errors': ['Form label association', 'Error identification', 'Help text & instructions', 'Consistent navigation'],
+  'Robust — ARIA & Semantic HTML': ['ARIA usage correctness', 'Landmark regions', 'Semantic element structure', 'Assistive technology support'],
   // Brand Consistency
   'Visual Identity Alignment': ['Logo usage & placement', 'Colour palette adherence', 'Typography consistency', 'Imagery & iconography style'],
   'Voice & Tone Alignment': ['Brand voice consistency', 'Tone-to-audience fit', 'Messaging hierarchy', 'Copy style guide adherence'],
@@ -59,6 +64,10 @@ export const PILLAR_FOR_CATEGORY: Record<string, string> = {
   'Technical SEO & Crawlability': 'SEO Structure & Rules',
   'Structured Data & Rich Results': 'SEO Structure & Rules',
   'SEO Content & Link Strategy': 'SEO Structure & Rules',
+  'Perceivable — Text Alternatives & Contrast': 'Accessibility Readiness',
+  'Operable — Keyboard & Navigation': 'Accessibility Readiness',
+  'Understandable — Labels & Errors': 'Accessibility Readiness',
+  'Robust — ARIA & Semantic HTML': 'Accessibility Readiness',
   'Visual Identity Alignment': 'Brand Consistency',
   'Voice & Tone Alignment': 'Brand Consistency',
   'Messaging & Value Prop Alignment': 'Brand Consistency',
