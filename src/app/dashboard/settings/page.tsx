@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
-import { ArrowLeft, Lock, User, Building2, CreditCard, Settings as SettingsIcon, Cpu, RefreshCw, AlertTriangle, HardDrive } from 'lucide-react';
+import { ArrowLeft, Lock, User, Building2, CreditCard, Settings as SettingsIcon, Cpu, RefreshCw, AlertTriangle, HardDrive, Trash2, RotateCcw } from 'lucide-react';
 import PageHeader from '@/components/dashboard/v2/PageHeader';
 import { useAuth } from '@/context/AuthContext';
 import { createBrowserSupabase } from '@/lib/supabase-ssr';
@@ -59,7 +59,7 @@ interface AIModelUI {
   useForReports: boolean;
 }
 
-type TabId = 'profile' | 'company' | 'security' | 'ai_models' | 'ftp';
+type TabId = 'profile' | 'company' | 'security' | 'ai_models' | 'ftp' | 'data';
 
 const TABS: { id: TabId; label: string; icon: React.ElementType }[] = [
   { id: 'profile', label: 'Profile', icon: User },
@@ -67,6 +67,7 @@ const TABS: { id: TabId; label: string; icon: React.ElementType }[] = [
   { id: 'security', label: 'Security', icon: Lock },
   { id: 'ai_models', label: 'AI Models', icon: Cpu },
   { id: 'ftp', label: 'FTP / SFTP', icon: HardDrive },
+  { id: 'data', label: 'Data management', icon: Trash2 },
 ];
 
 const SettingsPage: React.FC = () => {
@@ -124,6 +125,56 @@ const SettingsPage: React.FC = () => {
   const [ftpSaving, setFtpSaving] = useState(false);
   const [ftpTesting, setFtpTesting] = useState(false);
   const [ftpMessage, setFtpMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+
+  // Data management state
+  const [cleanupStats, setCleanupStats] = useState<{ totalAudits: number; completedAudits: number; scoreMismatches: number; oldAudits: number } | null>(null);
+  const [cleanupLoading, setCleanupLoading] = useState(false);
+  const [cleanupAction, setCleanupAction] = useState<string | null>(null);
+  const [cleanupResult, setCleanupResult] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+  const [wipeConfirm, setWipeConfirm] = useState('');
+
+  const fetchCleanupStats = useCallback(async () => {
+    setCleanupLoading(true);
+    try {
+      const params = workspaceId ? `?workspace_id=${workspaceId}` : '';
+      const res = await fetch(`/api/audits/cleanup${params}`);
+      if (!res.ok) throw new Error('Failed to load stats');
+      const data = await res.json();
+      setCleanupStats(data);
+    } catch (err) {
+      setCleanupResult({ type: 'error', text: err instanceof Error ? err.message : 'Failed to load stats' });
+    } finally {
+      setCleanupLoading(false);
+    }
+  }, [workspaceId]);
+
+  useEffect(() => {
+    if (activeTab === 'data' && !cleanupStats && !cleanupLoading) {
+      fetchCleanupStats();
+    }
+  }, [activeTab, cleanupStats, cleanupLoading, fetchCleanupStats]);
+
+  const handleCleanupAction = async (action: string, extraBody?: Record<string, any>) => {
+    setCleanupAction(action);
+    setCleanupResult(null);
+    try {
+      const res = await fetch('/api/audits/cleanup', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action, workspace_id: workspaceId, ...extraBody }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Action failed');
+      setCleanupResult({ type: 'success', text: data.message });
+      setCleanupStats(null); // Refresh stats
+      setWipeConfirm('');
+      fetchCleanupStats();
+    } catch (err) {
+      setCleanupResult({ type: 'error', text: err instanceof Error ? err.message : 'Action failed' });
+    } finally {
+      setCleanupAction(null);
+    }
+  };
 
   const fetchAIModels = useCallback(async () => {
     setAiModelsLoading(true);
@@ -923,6 +974,162 @@ const SettingsPage: React.FC = () => {
       )}
 
       {/* ═══ FTP / SFTP TAB ═══ */}
+      {/* ═══ DATA MANAGEMENT TAB ═══ */}
+      {activeTab === 'data' && (
+        <div className="space-y-6">
+          {/* Stats overview */}
+          <DashCard>
+            <div className="space-y-4">
+              <div>
+                <h2 className="text-lg font-normal font-sans text-text">Audit data overview</h2>
+                <p className="text-sm text-muted mt-1">Manage and clean up your audit history</p>
+              </div>
+
+              {cleanupLoading && !cleanupStats ? (
+                <div className="flex items-center gap-2 py-4">
+                  <RefreshCw size={14} className="animate-spin" style={{ color: 'var(--muted)' }} />
+                  <span className="text-sm text-muted">Loading stats...</span>
+                </div>
+              ) : cleanupStats ? (
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="p-3 rounded-xl" style={{ background: 'var(--paper-2)', border: '1px solid var(--rule)' }}>
+                    <p className="text-2xl font-medium text-text">{cleanupStats.totalAudits}</p>
+                    <p className="text-xs text-muted mt-0.5">Total audits</p>
+                  </div>
+                  <div className="p-3 rounded-xl" style={{ background: 'var(--paper-2)', border: '1px solid var(--rule)' }}>
+                    <p className="text-2xl font-medium text-text">{cleanupStats.completedAudits}</p>
+                    <p className="text-xs text-muted mt-0.5">Completed</p>
+                  </div>
+                  <div className="p-3 rounded-xl" style={{ background: cleanupStats.scoreMismatches > 0 ? 'color-mix(in srgb, var(--caution) 8%, transparent)' : 'var(--paper-2)', border: `1px solid ${cleanupStats.scoreMismatches > 0 ? 'color-mix(in srgb, var(--caution) 20%, transparent)' : 'var(--rule)'}` }}>
+                    <p className="text-2xl font-medium" style={{ color: cleanupStats.scoreMismatches > 0 ? 'var(--caution)' : 'var(--ink)' }}>{cleanupStats.scoreMismatches}</p>
+                    <p className="text-xs text-muted mt-0.5">Score mismatches</p>
+                  </div>
+                  <div className="p-3 rounded-xl" style={{ background: 'var(--paper-2)', border: '1px solid var(--rule)' }}>
+                    <p className="text-2xl font-medium text-text">{cleanupStats.oldAudits}</p>
+                    <p className="text-xs text-muted mt-0.5">Older than 90 days</p>
+                  </div>
+                </div>
+              ) : null}
+            </div>
+          </DashCard>
+
+          {/* Recalculate scores */}
+          <DashCard>
+            <div className="space-y-4">
+              <div className="flex items-center gap-2">
+                <RotateCcw size={16} style={{ color: 'var(--ink)' }} />
+                <h2 className="text-lg font-normal font-sans text-text">Recalculate scores</h2>
+              </div>
+              <p className="text-sm text-muted">
+                Some older audits may have incorrect overall scores due to unanalyzed categories (e.g. Brand Consistency without Brand DNA) being counted as zero. This recalculates all scores by excluding those sentinel values.
+              </p>
+
+              {cleanupStats && cleanupStats.scoreMismatches > 0 && (
+                <div className="p-3 rounded-lg" style={{ background: 'color-mix(in srgb, var(--caution) 8%, transparent)', border: '1px solid color-mix(in srgb, var(--caution) 20%, transparent)' }}>
+                  <p className="text-sm" style={{ color: 'var(--caution)' }}>
+                    {cleanupStats.scoreMismatches} audit{cleanupStats.scoreMismatches !== 1 ? 's have' : ' has'} scores that need recalculation.
+                  </p>
+                </div>
+              )}
+
+              <Button
+                variant="primary"
+                size="md"
+                loading={cleanupAction === 'recalculate'}
+                disabled={!!cleanupAction || (cleanupStats?.scoreMismatches === 0)}
+                onClick={() => handleCleanupAction('recalculate')}
+              >
+                {cleanupAction === 'recalculate' ? 'Recalculating...' : 'Recalculate all scores'}
+              </Button>
+            </div>
+          </DashCard>
+
+          {/* Wipe old audits */}
+          <DashCard>
+            <div className="space-y-4">
+              <div className="flex items-center gap-2">
+                <Trash2 size={16} style={{ color: 'var(--ink)' }} />
+                <h2 className="text-lg font-normal font-sans text-text">Remove old audits</h2>
+              </div>
+              <p className="text-sm text-muted">
+                Delete audits older than 90 days that may be polluting your score history. This keeps only recent, relevant data. Removed audits are recoverable for 30 days.
+              </p>
+
+              {cleanupStats && cleanupStats.oldAudits > 0 && (
+                <div className="p-3 rounded-lg" style={{ background: 'color-mix(in srgb, var(--ink) 4%, transparent)', border: '1px solid var(--rule)' }}>
+                  <p className="text-sm text-muted">
+                    {cleanupStats.oldAudits} audit{cleanupStats.oldAudits !== 1 ? 's are' : ' is'} older than 90 days.
+                  </p>
+                </div>
+              )}
+
+              <Button
+                variant="secondary"
+                size="md"
+                loading={cleanupAction === 'wipe_old'}
+                disabled={!!cleanupAction || (cleanupStats?.oldAudits === 0)}
+                onClick={() => handleCleanupAction('wipe_old', { days_threshold: 90 })}
+              >
+                {cleanupAction === 'wipe_old' ? 'Removing...' : 'Remove audits older than 90 days'}
+              </Button>
+            </div>
+          </DashCard>
+
+          {/* Wipe all — danger zone */}
+          <DashCard>
+            <div className="space-y-4" style={{ borderTop: '2px solid var(--severe)', marginTop: '-1px', paddingTop: '20px' }}>
+              <h2 className="text-lg font-medium" style={{ color: 'var(--severe)' }}>Wipe all audit data</h2>
+              <p className="text-sm" style={{ color: 'var(--m-muted)' }}>
+                This will remove all audits, scores, and history for the current workspace. Your score trend will start fresh. Removed data is recoverable for 30 days.
+              </p>
+
+              <div className="pt-1">
+                <label className="block text-xs font-medium mb-1.5" style={{ color: 'var(--severe)' }}>
+                  Type <span className="font-medium">WIPE</span> to confirm
+                </label>
+                <input
+                  type="text"
+                  value={wipeConfirm}
+                  onChange={(e) => setWipeConfirm(e.target.value)}
+                  placeholder="WIPE"
+                  className="w-full max-w-[200px] px-3 py-2 text-sm rounded-md focus:outline-none"
+                  style={{ border: '1px solid var(--rule)', background: 'var(--card)', color: 'var(--ink)' }}
+                />
+              </div>
+
+              <Button
+                variant="danger"
+                size="md"
+                loading={cleanupAction === 'wipe'}
+                disabled={wipeConfirm !== 'WIPE' || !!cleanupAction}
+                onClick={() => handleCleanupAction('wipe')}
+              >
+                {cleanupAction === 'wipe' ? 'Wiping...' : 'Wipe all audit data'}
+              </Button>
+            </div>
+          </DashCard>
+
+          {/* Result message */}
+          {cleanupResult && (
+            <div
+              className="rounded-lg p-3"
+              style={{
+                background: cleanupResult.type === 'success'
+                  ? 'color-mix(in srgb, var(--ok) 8%, transparent)'
+                  : 'color-mix(in srgb, var(--severe) 8%, transparent)',
+                border: `1px solid ${cleanupResult.type === 'success'
+                  ? 'color-mix(in srgb, var(--ok) 20%, transparent)'
+                  : 'color-mix(in srgb, var(--severe) 20%, transparent)'}`,
+              }}
+            >
+              <p className="text-sm" style={{ color: cleanupResult.type === 'success' ? 'var(--ok)' : 'var(--severe)' }}>
+                {cleanupResult.text}
+              </p>
+            </div>
+          )}
+        </div>
+      )}
+
       {activeTab === 'ftp' && (
         <div className="space-y-6">
           {/* Existing connections */}
