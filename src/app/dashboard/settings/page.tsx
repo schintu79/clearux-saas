@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
-import { ArrowLeft, Lock, User, Building2, CreditCard, Settings as SettingsIcon, Cpu, RefreshCw, AlertTriangle, HardDrive, Trash2, RotateCcw } from 'lucide-react';
+import { ArrowLeft, Lock, User, Building2, CreditCard, Settings as SettingsIcon, Cpu, RefreshCw, AlertTriangle, Trash2, RotateCcw } from 'lucide-react';
 import PageHeader from '@/components/dashboard/v2/PageHeader';
 import { useAuth } from '@/context/AuthContext';
 import { createBrowserSupabase } from '@/lib/supabase-ssr';
@@ -59,14 +59,13 @@ interface AIModelUI {
   useForReports: boolean;
 }
 
-type TabId = 'profile' | 'company' | 'security' | 'ai_models' | 'ftp' | 'data';
+type TabId = 'profile' | 'company' | 'security' | 'ai_models' | 'data';
 
 const TABS: { id: TabId; label: string; icon: React.ElementType }[] = [
   { id: 'profile', label: 'Profile', icon: User },
   { id: 'company', label: 'Company & Billing', icon: Building2 },
   { id: 'security', label: 'Security', icon: Lock },
   { id: 'ai_models', label: 'AI Models', icon: Cpu },
-  { id: 'ftp', label: 'FTP / SFTP', icon: HardDrive },
   { id: 'data', label: 'Data management', icon: Trash2 },
 ];
 
@@ -110,21 +109,7 @@ const SettingsPage: React.FC = () => {
   const [aiModelsMessage, setAiModelsMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
   const [refreshingModels, setRefreshingModels] = useState(false);
 
-  // FTP state
-  const [ftpForm, setFtpForm] = useState({
-    label: '',
-    protocol: 'sftp' as 'ftp' | 'sftp',
-    host: '',
-    port: '22',
-    username: '',
-    password: '',
-    remote_path: '/',
-  });
-  const [ftpConnections, setFtpConnections] = useState<any[]>([]);
-  const [ftpLoading, setFtpLoading] = useState(false);
-  const [ftpSaving, setFtpSaving] = useState(false);
-  const [ftpTesting, setFtpTesting] = useState(false);
-  const [ftpMessage, setFtpMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+
 
   // Data management state
   const [cleanupStats, setCleanupStats] = useState<{ totalAudits: number; completedAudits: number; scoreMismatches: number; oldAudits: number } | null>(null);
@@ -245,108 +230,6 @@ const SettingsPage: React.FC = () => {
       setAiModelsMessage({ type: 'error', text: err instanceof Error ? err.message : 'Refresh failed' });
     } finally {
       setRefreshingModels(false);
-    }
-  };
-
-  const fetchFtpConnections = useCallback(async () => {
-    if (!workspaceId) return;
-    setFtpLoading(true);
-    try {
-      const supabase = createBrowserSupabase();
-      const { data } = await supabase
-        .from('ftp_connections')
-        .select('*')
-        .eq('workspace_id', workspaceId)
-        .is('deleted_at', null)
-        .order('created_at', { ascending: false });
-      setFtpConnections(data || []);
-    } catch (err) {
-      setFtpMessage({ type: 'error', text: 'Failed to load FTP connections' });
-    } finally {
-      setFtpLoading(false);
-    }
-  }, [workspaceId]);
-
-  useEffect(() => {
-    if (activeTab === 'ftp' && ftpConnections.length === 0 && !ftpLoading) {
-      fetchFtpConnections();
-    }
-  }, [activeTab, ftpConnections.length, ftpLoading, fetchFtpConnections]);
-
-  const handleFtpChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
-    const { name, value } = e.target;
-    setFtpForm((prev) => ({ ...prev, [name]: value }));
-    setFtpMessage(null);
-  };
-
-  const handleFtpTest = async () => {
-    setFtpTesting(true);
-    setFtpMessage(null);
-    try {
-      const res = await fetch('/api/ftp/test', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          protocol: ftpForm.protocol,
-          host: ftpForm.host,
-          port: parseInt(ftpForm.port, 10),
-          username: ftpForm.username,
-          password: ftpForm.password,
-          remote_path: ftpForm.remote_path,
-        }),
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || 'Connection test failed');
-      setFtpMessage({ type: 'success', text: 'Connection successful' });
-      setTimeout(() => setFtpMessage(null), 3000);
-    } catch (err) {
-      setFtpMessage({ type: 'error', text: err instanceof Error ? err.message : 'Test failed' });
-    } finally {
-      setFtpTesting(false);
-    }
-  };
-
-  const handleFtpSave = async () => {
-    if (!ftpForm.host || !ftpForm.username) {
-      setFtpMessage({ type: 'error', text: 'Host and username are required' });
-      return;
-    }
-    setFtpSaving(true);
-    setFtpMessage(null);
-    try {
-      const supabase = createBrowserSupabase();
-      const { error } = await supabase.from('ftp_connections').insert({
-        workspace_id: workspaceId,
-        user_id: user!.id,
-        label: ftpForm.label || `${ftpForm.host}`,
-        protocol: ftpForm.protocol,
-        host: ftpForm.host,
-        port: parseInt(ftpForm.port, 10),
-        username: ftpForm.username,
-        password: ftpForm.password,
-        remote_path: ftpForm.remote_path,
-      } as any);
-      if (error) throw error;
-      setFtpMessage({ type: 'success', text: 'FTP connection saved' });
-      setFtpForm({ label: '', protocol: 'sftp', host: '', port: '22', username: '', password: '', remote_path: '/' });
-      fetchFtpConnections();
-      setTimeout(() => setFtpMessage(null), 3000);
-    } catch (err) {
-      setFtpMessage({ type: 'error', text: err instanceof Error ? err.message : 'Failed to save' });
-    } finally {
-      setFtpSaving(false);
-    }
-  };
-
-  const handleFtpDelete = async (id: string) => {
-    try {
-      const supabase = createBrowserSupabase();
-      await supabase.from('ftp_connections').update({ deleted_at: new Date().toISOString() } as any).eq('id', id);
-      setFtpConnections((prev) => prev.filter((c) => c.id !== id));
-      setFtpMessage({ type: 'success', text: 'Connection removed' });
-      setTimeout(() => setFtpMessage(null), 3000);
-    } catch {
-      setFtpMessage({ type: 'error', text: 'Failed to remove connection' });
     }
   };
 
@@ -542,7 +425,7 @@ const SettingsPage: React.FC = () => {
   const inputClass = "w-full px-4 py-2.5 border border-border rounded-xl font-sans text-sm transition-all focus:outline-none focus:border-text focus:shadow-[0_0_0_3px_rgba(0,0,0,.04)] bg-input-bg text-text placeholder:text-placeholder";
 
   return (
-    <div className="max-w-2xl mx-auto">
+    <div className="w-full">
       {/* Back button */}
       <Link href="/dashboard" className="inline-flex items-center gap-1.5 text-sm text-muted hover:text-text transition-colors mb-6">
         <ArrowLeft size={16} />
@@ -1130,127 +1013,8 @@ const SettingsPage: React.FC = () => {
         </div>
       )}
 
-      {activeTab === 'ftp' && (
-        <div className="space-y-6">
-          {/* Existing connections */}
-          {ftpConnections.length > 0 && (
-            <DashCard>
-              <div className="space-y-4">
-                <div>
-                  <h2 className="text-lg font-normal font-sans text-text">Saved Connections</h2>
-                  <p className="text-sm text-muted mt-1">Your workspace FTP/SFTP connections</p>
-                </div>
-                {ftpConnections.map((conn: any) => (
-                  <div key={conn.id} className="flex items-center gap-3 p-3 rounded-xl" style={{ background: 'var(--paper-2)', border: '1px solid var(--rule)' }}>
-                    <HardDrive size={16} style={{ color: 'var(--ink)' }} />
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-text truncate">{conn.label || conn.host}</p>
-                      <p className="text-xs text-muted">{conn.protocol?.toUpperCase()} — {conn.host}:{conn.port} — {conn.remote_path}</p>
-                    </div>
-                    <button
-                      onClick={() => handleFtpDelete(conn.id)}
-                      className="text-xs px-2 py-1 rounded-md transition-all hover:bg-black/[0.04]"
-                      style={{ color: 'var(--severe)' }}
-                    >
-                      Remove
-                    </button>
-                  </div>
-                ))}
-              </div>
-            </DashCard>
-          )}
 
-          {/* Add new connection */}
-          <DashCard>
-            <div className="space-y-6">
-              <div>
-                <div className="flex items-center gap-2 mb-1">
-                  <HardDrive size={18} style={{ color: 'var(--ink)' }} />
-                  <h2 className="text-lg font-normal font-sans text-text">
-                    {ftpConnections.length > 0 ? 'Add Connection' : 'FTP / SFTP Connection'}
-                  </h2>
-                </div>
-                <p className="text-sm text-muted">Connect your server to deploy fixes directly from Fixpath</p>
-              </div>
 
-              {ftpMessage && (
-                <div
-                  className="rounded-lg p-3"
-                  style={{
-                    background: ftpMessage.type === 'success'
-                      ? 'color-mix(in srgb, var(--ok) 8%, transparent)'
-                      : 'color-mix(in srgb, var(--severe) 8%, transparent)',
-                    border: `1px solid ${ftpMessage.type === 'success'
-                      ? 'color-mix(in srgb, var(--ok) 20%, transparent)'
-                      : 'color-mix(in srgb, var(--severe) 20%, transparent)'}`,
-                  }}
-                >
-                  <p className="text-sm" style={{ color: ftpMessage.type === 'success' ? 'var(--ok)' : 'var(--severe)' }}>
-                    {ftpMessage.text}
-                  </p>
-                </div>
-              )}
-
-              <div className="space-y-4">
-                <div>
-                  <label htmlFor="ftp-label" className="block text-sm font-medium text-text mb-1.5">Connection Label</label>
-                  <input type="text" id="ftp-label" name="label" value={ftpForm.label} onChange={handleFtpChange} placeholder="e.g. Production Server" className={inputClass} />
-                </div>
-
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label htmlFor="ftp-protocol" className="block text-sm font-medium text-text mb-1.5">Protocol</label>
-                    <select id="ftp-protocol" name="protocol" value={ftpForm.protocol} onChange={handleFtpChange as any} className={inputClass}>
-                      <option value="sftp">SFTP (recommended)</option>
-                      <option value="ftp">FTP</option>
-                    </select>
-                  </div>
-                  <div>
-                    <label htmlFor="ftp-port" className="block text-sm font-medium text-text mb-1.5">Port</label>
-                    <input type="text" id="ftp-port" name="port" value={ftpForm.port} onChange={handleFtpChange} placeholder="22" className={inputClass} />
-                  </div>
-                </div>
-
-                <div>
-                  <label htmlFor="ftp-host" className="block text-sm font-medium text-text mb-1.5">Host</label>
-                  <input type="text" id="ftp-host" name="host" value={ftpForm.host} onChange={handleFtpChange} placeholder="ftp.example.com" className={inputClass} />
-                </div>
-
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label htmlFor="ftp-username" className="block text-sm font-medium text-text mb-1.5">Username</label>
-                    <input type="text" id="ftp-username" name="username" value={ftpForm.username} onChange={handleFtpChange} placeholder="deploy_user" className={inputClass} />
-                  </div>
-                  <div>
-                    <label htmlFor="ftp-password" className="block text-sm font-medium text-text mb-1.5">Password</label>
-                    <input type="password" id="ftp-password" name="password" value={ftpForm.password} onChange={handleFtpChange} placeholder="••••••••" className={inputClass} />
-                  </div>
-                </div>
-
-                <div>
-                  <label htmlFor="ftp-path" className="block text-sm font-medium text-text mb-1.5">Remote Path</label>
-                  <input type="text" id="ftp-path" name="remote_path" value={ftpForm.remote_path} onChange={handleFtpChange} placeholder="/var/www/html" className={inputClass} />
-                  <p className="text-xs text-muted mt-1">The root directory on your server where site files live</p>
-                </div>
-
-                <div className="flex items-center gap-3 pt-2">
-                  <Button variant="primary" size="md" loading={ftpSaving} disabled={ftpSaving || !ftpForm.host || !ftpForm.username} onClick={handleFtpSave}>
-                    Save Connection
-                  </Button>
-                  <button
-                    onClick={handleFtpTest}
-                    disabled={ftpTesting || !ftpForm.host || !ftpForm.username}
-                    className="flex items-center gap-1.5 px-4 py-2.5 text-sm font-medium rounded-xl transition-all hover:bg-black/[0.04] disabled:opacity-50"
-                    style={{ color: 'var(--ink)', border: '1px solid var(--rule)' }}
-                  >
-                    {ftpTesting ? 'Testing...' : 'Test Connection'}
-                  </button>
-                </div>
-              </div>
-            </div>
-          </DashCard>
-        </div>
-      )}
     </div>
   );
 };
