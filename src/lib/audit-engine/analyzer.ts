@@ -82,6 +82,21 @@ export interface CategoryScore {
   summary: string
 }
 
+export interface SiteProfile {
+  /** e.g. "Design SaaS", "E-commerce", "Developer Tools", "FinTech", "Healthcare", "Education" */
+  industryVertical: string
+  /** e.g. "Professional designers", "Enterprise IT teams", "Small business owners" */
+  targetAudience: string
+  /** How technically/professionally sophisticated the audience is */
+  audienceSophistication: 'expert' | 'professional' | 'general' | 'mixed'
+  /** The communication style norms for this industry + audience */
+  communicationStyle: string
+  /** Where this site sits in its market */
+  marketPosition: 'leader' | 'challenger' | 'niche' | 'emerging' | 'unknown'
+  /** Free-form notes about what's normal/expected for this type of site */
+  contextNotes: string
+}
+
 export interface ReportData {
   executiveSummary: string
   keyRecommendation: string | null          // kept for backwards compat
@@ -93,6 +108,7 @@ export interface ReportData {
   aiDiscoverabilityScore: number
   contentScore: number
   categoryScores: CategoryScore[]
+  siteProfile?: SiteProfile
   verificationSummary?: {
     likelyFixed: number
     poorlyFixed?: number
@@ -105,6 +121,124 @@ export interface ReportData {
     status: string
     note: string
   }>
+}
+
+// ════════════════════════════════════════════════════════════════
+// SITE PROFILE DETECTION
+// Lightweight AI call that profiles the site BEFORE analysis begins.
+// Identifies: industry, audience, sophistication, communication norms.
+// This ensures findings are evaluated against the RIGHT standards.
+// ════════════════════════════════════════════════════════════════
+
+/**
+ * Detect the site's industry, audience, and communication context.
+ * Called once early in the pipeline, before any analyzeCategory() calls.
+ * The returned SiteProfile is passed to analyzeCategory() and generateReport()
+ * so they evaluate the site against appropriate standards.
+ */
+export async function detectSiteProfile(
+  pageContent: string,
+  siteUrl: string,
+): Promise<SiteProfile> {
+  const anthropic = getAnthropicClient()
+
+  const prompt = `Analyze this website and determine its profile. Be specific and accurate.
+
+WEBSITE: ${siteUrl}
+
+CONTENT (first 6000 chars):
+${pageContent.substring(0, 6000)}
+
+Based on the content, determine:
+
+1. INDUSTRY VERTICAL — What industry/sector is this? Be specific (e.g. "Design SaaS" not just "Technology", "B2B Marketing Platform" not just "SaaS", "Specialty Coffee E-commerce" not just "E-commerce").
+
+2. TARGET AUDIENCE — Who is the primary user? Be specific about their role, expertise, and context (e.g. "Professional UI/UX designers at agencies and product teams" not just "designers").
+
+3. AUDIENCE SOPHISTICATION — How technically/professionally sophisticated is the target audience?
+   - "expert": Deep domain expertise expected (developers, scientists, designers, engineers)
+   - "professional": Business-savvy but not necessarily technical (managers, marketers, executives)
+   - "general": Everyday consumers, no special expertise assumed
+   - "mixed": Serves multiple audience tiers
+
+4. COMMUNICATION STYLE — What communication norms are appropriate for this industry + audience? Consider:
+   - Is subtle, understated messaging appropriate (e.g., design tools for designers)?
+   - Is direct, benefit-driven copy expected (e.g., B2B SaaS for marketers)?
+   - Is technical precision valued over persuasion (e.g., developer tools)?
+   - Is emotional appeal central (e.g., health/wellness, nonprofits)?
+   Write 1-2 sentences describing the expected style.
+
+5. MARKET POSITION — Where does this site/brand sit in its market?
+   - "leader": Established, well-known, market-defining (top 3 in their space)
+   - "challenger": Credible competitor aiming to disrupt the leader
+   - "niche": Serves a specific segment very well
+   - "emerging": New or early-stage, building presence
+   - "unknown": Cannot determine from content alone
+
+6. CONTEXT NOTES — Write 2-3 sentences about what's NORMAL and EXPECTED for this type of site. What should NOT be penalized because it's standard for this industry/audience? What evaluation standards should be applied?
+   Example for a design SaaS: "Subtle, craft-focused CTAs are standard — aggressive 'BUY NOW' messaging would feel off-brand. Clean minimalism is a feature, not a gap. The audience evaluates tools by exploring, not by reading sales copy."
+
+Return ONLY valid JSON:
+{
+  "industryVertical": "...",
+  "targetAudience": "...",
+  "audienceSophistication": "expert|professional|general|mixed",
+  "communicationStyle": "...",
+  "marketPosition": "leader|challenger|niche|emerging|unknown",
+  "contextNotes": "..."
+}`
+
+  try {
+    const message = await withRetry(
+      () => withTimeout(
+        anthropic.messages.create({
+          model: 'claude-haiku-4-5-20251001',
+          max_tokens: 800,
+          temperature: 0,
+          messages: [{ role: 'user', content: prompt }],
+        }),
+        15_000,
+        'detectSiteProfile',
+      ),
+      'detectSiteProfile',
+      1, // single retry — this is fast and cheap
+      2000,
+    )
+
+    const text = message.content
+      .filter((b): b is Anthropic.TextBlock => b.type === 'text')
+      .map((b) => b.text)
+      .join('')
+
+    const jsonMatch = text.match(/\{[\s\S]*\}/m)
+    if (jsonMatch) {
+      const parsed = JSON.parse(jsonMatch[0])
+      const validSophistication = ['expert', 'professional', 'general', 'mixed']
+      const validPosition = ['leader', 'challenger', 'niche', 'emerging', 'unknown']
+      return {
+        industryVertical: parsed.industryVertical || 'Unknown',
+        targetAudience: parsed.targetAudience || 'General audience',
+        audienceSophistication: validSophistication.includes(parsed.audienceSophistication)
+          ? parsed.audienceSophistication : 'professional',
+        communicationStyle: parsed.communicationStyle || 'Standard professional tone',
+        marketPosition: validPosition.includes(parsed.marketPosition)
+          ? parsed.marketPosition : 'unknown',
+        contextNotes: parsed.contextNotes || '',
+      }
+    }
+  } catch (err) {
+    console.warn('[detectSiteProfile] Failed, using defaults:', err instanceof Error ? err.message : err)
+  }
+
+  // Safe defaults — don't block the pipeline if detection fails
+  return {
+    industryVertical: 'Unknown',
+    targetAudience: 'General audience',
+    audienceSophistication: 'professional',
+    communicationStyle: 'Standard professional tone',
+    marketPosition: 'unknown',
+    contextNotes: '',
+  }
 }
 
 // ── The UX categories we evaluate ────────────────────────────
@@ -606,6 +740,7 @@ export async function analyzeCategory(
   userFocus?: string | null,
   language: string = 'en',
   depthMode: 'deep' | 'baseline' = 'deep',
+  siteProfile?: SiteProfile | null,
 ): Promise<AnalysisFinding[]> {
   // If checklist is empty (DB not seeded), use our built-in category
   const builtIn = UX_CATEGORIES.find((c) => c.name.toLowerCase().includes(category.toLowerCase()))
@@ -845,9 +980,28 @@ QUANTITY GUIDELINES (HARD LIMITS):
 
 Return ONLY a valid JSON array. No markdown, no explanation, no code fences.`
 
+  // Build site profile context block for the prompt (variable per audit, not cached)
+  const profileBlock = siteProfile ? `
+SITE PROFILE (detected from crawled content — use this to calibrate your evaluation):
+- Industry: ${siteProfile.industryVertical}
+- Target Audience: ${siteProfile.targetAudience}
+- Audience Sophistication: ${siteProfile.audienceSophistication}
+- Communication Style Norms: ${siteProfile.communicationStyle}
+- Market Position: ${siteProfile.marketPosition}
+- Context: ${siteProfile.contextNotes}
+
+CALIBRATION RULES (based on site profile):
+You MUST evaluate this site against the standards, norms, and expectations of its specific industry and audience — NOT against generic best practices for all websites.
+- If the audience is "expert" or "professional", subtle/understated messaging is NOT a weakness. Do NOT flag it as "weak CTA" or "unclear value proposition" if the messaging matches the audience's expectations.
+- If the market position is "leader" or "challenger", the brand has earned trust through reputation. Do NOT over-penalize for missing trust signals that a new/unknown brand would need.
+- If the communication style is minimalist/craft-focused, do NOT flag clean design as "missing visual interest" or "lacking engagement elements."
+- Evaluate against COMPETITORS IN THE SAME INDUSTRY, not against a generic ideal website template.
+- A finding is only valid if it would be a REAL problem for THIS specific audience. "A professional designer visiting Sketch.com" has different expectations than "a first-time visitor to a random SaaS."
+` : ''
+
   // Variable part — category-specific content that changes per call
   const userPrompt = `${languageInstruction}
-CATEGORY: ${displayCategoryName}
+${profileBlock}CATEGORY: ${displayCategoryName}
 ${focusBlock}${pageUrlIndex}
 EVALUATION CRITERIA:
 ${itemsToCheck}
@@ -1046,6 +1200,7 @@ export async function generateReport(
     droppedFixed: number
     droppedDismissed: number
   },
+  siteProfile?: SiteProfile | null,
 ): Promise<ReportData> {
   // ════════════════════════════════════════════════════════════════
   // BASELINE MODE — 100% DETERMINISTIC, ZERO AI FOR SCORES
@@ -1117,14 +1272,14 @@ export async function generateReport(
 
     // Find categories that should be active but weren't in previous audit
     if (activeIndices.size > 0) {
-      const severityPenalty: Record<string, number> = { critical: 15, high: 10, medium: 5, low: 2 }
+      const severityPenalty: Record<string, number> = { critical: 18, high: 12, medium: 6, low: 2 }
 
       for (let gi = 0; gi < allCategoryNames.length; gi++) {
         if (!activeIndices.has(gi)) continue
         const catName = allCategoryNames[gi]
         if (prevCatNameSet.has(catName)) continue // already scored above
 
-        // This is a gap-filled category — score from findings
+        // This is a gap-filled category — score from findings (same formula as DEEP MODE)
         const catWords = catName.toLowerCase().split(/[&,\s]+/).filter(w => w.length > 3)
         const catFindings = findings.filter(f => {
           const text = `${f.title} ${f.description}`.toLowerCase()
@@ -1134,11 +1289,11 @@ export async function generateReport(
         let score: number
         let summary: string
         if (catFindings.length === 0) {
-          score = 75
-          summary = 'No specific issues identified in this category.'
+          score = 92
+          summary = 'No specific issues identified — strong performance in this category.'
         } else {
-          score = 85
-          for (const f of catFindings) { score -= severityPenalty[f.severity] || 5 }
+          score = 92
+          for (const f of catFindings) { score -= severityPenalty[f.severity] || 6 }
           score = Math.max(0, Math.min(100, Math.round(score)))
           const top = catFindings[0]
           summary = catFindings.length === 1
@@ -1197,27 +1352,15 @@ export async function generateReport(
   }
 
   // ════════════════════════════════════════════════════════════════
-  // DEEP MODE — Full AI analysis for scoring and executive summary
+  // DEEP MODE — DETERMINISTIC SCORING + AI NARRATIVE
+  // Scores are calculated MATHEMATICALLY from actual findings.
+  // AI only generates the executive summary and recommendations.
+  // This ensures scores are always coherent with findings:
+  //   9 minor findings → ~85-90 score, NOT 57.
+  //   0 findings in a category → 92, NOT a random AI guess.
   // ════════════════════════════════════════════════════════════════
-  const criticalCount = findings.filter((f) => f.severity === 'critical').length
-  const highCount = findings.filter((f) => f.severity === 'high').length
-  const mediumCount = findings.filter((f) => f.severity === 'medium').length
-  const lowCount = findings.filter((f) => f.severity === 'low').length
 
-  const findingsDetail = findings
-    .slice(0, 20)
-    .map((f) => `[${f.severity.toUpperCase()}] ${f.title}: ${f.description}`)
-    .join('\n')
-
-  const focusBlock = userFocus && userFocus.trim() && userFocus.trim().toLowerCase() !== 'general ux audit'
-    ? `\nCLIENT PRIORITY — The client specifically asked us to focus on:\n"${userFocus.trim()}"\nMake sure the executive summary addresses this concern directly. Mention findings related to their focus area prominently.\n`
-    : ''
-
-  const reportLanguageInstruction = getLanguagePromptInstruction(language)
-  const allTranslatedNames = getCategoryNames(language)
-
-  // Only ask the AI to score categories that were actually analyzed
-  // Brand Consistency (24-27) is excluded when no brand identity is attached
+  const allCategoryNames = getCategoryNames(language)
   const hasBrandIdentity = !!(auditData as any).brand_identity_id
   const selectedModules: string[] | null = (auditData as any).selected_modules ?? null
   const MODULE_RANGES: Record<string, [number, number]> = {
@@ -1236,24 +1379,146 @@ export async function generateReport(
     }
     return true
   }
-  const translatedNames = allTranslatedNames.filter((_, i) => wasAnalyzed(i))
 
-  const categoryList = translatedNames.map((name, i) => `${i + 1}. ${name}`).join('\n')
-  const summaryExamples = [
-    'Strong visual hierarchy but hero CTA lacks contrast on mobile viewports.',
-    'Clear value proposition with specific proof points. Differentiation could be stronger.',
-    'Well-structured navigation with descriptive labels. Footer could include more utility links.',
-    'Content is scannable with good subheadings. Some paragraphs exceed recommended length.',
-  ]
-  const categoryExamples = translatedNames.map((name, i) => {
-    const scores = [75, 68, 72, 65, 80, 74, 60, 70, 55, 62, 48, 65, 58, 72, 66, 45, 70, 63, 77, 52, 74, 67, 71, 59]
-    return `    { "name": "${name}", "score": ${scores[i % scores.length]}, "summary": "${summaryExamples[i % summaryExamples.length]}" }`
-  }).join(',\n')
+  // ── STEP 1: DETERMINISTIC SCORE CALCULATION FROM FINDINGS ──────
+  // Each category starts at 92 (no findings = strong baseline).
+  // Deductions per finding severity tied to that category via category_index.
+  // This is the ONLY source of truth for scores — no AI involvement.
+  const SEVERITY_DEDUCTION: Record<string, number> = {
+    critical: 18,
+    high: 12,
+    medium: 6,
+    low: 2,
+  }
+  const BASE_SCORE = 92 // Strong site with no findings = 92 (not 100, leaving room for "exceptional")
 
-  const prompt = `You are a senior UX strategist at a premium consultancy writing the executive summary for a human-centered digital audit. This report costs real money — the client expects the quality of a $10,000 consulting engagement.
+  // Group findings by category_index (0-27)
+  const findingsByCategory: Map<number, AuditFinding[]> = new Map()
+  for (const f of findings) {
+    const ci = (f as any).category_index
+    if (ci != null && ci >= 0 && ci < 28) {
+      if (!findingsByCategory.has(ci)) findingsByCategory.set(ci, [])
+      findingsByCategory.get(ci)!.push(f)
+    }
+  }
+
+  // For findings without category_index, try keyword matching as fallback
+  const unassigned = findings.filter(f => {
+    const ci = (f as any).category_index
+    return ci == null || ci < 0 || ci >= 28
+  })
+  if (unassigned.length > 0) {
+    for (const f of unassigned) {
+      const text = `${f.title} ${f.description}`.toLowerCase()
+      let bestIdx = -1
+      let bestScore = 0
+      for (let gi = 0; gi < allCategoryNames.length; gi++) {
+        if (!wasAnalyzed(gi)) continue
+        const words = allCategoryNames[gi].toLowerCase().split(/[&,\s]+/).filter(w => w.length > 3)
+        const matches = words.filter(w => text.includes(w)).length
+        if (matches > bestScore) { bestScore = matches; bestIdx = gi }
+      }
+      if (bestIdx >= 0) {
+        if (!findingsByCategory.has(bestIdx)) findingsByCategory.set(bestIdx, [])
+        findingsByCategory.get(bestIdx)!.push(f)
+      }
+    }
+  }
+
+  // Calculate score per category
+  const categoryScores: CategoryScore[] = []
+  for (let gi = 0; gi < allCategoryNames.length; gi++) {
+    const globalName = allCategoryNames[gi]
+    if (!wasAnalyzed(gi)) {
+      categoryScores.push({ name: globalName, score: -1, summary: '' })
+      continue
+    }
+    const catFindings = findingsByCategory.get(gi) || []
+    let score = BASE_SCORE
+    for (const f of catFindings) {
+      score -= SEVERITY_DEDUCTION[f.severity] || 6
+    }
+    score = Math.max(0, Math.min(100, Math.round(score)))
+
+    // Generate a basic summary from findings (AI will enrich these later)
+    let summary: string
+    if (catFindings.length === 0) {
+      summary = 'No specific issues identified — strong performance in this category.'
+    } else if (catFindings.length === 1) {
+      summary = `1 issue found: ${catFindings[0].title}.`
+    } else {
+      const top = catFindings.sort((a, b) => {
+        const order: Record<string, number> = { critical: 0, high: 1, medium: 2, low: 3 }
+        return (order[a.severity] ?? 2) - (order[b.severity] ?? 2)
+      })[0]
+      summary = `${catFindings.length} issues found. Top priority: ${top.title}.`
+    }
+    categoryScores.push({ name: globalName, score, summary })
+  }
+
+  // Calculate pillar averages from deterministic category scores
+  const pillarAvg = (start: number, end: number) => {
+    const cats = categoryScores.filter((c) => {
+      if (c.score < 0) return false
+      const idx = allCategoryNames.indexOf(c.name)
+      return idx >= start && idx < end
+    })
+    return cats.length > 0 ? Math.round(cats.reduce((s, c) => s + c.score, 0) / cats.length) : 50
+  }
+
+  const calculatedUx = pillarAvg(0, 4)
+  const calculatedConversion = pillarAvg(4, 8)
+  const calculatedInclusive = pillarAvg(8, 12)
+  const calculatedFuture = pillarAvg(12, 16)
+
+  const allScores = categoryScores.filter(c => c.score >= 0).map(c => c.score)
+  const calculatedOverall = allScores.length > 0
+    ? Math.round(allScores.reduce((s, v) => s + v, 0) / allScores.length)
+    : 50
+
+  console.log(`[generateReport] DEEP MODE DETERMINISTIC: overall=${calculatedOverall}, findings=${findings.length}, categories_with_findings=${findingsByCategory.size}`)
+
+  // ── STEP 2: AI GENERATES NARRATIVE ONLY (executive summary + recommendations) ──
+  // The AI receives the PRE-CALCULATED scores and writes around them.
+  // It does NOT generate scores — those are locked in from Step 1.
+  const criticalCount = findings.filter((f) => f.severity === 'critical').length
+  const highCount = findings.filter((f) => f.severity === 'high').length
+  const mediumCount = findings.filter((f) => f.severity === 'medium').length
+  const lowCount = findings.filter((f) => f.severity === 'low').length
+
+  const findingsDetail = findings
+    .slice(0, 20)
+    .map((f) => `[${f.severity.toUpperCase()}] ${f.title}: ${f.description}`)
+    .join('\n')
+
+  const focusBlock = userFocus && userFocus.trim() && userFocus.trim().toLowerCase() !== 'general ux audit'
+    ? `\nCLIENT PRIORITY — The client specifically asked us to focus on:\n"${userFocus.trim()}"\nMake sure the executive summary addresses this concern directly. Mention findings related to their focus area prominently.\n`
+    : ''
+
+  const reportLanguageInstruction = getLanguagePromptInstruction(language)
+
+  // Build the score context so AI can reference the pre-calculated scores
+  const scoreContext = categoryScores
+    .filter(c => c.score >= 0)
+    .map(c => `- ${c.name}: ${c.score}/100 (${c.summary})`)
+    .join('\n')
+
+  // Site profile context for the narrative
+  const profileContext = siteProfile ? `
+SITE PROFILE:
+- Industry: ${siteProfile.industryVertical}
+- Target Audience: ${siteProfile.targetAudience}
+- Audience Sophistication: ${siteProfile.audienceSophistication}
+- Market Position: ${siteProfile.marketPosition}
+- Communication Style: ${siteProfile.communicationStyle}
+- Context: ${siteProfile.contextNotes}
+The executive summary should acknowledge the industry context and evaluate the site against appropriate standards for this specific industry and audience.
+` : ''
+
+  const narrativePrompt = `You are a senior UX strategist at a premium consultancy writing the executive summary for a human-centered digital audit.
 ${reportLanguageInstruction}
 WEBSITE: ${auditData.product_url}
-${focusBlock}
+${focusBlock}${profileContext}
 WEBSITE CONTENT PREVIEW:
 ${pageContent.substring(0, 8000)}
 
@@ -1266,99 +1531,62 @@ AUDIT FINDINGS (${findings.length} total):
 DETAILED FINDINGS:
 ${findingsDetail}
 
-INSTRUCTIONS:
-Write a comprehensive, insightful executive summary and score the website. This is a Human-Centered Digital Audit — go beyond basic UX and address how the site treats its users as human beings.
+PRE-CALCULATED SCORES (these are FINAL — do NOT change them):
+Overall Score: ${calculatedOverall}/100
+${scoreContext}
+
+INSTRUCTIONS — NARRATIVE ONLY:
+The scores above have been calculated deterministically from actual findings. Your job is to write ONLY the narrative elements — the executive summary and top 3 recommendations. Do NOT generate or modify scores.
 
 For the EXECUTIVE SUMMARY:
 - Write 4-5 well-crafted paragraphs (not bullet points)
-- Start with what the website does, who it serves, and the overall impression it creates
-- Discuss what works well — be genuine about strengths (this builds credibility for the critique)
-- Address the most impactful issues with depth: explain the human impact, not just the technical problem. How does this issue make real users FEEL? What does it cost the business?
-- Cover findings across all audit modules analysed (Foundation, Human Experience, Inclusive Design, Future Readiness, plus SEO Structure and Brand Consistency if included) — show the breadth of the analysis
-- End with a clear, prioritized action plan: what to fix first for maximum ROI
-- Write with authority and empathy. This should feel like advice from a trusted consultant, not a scan report
-- Reference specific content from the site — quote actual copy, describe actual design decisions
+- Start with what the website does, who it serves, and the overall impression
+- Reference the pre-calculated overall score (${calculatedOverall}/100) — explain what it means for this site
+- Be genuine about strengths — if the score is high, acknowledge that the site is strong
+- Address the most impactful findings with depth: explain the human impact, not just the technical problem
+- If a site profile is provided, frame your analysis within the correct industry context. Don't penalize industry-appropriate design choices.
+- Cover findings across all audit modules analysed — show the breadth of analysis
+- End with a clear, prioritized action plan
+- Write with authority and empathy — this should feel like advice from a trusted consultant
 
-For SCORES (0-100, be precise — NOT all 50s):
-- overallScore: Weighted average reflecting overall quality
-- uxScore: Overall user experience (layout, interactions, flow)
-- conversionScore: Ability to drive actions/signups/purchases
-- mobileScore: Mobile experience quality
-- aiDiscoverabilityScore: SEO, structured data, LLM readability
-- contentScore: Writing quality, clarity, scannability
-
-Score guidelines:
-- 90-100: Exceptional, industry-leading
-- 75-89: Good, minor improvements needed
-- 60-74: Decent but with significant gaps
-- 40-59: Below average, needs substantial work
-- 20-39: Poor, major issues throughout
-
-For CATEGORY SUMMARIES (REQUIRED — do NOT leave empty):
-- Each categoryScores entry MUST have a "summary" field with 1-2 sentences
-- The summary should describe what was good AND what needs improvement in that category
-- Be specific: reference actual content, elements, or patterns from the site
-- Example: "Strong visual hierarchy with clear CTA placement. Hero section lacks contrast on mobile viewports."
-- 0-19: Severely broken
-
-For CATEGORY SCORES:
-Provide a score (0-100) and a one-sentence summary for each of the following ${translatedNames.length} categories.
-IMPORTANT: Use EXACTLY these category names (they are already in the correct language):
-${categoryList}
+For CATEGORY SUMMARIES:
+- Provide a 1-2 sentence summary for each scored category
+- Reference actual content, elements, or patterns from the site
+- If the category scored 85+, lead with what's strong. If it scored below 70, lead with what needs work.
 
 For TOP 3 PRIORITY RECOMMENDATIONS:
-- Provide exactly 3 recommendations, ordered by impact (highest first)
-- Each recommendation should be 1-2 sentences: what to change and why it matters
-- Be specific — reference actual elements, copy, or patterns from the site
-- Cover different aspects of the site (don't give 3 recommendations about the same thing)
-- These should be the 3 changes that would move the needle the most
-
-SCORE CALIBRATION (CRITICAL FOR RE-AUDITS):
-If a PREVIOUS AUDIT BASELINE with category scores is provided in the content above:
-- Your category scores MUST be calibrated against the previous baseline.
-- For unchanged content, scores should be IDENTICAL or within 3-5 points of the previous score.
-- Score a category HIGHER only if you can identify a specific improvement in the content.
-- Score a category LOWER only if you can identify a specific, concrete regression.
-- Random variation of more than 5 points on unchanged content is UNACCEPTABLE — it destroys user trust.
-- In the executive summary, note what changed vs what stayed the same.
-- When in doubt, use the SAME score as the previous audit for that category.
+- Provide exactly 3 recommendations, ordered by impact
+- Each should be 1-2 sentences: what to change and why
+- Be specific — reference actual elements from the site
+- Cover different aspects (don't give 3 recommendations about the same thing)
 
 Return ONLY valid JSON:
 {
   "executiveSummary": "...",
   "topRecommendations": ["First priority...", "Second priority...", "Third priority..."],
-  "overallScore": 72,
-  "uxScore": 68,
-  "conversionScore": 65,
-  "mobileScore": 74,
-  "aiDiscoverabilityScore": 55,
-  "contentScore": 70,
-  "categoryScores": [
-${categoryExamples}
-  ]
+  "categorySummaries": {
+${categoryScores.filter(c => c.score >= 0).map(c => `    "${c.name}": "..."`).join(',\n')}
+  }
 }
-${language !== 'en' ? `\nFINAL REMINDER — LANGUAGE: The executiveSummary, topRecommendations, and all category summary fields MUST be written entirely in ${getLanguageLabel(language)}. The JSON keys and category names stay as provided above, but all descriptive text must be in ${getLanguageLabel(language)}.\n` : ''}`
+${language !== 'en' ? `\nFINAL REMINDER — LANGUAGE: The executiveSummary, topRecommendations, and all category summaries MUST be written entirely in ${getLanguageLabel(language)}. JSON keys stay in English.\n` : ''}`
 
   try {
     const anthropic = getAnthropicClient()
-    // withRetry: retries up to 2 times on rate limits or timeouts before
-    // falling back to the score-75 default. This prevents transient API
-    // pressure from producing meaningless flat scores.
     const message = await withRetry(
       () => withTimeout(
         anthropic.beta.promptCaching.messages.create({
           model: 'claude-haiku-4-5-20251001',
           max_tokens: 4096,
           temperature: 0,
-          system: [{ type: 'text', text: 'You are a senior UX strategist at a premium consultancy writing the executive summary for a human-centered digital audit. This report costs real money — the client expects the quality of a $10,000 consulting engagement.', cache_control: { type: 'ephemeral' } }],
-          messages: [{ role: 'user', content: prompt }],
+          system: [{ type: 'text', text: 'You are a senior UX strategist writing an executive summary for a human-centered digital audit. Scores have been pre-calculated — your job is narrative only.', cache_control: { type: 'ephemeral' } }],
+          messages: [{ role: 'user', content: narrativePrompt }],
         }),
         60_000,
-        'generateReport',
+        'generateReport-narrative',
       ),
-      'generateReport',
-      2,  // max retries
-      3000, // 3s base delay — report is the final step, more time available
+      'generateReport-narrative',
+      2,
+      3000,
     )
 
     const responseText = message.content
@@ -1366,141 +1594,85 @@ ${language !== 'en' ? `\nFINAL REMINDER — LANGUAGE: The executiveSummary, topR
       .map((block) => block.text)
       .join('')
 
-    // Try to extract JSON — the response should be a single JSON object
-    // First try the full match, then try progressively shorter matches if parse fails
     const jsonMatch = responseText.match(/\{[\s\S]*\}/m)
-    if (!jsonMatch) {
-      console.error('[generateReport] No JSON in response:', responseText.substring(0, 500))
-      console.error('[generateReport] Response length:', responseText.length, '| stop_reason:', message.stop_reason)
-      return calculateScoresFromFindings(findings, language)
-    }
-
-    let report: ReportData
-    try {
-      report = JSON.parse(jsonMatch[0])
-    } catch (parseErr) {
-      // JSON was likely truncated — try to repair by finding the last complete categoryScores entry
-      console.error('[generateReport] JSON parse failed, attempting repair. stop_reason:', message.stop_reason)
-      let raw = jsonMatch[0]
-
-      // If truncated inside categoryScores array, close it off
-      const catStart = raw.indexOf('"categoryScores"')
-      if (catStart !== -1) {
-        // Find the last complete object (ends with })
+    if (jsonMatch) {
+      let narrative: any
+      try {
+        narrative = JSON.parse(jsonMatch[0])
+      } catch {
+        // Try to repair truncated JSON
+        let raw = jsonMatch[0]
         const lastBrace = raw.lastIndexOf('}')
-        const lastBracket = raw.lastIndexOf(']')
-
-        if (lastBracket > catStart && lastBracket > lastBrace) {
-          // Array was closed but outer object wasn't
-          raw = raw.substring(0, lastBracket + 1) + '}'
-        } else if (lastBrace > catStart) {
-          // Find the last complete }, then close array and object
-          raw = raw.substring(0, lastBrace + 1) + ']}'
+        if (lastBrace > 0) {
+          try {
+            narrative = JSON.parse(raw.substring(0, lastBrace + 1) + '}')
+          } catch {
+            console.error('[generateReport] JSON repair failed for narrative')
+          }
         }
       }
 
-      try {
-        report = JSON.parse(raw)
-        console.log('[generateReport] JSON repair succeeded')
-      } catch {
-        console.error('[generateReport] JSON repair also failed. Raw start:', raw.substring(0, 300))
-        return calculateScoresFromFindings(findings, language)
+      if (narrative) {
+        // Enrich category summaries with AI-generated narratives
+        const aiSummaries: Record<string, string> = narrative.categorySummaries || {}
+        for (const cs of categoryScores) {
+          if (cs.score >= 0 && aiSummaries[cs.name]) {
+            cs.summary = aiSummaries[cs.name]
+          }
+        }
+
+        const topRecs: string[] = Array.isArray(narrative.topRecommendations)
+          ? narrative.topRecommendations.filter((r: any) => typeof r === 'string' && r.trim())
+          : []
+
+        return {
+          executiveSummary: narrative.executiveSummary || '',
+          keyRecommendation: topRecs[0] || null,
+          topRecommendations: topRecs.length > 0 ? topRecs : ['Prioritize critical issues first, then address high-impact improvements.'],
+          overallScore: calculatedOverall,
+          uxScore: calculatedUx,
+          conversionScore: calculatedConversion,
+          mobileScore: calculatedInclusive,
+          aiDiscoverabilityScore: calculatedFuture,
+          contentScore: calculatedOverall,
+          categoryScores,
+          siteProfile: siteProfile || undefined,
+        }
       }
     }
 
-    // Validate
-    // Parse top recommendations — handle both new and old format
-    const topRecs: string[] = Array.isArray(report.topRecommendations)
-      ? report.topRecommendations.filter((r: any) => typeof r === 'string' && r.trim())
-      : report.keyRecommendation
-        ? [report.keyRecommendation]
-        : []
-
-    // Parse category scores from AI and map back to global 28-category positions
-    // The AI only scored the categories we asked about (which may be < 28)
-    // We need to rebuild the full array with correct global positions
-    const aiCategoryScores = Array.isArray(report.categoryScores)
-      ? report.categoryScores.map((c: any) => ({
-          name: c.name || 'Unknown',
-          score: clampScore(c.score),
-          summary: c.summary || '',
-        }))
-      : []
-
-    // Map AI scores back to the FULL 28-category array preserving global indices.
-    // Unanalyzed categories get score = -1 so the frontend can filter them out.
-    // This ensures positional indices in the stored array always match global
-    // category indices (0-3 = Foundation, ..., 20-23 = Accessibility Readiness, 24-27 = Brand Consistency).
-    const allCategoryNames = getCategoryNames(language)
-    const categoryScores: CategoryScore[] = []
-    let analyzedCount = 0 // tracks position in the AI response
-    for (let gi = 0; gi < allCategoryNames.length; gi++) {
-      const globalName = allCategoryNames[gi]
-      if (!wasAnalyzed(gi)) {
-        // Placeholder for unanalyzed category — preserves positional index
-        categoryScores.push({ name: globalName, score: -1, summary: '' })
-        continue
-      }
-      // Find the matching AI score by name (fuzzy match by position if names differ)
-      const matched = aiCategoryScores.find((c: any) =>
-        c.name.toLowerCase() === globalName.toLowerCase()
-      ) || aiCategoryScores[analyzedCount] // fallback to positional match
-      categoryScores.push({
-        name: globalName,
-        score: matched ? clampScore(matched.score) : 70,
-        summary: matched?.summary || '',
-      })
-      analyzedCount++
-    }
-
-    // If AI returned nothing useful, use defaults for analyzed categories
-    if (categoryScores.filter(c => c.score >= 0).length === 0) {
-      for (let gi = 0; gi < categoryScores.length; gi++) {
-        if (wasAnalyzed(gi)) categoryScores[gi] = { name: allCategoryNames[gi], score: 70, summary: '' }
-      }
-    }
-
-    // CALCULATE scores from category data — don't trust AI's arbitrary top-level numbers
-    // Modules: Foundation (0-3), Human Experience (4-7), Inclusive Design (8-11),
-    //          Future Readiness (12-15), SEO Structure (16-19), Brand Consistency (20-23)
-    // Pillar averages use the categoryScores which only contain analyzed categories
-    const pillarAvg = (start: number, end: number) => {
-      const cats = categoryScores.filter((c) => {
-        if (c.score < 0) return false // skip unanalyzed categories
-        const idx = allCategoryNames.indexOf(c.name)
-        return idx >= start && idx < end
-      })
-      return cats.length > 0 ? Math.round(cats.reduce((s, c) => s + c.score, 0) / cats.length) : 50
-    }
-
-    const calculatedUx = pillarAvg(0, 4)           // Foundation
-    const calculatedConversion = pillarAvg(4, 8)    // Human Experience
-    const calculatedInclusive = pillarAvg(8, 12)    // Inclusive Design
-    const calculatedFuture = pillarAvg(12, 16)      // Future Readiness
-    // SEO (16-19) and Brand (20-23) feed into overall but don't have dedicated legacy score columns
-
-    // Overall = average of ALL analyzed category scores (skip unanalyzed = -1)
-    const allScores = categoryScores.filter(c => c.score >= 0).map(c => c.score)
-    const calculatedOverall = allScores.length > 0
-      ? Math.round(allScores.reduce((s, v) => s + v, 0) / allScores.length)
-      : 50
-
-    return {
-      executiveSummary: report.executiveSummary || '',
-      keyRecommendation: topRecs[0] || report.keyRecommendation || null,
-      topRecommendations: topRecs.length > 0 ? topRecs : ['Prioritize critical issues first, then address high-impact improvements.'],
-      overallScore: calculatedOverall,
-      uxScore: calculatedUx,
-      conversionScore: calculatedConversion,
-      mobileScore: calculatedInclusive,
-      aiDiscoverabilityScore: calculatedFuture,
-      contentScore: clampScore(report.contentScore), // keep AI's content score as supplementary
-      categoryScores,
-    }
+    // AI narrative failed — return scores with basic summary
+    console.error('[generateReport] No JSON in narrative response, using basic summary')
   } catch (err) {
-    console.error('[generateReport] Error:', err instanceof Error ? err.message : err)
-    // Calculate scores from findings instead of returning fake 50s
-    return calculateScoresFromFindings(findings, language)
+    console.error('[generateReport] Narrative generation failed:', err instanceof Error ? err.message : err)
+  }
+
+  // Fallback: deterministic scores with basic summary (no AI narrative)
+  const basicSummary = criticalCount > 0
+    ? `This audit identified ${findings.length} issues, including ${criticalCount} critical finding${criticalCount > 1 ? 's' : ''} that require immediate attention.`
+    : highCount > 0
+    ? `This audit identified ${findings.length} issues, with ${highCount} high-priority finding${highCount > 1 ? 's' : ''}. Addressing these will meaningfully improve the user experience.`
+    : findings.length > 0
+    ? `This audit identified ${findings.length} areas for improvement. Most are medium or low severity, suggesting a solid baseline with room for refinement.`
+    : 'This site performs well across all audited categories with no significant issues identified.'
+
+  const fallbackRecs = findings
+    .filter(f => f.severity === 'critical' || f.severity === 'high')
+    .slice(0, 3)
+    .map(f => f.recommendation)
+
+  return {
+    executiveSummary: basicSummary,
+    keyRecommendation: fallbackRecs[0] || getDefaultRecommendation(language),
+    topRecommendations: fallbackRecs.length > 0 ? fallbackRecs : [getDefaultRecommendation(language)],
+    overallScore: calculatedOverall,
+    uxScore: calculatedUx,
+    conversionScore: calculatedConversion,
+    mobileScore: calculatedInclusive,
+    aiDiscoverabilityScore: calculatedFuture,
+    contentScore: calculatedOverall,
+    categoryScores,
+    siteProfile: siteProfile || undefined,
   }
 }
 
@@ -1528,18 +1700,27 @@ function getDefaultCategoryScores(language: string = 'en'): CategoryScore[] {
 
 /**
  * Calculate scores from findings when report generation fails.
- * Uses severity-based deduction: each finding reduces the score from 100.
- * This ensures scores always reflect real analysis, never static defaults.
+ * Uses the SAME deterministic formula as DEEP MODE:
+ *   Base = 92, deductions: critical=-18, high=-12, medium=-6, low=-2.
+ *   Categories with 0 findings = 92 (strong baseline).
+ * This ensures scores ALWAYS match the deterministic model, even in fallback paths.
  */
 function calculateScoresFromFindings(findings: AuditFinding[], language: string = 'en'): ReportData {
   const categoryNames = getCategoryNames(language)
-  const severityPenalty: Record<string, number> = { critical: 15, high: 10, medium: 5, low: 2 }
+  const severityPenalty: Record<string, number> = { critical: 18, high: 12, medium: 6, low: 2 }
+  const BASE_SCORE = 92
 
-  // Assign findings to categories by keyword matching
+  // Assign findings to categories — prefer category_index, fall back to keyword matching
   const findingsPerCategory: Record<string, AuditFinding[]> = {}
   for (const name of categoryNames) findingsPerCategory[name] = []
 
   for (const f of findings) {
+    const ci = (f as any).category_index
+    if (ci != null && ci >= 0 && ci < categoryNames.length) {
+      findingsPerCategory[categoryNames[ci]].push(f)
+      continue
+    }
+    // Keyword fallback
     let matched = false
     for (const catName of categoryNames) {
       const words = catName.toLowerCase().split(/[&,\s]+/).filter(w => w.length > 3)
@@ -1551,25 +1732,21 @@ function calculateScoresFromFindings(findings: AuditFinding[], language: string 
       }
     }
     if (!matched) {
-      // Distribute by sort order
       const idx = Math.min(Math.floor(f.sort_order / Math.max(1, findings.length / categoryNames.length)), categoryNames.length - 1)
       findingsPerCategory[categoryNames[idx]].push(f)
     }
   }
 
-  // Calculate score per category
-  // Categories WITH findings: start at 85, deduct per severity (findings = something was wrong)
-  // Categories WITHOUT findings: score 75 (we can't verify they're perfect, so be conservative)
+  // Calculate score per category — consistent with DEEP MODE formula
   const categoryScores: CategoryScore[] = categoryNames.map(name => {
     const catFindings = findingsPerCategory[name]
     if (catFindings.length === 0) {
-      return { name, score: 75, summary: 'No specific issues identified in this category.' }
+      return { name, score: BASE_SCORE, summary: 'No specific issues identified — strong performance in this category.' }
     }
-    let score = 85
+    let score = BASE_SCORE
     for (const f of catFindings) {
-      score -= severityPenalty[f.severity] || 5
+      score -= severityPenalty[f.severity] || 6
     }
-    // Generate a basic summary from findings
     const topFinding = catFindings[0]
     const summary = catFindings.length === 1
       ? `1 issue found: ${topFinding.title}.`
@@ -1578,21 +1755,22 @@ function calculateScoresFromFindings(findings: AuditFinding[], language: string 
   })
 
   const allScores = categoryScores.map(c => c.score)
-  const overall = allScores.length > 0 ? Math.round(allScores.reduce((a, b) => a + b, 0) / allScores.length) : 70
+  const overall = allScores.length > 0 ? Math.round(allScores.reduce((a, b) => a + b, 0) / allScores.length) : BASE_SCORE
 
   const pillarAvg = (start: number, end: number) => {
     const cats = categoryScores.slice(start, Math.min(end, categoryScores.length))
-    return cats.length > 0 ? Math.round(cats.reduce((s, c) => s + c.score, 0) / cats.length) : 70
+    return cats.length > 0 ? Math.round(cats.reduce((s, c) => s + c.score, 0) / cats.length) : BASE_SCORE
   }
 
-  // Build a basic executive summary from findings
   const criticalCount = findings.filter(f => f.severity === 'critical').length
   const highCount = findings.filter(f => f.severity === 'high').length
   const summary = criticalCount > 0
-    ? `This audit identified ${findings.length} issues, including ${criticalCount} critical finding${criticalCount > 1 ? 's' : ''} that require immediate attention. Focus on the critical and high-severity issues first for maximum impact.`
+    ? `This audit identified ${findings.length} issues, including ${criticalCount} critical finding${criticalCount > 1 ? 's' : ''} that require immediate attention.`
     : highCount > 0
     ? `This audit identified ${findings.length} issues, with ${highCount} high-priority finding${highCount > 1 ? 's' : ''}. Addressing these will meaningfully improve the user experience.`
-    : `This audit identified ${findings.length} areas for improvement. Most are medium or low severity, suggesting a solid baseline with room for refinement.`
+    : findings.length > 0
+    ? `This audit identified ${findings.length} areas for improvement. Most are medium or low severity, suggesting a solid baseline with room for refinement.`
+    : 'This site performs well across all audited categories with no significant issues identified.'
 
   const topRecs = findings
     .filter(f => f.severity === 'critical' || f.severity === 'high')

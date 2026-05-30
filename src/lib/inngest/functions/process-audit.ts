@@ -17,7 +17,8 @@ import { crawlPages, formatHeadTagsForAnalysis, type HeadTagData } from '@/lib/a
 import { runCrawlPreflight } from '@/lib/audit-engine/crawl-preflight'
 import { probeAIDiscovery, formatAIDiscoveryForAnalysis } from '@/lib/audit-engine/ai-discovery-probe'
 import { validateStructuredData, formatValidationForAnalysis } from '@/lib/audit-engine/structured-data-validator'
-import { analyzeCategory, generateReport, verifyFindings, UX_CATEGORIES } from '@/lib/audit-engine/analyzer'
+import { analyzeCategory, generateReport, verifyFindings, UX_CATEGORIES, detectSiteProfile } from '@/lib/audit-engine/analyzer'
+import type { SiteProfile } from '@/lib/audit-engine/analyzer'
 import { generatePdfReport } from '@/lib/audit-engine/pdf'
 import { sendAuditComplete, sendFreeAuditReady } from '@/lib/audit-engine/email'
 import { captureAuditScreenshots } from '@/lib/audit-engine/screenshots'
@@ -464,6 +465,7 @@ Return 2-6 findings. Be specific and evidence-based. Reference specific files/co
                   auditDetails.userFocus,
                   auditDetails.language,
                   'deep',
+                  siteProfile,
                 ),
                 45_000,
                 `brand-analyze-${cat.name}`,
@@ -579,6 +581,8 @@ Return 2-6 findings. Be specific and evidence-based. Reference specific files/co
           auditDetails.userFocus,
           auditDetails.language,
           'deep',
+          undefined,
+          siteProfile,
         )
 
         const severityCount = {
@@ -1962,6 +1966,31 @@ RULES FOR RE-AUDIT:
     const effectiveDepthMode = siteContext.effectiveDepthMode
     console.log(`[inngest] Audit ${auditId}: depth mode = ${effectiveDepthMode} (requested: ${auditDetails.depthMode})`)
 
+    // ──────────────────────────────────────────────────────────
+    // STEP 3b: Detect site profile (industry, audience, context)
+    // Runs once before any analysis. Lightweight (~2s Haiku call).
+    // Feeds into analyzeCategory() so findings are context-aware.
+    // ──────────────────────────────────────────────────────────
+    const siteProfile: SiteProfile | null = await step.run('detect-site-profile', async () => {
+      try {
+        await logActivity(auditId, 'Detecting site industry and audience profile...')
+        const profile = await withTimeout(
+          detectSiteProfile(crawlResult.pageContent, auditDetails.productUrl),
+          15_000,
+          'detect-site-profile',
+        )
+        if (profile) {
+          console.log(`[inngest] Site profile: ${profile.industryVertical} | ${profile.targetAudience} | ${profile.marketPosition}`)
+          await auditLog(auditId, 'site_profile_detected', 'success',
+            `${profile.industryVertical} | ${profile.targetAudience} | ${profile.audienceSophistication} | ${profile.marketPosition}`)
+        }
+        return profile
+      } catch (err) {
+        console.warn('[inngest] Site profile detection failed, using defaults:', err instanceof Error ? err.message : err)
+        return null
+      }
+    })
+
     let verificationData: { verified: number; likelyFixed: number; poorlyFixed: number; results: Array<{ findingId: string; status: string; note: string }> } | null = null
     // Titles of previous findings verified as fixed on the live site (for deep mode).
     // Hoisted here so quality gates (which run after both branches) can access it.
@@ -2237,7 +2266,7 @@ RULES FOR RE-AUDIT:
               try {
                 const result = await withTimeout(
                   analyzeCategory(
-                    content, categoryName, [], auditDetails.userFocus, auditDetails.language, 'deep',
+                    content, categoryName, [], auditDetails.userFocus, auditDetails.language, 'deep', siteProfile,
                   ),
                   45_000,
                   `gap-fill-${categoryName}`,
@@ -2523,7 +2552,7 @@ RULES FOR RE-AUDIT:
                 : contentWithContext
               try {
                 const result = await withTimeout(
-                  analyzeCategory(content, categoryName, [], auditDetails.userFocus, auditDetails.language, 'deep'),
+                  analyzeCategory(content, categoryName, [], auditDetails.userFocus, auditDetails.language, 'deep', siteProfile),
                   CATEGORY_TIMEOUT_MS,
                   `analyze-${categoryName}`,
                 )
@@ -3172,6 +3201,7 @@ RULES FOR RE-AUDIT:
           droppedFixed,
           droppedDismissed,
         } : undefined,
+        siteProfile,
       )
 
       const severityCount = {
