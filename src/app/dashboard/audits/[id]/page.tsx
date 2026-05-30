@@ -2128,6 +2128,15 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
                     <><RefreshCw size={14} /> Try again</>
                   )}
                 </button>
+                {isBlocked && (
+                  <a
+                    href="/contact?subject=blocked-site"
+                    className="inline-flex items-center gap-1.5 text-[13px] font-medium px-3.5 py-2 rounded-lg transition-colors hover:opacity-80"
+                    style={{ background: 'var(--card)', border: '1px solid var(--rule)', color: 'var(--ink)' }}
+                  >
+                    Contact support
+                  </a>
+                )}
                 <button
                   onClick={handleDelete}
                   disabled={deleting}

@@ -503,7 +503,7 @@ function OverviewInner() {
   /* ── Empty state ─────────────────────────────────────── */
   if (!bundle?.audit || !bundle.report) {
     return (
-      <div className="w-full max-w-3xl mx-auto">
+      <div className="w-full">
         <OverviewTabs />
         {creditsBanner && <CreditsBanner onClose={() => setCreditsBanner(false)} />}
         <div className="mb-6">
@@ -2354,7 +2354,7 @@ function FailedAuditOverview({
     : `${_dp}/new-audit`;
 
   return (
-    <div className="w-full max-w-3xl mx-auto">
+    <div className="w-full">
       <OverviewTabs />
       <div className="flex items-start justify-between gap-4 mb-6">
         <div className="min-w-0">
@@ -2393,9 +2393,9 @@ function FailedAuditOverview({
                   This site blocked our crawler
                 </h2>
                 <p className="text-[13px] mt-1.5 max-w-[560px] leading-relaxed" style={{ color: 'var(--m-muted)' }}>
-                  {domain ? <span className="font-medium" style={{ color: 'var(--ink)' }}>{domain}</span> : 'This website'} uses
+                  {domain ? <span className="font-medium" style={{ color: 'var(--ink)' }}>{domain}</span> : 'This website'}{' '}uses
                   anti-bot protection that prevents automated tools from accessing its content.
-                  This is not an error on our end — it means the site&apos;s security is working as intended.
+                  This is not an error on our end{' '}&mdash; it means the site&apos;s security is working as intended.
                 </p>
                 <div
                   className="mt-3 px-3 py-2.5 rounded-lg text-[12px] leading-relaxed"
@@ -2419,8 +2419,9 @@ function FailedAuditOverview({
                 Try again
               </Link>
               <a
-                href="mailto:support@fixpath.ai?subject=Blocked%20site%20audit%20request"
-                className="inline-flex items-center gap-1.5 text-[13px] font-medium px-3.5 py-2 rounded-lg bg-card border border-border text-text hover:bg-surface-alt transition-colors"
+                href="/contact?subject=blocked-site"
+                className="inline-flex items-center gap-1.5 text-[13px] font-medium px-3.5 py-2 rounded-lg transition-colors hover:opacity-80"
+                style={{ background: 'var(--card)', border: '1px solid var(--rule)', color: 'var(--ink)' }}
               >
                 Contact support
               </a>
