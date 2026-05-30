@@ -953,14 +953,13 @@ export default function IntelligencePage() {
           <div>
             <EmptyCardBody message="Add competitors to see how you compare. Use auto-detect or add manually." />
             <div className="flex justify-center">
-              <button
-                type="button"
-                onClick={() => { setShowCompetitorEditor(true); }}
+              <Link
+                href={`${dashPrefix}/competitors`}
                 className="inline-flex items-center gap-1.5 text-[11px] font-semibold px-3 py-1.5 rounded-md"
                 style={{ background: 'var(--ink)', color: 'var(--paper)' }}
               >
                 Add competitors <ArrowRight size={10} />
-              </button>
+              </Link>
             </div>
           </div>
         )}

@@ -208,7 +208,14 @@ export async function GET(req: NextRequest) {
 
   return NextResponse.json({
     modelProbes: aggregatedProbes,
-    recommendations: recommendations.data || [],
+    recommendations: (recommendations.data || []).map((r: any) => ({
+      title: r.action || '',
+      description: r.evidence || '',
+      impact: r.confidence === 'high' ? 'high' : r.confidence === 'medium' ? 'medium' : 'low',
+      category: r.category || '',
+      deployable: false,
+      predictedImpact: r.predicted_impact ?? 0,
+    })),
     benchmarkPosition,
     modelBenchmarks: (report.data as any)?.model_benchmarks || null,
     industry: (audit as any).detected_industry || 'General',
