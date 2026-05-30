@@ -282,7 +282,7 @@ export function FindingAnatomy() {
       <div ref={scrollRef} className="flex gap-5 overflow-x-auto px-8 max-sm:px-5 pb-4 snap-x snap-mandatory scrollbar-hide" style={{ scrollbarWidth: 'none' }}>
         <div className="flex-shrink-0" style={{ width: 'max(0px, calc((100vw - 1200px) / 2 - 32px))' }} />
         {FINDING_CARDS.map((card, i) => (
-          <div key={i} className="flex-shrink-0 w-[440px] max-sm:w-[340px] snap-start border border-rule rounded-xl overflow-hidden bg-white/80 hover:border-signal/30 transition-colors">
+          <div key={i} className="flex-shrink-0 w-[440px] max-sm:w-[340px] snap-start border border-rule rounded-xl overflow-hidden hover:border-signal/30 transition-colors shadow-[0_2px_12px_-4px_rgba(0,0,0,0.06)]" style={{ background: 'var(--paper)' }}>
             <div className="h-[260px] border-b border-rule p-6 flex items-center justify-center overflow-hidden">
               <div style={{ transform: 'scale(1.18)', transformOrigin: 'center center', width: '85%' }}>
                 {card.visual}

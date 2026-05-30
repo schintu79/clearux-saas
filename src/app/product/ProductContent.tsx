@@ -40,11 +40,11 @@ const PRODUCT_FAQS = [
 /* ── Mockup: Finding detail card — mirrors real findings panel ── */
 function FindingMockup() {
   return (
-    <div className="rounded-[4px] border border-rule overflow-hidden" style={{ background: 'var(--paper)' }}>
+    <div className="rounded-xl border border-rule overflow-hidden shadow-[0_4px_24px_-8px_rgba(0,0,0,0.08)]" style={{ background: 'var(--paper)' }}>
       {/* Header bar with severity + module */}
       <div className="px-5 py-3 border-b border-rule flex items-center justify-between" style={{ background: 'var(--paper-2)' }}>
         <div className="flex items-center gap-2.5">
-          <span className="font-mono text-[9px] font-semibold tracking-[0.08em] uppercase px-2 py-0.5 rounded-[2px]" style={{ color: 'var(--severe)', background: 'color-mix(in srgb, var(--severe) 12%, transparent)' }}>Critical</span>
+          <span className="font-mono text-[9px] font-semibold tracking-[0.08em] uppercase px-2 py-0.5 rounded-[3px]" style={{ color: 'var(--severe)', background: 'color-mix(in srgb, var(--severe) 12%, transparent)' }}>Critical</span>
           <span className="font-mono text-[10px] tracking-[0.06em] uppercase text-m-muted">Human experience</span>
         </div>
         <span className="font-mono text-[9px] tracking-[0.06em] uppercase text-m-muted">HX-04</span>
@@ -88,7 +88,7 @@ function FindingMockup() {
 /* ── Mockup: Fix console — mirrors real diff-preview + deploy flow ── */
 function FixMockup() {
   return (
-    <div className="rounded-[4px] border border-rule overflow-hidden" style={{ background: 'var(--paper)' }}>
+    <div className="rounded-xl border border-rule overflow-hidden shadow-[0_4px_24px_-8px_rgba(0,0,0,0.08)]" style={{ background: 'var(--paper)' }}>
       {/* Header with finding reference */}
       <div className="px-5 py-3 border-b border-rule flex items-center justify-between" style={{ background: 'var(--paper-2)' }}>
         <div className="flex items-center gap-2.5">
@@ -147,10 +147,10 @@ function FixMockup() {
 /* ── Mockup: Score tracking — mirrors real score history + comparison view ── */
 function TrackMockup() {
   return (
-    <div className="rounded-[4px] border border-rule overflow-hidden" style={{ background: 'var(--paper)' }}>
+    <div className="rounded-xl border border-rule overflow-hidden shadow-[0_4px_24px_-8px_rgba(0,0,0,0.08)]" style={{ background: 'var(--paper)' }}>
       <div className="px-5 py-3 border-b border-rule flex items-center justify-between" style={{ background: 'var(--paper-2)' }}>
         <span className="font-mono text-[10px] tracking-[0.08em] uppercase text-m-muted">Score history</span>
-        <span className="font-mono text-[9px] tracking-[0.06em] uppercase text-m-muted">5 audits / 12 weeks</span>
+        <span className="font-mono text-[9px] tracking-[0.06em] uppercase text-m-muted">5 audits · 12 weeks</span>
       </div>
       <div className="p-5">
         {/* Score trend bars */}
@@ -165,7 +165,7 @@ function TrackMockup() {
             <div key={i} className="flex-1 flex flex-col items-center gap-1.5">
               <span className="font-mono text-[10px] font-medium" style={{ color: i === 4 ? 'var(--signal)' : 'var(--ink-2)' }}>{audit.score}</span>
               <div
-                className="w-full rounded-[2px]"
+                className="w-full rounded-[3px]"
                 style={{
                   height: `${audit.score * 0.7}px`,
                   background: i === 4 ? 'var(--signal)' : 'var(--rule-2)',
@@ -181,15 +181,18 @@ function TrackMockup() {
           <p className="font-mono text-[9px] tracking-[0.08em] uppercase text-m-muted mb-3">Module changes (last audit)</p>
           <div className="space-y-2">
             {[
-              { name: 'Foundation', prev: 65, curr: 72, delta: '+7' },
-              { name: 'Human exp.', prev: 58, curr: 68, delta: '+10' },
-              { name: 'Inclusive', prev: 74, curr: 81, delta: '+7' },
-              { name: 'Future', prev: 51, curr: 59, delta: '+8' },
+              { name: 'Foundation', prev: 65, curr: 72, delta: '+7', color: '#3B82F6' },
+              { name: 'Human exp.', prev: 58, curr: 68, delta: '+10', color: '#EC4899' },
+              { name: 'Inclusive', prev: 74, curr: 81, delta: '+7', color: '#8B5CF6' },
+              { name: 'Future', prev: 51, curr: 59, delta: '+8', color: '#F59E0B' },
+              { name: 'Accessibility', prev: 60, curr: 68, delta: '+8', color: '#EF4444' },
+              { name: 'Brand', prev: 70, curr: 76, delta: '+6', color: '#06B6D4' },
+              { name: 'SEO', prev: 62, curr: 71, delta: '+9', color: '#10B981' },
             ].map((mod) => (
               <div key={mod.name} className="flex items-center gap-3">
-                <span className="font-sans text-[11px] text-ink-2 w-[72px] shrink-0">{mod.name}</span>
+                <span className="font-sans text-[11px] text-ink-2 w-[80px] shrink-0">{mod.name}</span>
                 <div className="flex-1 h-1.5 rounded-full" style={{ background: 'var(--rule)' }}>
-                  <div className="h-full rounded-full bg-signal" style={{ width: `${mod.curr}%` }} />
+                  <div className="h-full rounded-full" style={{ width: `${mod.curr}%`, background: mod.color }} />
                 </div>
                 <span className="font-mono text-[10px] text-signal w-[28px] text-right shrink-0">{mod.delta}</span>
               </div>
@@ -203,7 +206,7 @@ function TrackMockup() {
             <span className="w-2 h-2 rounded-full bg-signal" />
             <span className="font-sans text-[12px] text-ink">+36 points over 5 audits</span>
           </div>
-          <span className="font-mono text-[10px] text-m-muted tracking-[0.06em] uppercase">14 findings resolved</span>
+          <span className="font-mono text-[10px] text-m-muted tracking-[0.06em] uppercase">19 findings resolved</span>
         </div>
       </div>
     </div>

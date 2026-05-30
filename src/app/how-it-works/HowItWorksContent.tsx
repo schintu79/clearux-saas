@@ -59,7 +59,7 @@ function ScrollStrip({ cards, marker, markerLabel, heading, headingAccent, subti
         {/* Left spacer to align with max-w-mkt */}
         <div className="flex-shrink-0" style={{ width: 'max(0px, calc((100vw - 1200px) / 2 - 32px))' }} />
         {cards.map((card, i) => (
-          <div key={i} className="flex-shrink-0 w-[440px] max-sm:w-[340px] snap-start border border-rule rounded-xl overflow-hidden bg-white/80 hover:border-signal/30 transition-colors group">
+          <div key={i} className="flex-shrink-0 w-[440px] max-sm:w-[340px] snap-start border border-rule rounded-xl overflow-hidden hover:border-signal/30 transition-colors group shadow-[0_2px_12px_-4px_rgba(0,0,0,0.06)]" style={{ background: 'var(--paper)' }}>
             {/* Visual area */}
             <div className="h-[300px] border-b border-rule p-6 flex items-center justify-center overflow-hidden">
               <div style={{ transform: 'scale(1.18)', transformOrigin: 'center center', width: '85%' }}>
@@ -637,9 +637,9 @@ function FeatureSection({ marker, label, title, titleAccent, desc, features, vis
               ))}
             </div>
           </div>
-          {/* Visual side — larger with white background */}
+          {/* Visual side — larger with elevated treatment */}
           <div className={reverse ? 'lg:order-1' : ''}>
-            <div className="bg-white/80 rounded-xl border border-rule p-8 overflow-hidden">
+            <div className="rounded-xl border border-rule p-8 overflow-hidden shadow-[0_4px_24px_-8px_rgba(0,0,0,0.08)]" style={{ background: 'var(--paper)' }}>
               <div style={{ transform: 'scale(1.15)', transformOrigin: 'top center' }}>
                 <div className="space-y-4">
                   {visual}
@@ -756,7 +756,7 @@ export default function HowItWorksContent() {
           {/* Clean visual — probe card + readability side by side */}
           <div className="grid md:grid-cols-2 gap-5 mx-auto" style={{ maxWidth: 880 }}>
             {/* What AI knows */}
-            <div className="bg-white rounded-xl border border-rule overflow-hidden">
+            <div className="rounded-xl border border-rule overflow-hidden shadow-[0_2px_12px_-4px_rgba(0,0,0,0.06)]" style={{ background: 'var(--paper)' }}>
               <div className="px-5 py-3.5 border-b border-rule flex items-center gap-2">
                 <svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke="var(--signal)" strokeWidth={1.5}><path d="M12 2a7 7 0 0 1 7 7c0 2.38-1.19 4.47-3 5.74V17a2 2 0 0 1-2 2h-4a2 2 0 0 1-2-2v-2.26C6.19 13.47 5 11.38 5 9a7 7 0 0 1 7-7z" /><path d="M9 22h6" /></svg>
                 <span className="text-[14px] font-sans font-semibold text-ink">What AI knows about your site</span>
@@ -775,7 +775,7 @@ export default function HowItWorksContent() {
             </div>
 
             {/* AI readability by page */}
-            <div className="bg-white rounded-xl border border-rule overflow-hidden">
+            <div className="rounded-xl border border-rule overflow-hidden shadow-[0_2px_12px_-4px_rgba(0,0,0,0.06)]" style={{ background: 'var(--paper)' }}>
               <div className="px-5 py-3.5 border-b border-rule flex items-center gap-2">
                 <svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke="var(--signal)" strokeWidth={1.5}><circle cx={12} cy={12} r={10} /><path d="M2 12h20" /><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" /></svg>
                 <span className="text-[14px] font-sans font-semibold text-ink">AI readability by page</span>
@@ -897,7 +897,7 @@ export default function HowItWorksContent() {
           </div>
 
           {/* UX heuristic evaluation scorecard */}
-          <div className="rounded-xl overflow-hidden bg-white border border-rule">
+          <div className="rounded-xl overflow-hidden border border-rule shadow-[0_2px_12px_-4px_rgba(0,0,0,0.06)]" style={{ background: 'var(--paper)' }}>
             {/* Header */}
             <div className="px-8 py-5 flex items-center gap-3 max-sm:px-5 border-b border-rule">
               <svg width={20} height={20} viewBox="0 0 24 24" fill="none" stroke="var(--signal)" strokeWidth={1.5}><path d="M9 11l3 3L22 4" /><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11" /></svg>
