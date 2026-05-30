@@ -283,6 +283,40 @@ export const processAuditFn = inngest.createFunction(
     const pipelineStartTime = Date.now()
 
     try {
+    // ── Step-level timeout helper — wraps entire step body ──
+    // Each Inngest step.run has its own Vercel 300s timeout, but
+    // promises inside can hang forever (Puppeteer, AI APIs, slow DBs).
+    // This helper wraps the step body in a Promise.race so we fail
+    // fast rather than waiting for Vercel to kill the process.
+    async function withStepTimeout<T>(
+      fn: () => Promise<T>,
+      ms: number,
+      stepName: string,
+      fallback?: T,
+    ): Promise<T> {
+      let timer: ReturnType<typeof setTimeout>
+      try {
+        return await Promise.race([
+          fn(),
+          new Promise<never>((_, reject) => {
+            timer = setTimeout(() => {
+              console.error(`[inngest] Step "${stepName}" exceeded ${ms}ms hard timeout — aborting`)
+              reject(new Error(`Step "${stepName}" timed out after ${ms}ms`))
+            }, ms)
+          }),
+        ])
+      } catch (err) {
+        clearTimeout(timer!)
+        if (fallback !== undefined) {
+          console.warn(`[inngest] Step "${stepName}" failed/timed out, using fallback:`, (err as Error)?.message)
+          return fallback
+        }
+        throw err
+      } finally {
+        clearTimeout(timer!)
+      }
+    }
+
     // ── Transparency: track audit limitations for user-facing alerts ──
     // Each flag becomes a green info alert on the audit detail page,
     // explaining what limitation the engine faced and how it adapted.
@@ -421,15 +455,24 @@ Analyze the brand materials and return findings as JSON array. Each finding:
 
 Return 2-6 findings. Be specific and evidence-based. Reference specific files/content when possible.`
 
-            const findings = await analyzeCategory(
-              brandFastResult.brandContent,
-              cat.name,
-              [],
-              auditDetails.userFocus,
-              auditDetails.language,
-              'deep',
-            )
-            return { cat, findings }
+            try {
+              const findings = await withTimeout(
+                analyzeCategory(
+                  brandFastResult.brandContent,
+                  cat.name,
+                  [],
+                  auditDetails.userFocus,
+                  auditDetails.language,
+                  'deep',
+                ),
+                45_000,
+                `brand-analyze-${cat.name}`,
+              )
+              return { cat, findings: findings || [] }
+            } catch (catErr) {
+              console.error(`[inngest] Brand category "${cat.name}" timed out/failed:`, (catErr as Error)?.message)
+              return { cat, findings: [] }
+            }
           }),
         )
 
@@ -547,7 +590,11 @@ Return 2-6 findings. Be specific and evidence-based. Reference specific files/co
 
         let pdfUrl: string | null = null
         try {
-          pdfUrl = await generatePdfReport(auditId, audit as any, reportData, findings, [])
+          pdfUrl = await withTimeout(
+            generatePdfReport(auditId, audit as any, reportData, findings, []),
+            30_000,
+            'brand-pdf-generation',
+          ) || null
         } catch (pdfErr) {
           console.error('[inngest] Brand PDF generation error (non-fatal):', pdfErr)
         }
@@ -626,7 +673,11 @@ Return 2-6 findings. Be specific and evidence-based. Reference specific files/co
       await setProgress(auditId, stageProgress('preflight', 0), 'preflight')
       await auditLog(auditId, 'preflight_started', 'info', `Pre-flight check on ${auditDetails.productUrl}`)
 
-      const preflight = await runCrawlPreflight(auditDetails.productUrl)
+      const preflight = await withTimeout(
+        runCrawlPreflight(auditDetails.productUrl),
+        15_000,
+        'crawl-preflight',
+      ) || { status: 'unreachable' as const, reason: 'Preflight check timed out after 15s', httpStatus: null, durationMs: 15000 }
 
       await auditLog(auditId, 'preflight_complete', 'info',
         `Preflight: ${preflight.status} (${preflight.durationMs}ms)`,
@@ -673,9 +724,23 @@ Return 2-6 findings. Be specific and evidence-based. Reference specific files/co
       await auditLog(auditId, 'crawl_started', 'info', `Crawling ${auditDetails.productUrl}`)
 
       const maxPages = auditDetails.plan === 'free_preview' ? 5 : auditDetails.plan === 'starter' ? 8 : 25
-      const crawlOutput = await crawlPages(auditDetails.productUrl, maxPages, async (pct, stage) => {
-        await setProgress(auditId, pct, stage)
-      })
+      // 180s hard timeout on crawl — deep mode with 25 pages can be slow,
+      // but anything beyond 3 minutes is a hung connection.
+      const CRAWL_TIMEOUT_MS = 180_000
+      const crawlOutput = await withTimeout(
+        crawlPages(auditDetails.productUrl, maxPages, async (pct, stage) => {
+          await setProgress(auditId, pct, stage)
+        }),
+        CRAWL_TIMEOUT_MS,
+        'crawl-pages',
+      )
+      if (!crawlOutput) {
+        throw new Error(
+          `TIMEOUT: Crawling ${auditDetails.productUrl} took longer than ${CRAWL_TIMEOUT_MS / 1000}s. ` +
+          `The site may be very slow to respond or have many pages that time out individually. ` +
+          `Your credit has been refunded automatically. Try again later or with fewer pages.`
+        )
+      }
       const crawledPages = crawlOutput.pages
       const crawlStats = crawlOutput.stats
 
@@ -1201,12 +1266,28 @@ Return 2-6 findings. Be specific and evidence-based. Reference specific files/co
         }
       })()
 
-      // Run all three in parallel
-      const [responsive, _pagespeed, wcag] = await Promise.all([
-        responsivePromise,
-        pagespeedPromise,
-        wcagPromise,
-      ])
+      // Run all three in parallel with a 120s master timeout.
+      // Individual checks have their own try/catch, but if Puppeteer
+      // or the PageSpeed API hangs, the Promise.all blocks forever.
+      const SITE_CHECKS_TIMEOUT_MS = 120_000
+      const [responsive, _pagespeed, wcag] = await Promise.race([
+        Promise.all([
+          responsivePromise,
+          pagespeedPromise,
+          wcagPromise,
+        ]),
+        new Promise<never>((_, reject) =>
+          setTimeout(() => reject(new Error('Parallel site checks exceeded 120s timeout')), SITE_CHECKS_TIMEOUT_MS),
+        ),
+      ]).catch(err => {
+        console.error(`[inngest] Parallel site checks failed or timed out: ${err?.message || err}`)
+        // Return safe defaults so the pipeline can continue
+        return [
+          { summary: '', findingsCount: 0 },  // responsive
+          null,                                 // pagespeed
+          { summary: '', findingsCount: 0, overallScore: 0 }, // wcag
+        ] as any
+      })
 
       // Handle transparency notes
       if (responsive.findingsCount === 0) {
@@ -2150,12 +2231,22 @@ RULES FOR RE-AUDIT:
           let findingsInGap = 0
 
           const gapResults = await Promise.all(
-            gapCategories.map((categoryName) => {
+            gapCategories.map(async (categoryName) => {
               const isBrandCategory = brandCategoryNamesBl.has(categoryName)
               const content = isBrandCategory ? brandContentBl : contentWithContextBl
-              return analyzeCategory(
-                content, categoryName, [], auditDetails.userFocus, auditDetails.language, 'deep',
-              )
+              try {
+                const result = await withTimeout(
+                  analyzeCategory(
+                    content, categoryName, [], auditDetails.userFocus, auditDetails.language, 'deep',
+                  ),
+                  45_000,
+                  `gap-fill-${categoryName}`,
+                )
+                return result || []
+              } catch (gapErr) {
+                console.error(`[inngest] Gap-fill category "${categoryName}" timed out/failed:`, (gapErr as Error)?.message)
+                return []
+              }
             }),
           )
 
@@ -2985,7 +3076,17 @@ RULES FOR RE-AUDIT:
           crawledUrls: crawledUrlSet,
         }
 
-        const { result, scoring } = await runFullReconciliation(findings, ctx)
+        const reconciliationResult = await withTimeout(
+          runFullReconciliation(findings, ctx),
+          60_000,
+          'canonical-reconciliation',
+        )
+        if (!reconciliationResult) {
+          await auditLog(auditId, 'canonical_recon_timeout', 'warning',
+            'Canonical reconciliation timed out after 60s — skipping')
+          return null
+        }
+        const { result, scoring } = reconciliationResult
 
         await auditLog(auditId, 'canonical_reconciliation_completed', 'success',
           `Canonical: ${result.summary.matched_count} matched, ${result.summary.new_count} new, ` +
@@ -3109,10 +3210,14 @@ RULES FOR RE-AUDIT:
         }
       }
 
-      // Generate PDF
+      // Generate PDF (with 30s timeout — PDF is non-fatal, report still available in dashboard)
       let pdfUrl: string | null = null
       try {
-        pdfUrl = await generatePdfReport(auditId, audit as any, reportData, findings, [])
+        pdfUrl = await withTimeout(
+          generatePdfReport(auditId, audit as any, reportData, findings, []),
+          30_000,
+          'pdf-generation',
+        ) || null
       } catch (pdfErr) {
         console.error('[inngest] PDF generation error (non-fatal):', pdfErr)
         await auditLog(auditId, 'pdf_error', 'warning', 'PDF generation failed — report is still available in dashboard')
