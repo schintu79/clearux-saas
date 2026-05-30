@@ -624,28 +624,20 @@ const NewAuditInner: React.FC = () => {
 
                   {AUDIT_MODULES.map((mod) => {
                     const selected = selectedModules.includes(mod.slug);
-                    const brandRequired = mod.requiresBrandIdentity && !includeBrandConsistency;
-                    const disabled = brandRequired;
 
                     return (
                       <button
                         key={mod.slug}
                         type="button"
-                        disabled={disabled}
-                        onClick={() => { if (!disabled) toggleModule(mod.slug); }}
-                        className={`w-full flex items-center gap-3 px-4 py-2.5 hover:bg-surface transition-colors text-left ${disabled ? 'opacity-40 cursor-not-allowed' : ''}`}
+                        onClick={() => { toggleModule(mod.slug); }}
+                        className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-surface transition-colors text-left"
                       >
                         <div className="w-4 h-4 rounded flex items-center justify-center flex-shrink-0 transition-colors"
-                          style={selected && !disabled ? { background: 'var(--ok)' } : { border: '2px solid var(--rule)' }}>
-                          {selected && !disabled && <Check size={10} className="text-white" />}
+                          style={selected ? { background: 'var(--ok)' } : { border: '2px solid var(--rule)' }}>
+                          {selected && <Check size={10} className="text-white" />}
                         </div>
                         <div className="flex-1 min-w-0">
                           <span className="text-sm text-text">{mod.name}</span>
-                          {mod.requiresBrandIdentity && (
-                            <span className="text-[11px] font-medium text-muted bg-off px-1.5 py-0.5 rounded-full ml-2">
-                              Requires brand
-                            </span>
-                          )}
                         </div>
                       </button>
                     );
@@ -669,7 +661,7 @@ const NewAuditInner: React.FC = () => {
             )}
           </div>
 
-          {/* Brand Consistency checkbox — enabled only when workspace has Brand DNA files */}
+          {/* Brand DNA comparison — opt-in to compare against uploaded brand guidelines */}
           <div className="mb-6">
             <label
               className={`flex items-center gap-3 px-4 py-3 rounded-xl cursor-pointer transition-all ${
@@ -692,19 +684,19 @@ const NewAuditInner: React.FC = () => {
               </div>
               <div className="flex-1 min-w-0">
                 <span className="text-sm font-medium" style={{ color: 'var(--ink)' }}>
-                  Include brand consistency audit
+                  Include Brand DNA comparison
                 </span>
                 {workspaceBrandHasFiles ? (
                   <p className="text-xs mt-0.5" style={{ color: 'var(--m-muted)' }}>
-                    Check website against your brand guidelines and design tokens.
+                    Compare your website against uploaded brand guidelines. Without this, Brand Consistency still runs but scores based on the website's own internal consistency.
                   </p>
                 ) : (
                   <p className="text-xs mt-0.5" style={{ color: 'var(--m-muted)' }}>
-                    Add brand identity files on the{' '}
+                    Upload brand files on the{' '}
                     <Link href={`${dashPrefix}/brand-dna`} className="font-medium hover:underline" style={{ color: 'var(--ink)' }}>
                       Brand DNA tab
                     </Link>{' '}
-                    to enable this.
+                    to enable Brand DNA comparison. Brand Consistency will still run based on your website's internal consistency.
                   </p>
                 )}
               </div>

@@ -510,7 +510,8 @@ export const UX_CATEGORIES = [
   },
 
   // ═══ MODULE 7: BRAND CONSISTENCY ═══════════════════════════
-  // Website alignment with brand identity (requires brand files)
+  // Mode A (website-only): internal consistency of tone, style, messaging
+  // Mode B (with Brand DNA): also compares against uploaded brand guidelines
   {
     name: 'Visual Identity Alignment',
     pillar: 'Brand Consistency',
@@ -1113,12 +1114,8 @@ export async function runFullAnalysis(
 
   // Determine which categories to analyze
   const selectedModules: string[] | null = (audit as any).selected_modules ?? null
-  const hasBrandIdentity = !!(audit as any).brand_identity_id
 
   function shouldAnalyze(categoryIndex: number): boolean {
-    // Brand Consistency (24-27) requires brand identity files
-    if (categoryIndex >= 24 && categoryIndex < 28 && !hasBrandIdentity) return false
-
     // If selected_modules specified, only analyze those modules
     if (selectedModules && selectedModules.length > 0) {
       for (const mod of selectedModules) {

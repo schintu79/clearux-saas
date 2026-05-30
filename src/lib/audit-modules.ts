@@ -60,10 +60,10 @@ export const AUDIT_MODULES: AuditModule[] = [
   {
     slug: 'brand_consistency',
     name: 'Brand Consistency',
-    description: 'Checks website alignment with your brand voice, visual identity, and guidelines.',
+    description: 'Evaluates brand consistency across your live website. When Brand DNA is included, also checks alignment with uploaded brand guidelines.',
     legacyPillarIndex: null,
-    requiresBrandIdentity: true,
-    includedInComplete: false,
+    requiresBrandIdentity: false,
+    includedInComplete: true,
   },
   {
     slug: 'seo_structure',
