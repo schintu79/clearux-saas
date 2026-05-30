@@ -150,11 +150,11 @@ export default function FaqContent() {
       {/* Hero */}
       <section className="py-[100px] border-b border-rule max-sm:py-16">
         <div className="max-w-mkt mx-auto px-8 max-sm:px-5">
-          <SectionMarker number="01" label="Support centre" />
-          <h1 className="font-serif font-normal text-ink leading-[0.94] tracking-[-0.025em] mb-4" style={{ fontSize: 'clamp(48px, 7vw, 96px)' }}>
+          <SectionMarker number="00" label="Support centre" />
+          <h1 className="font-serif font-normal text-ink leading-[0.94] tracking-[-0.025em] mb-8" style={{ fontSize: 'clamp(48px, 7vw, 96px)' }}>
             Frequently asked <em className="italic text-signal">questions.</em>
           </h1>
-          <p className="text-[18px] leading-[1.55] text-ink-2 max-w-[480px] mb-10 font-sans">
+          <p className="text-[19px] leading-[1.55] text-ink-2 max-w-[640px] mb-10 font-sans">
             Everything you need to know about Fixpath audits, pricing, and reports.
           </p>
 

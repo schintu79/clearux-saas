@@ -89,25 +89,21 @@ export function WhyFixpathContent() {
   return (
     <main>
       {/* Hero */}
-      <section className="py-20 sm:py-[100px] border-b border-rule">
+      <section className="py-[100px] border-b border-rule max-sm:py-16">
         <div className="max-w-mkt mx-auto px-8 max-sm:px-5">
-          <div className="max-w-[720px]">
-            <p className="font-mono text-[11px] tracking-[0.12em] uppercase text-signal mb-6">
-              Why Fixpath
-            </p>
-            <h1
-              className="font-serif font-normal text-ink leading-[0.94] tracking-[-0.025em] mb-7"
-              style={{ fontSize: 'clamp(44px, 6vw, 80px)' }}
-            >
-              Most audit tools create noise.{' '}
-              <em className="italic text-signal">We built something different.</em>
-            </h1>
-            <p className="text-[19px] leading-[1.6] text-ink-2 max-w-[600px] font-sans">
-              Fixpath exists because too many teams get generic reports full of low-signal
-              findings instead of useful truth they can act on. We built a system around
-              clarity, honest scoring, and real progress tracking.
-            </p>
-          </div>
+          <SectionMarker number="00" label="Why Fixpath" />
+          <h1
+            className="font-serif font-normal text-ink leading-[0.94] tracking-[-0.025em] mb-8"
+            style={{ fontSize: 'clamp(48px, 7vw, 96px)' }}
+          >
+            Noise is the norm.{' '}
+            <em className="italic text-signal">We built clarity.</em>
+          </h1>
+          <p className="text-[19px] leading-[1.55] text-ink-2 max-w-[640px] mb-10 font-sans">
+            Fixpath exists because too many teams get generic reports full of low-signal
+            findings instead of useful truth they can act on. We built a system around
+            clarity, honest scoring, and real progress tracking.
+          </p>
         </div>
       </section>
 

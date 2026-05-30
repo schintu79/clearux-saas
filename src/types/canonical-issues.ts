@@ -264,7 +264,7 @@ export const ISSUE_CATEGORIES = [
 
 export type IssueCategoryKey = typeof ISSUE_CATEGORIES[number]
 
-/** Maps the 24 analyzer category indices to the 7 canonical issue categories */
+/** Maps the 28 analyzer category indices to the 7 canonical issue categories */
 export const CATEGORY_INDEX_TO_KEY: Record<number, IssueCategoryKey> = {
   // Foundation (0-3)
   0: 'ux',            // Visual Design & First Impression
@@ -291,11 +291,16 @@ export const CATEGORY_INDEX_TO_KEY: Record<number, IssueCategoryKey> = {
   17: 'discoverability', // Structured Data
   18: 'discoverability', // Crawler Optimization
   19: 'discoverability', // Search Discoverability
-  // Brand Consistency (20-23)
-  20: 'brand',        // Identity Consistency
-  21: 'brand',        // Messaging Consistency
-  22: 'brand',        // Visual System
-  23: 'brand',        // Tone of Voice
+  // Accessibility Readiness (20-23)
+  20: 'accessibility', // Perceivable — Text Alternatives & Contrast
+  21: 'accessibility', // Operable — Keyboard & Navigation
+  22: 'accessibility', // Understandable — Labels & Errors
+  23: 'accessibility', // Robust — ARIA & Semantic HTML
+  // Brand Consistency (24-27)
+  24: 'brand',        // Visual Identity Alignment
+  25: 'brand',        // Voice & Tone Alignment
+  26: 'brand',        // Messaging & Value Prop Alignment
+  27: 'brand',        // Brand Standards Compliance
 }
 
 /* ── Scoring Constants ───────────────────────────────────────── */

@@ -1,35 +1,32 @@
 import { Button } from './Button'
+import { SectionMarker } from './SectionMarker'
 import { ArrowRightIcon } from './icons'
 
 export function HomeHero() {
   return (
-    <section className="py-20 sm:py-[100px] border-b border-rule">
+    <section className="py-[100px] border-b border-rule max-sm:py-16">
       <div className="max-w-mkt mx-auto px-8 max-sm:px-5">
-        <div className="max-w-[780px]">
-          <p className="font-mono text-[11px] tracking-[0.12em] uppercase text-signal mb-6">
-            A decision engine for real website issues
-          </p>
-          <h1
-            className="font-serif font-normal text-ink leading-[0.94] tracking-[-0.025em] mb-7"
-            style={{ fontSize: 'clamp(48px, 6.5vw, 88px)' }}
-          >
-            See what is actually hurting trust.{' '}
-            <em className="italic text-signal">Fix what matters.</em>
-          </h1>
-          <p className="text-[19px] leading-[1.6] text-ink-2 max-w-[600px] mb-10 font-sans">
-            Fixpath finds real issues across clarity, trust, accessibility, and technical quality
-            — prioritizes them by impact, gives you fix guidance, and tracks whether
-            things improve. No noise. No inflated scores. Just useful truth.
-          </p>
-          <div className="flex gap-3.5 max-sm:flex-col max-sm:items-stretch">
-            <Button href="/register" size="large">
-              Start free audit
-              <ArrowRightIcon size={14} />
-            </Button>
-            <Button href="/how-it-works" variant="ghost" size="large">
-              See how it works
-            </Button>
-          </div>
+        <SectionMarker number="00" label="Website audit engine" />
+        <h1
+          className="font-serif font-normal text-ink leading-[0.94] tracking-[-0.025em] mb-8"
+          style={{ fontSize: 'clamp(48px, 7vw, 96px)' }}
+        >
+          Find what hurts trust.{' '}
+          <em className="italic text-signal">Fix what matters.</em>
+        </h1>
+        <p className="text-[19px] leading-[1.55] text-ink-2 max-w-[640px] font-sans mb-10">
+          Fixpath finds real issues across clarity, trust, accessibility, and technical quality
+          — prioritizes them by impact, gives you fix guidance, and tracks whether
+          things improve. No noise. No inflated scores. Just useful truth.
+        </p>
+        <div className="flex gap-3.5 max-sm:flex-col max-sm:items-stretch">
+          <Button href="/register">
+            Start free audit
+            <ArrowRightIcon size={14} />
+          </Button>
+          <Button href="/how-it-works" variant="ghost">
+            See how it works
+          </Button>
         </div>
 
         {/* Dashboard preview — mirrors real Fixpath overview layout */}

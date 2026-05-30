@@ -217,21 +217,24 @@ export function ProductContent() {
   return (
     <main>
       {/* Hero */}
-      <section className="py-20 sm:py-[100px] border-b border-rule">
+      <section className="py-[100px] border-b border-rule max-sm:py-16">
         <div className="max-w-mkt mx-auto px-8 max-sm:px-5">
-          <div className="max-w-[680px]">
-            <p className="font-mono text-[11px] tracking-[0.12em] uppercase text-signal mb-6">The product</p>
-            <h1 className="font-serif font-normal text-ink leading-[0.94] tracking-[-0.025em] mb-6" style={{ fontSize: 'clamp(44px, 6vw, 80px)' }}>
-              From real issues to{' '}
-              <em className="italic text-signal">real improvement.</em>
-            </h1>
-            <p className="text-[18px] leading-[1.6] text-ink-2 font-sans mb-9">
-              Fixpath is not just an audit tool. It is the complete system from issue detection
-              to fix guidance to progress verification — built around truth, not noise.
-            </p>
-            <Button href="/register" size="large">
+          <SectionMarker number="00" label="The product" />
+          <h1 className="font-serif font-normal text-ink leading-[0.94] tracking-[-0.025em] mb-8" style={{ fontSize: 'clamp(48px, 7vw, 96px)' }}>
+            From real issues to{' '}
+            <em className="italic text-signal">real improvement.</em>
+          </h1>
+          <p className="text-[19px] leading-[1.55] text-ink-2 max-w-[640px] font-sans mb-10">
+            Fixpath is not just an audit tool. It is the complete system from issue detection
+            to fix guidance to progress verification — built around truth, not noise.
+          </p>
+          <div className="flex gap-3.5 max-sm:flex-col max-sm:items-stretch">
+            <Button href="/register">
               Start free audit
               <ArrowRightIcon size={14} />
+            </Button>
+            <Button href="/how-it-works" variant="ghost">
+              See how it works
             </Button>
           </div>
         </div>

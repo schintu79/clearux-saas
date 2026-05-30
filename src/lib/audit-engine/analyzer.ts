@@ -1115,7 +1115,12 @@ export async function runFullAnalysis(
   // Determine which categories to analyze
   const selectedModules: string[] | null = (audit as any).selected_modules ?? null
 
+  const hasBrandIdentity = !!(audit as any).brand_identity_id
+
   function shouldAnalyze(categoryIndex: number): boolean {
+    // Brand Consistency (24-27) requires brand identity material — skip without it
+    if (categoryIndex >= 24 && categoryIndex < 28 && !hasBrandIdentity) return false
+
     // If selected_modules specified, only analyze those modules
     if (selectedModules && selectedModules.length > 0) {
       for (const mod of selectedModules) {
@@ -1311,7 +1316,7 @@ export async function generateReport(
       })
       return cats.length > 0 ? Math.round(cats.reduce((s, c) => s + c.score, 0) / cats.length) : 50
     }
-    const allScores = categoryScores.map(c => c.score)
+    const allScores = categoryScores.filter(c => c.score >= 0).map(c => c.score)
     const overallScore = allScores.length > 0
       ? Math.round(allScores.reduce((s, v) => s + v, 0) / allScores.length)
       : prev.previousOverallScore
@@ -1366,9 +1371,12 @@ export async function generateReport(
     brand_consistency: [24, 28],
   }
   function wasAnalyzed(idx: number): boolean {
+    // Brand Consistency (24-27) requires brand identity material — skip without it
     if (idx >= 24 && idx < 28 && !hasBrandIdentity) return false
     if (selectedModules && selectedModules.length > 0) {
       for (const mod of selectedModules) {
+        // Also skip brand_consistency in selectedModules when no brand identity
+        if (mod === 'brand_consistency' && !hasBrandIdentity) continue
         const r = MODULE_RANGES[mod]
         if (r && idx >= r[0] && idx < r[1]) return true
       }

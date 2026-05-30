@@ -1,5 +1,7 @@
 'use client'
 
+import { SectionMarker } from '@/components/marketing/SectionMarker'
+
 /* ── Static placeholder entries (will be replaced by Supabase CMS) ── */
 const ENTRIES = [
   {
@@ -48,14 +50,14 @@ export function ChangelogContent() {
   return (
     <main>
       {/* Hero */}
-      <section className="py-20 sm:py-[100px] border-b border-rule">
+      <section className="py-[100px] border-b border-rule max-sm:py-16">
         <div className="max-w-mkt mx-auto px-8 max-sm:px-5">
-          <p className="font-mono text-[11px] tracking-[0.12em] uppercase text-signal mb-6">Changelog</p>
-          <h1 className="font-serif font-normal text-ink leading-[0.94] tracking-[-0.025em] mb-6" style={{ fontSize: 'clamp(44px, 6vw, 80px)' }}>
+          <SectionMarker number="00" label="Changelog" />
+          <h1 className="font-serif font-normal text-ink leading-[0.94] tracking-[-0.025em] mb-8" style={{ fontSize: 'clamp(48px, 7vw, 96px)' }}>
             What&apos;s{' '}
             <em className="italic text-signal">new.</em>
           </h1>
-          <p className="text-[18px] leading-[1.6] text-ink-2 max-w-[560px] font-sans">
+          <p className="text-[19px] leading-[1.55] text-ink-2 max-w-[640px] mb-10 font-sans">
             Product updates, new features, and improvements to Fixpath.
           </p>
         </div>

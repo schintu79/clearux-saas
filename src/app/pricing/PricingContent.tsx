@@ -37,11 +37,11 @@ export default function PricingContent() {
       {/* Hero */}
       <section className="py-[100px] border-b border-rule max-sm:py-16">
         <div className="max-w-mkt mx-auto px-8 max-sm:px-5">
-          <SectionMarker number="01" label="Pricing" />
-          <h1 className="font-serif font-normal text-ink leading-[0.94] tracking-[-0.025em] mb-6" style={{ fontSize: 'clamp(44px, 6vw, 80px)' }}>
+          <SectionMarker number="00" label="Pricing" />
+          <h1 className="font-serif font-normal text-ink leading-[0.94] tracking-[-0.025em] mb-8" style={{ fontSize: 'clamp(48px, 7vw, 96px)' }}>
             Plans that <em className="italic text-signal">scale with you.</em>
           </h1>
-          <p className="text-[18px] leading-[1.6] text-ink-2 max-w-[600px] mb-10 font-sans">
+          <p className="text-[19px] leading-[1.55] text-ink-2 max-w-[640px] mb-10 font-sans">
             Every plan includes the full 112-checkpoint audit across seven modules, concrete fix guidance, and progress tracking. Subscribe for ongoing monitoring or buy credit packs for project work. First audit free, always.
           </p>
 
