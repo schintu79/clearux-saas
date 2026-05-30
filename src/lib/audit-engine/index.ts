@@ -486,6 +486,9 @@ async function _processAuditInner(auditId: string): Promise<void> {
         .insert({
           audit_id: auditId,
           checklist_item_id: null,
+          category_index: finding.categoryIndex ?? null,
+          finding_type: finding.findingType || 'specific',
+          fix_type: finding.fixType || null,
           severity: finding.severity,
           title: finding.title,
           description: finding.description,

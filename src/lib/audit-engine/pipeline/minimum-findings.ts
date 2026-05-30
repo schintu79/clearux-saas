@@ -49,7 +49,8 @@ const MODULE_RANGES: Record<string, [number, number]> = {
   inclusive_design: [8, 12],
   future_readiness: [12, 16],
   seo_structure: [16, 20],
-  brand_consistency: [20, 24],
+  accessibility_readiness: [20, 24],
+  brand_consistency: [24, 28],
 }
 
 /**
