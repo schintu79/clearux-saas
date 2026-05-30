@@ -75,10 +75,26 @@ export async function DELETE(
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-  // Soft delete: archive the workspace
+  // Soft delete: archive the workspace and release the slug so it can be reused.
+  // Append _archived_<timestamp> to the slug to free the original clean name.
+  const { data: ws } = await supabase
+    .from('workspaces')
+    .select('slug')
+    .eq('id', id)
+    .eq('user_id', user.id)
+    .single()
+
+  const releasedSlug = ws?.slug
+    ? `${ws.slug}_archived_${Date.now()}`
+    : `archived_${Date.now()}`
+
   const { error } = await supabase
     .from('workspaces')
-    .update({ status: 'archived', archived_at: new Date().toISOString() })
+    .update({
+      status: 'archived',
+      archived_at: new Date().toISOString(),
+      slug: releasedSlug,
+    })
     .eq('id', id)
     .eq('user_id', user.id)
 

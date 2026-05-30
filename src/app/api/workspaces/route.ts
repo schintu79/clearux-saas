@@ -56,19 +56,22 @@ export async function POST(request: NextRequest) {
   let baseSlug = slugify(name || primary_domain || 'workspace')
   if (!baseSlug) baseSlug = 'workspace'
 
-  // Try the clean slug first, then increment if collision
+  // Try the clean slug first, then increment if collision.
+  // Only check ACTIVE workspaces — archived/deleted ones should not reserve slugs.
   let slug = baseSlug
   const { count } = await supabase
     .from('workspaces')
     .select('id', { count: 'exact', head: true })
     .eq('slug', slug)
+    .eq('status', 'active')
 
   if (count && count > 0) {
-    // Find the next available number
+    // Find the next available number among active workspaces only
     const { data: existing } = await supabase
       .from('workspaces')
       .select('slug')
       .like('slug', `${baseSlug}%`)
+      .eq('status', 'active')
     const taken = new Set((existing || []).map((w: any) => w.slug))
     let suffix = 2
     while (taken.has(`${baseSlug}-${suffix}`)) suffix++

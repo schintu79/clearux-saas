@@ -73,7 +73,7 @@ function WorkspaceSwitcherInner() {
   }, [authLoading, user, loadWorkspaces]);
 
   const handleCreate = async () => {
-    if (!newName.trim()) return;
+    if (!newName.trim() || !newDomain.trim()) return;
     setCreating(true);
     try {
       const res = await fetch('/api/workspaces', {
@@ -90,7 +90,7 @@ function WorkspaceSwitcherInner() {
         setShowCreate(false);
         setNewName('');
         setNewDomain('');
-        router.push(`/dashboard/${data.workspace.slug}/overview`);
+        router.push(`/dashboard/${data.workspace.slug}/new-audit`);
       }
     } catch {}
     setCreating(false);
@@ -168,7 +168,7 @@ function WorkspaceSwitcherInner() {
             </div>
             <div className="flex-1">
               <label className="block text-[11px] font-medium mb-1.5 uppercase tracking-wide" style={{ color: 'var(--m-muted)' }}>
-                Domain (optional)
+                Website URL
               </label>
               <input
                 type="text"
@@ -183,7 +183,7 @@ function WorkspaceSwitcherInner() {
             <div className="flex items-end">
               <button
                 onClick={handleCreate}
-                disabled={creating || !newName.trim()}
+                disabled={creating || !newName.trim() || !newDomain.trim()}
                 className="px-4 py-2 rounded-md text-[13px] font-medium transition-all hover:opacity-90 disabled:opacity-50 whitespace-nowrap"
                 style={{ background: 'var(--ink)', color: 'var(--paper)' }}
               >
