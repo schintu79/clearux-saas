@@ -31,7 +31,7 @@ export function Pricing() {
             One tool. <em className="italic text-signal">Two ways in.</em>
           </h2>
           <p className="text-[18px] text-ink-2 max-w-[560px] mx-auto leading-[1.55] mb-10 font-sans">
-            Subscribe for regular audits, or buy credit packs when you need them. Every audit gets all 96 checkpoints, all 6 modules, full exports. First audit free, always.
+            Subscribe for regular audits, or buy credit packs when you need them. Every audit gets all 112 checkpoints, all 7 modules, full exports. First audit free, always.
           </p>
 
           {/* Mode toggle */}
@@ -214,8 +214,8 @@ export function Pricing() {
         {/* Bottom features row — contextual per mode */}
         <div className="flex justify-center gap-10 mt-12 font-mono text-[11px] text-m-muted tracking-[0.08em] uppercase flex-wrap max-sm:flex-col max-sm:gap-4">
           {(mode === 'subscribe'
-            ? ['96 checkpoints', 'PDF + Word export', 'Unlimited re-audits']
-            : ['First audit free', '96 checkpoints', 'Credits never expire']
+            ? ['112 checkpoints', 'PDF + Word export', 'Unlimited re-audits']
+            : ['First audit free', '112 checkpoints', 'Credits never expire']
           ).map((f) => (
             <span key={f} className="before:content-['◆_'] before:text-signal">{f}</span>
           ))}

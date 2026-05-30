@@ -37,7 +37,7 @@ export function Coda() {
               className="text-[18px] leading-[1.55] mb-11 font-sans"
               style={{ color: isDark ? 'var(--m-muted)' : 'color-mix(in srgb, var(--paper) 78%, transparent)' }}
             >
-              The first one is free, no expiration, no credit card. By the time your stand-up ends tomorrow, you&apos;ll have 96 checkpoints, ranked findings, and a sprint&apos;s worth of work that actually moves the score.
+              The first one is free, no expiration, no credit card. By the time your stand-up ends tomorrow, you&apos;ll have 112 checkpoints, ranked findings, and a sprint&apos;s worth of work that actually moves the score.
             </p>
             <a
               href="/register"
@@ -56,7 +56,7 @@ export function Coda() {
             color: isDark ? 'var(--m-muted)' : 'color-mix(in srgb, var(--paper) 45%, transparent)',
           }}
         >
-          <span>End of edition · 96 / 6 / 99</span>
+          <span>End of edition · 112 / 7 / 99</span>
           <span>Audits delivered in minutes</span>
         </div>
       </div>

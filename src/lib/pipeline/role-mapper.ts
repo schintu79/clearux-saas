@@ -14,7 +14,7 @@ import type {
 } from '@/types/database'
 
 // ── Category-to-role mapping ─────────────────────────────────
-// Maps each of the 24 category indices to the stakeholder roles
+// Maps each of the 28 category indices to the stakeholder roles
 // that should see findings from that category.
 // Some categories map to multiple roles.
 

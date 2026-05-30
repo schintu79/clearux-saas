@@ -205,7 +205,7 @@ export default function BestUxAuditToolsPage() {
               Lighthouse and axe as part of their development workflow. But
               they cover only one of the{' '}
               <Link href="/ux-audit-checklist" className="text-text font-medium underline decoration-brand decoration-2 underline-offset-2 hover:opacity-70 transition-opacity">
-                six modules of a complete UX audit
+                seven modules of a complete UX audit
               </Link>
               . Treating them as a full audit solution leaves usability
               problems, conversion issues, and ethical concerns completely
@@ -227,8 +227,8 @@ export default function BestUxAuditToolsPage() {
               scanners miss.
             </p>
             <p className="text-text/80 leading-relaxed mb-4">
-              Fixpath falls into this category. It evaluates 24 categories
-              across all six modules, produces scored reports with specific
+              Fixpath falls into this category. It evaluates 28 categories
+              across all seven modules, produces scored reports with specific
               recommendations, and lets teams track improvements over time.
               The audit takes minutes instead of weeks and costs a fraction of
               a consultancy engagement.
@@ -242,11 +242,11 @@ export default function BestUxAuditToolsPage() {
                 <ul className="space-y-2 text-text/80 text-sm leading-relaxed">
                   <li className="flex gap-2">
                     <Target size={14} className="text-brand mt-1 shrink-0" />
-                    All 6 modules: accessibility, usability, conversion, ethical design
+                    All 7 modules: accessibility, usability, conversion, ethical design
                   </li>
                   <li className="flex gap-2">
                     <Target size={14} className="text-brand mt-1 shrink-0" />
-                    24 categories with individual scores and issue-level detail
+                    28 categories with individual scores and issue-level detail
                   </li>
                   <li className="flex gap-2">
                     <Target size={14} className="text-brand mt-1 shrink-0" />
@@ -303,7 +303,7 @@ export default function BestUxAuditToolsPage() {
                 </thead>
                 <tbody className="divide-y divide-border bg-card">
                   {[
-                    ['Scope', '6 modules (subjective)', 'Accessibility only', '6 modules (24 categories)'],
+                    ['Scope', '7 modules (subjective)', 'Accessibility only', '7 modules (28 categories)'],
                     ['Turnaround', '2-6 weeks', 'Seconds', 'Minutes'],
                     ['Cost per audit', '$5,000-$30,000+', 'Free / low', 'From $0 (free tier)'],
                     ['Consistency', 'Varies by consultant', 'High (rule-based)', 'High (AI + rules)'],

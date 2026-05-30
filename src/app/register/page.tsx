@@ -255,7 +255,7 @@ function RegisterContent() {
                 Get your free <em className="italic text-signal">UX audit.</em>
               </h1>
               <p className="font-sans text-[15px] text-ink-2 leading-[1.6]">
-                96 checkpoints across 6 modules. No credit card required. Your first audit is free — no catches.
+                112 checkpoints across 7 modules. No credit card required. Your first audit is free — no catches.
               </p>
             </div>
 
@@ -496,7 +496,7 @@ function RegisterContent() {
               {faqOpen && (
                 <div className="mt-2 p-5 border border-rule bg-paper-2">
                   <p className="text-[13px] font-sans text-ink-2 leading-relaxed">
-                    You&apos;ll land on your dashboard where you can paste any website URL. Our AI crawls and analyses it across 96 checkpoints in 6 modules in under 10 minutes. You get an interactive report plus PDF and Word downloads — your first audit is completely free.
+                    You&apos;ll land on your dashboard where you can paste any website URL. Our AI crawls and analyses it across 112 checkpoints in 7 modules in under 10 minutes. You get an interactive report plus PDF and Word downloads — your first audit is completely free.
                   </p>
                 </div>
               )}

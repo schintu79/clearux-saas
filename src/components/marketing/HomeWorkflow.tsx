@@ -39,7 +39,7 @@ export function HomeWorkflow() {
             <StepNumber n="1" />
             <h3 className="font-sans text-[20px] font-semibold text-ink mt-5 mb-3">Find</h3>
             <p className="font-sans text-[15px] text-ink-2 leading-[1.65] mb-6">
-              Fixpath crawls your pages, runs 96 checkpoints across six modules,
+              Fixpath crawls your pages, runs 112 checkpoints across seven modules,
               and delivers severity-ranked findings with evidence from your actual
               content. Most audits complete in under ten minutes.
             </p>

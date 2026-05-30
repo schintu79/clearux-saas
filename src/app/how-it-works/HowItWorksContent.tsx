@@ -310,6 +310,7 @@ function MockCategoryScores() {
     { name: 'Human Experience', score: 62, dot: '#EC4899' },
     { name: 'Inclusive Design', score: 74, dot: '#10B981' },
     { name: 'Future Readiness', score: 55, dot: '#F59E0B' },
+    { name: 'Accessibility Readiness', score: 68, dot: '#8B5CF6' },
     { name: 'Brand Consistency', score: 78, dot: '#3B82F6' },
     { name: 'SEO Structure', score: 70, dot: '#06B6D4' },
   ]
@@ -341,6 +342,7 @@ function MockRadarChart() {
     { name: 'Human Experience', score: 75, color: '#EC4899' },
     { name: 'Inclusive Design', score: 75, color: '#F59E0B' },
     { name: 'Future Readiness', score: 75, color: '#2D6A4F' },
+    { name: 'Accessibility Readiness', score: 68, color: '#8B5CF6' },
     { name: 'SEO Structure', score: 76, color: '#06B6D4' },
     { name: 'Brand Consistency', score: 75, color: '#10B981' },
   ]
@@ -553,13 +555,13 @@ const AI_CARDS: HighlightCard[] = [
 const UX_CARDS: HighlightCard[] = [
   {
     label: 'Score overview',
-    title: '6 modules, 96 checkpoints',
+    title: '7 modules, 112 checkpoints',
     desc: 'Your whole site scored in one view — usability, accessibility, content quality, SEO, and AI readiness.',
     visual: <MockCategoryScores />,
   },
   {
     label: 'Heuristic radar',
-    title: 'Your site across 6 dimensions',
+    title: 'Your site across 7 dimensions',
     desc: 'See how your site scores on every audit pillar — spot weak areas and imbalances before users do.',
     visual: <MockRadarChart />,
   },
@@ -657,14 +659,14 @@ function FeatureSection({ marker, label, title, titleAccent, desc, features, vis
    ═══════════════════════════════════════════════════════════════ */
 
 const STEPS = [
-  { num: '01', title: 'Enter your URL', desc: 'Paste your website address. Fixpath crawls every page, checks 96 things across six modules, and delivers results in minutes.' },
+  { num: '01', title: 'Enter your URL', desc: 'Paste your website address. Fixpath crawls every page, checks 112 things across seven modules, and delivers results in minutes.' },
   { num: '02', title: 'See what matters', desc: 'Real issues ranked by severity. Each finding includes evidence from your actual site, affected pages, and a concrete fix recommendation.' },
   { num: '03', title: 'Fix and track', desc: 'Apply fixes directly, export recommendations, or hand off to your team. Re-audit to verify improvements and track progress over time.' },
 ]
 
 
 /* ═══════════════════════════════════════════════════════════════
-   SIX MODULES
+   SEVEN MODULES
    ═══════════════════════════════════════════════════════════════ */
 
 const MODULES = [
@@ -672,8 +674,9 @@ const MODULES = [
   { num: '02', title: 'Human Experience', desc: 'Does your site respect users? We look for confusing layouts, dark patterns, pressure tactics, and anything that makes people leave.', count: 22 },
   { num: '03', title: 'Inclusive Design', desc: 'Can everyone use your site? Accessibility, mobile support, screen readers, touch targets, and cognitive accessibility — all checked.', count: 18 },
   { num: '04', title: 'Future Readiness', desc: 'Can AI understand your site? We test how AI models read your content, plus performance, structured data, and agent compatibility.', count: 14 },
-  { num: '05', title: 'Brand Consistency', desc: 'Does your site match your brand? We compare what you say your brand is against what is actually live — colors, tone, logo usage, and more.', count: 14 },
-  { num: '06', title: 'SEO Structure', desc: 'Can search engines find and rank you? Headings, meta tags, structured data, and crawlability — the technical foundation of being discoverable.', count: 12 },
+  { num: '05', title: 'Accessibility Readiness', desc: 'How mature is your accessibility practice? We evaluate compliance depth, assistive technology support, and organisational readiness beyond baseline checks.', count: 16 },
+  { num: '06', title: 'Brand Consistency', desc: 'Does your site match your brand? We compare what you say your brand is against what is actually live — colors, tone, logo usage, and more.', count: 14 },
+  { num: '07', title: 'SEO Structure', desc: 'Can search engines find and rank you? Headings, meta tags, structured data, and crawlability — the technical foundation of being discoverable.', count: 12 },
 ]
 
 
@@ -1092,18 +1095,18 @@ export default function HowItWorksContent() {
         </div>
       </section>
 
-      {/* ── Six modules ──────────────────────────────────────── */}
+      {/* ── Seven modules ─────────────────────────────────────── */}
       <section className="py-[100px] border-b border-rule max-sm:py-16">
         <div className="max-w-mkt mx-auto px-8 max-sm:px-5">
           <div className="mb-16 grid lg:grid-cols-[1fr_1.2fr] gap-20 items-end max-lg:grid-cols-1 max-lg:gap-6">
             <div>
               <SectionMarker number="07" label="The instrument" />
               <h2 className="font-serif font-normal text-ink leading-[0.98] tracking-[-0.022em]" style={{ fontSize: 'clamp(40px, 5vw, 72px)' }}>
-                Six modules. <em className="italic text-signal">96</em> checkpoints.
+                Seven modules. <em className="italic text-signal">112</em> checkpoints.
               </h2>
             </div>
             <p className="text-[17px] text-ink-2 leading-[1.55] max-w-[540px] font-sans">
-              Every audit checks all six modules. No features locked behind paid plans. You always get the full picture.
+              Every audit checks all seven modules. No features locked behind paid plans. You always get the full picture.
             </p>
           </div>
           <div className="grid grid-cols-3 border-t border-l border-ink max-md:grid-cols-2 max-sm:grid-cols-1">
@@ -1157,11 +1160,11 @@ export default function HowItWorksContent() {
         <div className="max-w-mkt mx-auto px-8 max-sm:px-5">
           <div className="grid sm:grid-cols-4 gap-8 sm:gap-0 sm:divide-x sm:divide-rule">
             <div className="text-center sm:px-6">
-              <p className="font-serif text-[48px] text-ink tracking-[-0.02em] leading-none mb-2">96</p>
+              <p className="font-serif text-[48px] text-ink tracking-[-0.02em] leading-none mb-2">112</p>
               <p className="font-mono text-[11px] text-m-muted tracking-[0.08em] uppercase">Checkpoints per audit</p>
             </div>
             <div className="text-center sm:px-6">
-              <p className="font-serif text-[48px] text-ink tracking-[-0.02em] leading-none mb-2">6</p>
+              <p className="font-serif text-[48px] text-ink tracking-[-0.02em] leading-none mb-2">7</p>
               <p className="font-mono text-[11px] text-m-muted tracking-[0.08em] uppercase">Modules</p>
             </div>
             <div className="text-center sm:px-6">
@@ -1180,8 +1183,8 @@ export default function HowItWorksContent() {
       <FaqPreview
         sectionNumber="08"
         items={[
-          { q: 'What does the audit cover?', a: 'We evaluate 24 categories across six modules: Foundation (the structural and technical baseline), Human Experience (how your product feels to use), Inclusive Design (accessibility and equity), Future Readiness (AI discoverability), Brand Consistency (whether what users see matches the brand), and SEO Structure (findability and rankings).' },
-          { q: 'How does the AI analysis work?', a: 'Our engine crawls your site, then runs each page through specialised AI models trained on UX best practices, WCAG guidelines, dark pattern databases, and conversion research. Each page is evaluated across six modules and 96 checkpoints. Every finding includes severity scoring, evidence, and a specific recommendation.' },
+          { q: 'What does the audit cover?', a: 'We evaluate 28 categories across seven modules: Foundation (the structural and technical baseline), Human Experience (how your product feels to use), Inclusive Design (accessibility and equity), Future Readiness (AI discoverability), Accessibility Readiness (compliance depth and assistive technology support), Brand Consistency (whether what users see matches the brand), and SEO Structure (findability and rankings).' },
+          { q: 'How does the AI analysis work?', a: 'Our engine crawls your site, then runs each page through specialised AI models trained on UX best practices, WCAG guidelines, dark pattern databases, and conversion research. Each page is evaluated across seven modules and 112 checkpoints. Every finding includes severity scoring, evidence, and a specific recommendation.' },
           { q: 'What AI powers the audits?', a: "Fixpath uses Anthropic's Claude as its core analysis engine — but the AI is only the final layer. Behind every audit is a proprietary evaluation framework built on years of UX research, accessibility consulting, and conversion optimisation." },
           { q: 'What format is the report?', a: 'You get a professional PDF and a Word document (DOCX). Both include an overall score, executive summary, top 3 priority recommendations, module score breakdown, and detailed findings ranked by severity with specific recommendations and impact estimates.' },
           { q: 'Can I re-audit the same website to measure improvement?', a: "Absolutely. Re-auditing the same URL is the best way to prove progress. Your dashboard shows re-audit badges and your stats track average scores over time. Audit the same site before and after implementing fixes to see your score improve." },

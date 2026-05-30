@@ -7,9 +7,9 @@ import { Sparkles, ArrowRight, CheckCircle } from 'lucide-react'
 const BASE_URL = process.env.NEXT_PUBLIC_APP_URL ?? 'https://www.fixpath.ai'
 
 export const metadata: Metadata = {
-  title: 'UX Audit Checklist: 24 Categories Across 6 Modules | Fixpath',
+  title: 'UX Audit Checklist: 28 Categories Across 7 Modules | Fixpath',
   description:
-    'A comprehensive UX audit checklist organized by 6 modules and 24 categories. Use this template to evaluate accessibility, usability, conversion, and ethical design — or let Fixpath automate it.',
+    'A comprehensive UX audit checklist organized by 7 modules and 28 categories. Use this template to evaluate accessibility, usability, conversion, and ethical design — or let Fixpath automate it.',
   keywords: [
     'ux audit checklist',
     'ux audit template',
@@ -20,7 +20,7 @@ export const metadata: Metadata = {
   ],
   alternates: { canonical: `${BASE_URL}/ux-audit-checklist` },
   openGraph: {
-    title: 'UX Audit Checklist: 24 Categories Across 6 Modules',
+    title: 'UX Audit Checklist: 28 Categories Across 7 Modules',
     description:
       'The complete UX audit checklist used by Fixpath, covering accessibility, usability, conversion, and ethical design.',
     url: `${BASE_URL}/ux-audit-checklist`,
@@ -32,7 +32,7 @@ export const metadata: Metadata = {
 const jsonLd = {
   '@context': 'https://schema.org',
   '@type': 'Article',
-  headline: 'UX Audit Checklist: 24 Categories Across 6 Modules',
+  headline: 'UX Audit Checklist: 28 Categories Across 7 Modules',
   description:
     'The complete UX audit checklist used by Fixpath, covering accessibility, usability, conversion, and ethical design.',
   url: `${BASE_URL}/ux-audit-checklist`,
@@ -168,7 +168,34 @@ const pillars: { title: string; intro: string; categories: Category[] }[] = [
     ],
   },
   {
-    title: 'Module 5: Brand Consistency',
+    title: 'Module 5: Accessibility Readiness',
+    intro:
+      'Accessibility Readiness goes beyond baseline compliance to evaluate how deeply accessibility is embedded in your product and process. These four categories assess organisational maturity and assistive technology support.',
+    categories: [
+      {
+        name: 'Compliance Depth & Standards Alignment',
+        description:
+          'Evaluate alignment with WCAG 2.2 AA and emerging standards beyond the minimum. Check whether accessibility requirements are documented, tested, and verified across all critical user flows.',
+      },
+      {
+        name: 'Assistive Technology Support',
+        description:
+          'Test compatibility with screen readers (NVDA, VoiceOver, JAWS), switch access, voice control, and magnification tools. Ensure interactive components announce state changes and provide meaningful feedback.',
+      },
+      {
+        name: 'Accessibility Governance & Process',
+        description:
+          'Assess whether accessibility is part of design reviews, QA checklists, and acceptance criteria. Check for documented accessibility policies, assigned ownership, and regular audit cadence.',
+      },
+      {
+        name: 'Inclusive Testing & User Feedback',
+        description:
+          'Evaluate whether the team includes people with disabilities in usability testing. Check for feedback channels, accessibility bug triage processes, and response time commitments.',
+      },
+    ],
+  },
+  {
+    title: 'Module 6: Brand Consistency',
     intro:
       'Brand Consistency examines whether every touchpoint reinforces a cohesive identity. Inconsistent design erodes trust and makes products feel unfinished.',
     categories: [
@@ -195,7 +222,7 @@ const pillars: { title: string; intro: string; categories: Category[] }[] = [
     ],
   },
   {
-    title: 'Module 6: SEO Structure',
+    title: 'Module 7: SEO Structure',
     intro:
       'SEO Structure ensures your product is discoverable and correctly interpreted by search engines. Technical SEO and content structure directly impact organic visibility.',
     categories: [
@@ -235,7 +262,7 @@ export default function UxAuditChecklistPage() {
         <article className="max-w-3xl mx-auto px-4 py-16 sm:py-24">
           {/* ── H1 ── */}
           <h1 className="font-heading font-medium text-3xl sm:text-4xl text-text mb-6">
-            The Complete UX Audit Checklist: 24 Categories, 6 Modules
+            The Complete UX Audit Checklist: 28 Categories, 7 Modules
           </h1>
           <p className="text-lg text-muted mb-12 leading-relaxed">
             Running a{' '}
@@ -244,10 +271,10 @@ export default function UxAuditChecklistPage() {
             </Link>{' '}
             without a checklist is like performing a code review without
             linting rules — you will catch some issues, but you will miss far
-            more. This UX audit checklist covers the 24 categories that
-            Fixpath evaluates, organized into six modules: Foundation, Human
-            Experience, Inclusive Design, Future Readiness, Brand Consistency,
-            and SEO Structure. Use it as a template for manual reviews, or
+            more. This UX audit checklist covers the 28 categories that
+            Fixpath evaluates, organized into seven modules: Foundation, Human
+            Experience, Inclusive Design, Future Readiness, Accessibility Readiness,
+            Brand Consistency, and SEO Structure. Use it as a template for manual reviews, or
             let Fixpath automate the entire process.
           </p>
 
@@ -336,7 +363,7 @@ export default function UxAuditChecklistPage() {
               Automate this entire checklist
             </h2>
             <p className="text-muted mb-6">
-              Fixpath evaluates all 24 categories automatically and delivers
+              Fixpath evaluates all 28 categories automatically and delivers
               a scored, shareable report in minutes.
             </p>
             <Link

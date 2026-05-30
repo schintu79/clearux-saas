@@ -14,7 +14,7 @@ export function Hero() {
               The UX audit platform that finds what you{' '}<em className="italic text-signal">miss.</em>
             </h1>
             <p className="text-[19px] leading-[1.55] text-ink-2 max-w-[520px] mb-10 font-sans">
-              Audit your website, brand identity, and AI visibility in one place. <strong className="font-semibold text-ink">96 checkpoints, 6 modules</strong> — severity-ranked findings with evidence and fixes, delivered in minutes.
+              Audit your website, brand identity, and AI visibility in one place. <strong className="font-semibold text-ink">112 checkpoints, 7 modules</strong> — severity-ranked findings with evidence and fixes, delivered in minutes.
             </p>
             <div className="flex gap-3.5 mb-14 max-sm:flex-col max-sm:items-stretch">
               <Button href="/register">
@@ -25,7 +25,7 @@ export function Hero() {
             </div>
             <div className="grid grid-cols-3 gap-4 sm:gap-9 pt-7 border-t border-rule font-mono text-[11px] text-m-muted tracking-[0.06em] uppercase">
               <div>
-                <strong className="block font-serif text-[28px] sm:text-[36px] text-ink font-normal tracking-[-0.02em] normal-case mb-0.5">96</strong>
+                <strong className="block font-serif text-[28px] sm:text-[36px] text-ink font-normal tracking-[-0.02em] normal-case mb-0.5">112</strong>
                 Checkpoints / audit
               </div>
               <div>

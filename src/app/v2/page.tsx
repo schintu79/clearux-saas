@@ -14,7 +14,7 @@ import { Footer } from '@/components/marketing/Footer'
 export const metadata: Metadata = {
   title: 'Fixpath — The audit your team actually ships from.',
   description:
-    'AI-powered UX audits: 96 checkpoints, 6 modules. Severity-ranked, evidence-backed, shippable fixes. First audit free.',
+    'AI-powered UX audits: 112 checkpoints, 7 modules. Severity-ranked, evidence-backed, shippable fixes. First audit free.',
 }
 
 export default function MarketingV2Page() {

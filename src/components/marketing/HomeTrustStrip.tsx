@@ -22,7 +22,7 @@ export function HomeTrustStrip() {
             },
             {
               label: 'Clarity in under 10 minutes',
-              desc: '96 checkpoints. Severity-ranked. Delivered fast enough to act on today.',
+              desc: '112 checkpoints. Severity-ranked. Delivered fast enough to act on today.',
             },
           ].map((item) => (
             <div key={item.label}>

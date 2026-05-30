@@ -53,7 +53,7 @@ export default function AboutContent() {
               },
               {
                 title: 'What we built instead',
-                desc: 'A decision engine for real website and brand issues. Six modules, 96 checkpoints, severity-ranked findings with fix guidance and progress tracking. Truth, not noise.',
+                desc: 'A decision engine for real website and brand issues. Seven modules, 112 checkpoints, severity-ranked findings with fix guidance and progress tracking. Truth, not noise.',
               },
             ].map((item, i) => (
               <div

@@ -127,7 +127,7 @@ export async function sendWelcomeEmail(
     <div class="info-box">
       <h2 style="margin-top:0">What you get with every audit</h2>
       <ul class="check-list">
-        <li>96 checkpoints across 24 UX categories</li>
+        <li>112 checkpoints across 28 UX categories</li>
         <li>Severity-ranked findings with evidence</li>
         <li>Executive summary and top 3 recommendations</li>
         <li>Downloadable PDF and Word reports</li>

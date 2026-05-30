@@ -1,9 +1,9 @@
 const siteUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'https://www.fixpath.ai'
 
 const FAQ_ITEMS = [
-  { q: 'How long does an audit take?', a: 'Most audits complete in under 10 minutes. Our AI crawls your website, analyses every page against 96 checkpoints across six modules, and generates a full professional report with prioritised recommendations.' },
-  { q: 'What does the audit cover?', a: 'We evaluate 24 categories across six modules: Foundation (the structural and technical baseline), Human Experience (how the product feels to use — clarity, flow, cognitive load, wellbeing), Inclusive Design (accessibility and equity for every user), Future Readiness (AI discoverability and agent readiness), Brand Consistency (whether what users see matches what the brand promises), and SEO Structure (findability, legibility, and ranking). Available for websites, brand identity materials, and design files.' },
-  { q: 'How do credits work?', a: 'One credit equals one full audit of any website. Credits never expire. There are no feature tiers or limits — every audit includes all six modules, 96 checkpoints, PDF & Word reports, and prioritised recommendations.' },
+  { q: 'How long does an audit take?', a: 'Most audits complete in under 10 minutes. Our AI crawls your website, analyses every page against 112 checkpoints across seven modules, and generates a full professional report with prioritised recommendations.' },
+  { q: 'What does the audit cover?', a: 'We evaluate 28 categories across seven modules: Foundation (the structural and technical baseline), Human Experience (how the product feels to use — clarity, flow, cognitive load, wellbeing), Inclusive Design (accessibility and equity for every user), Future Readiness (AI discoverability and agent readiness), Accessibility Readiness (WCAG compliance and assistive technology support), Brand Consistency (whether what users see matches what the brand promises), and SEO Structure (findability, legibility, and ranking). Available for websites, brand identity materials, and design files.' },
+  { q: 'How do credits work?', a: 'One credit equals one full audit of any website. Credits never expire. There are no feature tiers or limits — every audit includes all seven modules, 112 checkpoints, PDF & Word reports, and prioritised recommendations.' },
   { q: 'What format is the report?', a: 'You get both a professional PDF report and a downloadable Word document. Reports include an overall score, module breakdowns, detailed findings with severity levels, and actionable recommendations for each issue.' },
   { q: 'Can I audit any website?', a: 'Yes. Fixpath works with any publicly accessible URL. Our crawler handles JavaScript-rendered sites, single-page applications, and multi-page websites. We automatically detect your industry, tech stack, and target audience.' },
   { q: 'Is my data secure?', a: 'Absolutely. We only analyse publicly visible content on your website. Payments are processed securely via Stripe. We do not store or share your website data beyond generating your audit report.' },
@@ -11,7 +11,7 @@ const FAQ_ITEMS = [
   { q: 'Can I get a refund?', a: 'If you are unsatisfied with an audit result, use our contact form at fixpath.ai/contact or email support@fixpath.ai and we will work with you to resolve the issue or provide a credit for a new audit.' },
   { q: 'How accurate are the AI-generated findings?', a: 'Our AI delivers high-precision findings on critical issues like mobile responsiveness, accessibility failures, and conversion blockers. Every finding includes specific evidence — screenshots, element selectors, or metrics — so you can verify instantly. We prioritise precision over volume, flagging only findings we are confident about.' },
   { q: 'What are the limitations of an AI audit?', a: 'Fixpath analyses publicly visible pages only — we cannot audit gated content like login-required areas or admin panels. We do not test with real users, so behavioural insights like A/B test results or heatmaps are not included.' },
-  { q: 'How does Fixpath compare to hiring a UX consultant?', a: 'A traditional UX audit costs $5,000 to $15,000 and takes 2 to 4 weeks. Fixpath delivers 96 checkpoints across six modules in minutes for a fraction of the cost. It is ideal for comprehensive baseline assessments.' },
+  { q: 'How does Fixpath compare to hiring a UX consultant?', a: 'A traditional UX audit costs $5,000 to $15,000 and takes 2 to 4 weeks. Fixpath delivers 112 checkpoints across seven modules in minutes for a fraction of the cost. It is ideal for comprehensive baseline assessments.' },
 ]
 
 export function FaqJsonLd() {
@@ -79,12 +79,13 @@ export function HomeJsonLd() {
         url: siteUrl,
         applicationCategory: 'BusinessApplication',
         operatingSystem: 'Web',
-        description: 'A decision engine for real website and brand issues. 96 checkpoints across 6 modules — Foundation, Human Experience, Inclusive Design, Future Readiness, Brand Consistency, SEO Structure. Severity-ranked findings, concrete fix guidance, and progress tracking.',
+        description: 'A decision engine for real website and brand issues. 112 checkpoints across 7 modules — Foundation, Human Experience, Inclusive Design, Future Readiness, Accessibility Readiness, Brand Consistency, SEO Structure. Severity-ranked findings, concrete fix guidance, and progress tracking.',
         featureList: [
           'Foundation: The structural and technical baseline a great experience is built on',
           'Human Experience: How the product feels to use — clarity, flow, cognitive load, wellbeing',
           'Inclusive Design: Accessibility and equity for every user, every ability, every context',
           'Future Readiness: AI discoverability and how the product holds up as discovery shifts',
+          'Accessibility Readiness: WCAG compliance and assistive technology support across all pages',
           'Brand Consistency: Whether what users see matches what the brand promises',
           'SEO Structure: Whether the product is findable, legible, and ranked the way it deserves',
           'Audit types: Website audits, Brand Identity audits, Design audits',
@@ -95,7 +96,7 @@ export function HomeJsonLd() {
             name: 'Free audit',
             price: '0',
             priceCurrency: 'USD',
-            description: 'First full 96-checkpoint audit free, no credit card required',
+            description: 'First full 112-checkpoint audit free, no credit card required',
             availability: 'https://schema.org/InStock',
           },
           {

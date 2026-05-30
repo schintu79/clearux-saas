@@ -63,7 +63,7 @@ const FINDING_CARDS = [
   },
   {
     label: 'Score overview',
-    title: '6 modules, 96 checkpoints',
+    title: '7 modules, 112 checkpoints',
     desc: 'Every page scored across usability, accessibility, performance, content, SEO, and AI readiness — in one view.',
     visual: (
       <div className="w-full border border-rule rounded-lg overflow-hidden p-3" style={{ fontSize: 0 }}>

@@ -42,7 +42,7 @@ export default function PricingContent() {
             Plans that <em className="italic text-signal">scale with you.</em>
           </h1>
           <p className="text-[18px] leading-[1.6] text-ink-2 max-w-[600px] mb-10 font-sans">
-            Every plan includes the full 96-checkpoint audit across six modules, concrete fix guidance, and progress tracking. Subscribe for ongoing monitoring or buy credit packs for project work. First audit free, always.
+            Every plan includes the full 112-checkpoint audit across seven modules, concrete fix guidance, and progress tracking. Subscribe for ongoing monitoring or buy credit packs for project work. First audit free, always.
           </p>
 
           {/* Mode toggle */}
@@ -246,7 +246,7 @@ export default function PricingContent() {
               </thead>
               <tbody>
                 {([
-                  { feature: '96-checkpoint analysis', free: true, credits: true, sub: true },
+                  { feature: '112-checkpoint analysis', free: true, credits: true, sub: true },
                   { feature: 'Dashboard access', free: true, credits: true, sub: true },
                   { feature: 'PDF + DOCX reports', free: false, credits: true, sub: true },
                   { feature: 'Re-audits', free: '-', credits: '1 credit each', sub: 'Unlimited' },
@@ -294,7 +294,7 @@ export default function PricingContent() {
       <FaqPreview
         sectionNumber="05"
         items={[
-          { q: 'How do credits work?', a: 'One credit = one full audit. Credits never expire. Every audit includes all six modules, 96 checkpoints, PDF & Word reports, finding status tracking, shareable team links, and prioritised recommendations. Buy in packs to lower the per-audit cost.' },
+          { q: 'How do credits work?', a: 'One credit = one full audit. Credits never expire. Every audit includes all seven modules, 112 checkpoints, PDF & Word reports, finding status tracking, shareable team links, and prioritised recommendations. Buy in packs to lower the per-audit cost.' },
           { q: 'Can I get a refund?', a: "If you're unsatisfied with an audit, reach out via our contact form or email support@fixpath.ai and we'll resolve it or provide a credit for a new audit. We stand behind the quality of our reports." },
           { q: 'What is the free preview audit?', a: 'Anyone can run a free preview audit from the homepage without signing up. The preview shows your overall score, module scores, and severity breakdown. Individual findings, recommendations, and downloadable reports are available when you unlock the full audit.' },
           { q: 'What payment methods are accepted?', a: 'We accept Visa, Mastercard, American Express, Apple Pay, and Google Pay. All payments are processed securely via Stripe.' },

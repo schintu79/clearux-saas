@@ -89,7 +89,7 @@ export const CREDIT_PACKS: CreditPack[] = [
     perAudit: '$13',
     savePercent: null,
     features: [
-      'Full 96-checkpoint audits',
+      'Full 112-checkpoint audits',
       'PDF + DOCX reports',
       'Never expire',
     ],
@@ -103,7 +103,7 @@ export const CREDIT_PACKS: CreditPack[] = [
     savePercent: 24,
     popular: true,
     features: [
-      'Full 96-checkpoint audits',
+      'Full 112-checkpoint audits',
       'PDF + DOCX reports',
       'Never expire',
     ],
@@ -117,7 +117,7 @@ export const CREDIT_PACKS: CreditPack[] = [
     savePercent: 36,
     whiteLabel: true,
     features: [
-      'Full 96-checkpoint audits',
+      'Full 112-checkpoint audits',
       'PDF + DOCX reports',
       'White-label included',
       'Never expire',

@@ -6,7 +6,7 @@ import PricingContent from './PricingContent'
 
 export const metadata: Metadata = {
   title: 'Pricing — Full audits from $9.90 | Fixpath',
-  description: 'Full 96-checkpoint audits from $9.90. First audit free. Subscribe for ongoing monitoring or buy credit packs for project work. Fix guidance, progress tracking, and reports included.',
+  description: 'Full 112-checkpoint audits from $9.90. First audit free. Subscribe for ongoing monitoring or buy credit packs for project work. Fix guidance, progress tracking, and reports included.',
 }
 
 export default function PricingPage() {

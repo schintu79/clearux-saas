@@ -13,6 +13,7 @@ const MODULE_TINTS: Record<string, string> = {
   'Human experience': '#EC4899',
   'Inclusive design': '#8B5CF6',
   'Future readiness': '#F59E0B',
+  'Accessibility readiness': '#8B5CF6',
   'Brand consistency': '#06B6D4',
   'SEO structure': '#10B981',
 }
@@ -22,17 +23,18 @@ const AUDIT_MODULES: { name: string; Icon: LucideIcon; categories: string[] }[] 
   { name: 'Human experience', Icon: Heart, categories: ['Conversion paths and CTAs', 'Trust and credibility signals', 'Ethical design and dark patterns', 'Emotional design and engagement'] },
   { name: 'Inclusive design', Icon: Accessibility, categories: ['WCAG 2.1 AA accessibility', 'Cognitive accessibility', 'Digital wellbeing and responsibility', 'Responsive and device support'] },
   { name: 'Future readiness', Icon: Brain, categories: ['Performance and core web vitals', 'AI discoverability and structured data', 'AI agent readiness', 'Cultural and global readiness'] },
+  { name: 'Accessibility readiness', Icon: Accessibility, categories: ['Compliance depth and standards alignment', 'Assistive technology support', 'Accessibility governance and process', 'Inclusive testing and user feedback'] },
   { name: 'SEO structure', Icon: FileSearch, categories: ['On-page SEO and metadata', 'Technical SEO and crawlability', 'Rich snippets and social markup', 'Content strategy and link structure'] },
   { name: 'Brand consistency', Icon: Eye, categories: ['Brand identity and guidelines', 'Brand experience and story', 'Visual asset consistency', 'Brand communication and tone'] },
 ]
 
 /* ── FAQ data ── */
 const PRODUCT_FAQS = [
-  { q: 'How does Fixpath work?', a: 'Fixpath crawls your website, analyses every page against 96 checkpoints across six modules, and surfaces only the issues that matter. Findings are ranked by severity with real evidence — no noise, no inflated findings.' },
+  { q: 'How does Fixpath work?', a: 'Fixpath crawls your website, analyses every page against 112 checkpoints across seven modules, and surfaces only the issues that matter. Findings are ranked by severity with real evidence — no noise, no inflated findings.' },
   { q: 'Can I fix issues directly through Fixpath?', a: 'Yes. Every finding includes a concrete fix. For code-level issues, Fixpath generates a surgical fix you can preview, edit, and deploy directly to your server via FTP or SFTP. For content and strategy issues, you get clear recommendations to share with your team.' },
-  { q: 'What is the Website Health Score?', a: 'Your Website Health Score is a composite metric across all six audit modules. It gives your team a single number to track over time. Re-audit after making fixes and see exactly how your score improves.' },
+  { q: 'What is the Website Health Score?', a: 'Your Website Health Score is a composite metric across all seven audit modules. It gives your team a single number to track over time. Re-audit after making fixes and see exactly how your score improves.' },
   { q: 'Does Fixpath check AI visibility?', a: 'Yes. The Future Readiness module checks how LLMs interpret your pages, validates structured data for AI consumption, probes multiple AI models for accuracy, and audits your llms.txt and AI discovery files.' },
-  { q: 'How is this different from Lighthouse or PageSpeed?', a: 'Lighthouse focuses on performance and basic accessibility. Fixpath covers 96 checkpoints across UX, accessibility, AI readiness, brand consistency, SEO, and more. It also helps you fix issues and tracks improvement, rather than just listing problems.' },
+  { q: 'How is this different from Lighthouse or PageSpeed?', a: 'Lighthouse focuses on performance and basic accessibility. Fixpath covers 112 checkpoints across UX, accessibility, AI readiness, brand consistency, SEO, and more. It also helps you fix issues and tracks improvement, rather than just listing problems.' },
 ]
 
 /* ── Mockup: Finding detail card — mirrors real findings panel ── */
@@ -243,7 +245,7 @@ export function ProductContent() {
                 <em className="italic text-signal">hurting your site.</em>
               </h2>
               <p className="text-[18px] leading-[1.6] text-ink-2 font-sans mb-8">
-                Enter your URL. Fixpath crawls every page, runs 96 checkpoints across six modules,
+                Enter your URL. Fixpath crawls every page, runs 112 checkpoints across seven modules,
                 and surfaces only the issues that matter — ranked by severity with real evidence.
                 No noise. No inflated findings. Just useful truth about your site, in under ten minutes.
               </p>
@@ -275,7 +277,7 @@ export function ProductContent() {
                 })}
               </div>
               <p className="font-sans text-[14px] text-m-muted">
-                24 categories across six modules. Every finding includes affected pages, evidence, and a
+                28 categories across seven modules. Every finding includes affected pages, evidence, and a
                 concrete recommendation.
               </p>
             </div>
@@ -361,7 +363,7 @@ export function ProductContent() {
                 <div>
                   <h3 className="font-sans text-[16px] font-semibold text-ink mb-1.5">Competitor benchmarking</h3>
                   <p className="font-sans text-[14px] text-ink-2 leading-relaxed">
-                    See how your site stacks up against competitors across all six modules.
+                    See how your site stacks up against competitors across all seven modules.
                     Identify where you lead and where to focus next.
                   </p>
                 </div>

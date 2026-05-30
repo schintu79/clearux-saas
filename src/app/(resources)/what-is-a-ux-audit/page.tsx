@@ -140,7 +140,7 @@ export default function WhatIsAUxAuditPage() {
               What a UX Audit Evaluates
             </h2>
             <p className="text-text/80 leading-relaxed mb-6">
-              A thorough UX audit process covers six modules. Each module
+              A thorough UX audit process covers seven modules. Each module
               addresses a different dimension of the user experience, and
               skipping any one of them leaves blind spots.
             </p>
@@ -238,7 +238,7 @@ export default function WhatIsAUxAuditPage() {
             </h2>
             <p className="text-text/80 leading-relaxed mb-4">
               Fixpath replaces the manual audit workflow with an AI-powered
-              platform that evaluates your product across all six modules — 24
+              platform that evaluates your product across all seven modules — 28
               categories in total — in minutes, not weeks. You submit a URL, and
               Fixpath returns a comprehensive report with scores, issue
               descriptions, severity ratings, and actionable recommendations.

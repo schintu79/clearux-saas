@@ -286,11 +286,11 @@ export function Comparison() {
           {/* Bottom stat strip */}
           <div className="grid sm:grid-cols-3 mt-14 gap-8 sm:gap-0 sm:divide-x sm:divide-rule">
             <div className="text-center sm:px-6">
-              <p className="font-serif text-[48px] text-ink tracking-[-0.02em] leading-none mb-2">96</p>
+              <p className="font-serif text-[48px] text-ink tracking-[-0.02em] leading-none mb-2">112</p>
               <p className="font-mono text-[11px] text-m-muted tracking-[0.08em] uppercase">UX checkpoints per audit</p>
             </div>
             <div className="text-center sm:px-6">
-              <p className="font-serif text-[48px] text-ink tracking-[-0.02em] leading-none mb-2">6</p>
+              <p className="font-serif text-[48px] text-ink tracking-[-0.02em] leading-none mb-2">7</p>
               <p className="font-mono text-[11px] text-m-muted tracking-[0.08em] uppercase">modules — foundation to AI readiness</p>
             </div>
             <div className="text-center sm:px-6">

@@ -28,7 +28,7 @@ const ARTICLES: Record<string, Article> = {
     intro: 'Your Website Health Score is a composite metric that tells you how well your site performs across UX, accessibility, AI readiness, brand consistency, and SEO. It turns a complex, multi-dimensional audit into a single number you can track over time.',
     blocks: [
       { type: 'h2', text: 'How the score is calculated' },
-      { type: 'p', text: 'Fixpath runs 96 checkpoints across six modules: Foundation, Human Experience, Inclusive Design, Future Readiness, Brand Consistency, and SEO Structure. Each module contains four categories, and each category contains four individual checkpoints.' },
+      { type: 'p', text: 'Fixpath runs 112 checkpoints across seven modules: Foundation, Human Experience, Inclusive Design, Future Readiness, Accessibility Readiness, Brand Consistency, and SEO Structure. Each module contains four categories, and each category contains four individual checkpoints.' },
       { type: 'p', text: 'Every finding is assigned a severity level — critical, major, moderate, or minor. Critical findings carry the most weight because they represent issues that directly harm user experience or prevent entire user groups from accessing your site. The score is weighted so that fixing a single critical issue moves the needle more than fixing several minor ones.' },
       { type: 'p', text: 'The final score is normalised to a 0 to 100 scale. It reflects not just the count of issues but their relative importance, giving you a realistic picture of site quality rather than an overwhelming list of everything that could theoretically be improved.' },
 
@@ -203,7 +203,7 @@ const ARTICLES: Record<string, Article> = {
       { type: 'p', text: 'After connecting, the plugin adds a Fixpath menu item to your WordPress admin sidebar. From here you can trigger audits, view findings, and track your Website Health Score — all without switching to a separate tool.' },
 
       { type: 'h2', text: 'Running your first audit' },
-      { type: 'p', text: 'Click "Run audit" from the Fixpath dashboard inside WordPress. The plugin sends your site URL to Fixpath, which runs all 96 checkpoints across the six modules. Depending on the size of your site, this typically takes two to five minutes. You will see a progress indicator while the audit runs, and a notification when it completes.' },
+      { type: 'p', text: 'Click "Run audit" from the Fixpath dashboard inside WordPress. The plugin sends your site URL to Fixpath, which runs all 112 checkpoints across the seven modules. Depending on the size of your site, this typically takes two to five minutes. You will see a progress indicator while the audit runs, and a notification when it completes.' },
       { type: 'p', text: 'Once complete, findings appear in a list view grouped by module. Each finding shows the severity, the affected page or template, a description of the issue, and a recommended fix. You can filter by severity, module, or page to focus on what matters most.' },
 
       { type: 'h2', text: 'Fixing issues from WordPress' },

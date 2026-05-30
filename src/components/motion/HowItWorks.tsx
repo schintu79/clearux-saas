@@ -168,7 +168,7 @@ function ScanningGrid({ inView }: { inView: boolean }) {
             </motion.div>
             <div>
               <p className="text-sm font-medium text-text">Analysing acme.com</p>
-              <p className="text-xs text-muted">96 checkpoints across 6 modules</p>
+              <p className="text-xs text-muted">112 checkpoints across 7 modules</p>
             </div>
           </div>
           <span className="text-[#34D399] font-heading text-3xl font-medium">{progress}%</span>
@@ -349,8 +349,8 @@ const STEPS = [
   },
   {
     number: '02',
-    title: 'Our AI runs 96 checkpoints',
-    description: 'Each page is evaluated across six modules: Foundation, Human Experience, Inclusive Design, Future Readiness, Brand Consistency, and SEO Structure.',
+    title: 'Our AI runs 112 checkpoints',
+    description: 'Each page is evaluated across seven modules: Foundation, Human Experience, Inclusive Design, Future Readiness, Accessibility Readiness, Brand Consistency, and SEO Structure.',
   },
   {
     number: '03',

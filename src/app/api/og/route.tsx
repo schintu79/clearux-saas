@@ -90,7 +90,7 @@ export async function GET() {
             marginBottom: '40px',
           }}
         >
-          96 checkpoints across six modules. Every issue becomes a clear fix path.
+          112 checkpoints across seven modules. Every issue becomes a clear fix path.
         </div>
 
         {/* Stats row */}
@@ -101,9 +101,9 @@ export async function GET() {
           }}
         >
           {[
-            { num: '96', label: 'Checkpoints' },
-            { num: '24', label: 'Categories' },
-            { num: '6', label: 'Modules' },
+            { num: '112', label: 'Checkpoints' },
+            { num: '28', label: 'Categories' },
+            { num: '7', label: 'Modules' },
           ].map((stat) => (
             <div
               key={stat.label}

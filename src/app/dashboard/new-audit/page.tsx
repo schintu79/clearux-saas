@@ -463,7 +463,7 @@ const NewAuditInner: React.FC = () => {
             ? 'Run a deeper analysis with extended modules and additional checks.'
             : domainPreFilled
             ? 'Choose your modules and start the audit.'
-            : 'Paste your URL and our AI does a deep analysis across all 96 checkpoints.'}
+            : 'Paste your URL and our AI does a deep analysis across all 112 checkpoints.'}
         </p>
       </div>
 

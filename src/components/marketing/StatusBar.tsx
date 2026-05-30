@@ -9,7 +9,7 @@ export function StatusBar() {
           </span>
           <span>Edition 04 · Vol. 01</span>
         </div>
-        <div>96 / 6 / 99</div>
+        <div>112 / 7 / 99</div>
       </div>
     </div>
   )

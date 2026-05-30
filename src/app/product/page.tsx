@@ -7,7 +7,7 @@ import { ProductContent } from './ProductContent'
 export const metadata: Metadata = {
   title: 'Product — A decision engine for real website issues | Fixpath',
   description:
-    'Fixpath finds real issues hurting trust and clarity, prioritises by impact, provides concrete fix guidance, and tracks improvement over time. 96 checkpoints across 6 modules.',
+    'Fixpath finds real issues hurting trust and clarity, prioritises by impact, provides concrete fix guidance, and tracks improvement over time. 112 checkpoints across 7 modules.',
 }
 
 export default function ProductPage() {

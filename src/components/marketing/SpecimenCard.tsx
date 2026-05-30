@@ -25,9 +25,9 @@ const SLIDES: AuditSlide[] = [
     site: 'acme-finance.com',
     auditId: '#4827',
     targetScore: 62,
-    checkpointsTotal: 96,
+    checkpointsTotal: 112,
     checkpointsComplete: 74,
-    module: '5/6',
+    module: '6/7',
     moduleProgress: '77%',
     criticalCount: 4,
     findings: [

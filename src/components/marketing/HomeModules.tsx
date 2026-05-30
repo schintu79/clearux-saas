@@ -1,5 +1,5 @@
 import { SectionMarker } from './SectionMarker'
-import { Scale, Heart, Accessibility, Brain, FileSearch, Eye } from 'lucide-react'
+import { Scale, Heart, Accessibility, Brain, FileSearch, Eye, Focus } from 'lucide-react'
 
 /* Dashboard-matching MODULE_TINTS colors */
 const MODULE_TINTS: Record<string, string> = {
@@ -7,6 +7,7 @@ const MODULE_TINTS: Record<string, string> = {
   'Human experience': '#EC4899',
   'Inclusive design': '#8B5CF6',
   'Future readiness': '#F59E0B',
+  'Accessibility readiness': '#EF4444',
   'Brand consistency': '#06B6D4',
   'SEO structure': '#10B981',
 }
@@ -37,6 +38,12 @@ const MODULES = [
     categories: ['Performance and core web vitals', 'AI discoverability and structured data', 'AI agent readiness', 'Cultural and global readiness'],
   },
   {
+    name: 'Accessibility readiness',
+    count: 16,
+    Icon: Focus,
+    categories: ['Keyboard navigation and focus management', 'Screen-reader compatibility', 'Color contrast and visual clarity', 'ARIA landmarks and semantic structure'],
+  },
+  {
     name: 'Brand consistency',
     count: 16,
     Icon: Eye,
@@ -59,11 +66,11 @@ export function HomeModules() {
           className="font-serif font-normal text-ink leading-[0.94] tracking-[-0.025em] mb-5"
           style={{ fontSize: 'clamp(36px, 5vw, 64px)' }}
         >
-          24 categories.{' '}
-          <em className="italic text-signal">Six modules.</em>
+          28 categories.{' '}
+          <em className="italic text-signal">Seven modules.</em>
         </h2>
         <p className="text-[18px] leading-[1.6] text-ink-2 max-w-[560px] mb-14 font-sans">
-          Every audit covers six modules with four categories each — 96 checkpoints total.
+          Every audit covers seven modules with four categories each — 112 checkpoints total.
           Findings are severity-ranked with evidence, affected pages, and a concrete fix path.
         </p>
 

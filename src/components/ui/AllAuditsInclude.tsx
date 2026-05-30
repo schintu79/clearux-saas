@@ -3,7 +3,7 @@
 import { CheckCircle, Globe2, Clock, Zap } from 'lucide-react'
 
 const ITEMS = [
-  { Icon: CheckCircle, title: '96 checkpoints' },
+  { Icon: CheckCircle, title: '112 checkpoints' },
   { Icon: Globe2, title: '6 languages' },
   { Icon: Clock, title: 'Credits never expire' },
   { Icon: Zap, title: 'Instant delivery' },

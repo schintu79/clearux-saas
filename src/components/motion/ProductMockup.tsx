@@ -119,7 +119,7 @@ export function ReportShowcase() {
         <div className="flex items-center justify-between mb-6">
           <div>
             <p className="text-sm font-medium text-text">Category Breakdown</p>
-            <p className="text-xs text-muted">96 checkpoints across 6 modules</p>
+            <p className="text-xs text-muted">112 checkpoints across 7 modules</p>
           </div>
           <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-500/10 border border-emerald-500/20">
             <TrendingUp size={12} className="text-emerald-400" />
