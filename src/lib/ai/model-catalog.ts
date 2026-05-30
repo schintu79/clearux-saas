@@ -72,7 +72,7 @@ export const DEFAULT_MODEL_CATALOG: AIModelDef[] = [
     features: { competitors: true, voice: true, answers: true, reports: true },
   },
   {
-    slug: 'xai/grok-3-mini-beta',
+    slug: 'x-ai/grok-4.3',
     displayName: 'Grok',
     provider: 'xai',
     shortId: 'grok',

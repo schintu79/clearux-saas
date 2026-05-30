@@ -213,11 +213,17 @@ function generateExecutiveSummary(params: {
     }
   }
 
-  // Opportunity line
-  if (negativeThemes.length > 0) {
-    lines.push(`Main opportunity: address ${negativeThemes.slice(0, 2).join(' and ')} to improve how AI represents your brand.`);
+  // Opportunity line — specific, actionable advice
+  if (recognizedCount === 0 && modelCount > 0) {
+    lines.push(`Next step: add structured data (JSON-LD Organization schema), a clear one-line description in your homepage meta, and get mentioned on industry directories so AI models can learn who you are.`);
+  } else if (negativeThemes.length > 0 && avgAccuracy < 40) {
+    lines.push(`Next step: AI models are confused about what ${brandName} does. Update your homepage meta description and About page to state your product category, target audience, and core features explicitly.`);
+  } else if (negativeThemes.length > 0) {
+    lines.push(`Next step: address "${negativeThemes[0]}"${negativeThemes.length > 1 ? ` and "${negativeThemes[1]}"` : ''} — update the relevant pages on your site so AI models pick up accurate information on the next training cycle.`);
   } else if (avgAccuracy < 70) {
-    lines.push(`Main opportunity: clarify your positioning and strengthen model-readable trust signals to improve accuracy.`);
+    lines.push(`Next step: strengthen your site's machine-readable signals — add JSON-LD schema markup, explicit product descriptions, and FAQ structured data so AI models can parse your positioning accurately.`);
+  } else if (avgAccuracy >= 70 && recognizedCount >= modelCount) {
+    lines.push(`Your brand is well-represented across AI. Keep your site content current and monitor for accuracy drift as models retrain.`);
   }
 
   return lines.length > 0 ? lines : [`${brandName} has a ${overallScore >= 70 ? 'strong' : overallScore >= 40 ? 'moderate' : 'weak'} AI brand intelligence profile. Review the detailed breakdown below for specific insights and actions.`];
@@ -623,6 +629,22 @@ export default function IntelligencePage() {
             </p>
           </div>
 
+          {/* Quick summary stats */}
+          <div className="grid grid-cols-3 gap-3 mb-3">
+            <div className="rounded-md px-3 py-2.5 text-center" style={{ background: 'var(--card)', border: '1px solid var(--rule)' }}>
+              <p className="text-[18px] font-bold tabular-nums" style={{ color: recognizedCount === modelProbes.length ? 'var(--ok)' : recognizedCount > 0 ? 'var(--warn)' : 'var(--severe)' }}>{recognizedCount}/{modelProbes.length}</p>
+              <p className="text-[10px]" style={{ color: 'var(--m-muted)' }}>Models recognize you</p>
+            </div>
+            <div className="rounded-md px-3 py-2.5 text-center" style={{ background: 'var(--card)', border: '1px solid var(--rule)' }}>
+              <p className="text-[18px] font-bold tabular-nums" style={{ color: scoreColor(avgAccuracy) }}>{avgAccuracy}%</p>
+              <p className="text-[10px]" style={{ color: 'var(--m-muted)' }}>Average accuracy</p>
+            </div>
+            <div className="rounded-md px-3 py-2.5 text-center" style={{ background: 'var(--card)', border: '1px solid var(--rule)' }}>
+              <p className="text-[18px] font-bold tabular-nums" style={{ color: hallucinations.length === 0 ? 'var(--ok)' : 'var(--severe)' }}>{hallucinations.length}</p>
+              <p className="text-[10px]" style={{ color: 'var(--m-muted)' }}>Inaccurate answers</p>
+            </div>
+          </div>
+
           <div className="space-y-2">
             {modelProbes.map((probe) => (
               <ModelCard
@@ -634,6 +656,30 @@ export default function IntelligencePage() {
               />
             ))}
           </div>
+
+          {/* What this means for you */}
+          {(recognizedCount < modelProbes.length || avgAccuracy < 70 || hallucinations.length > 0) && (
+            <div className="mt-3 rounded-lg px-4 py-3" style={{ background: 'color-mix(in srgb, var(--signal) 4%, transparent)', border: '1px solid color-mix(in srgb, var(--signal) 10%, transparent)' }}>
+              <p className="text-[11px] font-semibold mb-1.5" style={{ color: 'var(--ink)' }}>What this means</p>
+              <div className="space-y-1">
+                {recognizedCount < modelProbes.length && (
+                  <p className="text-[11px] leading-[1.5]" style={{ color: 'var(--ink)', opacity: 0.8 }}>
+                    {modelProbes.length - recognizedCount} AI model{modelProbes.length - recognizedCount > 1 ? 's don\'t' : ' doesn\'t'} know {brandName}. People using {modelProbes.filter(p => p.accuracy_score < 20).map(p => p.model_label).join(', ')} won't find you when asking about your category.
+                  </p>
+                )}
+                {hallucinations.length > 0 && (
+                  <p className="text-[11px] leading-[1.5]" style={{ color: 'var(--ink)', opacity: 0.8 }}>
+                    {hallucinations.length} answer{hallucinations.length > 1 ? 's are' : ' is'} factually wrong — AI is inventing features, confusing your product with competitors, or misidentifying your category. This actively misleads potential customers.
+                  </p>
+                )}
+                {avgAccuracy < 70 && avgAccuracy >= 20 && hallucinations.length === 0 && (
+                  <p className="text-[11px] leading-[1.5]" style={{ color: 'var(--ink)', opacity: 0.8 }}>
+                    AI models have a partial understanding but miss key details about what {brandName} offers. Your site content isn't structured clearly enough for AI to parse.
+                  </p>
+                )}
+              </div>
+            </div>
+          )}
         </DashCard>
       )}
 

@@ -174,7 +174,16 @@ export async function GET(req: NextRequest) {
       if (row.sentiment_score != null) existing._sentimentScores.push(row.sentiment_score)
       if (row.placement_score != null) existing._placementScores.push(row.placement_score)
       if (row.share_of_voice != null) existing._sovScores.push(row.share_of_voice)
-      if (Array.isArray(row.results_json)) existing.results_json.push(...row.results_json)
+      if (Array.isArray(row.results_json)) {
+        // Deduplicate by question text — multiple probe runs may store the same Q&A
+        const seenQuestions = new Set(existing.results_json.map((r: any) => r.question))
+        for (const r of row.results_json) {
+          if (!seenQuestions.has(r.question)) {
+            existing.results_json.push(r)
+            seenQuestions.add(r.question)
+          }
+        }
+      }
       if (Array.isArray(row.sentiment_themes)) {
         for (const t of row.sentiment_themes) {
           const dup = existing.sentiment_themes.find((e: any) => e.theme === t.theme)
