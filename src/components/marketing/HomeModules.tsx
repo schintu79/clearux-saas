@@ -79,10 +79,10 @@ export function HomeModules() {
             const tint = MODULE_TINTS[mod.name] || 'var(--signal)'
             const IconComp = mod.Icon
             return (
-            <div key={mod.name} className="rounded-[4px] border border-rule p-6" style={{ background: 'var(--paper)' }}>
+            <div key={mod.name} className="rounded-xl p-6" style={{ background: 'var(--card)', border: '1px solid var(--rule)' }}>
               <div className="flex items-center gap-3 mb-4">
                 <span
-                  className="w-9 h-9 rounded-[6px] flex items-center justify-center shrink-0"
+                  className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0"
                   style={{ background: `color-mix(in srgb, ${tint} 12%, transparent)`, color: tint }}
                 >
                   <IconComp size={20} strokeWidth={1.5} />

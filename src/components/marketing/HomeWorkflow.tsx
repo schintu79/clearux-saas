@@ -33,9 +33,9 @@ export function HomeWorkflow() {
           concrete guidance. Re-audit to confirm improvement.
         </p>
 
-        <div className="grid lg:grid-cols-3 gap-0 border border-rule rounded-[4px] overflow-hidden max-lg:grid-cols-1">
+        <div className="grid lg:grid-cols-3 gap-4 max-lg:grid-cols-1">
           {/* Find */}
-          <div className="p-8 sm:p-10 lg:border-r border-rule max-lg:border-b">
+          <div className="rounded-xl p-8 sm:p-10" style={{ background: 'var(--card)', border: '1px solid var(--rule)' }}>
             <StepNumber n="1" />
             <h3 className="font-sans text-[20px] font-semibold text-ink mt-5 mb-3">Find</h3>
             <p className="font-sans text-[15px] text-ink-2 leading-[1.65] mb-6">
@@ -54,7 +54,7 @@ export function HomeWorkflow() {
           </div>
 
           {/* Fix */}
-          <div className="p-8 sm:p-10 lg:border-r border-rule max-lg:border-b">
+          <div className="rounded-xl p-8 sm:p-10" style={{ background: 'var(--card)', border: '1px solid var(--rule)' }}>
             <StepNumber n="2" />
             <h3 className="font-sans text-[20px] font-semibold text-ink mt-5 mb-3">Fix</h3>
             <p className="font-sans text-[15px] text-ink-2 leading-[1.65] mb-6">
@@ -73,7 +73,7 @@ export function HomeWorkflow() {
           </div>
 
           {/* Track */}
-          <div className="p-8 sm:p-10">
+          <div className="rounded-xl p-8 sm:p-10" style={{ background: 'var(--card)', border: '1px solid var(--rule)' }}>
             <StepNumber n="3" />
             <h3 className="font-sans text-[20px] font-semibold text-ink mt-5 mb-3">Track</h3>
             <p className="font-sans text-[15px] text-ink-2 leading-[1.65] mb-6">

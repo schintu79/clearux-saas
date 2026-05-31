@@ -93,15 +93,16 @@ export default function PricingContent() {
         <div className="max-w-mkt mx-auto px-8 max-sm:px-5">
           {/* Subscription cards */}
           {mode === 'subscribe' && (
-            <div className="grid lg:grid-cols-3 gap-0 border border-ink max-lg:grid-cols-1">
+            <div className="grid lg:grid-cols-3 gap-4 max-lg:grid-cols-1">
               {SUBSCRIPTION_PLANS.map((plan, i) => {
                 const price = interval === 'monthly' ? plan.monthlyPrice : plan.yearlyPrice
                 return (
                   <div
                     key={plan.id}
-                    className={`relative px-8 py-10 flex flex-col ${i < SUBSCRIPTION_PLANS.length - 1 ? 'lg:border-r max-lg:border-b' : ''} border-ink ${
+                    className={`relative rounded-xl px-8 py-10 flex flex-col ${
                       plan.popular ? 'bg-ink text-paper' : ''
                     }`}
+                    style={plan.popular ? undefined : { background: 'var(--card)', border: '1px solid var(--rule)' }}
                   >
                     {plan.popular && (
                       <span className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-signal text-paper text-[10px] font-mono tracking-[0.1em] uppercase px-4 py-1 rounded-full">
@@ -162,13 +163,14 @@ export default function PricingContent() {
 
           {/* Credit packs */}
           {mode === 'credits' && (
-            <div className="grid lg:grid-cols-3 gap-0 border border-ink max-lg:grid-cols-1">
+            <div className="grid lg:grid-cols-3 gap-4 max-lg:grid-cols-1">
               {CREDIT_PACKS.map((pack, i) => (
                 <div
                   key={pack.id}
-                  className={`relative px-8 py-10 flex flex-col ${i < CREDIT_PACKS.length - 1 ? 'lg:border-r max-lg:border-b' : ''} border-ink ${
+                  className={`relative rounded-xl px-8 py-10 flex flex-col ${
                     pack.popular ? 'bg-ink text-paper' : ''
                   }`}
+                  style={pack.popular ? undefined : { background: 'var(--card)', border: '1px solid var(--rule)' }}
                 >
                   {pack.popular && (
                     <span className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-signal text-paper text-[10px] font-mono tracking-[0.1em] uppercase px-4 py-1 rounded-full">
@@ -233,7 +235,7 @@ export default function PricingContent() {
             Compare <em className="italic text-signal">plans</em>
           </h2>
 
-          <div className="border border-ink overflow-x-auto">
+          <div className="rounded-xl overflow-x-auto" style={{ background: 'var(--card)', border: '1px solid var(--rule)' }}>
             <table className="w-full border-collapse min-w-[640px]">
               <thead>
                 <tr>

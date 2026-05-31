@@ -1,6 +1,7 @@
 'use client'
 
 import Image from 'next/image'
+import { Search, Target, Cpu, Eye, Shield, Heart } from 'lucide-react'
 import { SectionMarker } from '@/components/marketing/SectionMarker'
 import { Button } from '@/components/marketing/Button'
 import { ArrowRightIcon } from '@/components/marketing/icons'
@@ -35,31 +36,43 @@ export default function AboutContent() {
           </h2>
 
           {/* Pull quote */}
-          <div className="mb-14 border-l-[3px] border-signal pl-8 py-2">
-            <p className="font-serif italic text-[24px] text-ink leading-[1.4] max-w-[640px]">
-              &ldquo;What if teams could get useful truth about their website — not noise, not inflated scores — and actually track whether things are getting better?&rdquo;
-            </p>
+          <div className="mb-14 rounded-xl p-6 sm:p-8" style={{ background: 'var(--card)', border: '1px solid var(--rule)' }}>
+            <div className="border-l-[3px] border-signal pl-6">
+              <p className="font-serif italic text-[24px] text-ink leading-[1.4] max-w-[640px]">
+                &ldquo;What if teams could get useful truth about their website — not noise, not inflated scores — and actually track whether things are getting better?&rdquo;
+              </p>
+            </div>
           </div>
 
-          <div className="grid md:grid-cols-3 gap-0 border border-ink">
+          <div className="grid md:grid-cols-3 gap-4">
             {[
               {
                 title: 'The problem we saw',
                 desc: 'Most audit tools create noise. Teams get 200 findings and no way to tell which ten matter. Scores lose meaning. Reports feel generic. Progress is invisible.',
+                icon: Search,
+                color: '#EF4444',
               },
               {
                 title: 'What teams actually need',
                 desc: 'Not more findings — better answers. Clear priority. Concrete fixes. Progress evidence. Honest assessment. Useful categories beyond just SEO checklists.',
+                icon: Target,
+                color: '#3B82F6',
               },
               {
                 title: 'What we built instead',
                 desc: 'A decision engine for real website and brand issues. Seven modules, 112 checkpoints, severity-ranked findings with fix guidance and progress tracking. Truth, not noise.',
+                icon: Cpu,
+                color: '#10B981',
               },
-            ].map((item, i) => (
+            ].map((item) => (
               <div
                 key={item.title}
-                className={`p-8 ${i < 2 ? 'md:border-r border-ink max-md:border-b' : ''}`}
+                className="rounded-xl p-6"
+                style={{ background: 'var(--card)', border: '1px solid var(--rule)' }}
               >
+                <div className="w-10 h-10 rounded-xl flex items-center justify-center mb-4" style={{ background: `color-mix(in srgb, ${item.color} 12%, transparent)` }}>
+                  <item.icon size={20} style={{ color: item.color }} />
+                </div>
                 <h3 className="font-mono text-[11px] tracking-[0.1em] uppercase text-m-muted mb-4">{item.title}</h3>
                 <p className="font-sans text-[15px] text-ink-2 leading-[1.6]">{item.desc}</p>
               </div>
@@ -126,25 +139,35 @@ export default function AboutContent() {
             Three principles guide every decision we make — from how we score to how we charge.
           </p>
 
-          <div className="grid sm:grid-cols-3 gap-0 border border-ink">
+          <div className="grid sm:grid-cols-3 gap-4">
             {[
               {
                 title: 'Truth over noise',
                 desc: 'Every finding is backed by evidence from your actual site. Scores come from measurable checkpoints, not subjective opinion. We show what matters and skip what doesn\'t.',
+                icon: Eye,
+                color: '#10B981',
               },
               {
                 title: 'Trust by design',
                 desc: 'We audit for dark patterns, manipulative design, and cognitive overload — and refuse to use them ourselves. No subscription traps, no pressure tactics, no hidden costs.',
+                icon: Shield,
+                color: '#3B82F6',
               },
               {
                 title: 'Useful to everyone',
                 desc: 'Audits from $9.90 deliver what used to cost $5K-15K from a consultant. Quality UX review shouldn\'t be a luxury reserved for well-funded teams.',
+                icon: Heart,
+                color: '#EC4899',
               },
-            ].map((item, i) => (
+            ].map((item) => (
               <div
                 key={item.title}
-                className={`p-8 ${i < 2 ? 'sm:border-r border-ink max-sm:border-b' : ''}`}
+                className="rounded-xl p-6"
+                style={{ background: 'var(--card)', border: '1px solid var(--rule)' }}
               >
+                <div className="w-10 h-10 rounded-xl flex items-center justify-center mb-4" style={{ background: `color-mix(in srgb, ${item.color} 12%, transparent)` }}>
+                  <item.icon size={20} style={{ color: item.color }} />
+                </div>
                 <h3 className="font-mono text-[11px] tracking-[0.1em] uppercase text-m-muted mb-4">{item.title}</h3>
                 <p className="font-sans text-[15px] text-ink-2 leading-[1.6]">{item.desc}</p>
               </div>

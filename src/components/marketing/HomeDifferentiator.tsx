@@ -1,37 +1,47 @@
 import { SectionMarker } from './SectionMarker'
+import { Filter, Layers, Code2, GitCompareArrows, Scale } from 'lucide-react'
 
 /**
  * HomeDifferentiator — "Why we are different" section.
- * Highlights the audit-bible philosophy as a market differentiator:
- * real issues over noise, prioritization over checklists, fix guidance
- * over generic reports, progress over one-off audits, truth over hype.
+ * Shows HOW Fixpath works differently in detail — not just contrast statements.
+ * Each card explains a real product behavior with depth.
  */
 
-const CONTRASTS = [
+const FEATURES = [
   {
-    theirs: 'Endless findings',
-    ours: 'Real issues only',
-    desc: 'We never pad the report. If something is not actually hurting your site, we do not flag it. Your team focuses on what matters.',
+    Icon: Filter,
+    color: '#10B981',
+    title: 'Aggressive noise filtering',
+    desc: 'Every finding passes through speculative detection, evidence verification, and relevance scoring before it reaches your report. If something cannot be proven from your actual content, it is dropped.',
+    detail: 'Result: reports with 15–30 findings, not 200.',
   },
   {
-    theirs: 'Flat checklists',
-    ours: 'Impact-ranked priorities',
-    desc: 'Every finding is ranked by severity and real-world impact. Critical issues surface first. Low-noise items stay out of the way.',
+    Icon: Scale,
+    color: '#3B82F6',
+    title: 'Deterministic scoring',
+    desc: 'Your Website Health Score is calculated from a fixed formula — severity weights, scope multipliers, and confidence factors. Same inputs always produce the same score. No black-box AI scoring.',
+    detail: 'Critical: -18pts · High: -12pts · Medium: -6pts · Low: -2pts',
   },
   {
-    theirs: 'Generic advice',
-    ours: 'Concrete fix guidance',
-    desc: 'Fixpath generates the actual fix — code diffs, copy suggestions, deployment steps. Not a paragraph of vague recommendations.',
+    Icon: Code2,
+    color: '#8B5CF6',
+    title: 'Surgical fix generation',
+    desc: 'For code-level issues, Fixpath reads your actual source file, generates a minimal diff that fixes only the flagged problem, and lets you preview and edit before deploying via FTP.',
+    detail: 'Not a template. A fix built from your code.',
   },
   {
-    theirs: 'One-off reports',
-    ours: 'Progress tracking',
-    desc: 'Re-audit after changes to confirm fixes landed. Compare scores over time. See which fixes had the biggest impact on your health score.',
+    Icon: GitCompareArrows,
+    color: '#EC4899',
+    title: 'Issue lifecycle tracking',
+    desc: 'Every finding has a lifecycle state: new, still present, improved, fixed, or regressed. Re-audits reconcile against previous findings so resolved issues get credit and regressions get flagged.',
+    detail: 'Fixes are verified. Progress is provable.',
   },
   {
-    theirs: 'Inflated scores',
-    ours: 'Honest truth',
-    desc: 'We do not gamify scores to keep you engaged. If your site is strong, we say so. If it needs work, you will know exactly where.',
+    Icon: Layers,
+    color: '#F59E0B',
+    title: 'Seven-module depth',
+    desc: 'Not just SEO and performance. Fixpath audits trust signals, accessibility (WCAG 2.1 AA), AI readiness, brand consistency, and ethical UX — all in a single run with 112 checkpoints.',
+    detail: '28 categories · 4 per module · evidence-based.',
   },
 ]
 
@@ -39,7 +49,7 @@ export function HomeDifferentiator() {
   return (
     <section className="py-[100px] border-b border-rule max-sm:py-16">
       <div className="max-w-mkt mx-auto px-8 max-sm:px-5">
-        <SectionMarker number="03" label="Why we are different" />
+        <SectionMarker number="03" label="How it actually works" />
         <h2
           className="font-serif font-normal text-ink leading-[0.94] tracking-[-0.025em] mb-5"
           style={{ fontSize: 'clamp(36px, 5vw, 64px)' }}
@@ -48,26 +58,28 @@ export function HomeDifferentiator() {
           <em className="italic text-signal">not noise.</em>
         </h2>
         <p className="text-[18px] leading-[1.6] text-ink-2 max-w-[560px] mb-14 font-sans">
-          Most audit tools try to always find something. Fixpath is built around a different
-          principle: only surface what is real, useful, and worth fixing.
+          Every design decision in Fixpath serves one goal: give teams useful truth
+          they can act on — and proof that acting on it made things better.
         </p>
 
-        <div className="space-y-0 border border-rule rounded-[4px] overflow-hidden">
-          {CONTRASTS.map((c, i) => (
+        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          {FEATURES.map((f) => (
             <div
-              key={c.ours}
-              className={`grid sm:grid-cols-[160px_160px_1fr] gap-4 sm:gap-8 p-6 sm:p-7 items-start ${i < CONTRASTS.length - 1 ? 'border-b border-rule' : ''}`}
-              style={{ background: 'var(--paper)' }}
+              key={f.title}
+              className="rounded-xl p-6 flex flex-col"
+              style={{ background: 'var(--card)', border: '1px solid var(--rule)' }}
             >
-              <div>
-                <span className="font-mono text-[10px] tracking-[0.08em] uppercase text-m-muted block mb-1">Others</span>
-                <span className="font-sans text-[14px] text-ink-2 line-through decoration-rule-2">{c.theirs}</span>
-              </div>
-              <div>
-                <span className="font-mono text-[10px] tracking-[0.08em] uppercase text-signal block mb-1">Fixpath</span>
-                <span className="font-sans text-[14px] font-semibold text-ink">{c.ours}</span>
-              </div>
-              <p className="font-sans text-[14px] text-ink-2 leading-[1.6]">{c.desc}</p>
+              <span
+                className="w-10 h-10 rounded-xl flex items-center justify-center mb-4 shrink-0"
+                style={{ background: `color-mix(in srgb, ${f.color} 12%, transparent)`, color: f.color }}
+              >
+                <f.Icon size={20} strokeWidth={1.5} />
+              </span>
+              <h3 className="font-sans text-[15px] font-semibold text-ink mb-2">{f.title}</h3>
+              <p className="font-sans text-[13px] text-ink-2 leading-[1.6] mb-3 flex-1">{f.desc}</p>
+              <p className="font-mono text-[11px] tracking-[0.04em] text-m-muted pt-3" style={{ borderTop: '1px solid var(--rule)' }}>
+                {f.detail}
+              </p>
             </div>
           ))}
         </div>

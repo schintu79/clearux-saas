@@ -1,61 +1,39 @@
 import { SectionMarker } from './SectionMarker'
+import { LayoutDashboard, BarChart3, Wrench, TrendingUp, Award } from 'lucide-react'
 
 /**
  * HomeIdentity — "What Fixpath is" section.
- * 5 visual cards for the core product identity, per the brief:
- * decision engine, prioritization system, fix guidance,
- * progress tracking, trust-building layer.
+ * 5 dashboard-style cards showing the core product identity.
  */
 
 const PILLARS = [
   {
-    icon: (
-      <svg width="28" height="28" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <rect x="3" y="6" width="22" height="16" rx="2" stroke="currentColor" strokeWidth="1.5" />
-        <path d="M8 14h4m4 0h4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-        <path d="M14 10v8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-      </svg>
-    ),
+    Icon: LayoutDashboard,
+    color: '#3B82F6',
     title: 'Decision engine',
     desc: 'Turns a complex website into a clear picture of what is working, what is broken, and what to do next.',
   },
   {
-    icon: (
-      <svg width="28" height="28" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <path d="M7 20l4-4 4 3 6-8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-        <rect x="4" y="4" width="20" height="20" rx="2" stroke="currentColor" strokeWidth="1.5" />
-      </svg>
-    ),
+    Icon: BarChart3,
+    color: '#8B5CF6',
     title: 'Prioritization system',
     desc: 'Ranks every issue by severity and real impact so you fix the things that matter most — first.',
   },
   {
-    icon: (
-      <svg width="28" height="28" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <path d="M9 14h10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-        <path d="M14 9v10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-        <rect x="4" y="4" width="20" height="20" rx="10" stroke="currentColor" strokeWidth="1.5" />
-      </svg>
-    ),
+    Icon: Wrench,
+    color: '#10B981',
     title: 'Fix guidance',
     desc: 'Every finding comes with a concrete fix — code diffs, copy changes, or step-by-step recommendations your team can act on.',
   },
   {
-    icon: (
-      <svg width="28" height="28" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <path d="M6 21l4-6 4 3 4-5 4 2" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-        <path d="M6 7v14h16" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-      </svg>
-    ),
+    Icon: TrendingUp,
+    color: '#F59E0B',
     title: 'Progress tracking',
     desc: 'Re-audit after changes to confirm fixes landed. Compare scores, see trends, and prove improvement over time.',
   },
   {
-    icon: (
-      <svg width="28" height="28" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <path d="M14 6l2 4 4.5.5-3.25 3.5L18 19l-4-2.5L10 19l.75-5-3.25-3.5L12 10l2-4z" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round" />
-      </svg>
-    ),
+    Icon: Award,
+    color: '#EC4899',
     title: 'Trust-building layer',
     desc: 'Shows your team, your clients, or your stakeholders that the site is improving — with real data, not opinions.',
   },
@@ -78,10 +56,19 @@ export function HomeIdentity() {
           matters, tells you how to fix it, and tracks whether things improve.
         </p>
 
-        <div className="grid sm:grid-cols-2 lg:grid-cols-5 gap-px rounded-[4px] overflow-hidden" style={{ background: 'var(--rule)' }}>
+        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {PILLARS.map((p) => (
-            <div key={p.title} className="p-6 sm:p-7" style={{ background: 'var(--paper)' }}>
-              <span className="text-signal mb-4 block">{p.icon}</span>
+            <div
+              key={p.title}
+              className="rounded-xl p-6"
+              style={{ background: 'var(--card)', border: '1px solid var(--rule)' }}
+            >
+              <span
+                className="w-10 h-10 rounded-xl flex items-center justify-center mb-4"
+                style={{ background: `color-mix(in srgb, ${p.color} 12%, transparent)`, color: p.color }}
+              >
+                <p.Icon size={20} strokeWidth={1.5} />
+              </span>
               <h3 className="font-sans text-[15px] font-semibold text-ink mb-2">{p.title}</h3>
               <p className="font-sans text-[13px] text-ink-2 leading-[1.6]">{p.desc}</p>
             </div>

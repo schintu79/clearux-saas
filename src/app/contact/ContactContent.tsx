@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import type { FormEvent } from 'react'
+import { Mail, Clock } from 'lucide-react'
 import { SectionMarker } from '@/components/marketing/SectionMarker'
 import { ArrowRightIcon } from '@/components/marketing/icons'
 import { HomeCta } from '@/components/marketing/HomeCta'
@@ -60,7 +61,7 @@ export default function ContactContent() {
             {/* Form */}
             <div>
               {submitted ? (
-                <div className="border border-ink p-10">
+                <div className="rounded-xl p-10" style={{ background: 'var(--card)', border: '1px solid var(--rule)' }}>
                   <span className="font-mono text-[11px] tracking-[0.1em] uppercase text-signal mb-4 block">Sent</span>
                   <h3 className="font-serif text-[28px] text-ink font-normal mb-3">Message sent!</h3>
                   <p className="font-sans text-[15px] text-ink-2 mb-8">
@@ -83,7 +84,7 @@ export default function ContactContent() {
                   </div>
                 </div>
               ) : (
-                <div className="border border-ink p-10 max-sm:p-6">
+                <div className="rounded-xl p-10 max-sm:p-6" style={{ background: 'var(--card)', border: '1px solid var(--rule)' }}>
                   <form onSubmit={handleSubmit} className="space-y-6" aria-label="Contact form">
                     {error && (
                       <div className="rounded-lg p-4 text-[14px] font-sans text-severe border border-severe/30 bg-severe/5">
@@ -164,19 +165,33 @@ export default function ContactContent() {
             </div>
 
             {/* Contact info */}
-            <div className="flex flex-col gap-0 border border-ink">
-              <div className="p-7 border-b border-ink">
-                <span className="font-mono text-[11px] tracking-[0.1em] uppercase text-signal mb-3 block">Email</span>
-                <a
-                  href="mailto:support@fixpath.ai"
-                  className="font-sans text-[15px] text-ink hover:text-signal transition-colors"
-                >
-                  support@fixpath.ai
-                </a>
+            <div className="flex flex-col gap-0 rounded-xl overflow-hidden" style={{ background: 'var(--card)', border: '1px solid var(--rule)' }}>
+              <div className="p-7 border-b" style={{ borderColor: 'var(--rule)' }}>
+                <div className="flex items-center gap-4">
+                  <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: 'color-mix(in srgb, #3B82F6 12%, transparent)' }}>
+                    <Mail size={20} color="#3B82F6" />
+                  </div>
+                  <div>
+                    <span className="font-mono text-[11px] tracking-[0.1em] uppercase text-signal mb-1 block">Email</span>
+                    <a
+                      href="mailto:support@fixpath.ai"
+                      className="font-sans text-[15px] text-ink hover:text-signal transition-colors"
+                    >
+                      support@fixpath.ai
+                    </a>
+                  </div>
+                </div>
               </div>
               <div className="p-7">
-                <span className="font-mono text-[11px] tracking-[0.1em] uppercase text-signal mb-3 block">Response time</span>
-                <p className="font-sans text-[15px] text-ink-2">Usually within 24 hours</p>
+                <div className="flex items-center gap-4">
+                  <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: 'color-mix(in srgb, #10B981 12%, transparent)' }}>
+                    <Clock size={20} color="#10B981" />
+                  </div>
+                  <div>
+                    <span className="font-mono text-[11px] tracking-[0.1em] uppercase text-signal mb-1 block">Response time</span>
+                    <p className="font-sans text-[15px] text-ink-2">Usually within 24 hours</p>
+                  </div>
+                </div>
               </div>
             </div>
           </div>

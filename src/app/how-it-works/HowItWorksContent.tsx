@@ -1081,9 +1081,9 @@ export default function HowItWorksContent() {
           <h2 className="font-serif font-normal text-ink leading-[0.96] tracking-[-0.02em] mb-14" style={{ fontSize: 'clamp(36px, 5vw, 64px)' }}>
             Three steps. <em className="italic text-signal">Minutes, not weeks.</em>
           </h2>
-          <div className="grid md:grid-cols-3 gap-0 border border-ink">
-            {STEPS.map((step, i) => (
-              <div key={step.num} className={`p-8 ${i < STEPS.length - 1 ? 'md:border-r border-ink max-md:border-b' : ''}`}>
+          <div className="grid md:grid-cols-3 gap-4">
+            {STEPS.map((step) => (
+              <div key={step.num} className="rounded-xl p-8" style={{ background: 'var(--card)', border: '1px solid var(--rule)' }}>
                 <span className="font-serif text-[56px] font-normal leading-none block mb-5" style={{ color: 'color-mix(in srgb, var(--ink) 12%, transparent)' }}>
                   {step.num}
                 </span>
@@ -1109,9 +1109,9 @@ export default function HowItWorksContent() {
               Every audit checks all seven modules. No features locked behind paid plans. You always get the full picture.
             </p>
           </div>
-          <div className="grid grid-cols-3 border-t border-l border-ink max-md:grid-cols-2 max-sm:grid-cols-1">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {MODULES.map((mod) => (
-              <div key={mod.num} className="border-r border-b border-ink p-7 sm:p-8 bg-paper hover:bg-paper-2 transition-colors min-h-[240px] flex flex-col">
+              <div key={mod.num} className="rounded-xl p-6 hover:bg-paper-2 transition-colors min-h-[240px] flex flex-col" style={{ background: 'var(--card)', border: '1px solid var(--rule)' }}>
                 <div className="font-mono text-[11px] text-signal font-semibold tracking-[0.08em] mb-3">
                   {mod.num} / {mod.title}
                 </div>
@@ -1141,9 +1141,9 @@ export default function HowItWorksContent() {
           <p className="text-[17px] text-ink-2 leading-[1.55] max-w-[540px] font-sans mb-14">
             Beyond finding issues — Fixpath helps you track progress, share results, and show your team what changed.
           </p>
-          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-0 border-t border-l border-rule">
+          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {PLATFORM_FEATURES.map((feat) => (
-              <div key={feat.title} className="border-r border-b border-rule p-7 hover:bg-paper-2/50 transition-colors">
+              <div key={feat.title} className="rounded-xl p-6 hover:bg-paper-2/50 transition-colors" style={{ background: 'var(--card)', border: '1px solid var(--rule)' }}>
                 <div className="mb-4">
                   <FeatureIcon type={feat.icon} />
                 </div>

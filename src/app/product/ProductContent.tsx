@@ -260,10 +260,10 @@ export function ProductContent() {
                 {AUDIT_MODULES.map((mod) => {
                   const tint = MODULE_TINTS[mod.name] || 'var(--signal)'
                   return (
-                    <div key={mod.name} className="rounded-[4px] border border-rule p-4" style={{ background: 'var(--paper)' }}>
+                    <div key={mod.name} className="rounded-xl p-4" style={{ background: 'var(--card)', border: '1px solid var(--rule)' }}>
                       <div className="flex items-center gap-2.5 mb-3">
                         <span
-                          className="w-7 h-7 rounded-[5px] flex items-center justify-center shrink-0"
+                          className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0"
                           style={{ background: `color-mix(in srgb, ${tint} 12%, transparent)`, color: tint }}
                         >
                           <mod.Icon size={15} strokeWidth={1.5} />
@@ -399,9 +399,9 @@ export function ProductContent() {
               { title: 'AI discovery files', desc: 'Checks for llms.txt, robots.txt AI directives, and other files that guide AI crawlers.', Icon: FileCode, color: '#3B82F6' },
               { title: 'Citation monitoring', desc: 'Tracks when and how AI models cite your content, and whether the citations are accurate.', Icon: Quote, color: '#10B981' },
             ].map((item) => (
-              <div key={item.title} className="rounded-[4px] border border-rule p-6" style={{ background: 'var(--paper-2)' }}>
+              <div key={item.title} className="rounded-xl p-6" style={{ background: 'var(--card)', border: '1px solid var(--rule)' }}>
                 <span
-                  className="w-9 h-9 rounded-[6px] flex items-center justify-center mb-4"
+                  className="w-10 h-10 rounded-xl flex items-center justify-center mb-4"
                   style={{ background: `color-mix(in srgb, ${item.color} 12%, transparent)`, color: item.color }}
                 >
                   <item.Icon size={18} strokeWidth={1.5} />
@@ -433,9 +433,9 @@ export function ProductContent() {
               { format: 'Word document', desc: 'Editable .docx format. Add your own notes, customise recommendations, and share with your team.', Icon: FileCode, color: '#3B82F6' },
               { format: 'Shareable link', desc: 'A live web page anyone can view. No login required. Includes score, findings, and module breakdown.', Icon: Eye, color: '#10B981' },
             ].map((item) => (
-              <div key={item.format} className="p-6 rounded-[4px] border border-rule" style={{ background: 'var(--paper-2)' }}>
+              <div key={item.format} className="p-6 rounded-xl" style={{ background: 'var(--card)', border: '1px solid var(--rule)' }}>
                 <span
-                  className="w-9 h-9 rounded-[6px] flex items-center justify-center mb-4"
+                  className="w-10 h-10 rounded-xl flex items-center justify-center mb-4"
                   style={{ background: `color-mix(in srgb, ${item.color} 12%, transparent)`, color: item.color }}
                 >
                   <item.Icon size={18} strokeWidth={1.5} />
