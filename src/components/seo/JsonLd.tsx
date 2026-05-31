@@ -116,7 +116,7 @@ export function HomeJsonLd() {
             name: 'Pro subscription',
             price: '59',
             priceCurrency: 'USD',
-            description: '10 audits per month, white-label reports, priority processing',
+            description: '3 workspaces, 12 re-audits per month, priority processing',
             availability: 'https://schema.org/InStock',
             priceSpecification: {
               '@type': 'UnitPriceSpecification',

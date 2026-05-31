@@ -80,7 +80,7 @@ export async function POST(request: NextRequest) {
             currency: 'usd',
             product_data: {
               name: `Fixpath ${plan.name}`,
-              description: `${plan.auditsPerMonth} audits/month + unlimited re-audits`,
+              description: `${plan.workspaces} workspace${plan.workspaces > 1 ? 's' : ''} · ${plan.reAuditsPerMonth} re-audits/month`,
             },
             unit_amount: isYearly ? plan.yearlyPrice * 12 : unitAmount,
             recurring: { interval: intervalStr },
@@ -92,14 +92,16 @@ export async function POST(request: NextRequest) {
           type: 'subscription',
           plan: plan.id,
           interval: parsed.data.interval,
-          audits_per_month: plan.auditsPerMonth.toString(),
+          workspaces: plan.workspaces.toString(),
+          re_audits_per_month: plan.reAuditsPerMonth.toString(),
         },
         subscription_data: {
           metadata: {
             user_id: user.id,
             plan: plan.id,
             interval: parsed.data.interval,
-            audits_per_month: plan.auditsPerMonth.toString(),
+            workspaces: plan.workspaces.toString(),
+            re_audits_per_month: plan.reAuditsPerMonth.toString(),
           },
         },
         success_url: `${appUrl}/dashboard?subscribed=${plan.id}`,

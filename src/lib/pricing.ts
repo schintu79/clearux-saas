@@ -1,5 +1,5 @@
 // ============================================================
-// ClearUX — Pricing Configuration
+// Fixpath — Pricing Configuration
 // Central source of truth for all plans and credit packs.
 // ============================================================
 
@@ -9,59 +9,62 @@ export type BillingInterval = 'monthly' | 'yearly'
 export interface SubscriptionPlan {
   id: string
   name: string
-  auditsPerMonth: number
+  workspaces: number
+  reAuditsPerMonth: number
   monthlyPrice: number   // cents
   yearlyPrice: number    // cents per month (billed yearly)
+  bestFor: string
   features: string[]
   popular?: boolean
-  whiteLabel?: boolean
-  teamSeats?: number
-  apiAccess?: boolean
 }
 
 export const SUBSCRIPTION_PLANS: SubscriptionPlan[] = [
   {
     id: 'starter',
     name: 'Starter',
-    auditsPerMonth: 3,
+    workspaces: 1,
+    reAuditsPerMonth: 4,
     monthlyPrice: 2900,
     yearlyPrice: 2300,
+    bestFor: 'One active site',
     features: [
-      '3 audits per month',
-      'Unlimited re-audits',
+      '1 workspace',
+      '4 re-audits per month',
+      'Full product access',
       'PDF + DOCX reports',
-      'Email support',
     ],
   },
   {
     id: 'pro',
     name: 'Pro',
-    auditsPerMonth: 10,
+    workspaces: 3,
+    reAuditsPerMonth: 12,
     monthlyPrice: 5900,
     yearlyPrice: 4700,
     popular: true,
-    whiteLabel: true,
+    bestFor: 'Multiple brands or client sites',
     features: [
-      '10 audits per month',
-      'Unlimited re-audits',
+      '3 workspaces',
+      '12 re-audits per month',
+      'Full product access',
       'PDF + DOCX reports',
       'Priority processing',
-      'White-label reports',
     ],
   },
   {
-    id: 'agency',
-    name: 'Agency',
-    auditsPerMonth: 30,
-    monthlyPrice: 14900,
-    yearlyPrice: 11900,
-    whiteLabel: true,
+    id: 'team',
+    name: 'Team',
+    workspaces: 10,
+    reAuditsPerMonth: 40,
+    monthlyPrice: 9900,
+    yearlyPrice: 7900,
+    bestFor: 'Agencies and teams',
     features: [
-      '30 audits per month',
-      'Unlimited re-audits',
+      '10 workspaces',
+      '40 re-audits per month',
+      'Full product access',
       'PDF + DOCX reports',
       'Priority processing',
-      'White-label reports',
       'Dedicated support',
     ],
   },
@@ -77,7 +80,6 @@ export interface CreditPack {
   savePercent: number | null
   features: string[]
   popular?: boolean
-  whiteLabel?: boolean
 }
 
 export const CREDIT_PACKS: CreditPack[] = [
@@ -115,11 +117,9 @@ export const CREDIT_PACKS: CreditPack[] = [
     price: 24900,
     perAudit: '$8.30',
     savePercent: 36,
-    whiteLabel: true,
     features: [
       'Full 112-checkpoint audits',
       'PDF + DOCX reports',
-      'White-label included',
       'Never expire',
     ],
   },

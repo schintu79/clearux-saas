@@ -116,7 +116,7 @@ export function Pricing() {
                   )}
                   {interval === 'monthly' && <div className="mb-5" />}
                   <p className="text-[15px] font-sans font-medium mb-7" style={{ color: plan.popular ? 'var(--paper)' : 'var(--ink)' }}>
-                    {plan.auditsPerMonth} audits per month
+                      {plan.workspaces} workspace{plan.workspaces > 1 ? 's' : ''} · {plan.reAuditsPerMonth} re-audits/mo
                   </p>
                   <ul className="list-none space-y-3 mb-9">
                     {plan.features.slice(1).map((f) => (
