@@ -56,8 +56,8 @@ export const SUBSCRIPTION_PLANS: SubscriptionPlan[] = [
     name: 'Team',
     workspaces: 10,
     reAuditsPerMonth: 40,
-    monthlyPrice: 9900,
-    yearlyPrice: 7900,
+    monthlyPrice: 14900,
+    yearlyPrice: 11900,
     bestFor: 'Agencies and teams',
     features: [
       '10 workspaces',

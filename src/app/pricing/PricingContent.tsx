@@ -128,19 +128,25 @@ export default function PricingContent() {
                     {interval === 'monthly' && <div className="mb-5" />}
 
                     {/* Key metrics */}
-                    <div className="flex gap-6 mb-7">
-                      <div>
-                        <p className="font-serif text-[22px] font-normal" style={{ color: plan.popular ? 'var(--paper)' : 'var(--ink)' }}>{plan.workspaces}</p>
-                        <p className="text-[11px] font-mono tracking-[0.04em] uppercase" style={{ color: plan.popular ? 'color-mix(in srgb, var(--paper) 55%, transparent)' : 'var(--m-muted)' }}>
-                          {plan.workspaces === 1 ? 'workspace' : 'workspaces'}
-                        </p>
-                      </div>
-                      <div>
-                        <p className="font-serif text-[22px] font-normal" style={{ color: plan.popular ? 'var(--paper)' : 'var(--ink)' }}>{plan.reAuditsPerMonth}</p>
-                        <p className="text-[11px] font-mono tracking-[0.04em] uppercase" style={{ color: plan.popular ? 'color-mix(in srgb, var(--paper) 55%, transparent)' : 'var(--m-muted)' }}>
-                          re-audits / mo
-                        </p>
-                      </div>
+                    <div className="flex gap-2 mb-7">
+                      <span
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[13px] font-sans font-medium"
+                        style={{
+                          background: plan.popular ? 'color-mix(in srgb, var(--paper) 14%, transparent)' : 'color-mix(in srgb, var(--ink) 6%, transparent)',
+                          color: plan.popular ? 'var(--paper)' : 'var(--ink)',
+                        }}
+                      >
+                        {plan.workspaces} {plan.workspaces === 1 ? 'workspace' : 'workspaces'}
+                      </span>
+                      <span
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[13px] font-sans font-medium"
+                        style={{
+                          background: plan.popular ? 'color-mix(in srgb, var(--paper) 14%, transparent)' : 'color-mix(in srgb, var(--ink) 6%, transparent)',
+                          color: plan.popular ? 'var(--paper)' : 'var(--ink)',
+                        }}
+                      >
+                        {plan.reAuditsPerMonth} re-audits / mo
+                      </span>
                     </div>
 
                     <ul className="list-none space-y-3 mb-9 flex-1">
