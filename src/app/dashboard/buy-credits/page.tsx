@@ -87,7 +87,7 @@ export default function BuyCreditsPage() {
           Plans and credits
         </h1>
         <p className="text-[14px] max-w-md mx-auto" style={{ color: 'var(--m-muted)' }}>
-          Subscribe for unlimited re-audits or buy credit packs for flexible usage.
+          Subscribe for monthly re-audits and workspaces, or buy credit packs for one-time audits.
         </p>
 
         {/* Current status */}
@@ -244,7 +244,7 @@ export default function BuyCreditsPage() {
       {mode === 'credits' && (
         <>
           <p className="text-center text-sm text-muted mb-6">
-            No subscription required. Credits never expire. Re-audits cost 1 credit.
+            No subscription required. One credit = one full audit. Credits never expire.
           </p>
           <div className="grid sm:grid-cols-3 gap-4 mb-8">
             {CREDIT_PACKS.map((pack) => (
@@ -318,7 +318,7 @@ export default function BuyCreditsPage() {
       )}
 
       <p className="text-center text-xs text-muted">
-        Secure payment via Stripe. 30-day money-back guarantee. Cancel subscriptions anytime.
+        Secure payment via Stripe. Satisfied or refunded — no friction. Cancel subscriptions anytime.
       </p>
     </div>
   );
