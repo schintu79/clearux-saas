@@ -26,7 +26,7 @@ export function HomeCta() {
           <h2
             className="font-serif font-normal leading-[0.94] tracking-[-0.025em] mb-6"
             style={{
-              fontSize: 'clamp(36px, 5vw, 64px)',
+              fontSize: 'clamp(48px, 7vw, 92px)',
               color: isDark ? 'var(--ink)' : 'var(--paper)',
             }}
           >

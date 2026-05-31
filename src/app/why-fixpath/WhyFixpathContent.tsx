@@ -1,9 +1,7 @@
 'use client'
 
 import { SectionMarker } from '@/components/marketing/SectionMarker'
-import { Button } from '@/components/marketing/Button'
-import { ArrowRightIcon } from '@/components/marketing/icons'
-import { useTheme } from '@/context/ThemeContext'
+import { HomeCta } from '@/components/marketing/HomeCta'
 import { AlertTriangle, ShieldOff, RefreshCcw, HelpCircle, Eye, Shield, Wrench, Filter, FileText, GitCompareArrows, AlertCircle, Scale, History, LineChart, Users } from 'lucide-react'
 
 /**
@@ -108,9 +106,6 @@ const REPORTING_DIFFERENCES = [
 ]
 
 export function WhyFixpathContent() {
-  const { theme } = useTheme()
-  const isDark = theme === 'dark'
-
   return (
     <main>
       {/* Hero */}
@@ -291,43 +286,7 @@ export function WhyFixpathContent() {
       </section>
 
       {/* Final CTA */}
-      <section
-        className="relative overflow-hidden"
-        style={{
-          background: isDark ? 'var(--paper-2)' : 'var(--ink)',
-          color: isDark ? 'var(--ink)' : 'var(--paper)',
-          padding: '100px 0',
-        }}
-      >
-        <div className="max-w-mkt mx-auto px-8 max-sm:px-5 relative">
-          <div className="max-w-[680px] mx-auto text-center">
-            <h2
-              className="font-serif font-normal leading-[0.94] tracking-[-0.025em] mb-6"
-              style={{
-                fontSize: 'clamp(36px, 5vw, 56px)',
-                color: isDark ? 'var(--ink)' : 'var(--paper)',
-              }}
-            >
-              Try it yourself.
-            </h2>
-            <p
-              className="text-[18px] leading-[1.6] mb-10 font-sans"
-              style={{ color: isDark ? 'var(--m-muted)' : 'color-mix(in srgb, var(--paper) 75%, transparent)' }}
-            >
-              Your first audit is free. See the difference between noise and useful truth.
-            </p>
-            <div className="flex gap-3.5 justify-center max-sm:flex-col max-sm:items-stretch">
-              <Button href="/register" size="large" className={isDark ? '' : '!bg-signal !border-signal !text-white hover:!opacity-90'}>
-                Start free audit
-                <ArrowRightIcon size={14} />
-              </Button>
-              <Button href="/how-it-works" variant="ghost" size="large" className={isDark ? '' : '!text-white/80 !border-white/20 hover:!border-white/50 hover:!text-white'}>
-                See how it works
-              </Button>
-            </div>
-          </div>
-        </div>
-      </section>
+      <HomeCta />
     </main>
   )
 }
