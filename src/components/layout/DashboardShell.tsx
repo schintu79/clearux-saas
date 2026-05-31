@@ -103,8 +103,10 @@ const DashboardShell: React.FC<DashboardShellProps> = ({ children }) => {
     credits: number;
     subscription_plan: string | null;
     subscription_status: string | null;
-    audits_remaining: number;
-    audits_per_month: number;
+    reaudits_remaining: number;
+    reaudits_per_month: number;
+    workspace_count: number;
+    workspace_limit: number;
     first_audit_free: boolean;
   } | null>(null);
   const [unreadNotifications, setUnreadNotifications] = useState(0);
@@ -144,8 +146,10 @@ const DashboardShell: React.FC<DashboardShellProps> = ({ children }) => {
         credits: d.credits ?? 0,
         subscription_plan: d.subscription_plan ?? null,
         subscription_status: d.subscription_status ?? null,
-        audits_remaining: d.audits_remaining ?? 0,
-        audits_per_month: d.audits_per_month ?? 0,
+        reaudits_remaining: d.reaudits_remaining ?? 0,
+        reaudits_per_month: d.reaudits_per_month ?? 0,
+        workspace_count: d.workspace_count ?? 0,
+        workspace_limit: d.workspace_limit ?? 1,
         first_audit_free: d.first_audit_free ?? false,
       })).catch(() => {});
       fetch('/api/notifications').then((r) => r.json()).then((d) => setUnreadNotifications(d.unreadCount ?? 0)).catch(() => {});
@@ -653,7 +657,35 @@ const DashboardShell: React.FC<DashboardShellProps> = ({ children }) => {
             )}
           </div>
 
-          <div className="flex items-center gap-1">
+          <div className="flex items-center gap-2">
+            {/* Usage pills — workspace count and re-audit allowance */}
+            {creditData && creditData.subscription_status === 'active' && (
+              <div className="hidden md:flex items-center gap-1.5">
+                <span
+                  className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-medium"
+                  style={{ background: 'color-mix(in srgb, var(--ink) 6%, transparent)', color: 'var(--ink-2)' }}
+                  title={`${creditData.workspace_count} of ${creditData.workspace_limit} workspaces used`}
+                >
+                  {creditData.workspace_count}/{creditData.workspace_limit} workspaces
+                </span>
+                <span
+                  className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-medium"
+                  style={{ background: 'color-mix(in srgb, var(--ink) 6%, transparent)', color: 'var(--ink-2)' }}
+                  title={`${creditData.reaudits_remaining} of ${creditData.reaudits_per_month} re-audits remaining this month`}
+                >
+                  {creditData.reaudits_remaining}/{creditData.reaudits_per_month} re-audits
+                </span>
+              </div>
+            )}
+            {creditData && !creditData.subscription_plan && creditData.credits > 0 && (
+              <span
+                className="hidden md:inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-medium"
+                style={{ background: 'color-mix(in srgb, var(--ink) 6%, transparent)', color: 'var(--ink-2)' }}
+                title={`${creditData.credits} audit credit${creditData.credits !== 1 ? 's' : ''} remaining`}
+              >
+                {creditData.credits} credit{creditData.credits !== 1 ? 's' : ''}
+              </span>
+            )}
             <Link
               href="/dashboard/notifications"
               className="relative w-9 h-9 rounded-md inline-flex items-center justify-center transition-colors hover:bg-black/[0.04]"

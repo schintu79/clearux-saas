@@ -13,10 +13,12 @@ interface User {
   package_tier: string
   subscription_plan: string | null
   subscription_status: string | null
+  audits_remaining: number
+  audits_per_month: number
+  workspace_count: number
   free_membership: boolean
   free_membership_expiry: string | null
   role: string
-  white_label: boolean
   created_at: string
   updated_at: string
 }
@@ -398,9 +400,9 @@ export default function AdminUsersPage() {
                   style={{ background: 'var(--paper)', border: '1px solid var(--rule)', color: 'var(--ink)' }}
                 >
                   <option value="none">No plan</option>
-                  <option value="starter">Starter (3 audits/mo)</option>
-                  <option value="pro">Pro (10 audits/mo)</option>
-                  <option value="agency">Agency (30 audits/mo)</option>
+                  <option value="starter">Starter (1 workspace, 4 re-audits/mo)</option>
+                  <option value="pro">Pro (3 workspaces, 12 re-audits/mo)</option>
+                  <option value="team">Team (10 workspaces, 40 re-audits/mo)</option>
                 </select>
               </div>
 

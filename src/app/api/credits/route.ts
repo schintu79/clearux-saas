@@ -1,16 +1,17 @@
 // ============================================================
-// ClearUX API — /api/credits
-// GET  → returns credit balance + subscription status
-// POST → uses 1 credit or 1 subscription audit for a new audit
+// Fixpath API — /api/credits
+// GET  → returns credit balance + subscription status + usage
+// POST → uses 1 credit or 1 re-audit allowance for an audit
 // ============================================================
 
 import { NextRequest, NextResponse } from 'next/server'
 import { createServerSupabase, createServiceSupabase } from '@/lib/supabase-server'
 import { inngest } from '@/lib/inngest/client'
+import { SUBSCRIPTION_PLANS } from '@/lib/pricing'
 
 export const maxDuration = 300 // 5 minutes (Vercel Pro max)
 
-/* ── GET — credit balance + subscription info ───────────── */
+/* ── GET — credit balance + subscription + usage info ───── */
 export async function GET(request: NextRequest) {
   try {
     const supabase = await createServerSupabase()
@@ -21,7 +22,7 @@ export async function GET(request: NextRequest) {
     const db = createServiceSupabase()
     const { data: profile } = await db
       .from('profiles')
-      .select('credits, package_tier, subscription_plan, subscription_status, subscription_interval, audits_remaining, audits_per_month, white_label')
+      .select('credits, package_tier, subscription_plan, subscription_status, subscription_interval, audits_remaining, audits_per_month')
       .eq('id', user.id)
       .single()
 
@@ -32,8 +33,19 @@ export async function GET(request: NextRequest) {
       .eq('user_id', user.id)
       .in('status', ['completed', 'failed', 'analysing', 'crawling', 'generating_report', 'payment_received'])
 
+    // Count active workspaces for limit enforcement
+    const { count: workspaceCount } = await db
+      .from('workspaces')
+      .select('id', { count: 'exact', head: true })
+      .eq('user_id', user.id)
+      .eq('status', 'active')
+
     const firstAuditFree = (completedAudits ?? 0) === 0
     const p = profile as any
+
+    // Derive workspace limit from plan using pricing.ts as source of truth
+    const plan = SUBSCRIPTION_PLANS.find((pl) => pl.id === p?.subscription_plan)
+    const workspaceLimit = plan?.workspaces ?? 1 // Free/no-plan users get 1 workspace
 
     return NextResponse.json({
       credits: p?.credits ?? 0,
@@ -43,15 +55,18 @@ export async function GET(request: NextRequest) {
       subscription_plan: p?.subscription_plan ?? null,
       subscription_status: p?.subscription_status ?? null,
       subscription_interval: p?.subscription_interval ?? null,
-      audits_remaining: p?.audits_remaining ?? 0,
-      audits_per_month: p?.audits_per_month ?? 0,
-      white_label: p?.white_label ?? false,
-      // Can the user run an audit right now?
+      // Re-audit allowance (monthly, resets on renewal)
+      reaudits_remaining: p?.audits_remaining ?? 0,
+      reaudits_per_month: p?.audits_per_month ?? 0,
+      // Workspace usage
+      workspace_count: workspaceCount ?? 0,
+      workspace_limit: workspaceLimit,
+      // Can the user run an initial audit right now?
       can_audit: firstAuditFree
         || (p?.credits ?? 0) > 0
         || (p?.subscription_status === 'active' && (p?.audits_remaining ?? 0) > 0),
-      // Does this user get free re-audits?
-      unlimited_reaudits: p?.subscription_status === 'active',
+      // Can the user run a re-audit right now?
+      can_reaudit: p?.subscription_status === 'active' && (p?.audits_remaining ?? 0) > 0,
     })
   } catch (err) {
     console.error('GET /api/credits error:', err)
@@ -100,25 +115,29 @@ export async function POST(request: NextRequest) {
       const subscriptionAuditsLeft = p?.audits_remaining ?? 0
       const creditBalance = p?.credits ?? 0
 
-      // For re-audits: subscribers get them free, credit users pay 1 credit
-      if (is_reaudit && hasSubscription) {
-        // Free re-audit for subscribers — no deduction needed
-      } else if (hasSubscription && subscriptionAuditsLeft > 0) {
-        // Use subscription allowance
-        const { error: deductErr } = await db
-          .from('profiles')
-          .update({
-            audits_remaining: subscriptionAuditsLeft - 1,
-            updated_at: new Date().toISOString(),
-          } as any)
-          .eq('id', user.id)
+      // Re-audits consume monthly re-audit allowance (subscribers only)
+      if (is_reaudit) {
+        if (hasSubscription && subscriptionAuditsLeft > 0) {
+          // Decrement re-audit allowance
+          const { error: deductErr } = await db
+            .from('profiles')
+            .update({
+              audits_remaining: subscriptionAuditsLeft - 1,
+              updated_at: new Date().toISOString(),
+            } as any)
+            .eq('id', user.id)
 
-        if (deductErr) {
-          console.error('Subscription audit deduct error:', deductErr)
-          return NextResponse.json({ error: 'Failed to use subscription audit' }, { status: 500 })
+          if (deductErr) {
+            console.error('Re-audit allowance deduct error:', deductErr)
+            return NextResponse.json({ error: 'Failed to use re-audit allowance' }, { status: 500 })
+          }
+        } else if (hasSubscription && subscriptionAuditsLeft <= 0) {
+          return NextResponse.json({ error: 'Monthly re-audit allowance exhausted. Resets on your next billing cycle.' }, { status: 400 })
+        } else {
+          return NextResponse.json({ error: 'Re-audits require an active subscription.' }, { status: 400 })
         }
       } else if (creditBalance > 0) {
-        // Use credits
+        // Initial audits use credits (from credit packs)
         const { error: deductErr } = await db
           .from('profiles')
           .update({
@@ -133,7 +152,7 @@ export async function POST(request: NextRequest) {
           return NextResponse.json({ error: 'Failed to deduct credit' }, { status: 500 })
         }
       } else {
-        return NextResponse.json({ error: 'No audits available. Subscribe or buy credits.' }, { status: 400 })
+        return NextResponse.json({ error: 'No audits available. Buy credits to run an audit.' }, { status: 400 })
       }
     }
 
@@ -168,13 +187,13 @@ export async function POST(request: NextRequest) {
     // Log it
     await db.from('audit_logs').insert({
       audit_id,
-      event: usingFreeFirst ? 'free_first_audit' : is_reaudit ? 'reaudit' : 'credit_used',
+      event: usingFreeFirst ? 'free_first_audit' : is_reaudit ? 'reaudit_used' : 'credit_used',
       status: 'success',
       message: usingFreeFirst
         ? 'Free first audit — no credit deducted'
         : is_reaudit
-          ? 'Re-audit (subscription — free)'
-          : `1 credit/audit deducted. Credits: ${balance}, Sub audits: ${auditsRemaining}`,
+          ? `Re-audit allowance used. Remaining: ${auditsRemaining}`
+          : `1 credit deducted. Credits: ${balance}`,
     } as any)
 
     // Determine audit type and trigger processing

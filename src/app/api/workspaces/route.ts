@@ -1,11 +1,12 @@
 // ============================================================
 // /api/workspaces — CRUD for workspaces
 // GET  → list user's workspaces
-// POST → create a new workspace
+// POST → create a new workspace (with plan-based limit enforcement)
 // ============================================================
 
 import { NextRequest, NextResponse } from 'next/server'
 import { createServerSupabase } from '@/lib/supabase-server'
+import { SUBSCRIPTION_PLANS } from '@/lib/pricing'
 
 function slugify(text: string): string {
   return text
@@ -49,6 +50,35 @@ export async function POST(request: NextRequest) {
 
   if (!name) {
     return NextResponse.json({ error: 'Name is required' }, { status: 400 })
+  }
+
+  // ── Workspace limit enforcement ────────────────────────────
+  // Look up the user's subscription plan and derive workspace limit
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('subscription_plan, subscription_status')
+    .eq('id', user.id)
+    .single()
+
+  const p = profile as any
+  const planConfig = SUBSCRIPTION_PLANS.find((pl) => pl.id === p?.subscription_plan)
+  // Active subscribers get their plan's limit; free/credit-only users get 1
+  const workspaceLimit = (p?.subscription_status === 'active' && planConfig)
+    ? planConfig.workspaces
+    : 1
+
+  // Count existing active workspaces
+  const { count: activeWorkspaces } = await supabase
+    .from('workspaces')
+    .select('id', { count: 'exact', head: true })
+    .eq('user_id', user.id)
+    .eq('status', 'active')
+
+  if ((activeWorkspaces ?? 0) >= workspaceLimit) {
+    const planName = planConfig?.name ?? 'Free'
+    return NextResponse.json({
+      error: `Workspace limit reached. Your ${planName} plan allows ${workspaceLimit} workspace${workspaceLimit > 1 ? 's' : ''}. Upgrade to add more.`,
+    }, { status: 403 })
   }
 
   // Generate a clean, human-readable slug from the workspace name.

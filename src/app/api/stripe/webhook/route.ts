@@ -12,6 +12,7 @@ import { stripe } from '@/lib/stripe'
 import { createServiceSupabase } from '@/lib/supabase-server'
 import { inngest } from '@/lib/inngest/client'
 import { sendPaymentConfirmation, sendCreditsPurchased } from '@/lib/audit-engine/email'
+import { SUBSCRIPTION_PLANS } from '@/lib/pricing'
 
 export async function POST(request: NextRequest) {
   try {
@@ -52,12 +53,13 @@ export async function POST(request: NextRequest) {
 
       // ── Subscription activated ──────────────────────────────
       if (paymentType === 'subscription') {
-        const planId = meta.plan // 'starter' | 'pro' | 'agency'
+        const planId = meta.plan // 'starter' | 'pro' | 'team'
         const billingInterval = meta.interval // 'monthly' | 'yearly'
-        const auditsPerMonth = parseInt(meta.audits_per_month || '0', 10)
         const stripeSubscriptionId = session.subscription
 
-        const isWhiteLabel = planId === 'pro' || planId === 'agency'
+        // Use pricing.ts as source of truth for plan entitlements
+        const planConfig = SUBSCRIPTION_PLANS.find((p) => p.id === planId)
+        const reAuditsPerMonth = planConfig?.reAuditsPerMonth ?? 4
 
         const { error } = await supabase
           .from('profiles')
@@ -67,10 +69,9 @@ export async function POST(request: NextRequest) {
             subscription_interval: billingInterval,
             stripe_subscription_id: stripeSubscriptionId,
             stripe_customer_id: session.customer,
-            audits_remaining: auditsPerMonth,
-            audits_per_month: auditsPerMonth,
+            audits_remaining: reAuditsPerMonth,
+            audits_per_month: reAuditsPerMonth,
             package_tier: planId,
-            white_label: isWhiteLabel,
             updated_at: new Date().toISOString(),
           } as any)
           .eq('id', userId)
@@ -80,7 +81,7 @@ export async function POST(request: NextRequest) {
           return NextResponse.json({ error: 'Failed to activate subscription' }, { status: 500 })
         }
 
-        console.log(`Subscription activated: user=${userId} plan=${planId} interval=${billingInterval}`)
+        console.log(`Subscription activated: user=${userId} plan=${planId} interval=${billingInterval} reAudits=${reAuditsPerMonth}`)
         return NextResponse.json({ received: true }, { status: 200 })
       }
 
@@ -111,12 +112,11 @@ export async function POST(request: NextRequest) {
 
           console.log(`Added ${creditsToAdd} credits to user ${userId}. New balance: ${current + creditsToAdd}`)
 
-          // Update tier & white-label (non-critical)
+          // Update tier (non-critical)
           try {
-            const isWhiteLabel = pack === 'scale'
             await supabase
               .from('profiles')
-              .update({ package_tier: pack, white_label: isWhiteLabel } as any)
+              .update({ package_tier: pack } as any)
               .eq('id', userId)
           } catch (tierErr) {
             console.warn(`Non-critical: failed to update tier for user ${userId}:`, tierErr)
@@ -312,7 +312,6 @@ export async function POST(request: NextRequest) {
             stripe_subscription_id: null,
             audits_remaining: 0,
             audits_per_month: 0,
-            white_label: false,
             updated_at: new Date().toISOString(),
           } as any)
           .eq('id', userId)

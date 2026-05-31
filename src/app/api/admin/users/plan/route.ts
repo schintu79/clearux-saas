@@ -1,10 +1,11 @@
 // ============================================================
-// ClearUX Admin API — /api/admin/users/plan
+// Fixpath Admin API — /api/admin/users/plan
 // PATCH → Override a user's plan, credits, and expiry
 // ============================================================
 
 import { NextRequest, NextResponse } from 'next/server'
 import { requireAdmin } from '@/lib/admin'
+import { SUBSCRIPTION_PLANS } from '@/lib/pricing'
 
 export async function PATCH(request: NextRequest) {
   try {
@@ -21,7 +22,7 @@ export async function PATCH(request: NextRequest) {
       expiry_date,
     } = body as {
       user_id: string
-      subscription_plan?: 'starter' | 'pro' | 'agency' | null
+      subscription_plan?: 'starter' | 'pro' | 'team' | null
       credits?: number
       free_membership?: boolean
       expiry_date?: string | null
@@ -53,13 +54,9 @@ export async function PATCH(request: NextRequest) {
       updates.subscription_plan = subscription_plan
       updates.subscription_status = subscription_plan ? 'active' : null
 
-      // Set audits_per_month based on plan
-      const planAudits: Record<string, number> = {
-        starter: 3,
-        pro: 10,
-        agency: 30,
-      }
-      updates.audits_per_month = subscription_plan ? planAudits[subscription_plan] || 3 : 0
+      // Use pricing.ts as source of truth for re-audit allowance
+      const planConfig = SUBSCRIPTION_PLANS.find((pl) => pl.id === subscription_plan)
+      updates.audits_per_month = planConfig?.reAuditsPerMonth ?? 0
       updates.audits_remaining = updates.audits_per_month
     }
 
