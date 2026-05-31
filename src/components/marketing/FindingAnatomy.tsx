@@ -63,7 +63,7 @@ const FINDING_CARDS = [
   },
   {
     label: 'Score overview',
-    title: '7 modules, 112 checkpoints',
+    title: '7 categories, 112 checkpoints',
     desc: 'Every page scored across usability, accessibility, performance, content, SEO, and AI readiness — in one view.',
     visual: (
       <div className="w-full border border-rule rounded-lg overflow-hidden p-3" style={{ fontSize: 0 }}>
@@ -227,7 +227,7 @@ export function FindingAnatomy() {
                 Subscription flow uses pre-checked consent box for marketing emails.
               </h3>
               <div className="font-mono text-[11px] text-m-muted tracking-[0.06em] uppercase mb-6 pb-5 border-b border-dashed border-rule-2">
-                Module: Human Experience · Pattern: Confirmshaming + opt-out trap · Page: /checkout
+                Category: Human Experience · Pattern: Confirmshaming + opt-out trap · Page: /checkout
               </div>
 
               {/* What we observed */}

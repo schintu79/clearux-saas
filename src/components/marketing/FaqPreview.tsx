@@ -20,7 +20,7 @@ function ChevronIcon({ open }: { open: boolean }) {
 /* ── Accordion Item ── */
 function AccordionItem({ q, a, isOpen, onToggle }: { q: string; a: string; isOpen: boolean; onToggle: () => void }) {
   return (
-    <div className="border-b border-rule last:border-b-0">
+    <div style={{ borderBottom: '1px solid color-mix(in srgb, var(--ink) 8%, transparent)' }} className="last:border-b-0">
       <button
         onClick={onToggle}
         className="w-full flex items-center gap-3 py-5 px-1 text-left hover:text-signal transition-colors group"
@@ -58,15 +58,18 @@ export function FaqPreview({
   }
 
   return (
-    <section className="py-[100px] border-b border-rule max-sm:py-16">
+    <section className="py-[80px] border-b border-rule max-sm:py-14">
       <div className="max-w-mkt mx-auto px-8 max-sm:px-5">
-        <SectionMarker number={sectionNumber} label="FAQ" />
-        <h2 className="font-serif font-normal text-ink leading-[0.94] tracking-[-0.025em] mb-12" style={{ fontSize: 'clamp(36px, 5vw, 64px)' }}>
+        <SectionMarker number={sectionNumber} label="FAQ" centered />
+        <h2
+          className="font-serif font-normal text-ink leading-[0.94] tracking-[-0.025em] mb-12 text-center"
+          style={{ fontSize: 'clamp(48px, 7vw, 96px)' }}
+        >
           Common <em className="italic text-signal">questions.</em>
         </h2>
 
-        <div className="max-w-3xl">
-          <div className="border-t border-rule">
+        <div className="max-w-2xl mx-auto">
+          <div style={{ borderTop: '1px solid color-mix(in srgb, var(--ink) 8%, transparent)' }}>
             {items.map((item, i) => (
               <AccordionItem
                 key={i}
@@ -78,13 +81,15 @@ export function FaqPreview({
             ))}
           </div>
 
-          <Link
-            href="/faq"
-            className="inline-flex items-center gap-2 mt-10 font-mono text-[12px] tracking-[0.08em] uppercase text-signal hover:text-ink transition-colors group"
-          >
-            Read all FAQs
-            <ArrowRightIcon className="w-3.5 h-3.5 transition-transform group-hover:translate-x-0.5" />
-          </Link>
+          <div className="text-center mt-10">
+            <Link
+              href="/faq"
+              className="inline-flex items-center gap-2 font-mono text-[12px] tracking-[0.08em] uppercase text-signal hover:text-ink transition-colors group"
+            >
+              Read all FAQs
+              <ArrowRightIcon className="w-3.5 h-3.5 transition-transform group-hover:translate-x-0.5" />
+            </Link>
+          </div>
         </div>
       </div>
     </section>

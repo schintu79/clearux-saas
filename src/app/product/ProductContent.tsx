@@ -5,28 +5,7 @@ import { Button } from '@/components/marketing/Button'
 import { ArrowRightIcon } from '@/components/marketing/icons'
 import { HomeCta } from '@/components/marketing/HomeCta'
 import { FaqPreview } from '@/components/marketing/FaqPreview'
-import { Scale, Heart, Accessibility, Brain, FileSearch, Eye, Bot, Database, FileCode, Quote, type LucideIcon } from 'lucide-react'
-
-/* Dashboard-matching MODULE_TINTS */
-const MODULE_TINTS: Record<string, string> = {
-  'Foundation': '#3B82F6',
-  'Human experience': '#EC4899',
-  'Inclusive design': '#8B5CF6',
-  'Future readiness': '#F59E0B',
-  'Accessibility readiness': '#8B5CF6',
-  'Brand consistency': '#06B6D4',
-  'SEO structure': '#10B981',
-}
-
-const AUDIT_MODULES: { name: string; Icon: LucideIcon; categories: string[] }[] = [
-  { name: 'Foundation', Icon: Scale, categories: ['Visual design and first impression', 'Value proposition and messaging', 'Navigation and information architecture', 'Content quality and readability'] },
-  { name: 'Human experience', Icon: Heart, categories: ['Conversion paths and CTAs', 'Trust and credibility signals', 'Ethical design and dark patterns', 'Emotional design and engagement'] },
-  { name: 'Inclusive design', Icon: Accessibility, categories: ['WCAG 2.1 AA accessibility', 'Cognitive accessibility', 'Digital wellbeing and responsibility', 'Responsive and device support'] },
-  { name: 'Future readiness', Icon: Brain, categories: ['Performance and core web vitals', 'AI discoverability and structured data', 'AI agent readiness', 'Cultural and global readiness'] },
-  { name: 'Accessibility readiness', Icon: Accessibility, categories: ['Compliance depth and standards alignment', 'Assistive technology support', 'Accessibility governance and process', 'Inclusive testing and user feedback'] },
-  { name: 'SEO structure', Icon: FileSearch, categories: ['On-page SEO and metadata', 'Technical SEO and crawlability', 'Rich snippets and social markup', 'Content strategy and link structure'] },
-  { name: 'Brand consistency', Icon: Eye, categories: ['Brand identity and guidelines', 'Brand experience and story', 'Visual asset consistency', 'Brand communication and tone'] },
-]
+import { Bot, Database, FileCode, Quote, FileSearch, Eye, Server, ShieldCheck, Users, MessageSquareText, Blocks, Layers, Fingerprint, ArrowUpDown, Lightbulb, TrendingUp, GitCompareArrows, Target, type LucideIcon } from 'lucide-react'
 
 /* ── FAQ data ── */
 const PRODUCT_FAQS = [
@@ -37,176 +16,361 @@ const PRODUCT_FAQS = [
   { q: 'How is this different from Lighthouse or PageSpeed?', a: 'Lighthouse focuses on performance and basic accessibility. Fixpath covers 112 checkpoints across UX, accessibility, AI readiness, brand consistency, SEO, and more. It also helps you fix issues and tracks improvement, rather than just listing problems.' },
 ]
 
-/* ── Mockup: Finding detail card — mirrors real findings panel ── */
+/* ── Supporting proof data ── */
+const PROOF_ITEMS: { title: string; desc: string; Icon: LucideIcon }[] = [
+  { title: 'LLM probe testing', desc: 'We ask multiple AI models about your business and compare their answers to what is actually on your site.', Icon: Bot },
+  { title: 'Structured data audit', desc: 'Validates JSON-LD, Open Graph, and schema markup that AI agents rely on to understand your pages.', Icon: Database },
+  { title: 'AI discovery files', desc: 'Checks for llms.txt, robots.txt AI directives, and other files that guide AI crawlers to your content.', Icon: FileCode },
+  { title: 'Citation monitoring', desc: 'Tracks when and how AI models cite your content, and whether the citations are accurate.', Icon: Quote },
+  { title: 'Professional reports', desc: 'Export your audit as a PDF or Word document. Share a live link with clients or stakeholders — no login required.', Icon: FileSearch },
+  { title: 'Competitor benchmarking', desc: 'Audit a competitor site and compare scores across all seven modules. See where you lead and where to focus.', Icon: Eye },
+]
+
+/* ── Mockup: Finding detail card — mirrors real dashboard findings panel ── */
 function FindingMockup() {
   return (
     <div className="rounded-xl border border-rule overflow-hidden shadow-[0_4px_24px_-8px_rgba(0,0,0,0.08)]" style={{ background: 'var(--paper)' }}>
-      {/* Header bar with severity + module */}
-      <div className="px-5 py-3 border-b border-rule flex items-center justify-between" style={{ background: 'var(--paper-2)' }}>
-        <div className="flex items-center gap-2.5">
-          <span className="font-mono text-[9px] font-semibold tracking-[0.08em] uppercase px-2 py-0.5 rounded-[3px]" style={{ color: 'var(--severe)', background: 'color-mix(in srgb, var(--severe) 12%, transparent)' }}>Critical</span>
-          <span className="font-mono text-[10px] tracking-[0.06em] uppercase text-m-muted">Human experience</span>
+      {/* Filter bar */}
+      <div className="px-5 py-3 border-b border-rule flex items-center justify-between" style={{ background: 'var(--paper)' }}>
+        <div className="flex items-center gap-3">
+          <span className="font-sans text-[11px] text-m-muted border border-rule rounded-md px-2.5 py-1">All severities (3)</span>
+          <span className="font-sans text-[11px] text-m-muted border border-rule rounded-md px-2.5 py-1">All modules</span>
         </div>
-        <span className="font-mono text-[9px] tracking-[0.06em] uppercase text-m-muted">HX-04</span>
+        <span className="font-sans text-[10px] text-m-muted">3 of 3 findings</span>
       </div>
-      {/* Finding content */}
-      <div className="p-5">
-        <h4 className="font-sans text-[15px] font-semibold text-ink mb-2">Login flow uses 3 dark-pattern signals that erode trust</h4>
-        <p className="font-sans text-[13px] text-ink-2 leading-relaxed mb-4">
-          The login page uses urgency messaging, pre-checked opt-ins, and a hidden close button
-          on the modal overlay. These patterns reduce user trust and may violate consumer protection
-          regulations in the EU.
-        </p>
-        {/* Evidence + affected pages — mirrors real layout */}
-        <div className="rounded border border-rule p-3 mb-4" style={{ background: 'var(--paper-2)' }}>
-          <p className="font-mono text-[9px] tracking-[0.08em] uppercase text-m-muted mb-2">Evidence</p>
-          <p className="font-mono text-[11px] text-ink-2 leading-relaxed">
-            &quot;Only 2 spots left!&quot; urgency text + pre-checked newsletter opt-in + modal close button opacity: 0.15
-          </p>
-        </div>
-        <div className="flex items-center gap-4 text-[11px] font-mono text-m-muted tracking-[0.06em]">
-          <span className="uppercase">Affected: /login, /signup</span>
-          <span className="flex items-center gap-1.5">
-            <span className="w-1.5 h-1.5 rounded-full bg-signal" />
-            <span className="uppercase text-signal">Fix available</span>
+
+      {/* Category header — tinted background */}
+      <div className="px-5 py-3.5 flex items-center justify-between" style={{ background: 'color-mix(in srgb, var(--severe) 6%, var(--paper))' }}>
+        <div className="flex items-center gap-3">
+          <span className="w-7 h-7 rounded-md inline-flex items-center justify-center" style={{ background: 'color-mix(in srgb, var(--severe) 12%, transparent)' }}>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--severe)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
           </span>
+          <div className="flex items-center gap-2.5">
+            <span className="font-sans text-[13px] font-semibold text-ink">Human Experience</span>
+            <span className="font-sans text-[12px] text-m-muted">62<span className="text-[10px]">/100</span></span>
+            <span className="font-sans text-[11px] text-m-muted">· 3 findings</span>
+          </div>
+        </div>
+        <div className="flex items-center gap-2">
+          <span className="font-sans text-[9px] font-semibold uppercase tracking-[0.06em] px-1.5 py-0.5 rounded" style={{ color: 'var(--severe)', background: 'color-mix(in srgb, var(--severe) 10%, transparent)' }}>1 Critical</span>
+          <span className="font-sans text-[9px] font-semibold uppercase tracking-[0.06em] px-1.5 py-0.5 rounded" style={{ color: '#F97316', background: 'color-mix(in srgb, #F97316 10%, transparent)' }}>2 High</span>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--ink-2)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="m18 15-6-6-6 6"/></svg>
         </div>
       </div>
-      {/* Action bar */}
-      <div className="px-5 py-3 border-t border-rule flex items-center gap-3">
-        <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[11px] font-sans font-medium bg-ink text-paper">
-          View fix
-        </span>
-        <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[11px] font-sans font-medium border border-rule text-ink">
-          Export finding
-        </span>
+
+      {/* Finding row — expanded */}
+      <div className="border-t border-rule">
+        <div className="flex items-center px-5 py-3.5" style={{ borderLeft: '3px solid var(--severe)' }}>
+          <div className="flex items-center gap-3 flex-1 min-w-0">
+            <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ background: 'var(--signal)' }} />
+            <div className="min-w-0">
+              <p className="font-sans text-[13px] font-semibold text-ink leading-tight">Login flow uses 3 dark-pattern signals that erode trust</p>
+              <div className="flex items-center gap-2 mt-1">
+                <span className="font-sans text-[10px] font-semibold" style={{ color: 'var(--severe)' }}>Critical</span>
+                <span className="font-sans text-[10px] text-m-muted">·</span>
+                <span className="font-sans text-[10px] text-m-muted flex items-center gap-1">
+                  <svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+                  example.com
+                </span>
+              </div>
+            </div>
+          </div>
+          <div className="flex items-center gap-2 shrink-0">
+            <span className="font-sans text-[10px] font-medium px-2.5 py-1 rounded-md border border-rule text-ink">Console</span>
+            <span className="font-sans text-[10px] font-medium px-2.5 py-1 rounded-md border border-rule text-ink flex items-center gap-1">
+              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+              View
+            </span>
+            <span className="font-sans text-[10px] font-medium px-2.5 py-1 rounded-md bg-ink text-paper flex items-center gap-1">
+              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>
+              Fix
+            </span>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--ink-2)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="m18 15-6-6-6 6"/></svg>
+          </div>
+        </div>
+
+        {/* Expanded detail — What we found + Why it matters */}
+        <div className="px-5 pb-5 pt-1">
+          <div className="grid grid-cols-2 gap-3">
+            <div className="rounded-lg p-4" style={{ background: 'var(--paper-2)' }}>
+              <p className="font-sans text-[9px] font-semibold uppercase tracking-[0.08em] text-m-muted mb-2">What we found</p>
+              <p className="font-sans text-[12px] text-ink-2 leading-[1.55]">
+                The login page uses urgency messaging, pre-checked opt-ins, and a hidden close button. These patterns reduce user trust.
+              </p>
+            </div>
+            <div className="rounded-lg p-4" style={{ background: 'var(--paper-2)' }}>
+              <p className="font-sans text-[9px] font-semibold uppercase tracking-[0.08em] text-m-muted mb-2">Why it matters</p>
+              <p className="font-sans text-[12px] text-ink-2 leading-[1.55]">
+                Dark patterns erode trust and may violate consumer protection regulations in the EU.
+              </p>
+            </div>
+          </div>
+          {/* Open in fix console button */}
+          <div className="flex justify-end mt-3">
+            <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-[10px] font-sans font-medium bg-ink text-paper">
+              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>
+              Open in fix console
+            </span>
+          </div>
+        </div>
       </div>
     </div>
   )
 }
 
-/* ── Mockup: Fix console — mirrors real diff-preview + deploy flow ── */
+/* ── Mockup: Fix console — mirrors real resolve-this-issue panel ── */
 function FixMockup() {
   return (
     <div className="rounded-xl border border-rule overflow-hidden shadow-[0_4px_24px_-8px_rgba(0,0,0,0.08)]" style={{ background: 'var(--paper)' }}>
-      {/* Header with finding reference */}
-      <div className="px-5 py-3 border-b border-rule flex items-center justify-between" style={{ background: 'var(--paper-2)' }}>
-        <div className="flex items-center gap-2.5">
-          <span className="font-mono text-[10px] tracking-[0.08em] uppercase text-m-muted">Fix console</span>
-          <span className="font-mono text-[9px] tracking-[0.06em] uppercase text-m-muted">HX-04</span>
+      {/* Header — Resolve this issue */}
+      <div className="px-5 pt-5 pb-0">
+        <div className="flex items-center gap-2 mb-3">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--ink)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>
+          <span className="font-sans text-[14px] font-semibold text-ink">Resolve this issue</span>
         </div>
-        <span className="flex items-center gap-1.5">
-          <span className="w-1.5 h-1.5 rounded-full bg-signal" />
-          <span className="font-mono text-[10px] tracking-[0.08em] uppercase text-signal">Ready to deploy</span>
-        </span>
-      </div>
-      {/* File path */}
-      <div className="px-5 py-2 border-b border-rule">
-        <span className="font-mono text-[11px] text-ink-2">/login.html</span>
-      </div>
-      {/* Diff preview */}
-      <div className="p-5 space-y-2">
-        <div className="rounded border border-rule p-3" style={{ background: 'color-mix(in srgb, var(--severe) 4%, var(--paper))' }}>
-          <div className="flex items-center gap-2 mb-1.5">
-            <span className="font-mono text-[10px] text-severe">-</span>
-            <span className="font-mono text-[10px] text-m-muted">line 47</span>
-          </div>
-          <p className="font-mono text-[11px] text-severe leading-relaxed line-through">&lt;input type=&quot;checkbox&quot; checked&gt; Subscribe to newsletter</p>
-        </div>
-        <div className="rounded border border-rule p-3" style={{ background: 'color-mix(in srgb, var(--signal) 4%, var(--paper))' }}>
-          <div className="flex items-center gap-2 mb-1.5">
-            <span className="font-mono text-[10px] text-signal">+</span>
-            <span className="font-mono text-[10px] text-m-muted">line 47</span>
-          </div>
-          <p className="font-mono text-[11px] text-signal leading-relaxed">&lt;input type=&quot;checkbox&quot;&gt; Subscribe to newsletter</p>
-        </div>
-        <div className="rounded border border-rule p-3" style={{ background: 'color-mix(in srgb, var(--severe) 4%, var(--paper))' }}>
-          <div className="flex items-center gap-2 mb-1.5">
-            <span className="font-mono text-[10px] text-severe">-</span>
-            <span className="font-mono text-[10px] text-m-muted">line 52</span>
-          </div>
-          <p className="font-mono text-[11px] text-severe leading-relaxed line-through">&lt;p class=&quot;urgency&quot;&gt;Only 2 spots left!&lt;/p&gt;</p>
+        {/* Status badge */}
+        <div className="rounded-md px-3 py-2 mb-4 flex items-center gap-2" style={{ background: 'var(--paper-2)' }}>
+          <span className="w-2 h-2 rounded-full" style={{ background: 'var(--signal)' }} />
+          <span className="font-sans text-[11px] text-ink">In progress</span>
         </div>
       </div>
-      {/* Deploy bar */}
-      <div className="px-5 py-3 border-t border-rule flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[11px] font-sans font-medium bg-ink text-paper">
-            Deploy fix
+
+      {/* Choose an action */}
+      <div className="px-5 pb-4">
+        <p className="font-sans text-[9px] font-semibold uppercase tracking-[0.08em] text-m-muted mb-2.5">Choose an action</p>
+        <div className="flex items-center gap-2">
+          <span className="inline-flex items-center gap-1.5 px-3 py-2 rounded-md text-[11px] font-sans font-medium bg-ink text-paper" style={{ boxShadow: '0 0 0 2px color-mix(in srgb, var(--signal) 40%, transparent)' }}>
+            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>
+            Fix it yourself
           </span>
-          <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[11px] font-sans font-medium border border-rule text-ink">
-            Edit diff
+          <span className="inline-flex items-center gap-1.5 px-3 py-2 rounded-md text-[11px] font-sans font-medium border border-rule text-ink">
+            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+            Send to your team
+          </span>
+          <span className="inline-flex items-center gap-1.5 px-3 py-2 rounded-md text-[11px] font-sans font-medium border border-rule text-ink">
+            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+            Save for later
           </span>
         </div>
-        <span className="font-mono text-[9px] text-m-muted tracking-[0.06em] uppercase">SFTP</span>
+        <p className="font-sans text-[10px] text-m-muted mt-2">Deploy the fix directly from your dashboard</p>
+      </div>
+
+      {/* Evidence card */}
+      <div className="mx-5 mb-4 rounded-lg border border-rule overflow-hidden">
+        <div className="px-4 py-2.5 flex items-center gap-2 border-b border-rule" style={{ background: 'var(--paper-2)' }}>
+          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="var(--ink-2)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+          <span className="font-sans text-[10px] font-semibold uppercase tracking-[0.06em] text-ink">Evidence</span>
+        </div>
+        <div className="grid grid-cols-3 gap-px" style={{ background: 'var(--rule)' }}>
+          {[
+            { label: 'Fix type', value: 'Schema' },
+            { label: 'Scope', value: 'Surgical fix', accent: true },
+            { label: 'Impact', value: 'Trust signals', badge: true },
+          ].map((item) => (
+            <div key={item.label} className="px-3 py-2.5" style={{ background: 'var(--paper)' }}>
+              <p className="font-sans text-[8px] font-semibold uppercase tracking-[0.08em] text-m-muted mb-1">{item.label}</p>
+              {item.accent ? (
+                <p className="font-sans text-[11px] text-signal flex items-center gap-1">
+                  <svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>
+                  {item.value}
+                </p>
+              ) : item.badge ? (
+                <span className="font-sans text-[10px] px-1.5 py-0.5 rounded border border-rule text-ink">{item.value}</span>
+              ) : (
+                <p className="font-sans text-[11px] text-ink">{item.value}</p>
+              )}
+            </div>
+          ))}
+          {[
+            { label: 'Deploy target', value: 'HTML <head> section' },
+            { label: 'Confidence', value: 'High confidence', accent: true },
+            { label: 'Detected by', value: 'Dark pattern scan' },
+          ].map((item) => (
+            <div key={item.label} className="px-3 py-2.5" style={{ background: 'var(--paper)' }}>
+              <p className="font-sans text-[8px] font-semibold uppercase tracking-[0.08em] text-m-muted mb-1">{item.label}</p>
+              {item.accent ? (
+                <span className="font-sans text-[10px] px-1.5 py-0.5 rounded text-signal" style={{ background: 'color-mix(in srgb, var(--signal) 10%, transparent)' }}>
+                  {item.value}
+                </span>
+              ) : (
+                <p className="font-sans text-[11px] text-ink">{item.value}</p>
+              )}
+            </div>
+          ))}
+        </div>
+        <div className="px-3 py-2.5 border-t border-rule" style={{ background: 'var(--paper)' }}>
+          <p className="font-sans text-[8px] font-semibold uppercase tracking-[0.08em] text-m-muted mb-1">Affected URL</p>
+          <p className="font-sans text-[11px] text-ink">/login</p>
+        </div>
+      </div>
+
+      {/* Review the fix */}
+      <div className="px-5 pb-4">
+        <p className="font-sans text-[12px] font-semibold text-ink mb-2">1. Review the fix</p>
+        <div className="rounded-md border border-rule p-3 mb-2.5" style={{ background: 'var(--paper)' }}>
+          <p className="font-mono text-[11px] text-ink-2 leading-[1.6]">
+            Remove pre-checked opt-in and urgency messaging from the login modal.
+          </p>
+        </div>
+        <div className="flex items-center gap-2">
+          <span className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-md text-[10px] font-sans font-medium border border-rule text-ink">
+            <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 3v12M3 12l9 9 9-9"/></svg>
+            AI suggest
+          </span>
+          <span className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-md text-[10px] font-sans font-medium border border-rule text-ink">
+            <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+            Explain
+          </span>
+          <span className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-md text-[10px] font-sans font-medium border border-rule text-ink">
+            <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+            Copy
+          </span>
+        </div>
+      </div>
+
+      {/* Deploy to server */}
+      <div className="px-5 pb-5">
+        <p className="font-sans text-[12px] font-semibold text-ink mb-2">2. Deploy to server</p>
+        <div className="rounded-lg p-5 flex flex-col items-center text-center" style={{ background: 'var(--paper-2)' }}>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--ink-2)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="mb-2"><rect x="2" y="2" width="20" height="8" rx="2" ry="2"/><rect x="2" y="14" width="20" height="8" rx="2" ry="2"/><line x1="6" y1="6" x2="6.01" y2="6"/><line x1="6" y1="18" x2="6.01" y2="18"/></svg>
+          <p className="font-sans text-[11px] font-semibold text-ink mb-0.5">No server connected</p>
+          <p className="font-sans text-[10px] text-m-muted mb-3">Connect your FTP/SFTP server to deploy fixes directly.</p>
+          <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-[10px] font-sans font-medium bg-ink text-paper">
+            <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="2" width="20" height="8" rx="2" ry="2"/><rect x="2" y="14" width="20" height="8" rx="2" ry="2"/><line x1="6" y1="6" x2="6.01" y2="6"/><line x1="6" y1="18" x2="6.01" y2="18"/></svg>
+            Connect server
+          </span>
+        </div>
       </div>
     </div>
   )
 }
 
-/* ── Mockup: Score tracking — mirrors real score history + comparison view ── */
+/* ── Mockup: Track dashboard — mirrors real Track page layout ── */
 function TrackMockup() {
+  /* Score trend line data — dramatic improvement from 41 → 87 */
+  const audits = [
+    { date: '12/01', score: 41 },
+    { date: '26/01', score: 52 },
+    { date: '14/02', score: 61 },
+    { date: '05/03', score: 72 },
+    { date: '28/03', score: 79 },
+    { date: '15/04', score: 87 },
+  ]
+  const w = 320
+  const h = 90
+  const pad = { top: 10, right: 12, bottom: 18, left: 28 }
+  const cw = w - pad.left - pad.right
+  const ch = h - pad.top - pad.bottom
+  const minS = 30
+  const maxS = 100
+  const pts = audits.map((d, i) => ({
+    x: pad.left + (i / (audits.length - 1)) * cw,
+    y: pad.top + ch - ((d.score - minS) / (maxS - minS)) * ch,
+    ...d,
+  }))
+  const linePath = `M${pts.map((p) => `${p.x},${p.y}`).join('L')}`
+  const areaPath = `${linePath}L${pts[pts.length - 1].x},${pad.top + ch}L${pts[0].x},${pad.top + ch}Z`
+
   return (
     <div className="rounded-xl border border-rule overflow-hidden shadow-[0_4px_24px_-8px_rgba(0,0,0,0.08)]" style={{ background: 'var(--paper)' }}>
-      <div className="px-5 py-3 border-b border-rule flex items-center justify-between" style={{ background: 'var(--paper-2)' }}>
-        <span className="font-mono text-[10px] tracking-[0.08em] uppercase text-m-muted">Score history</span>
-        <span className="font-mono text-[9px] tracking-[0.06em] uppercase text-m-muted">5 audits · 12 weeks</span>
+      {/* Page header — mirrors real Track page */}
+      <div className="px-5 pt-5 pb-4">
+        <div className="flex items-center gap-2.5 mb-1">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--ink)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+          <span className="font-sans text-[16px] font-semibold text-ink">Track</span>
+        </div>
+        <p className="font-sans text-[11px] text-m-muted">Website Health Score and issue trend. Re-audit to confirm fixes landed.</p>
       </div>
-      <div className="p-5">
-        {/* Score trend bars */}
-        <div className="flex items-end gap-3 mb-5">
+
+      {/* Score over time + Issues — side by side */}
+      <div className="px-5 pb-4 grid grid-cols-[1fr_auto] gap-3">
+        {/* Score over time card */}
+        <div className="rounded-lg border border-rule p-4" style={{ background: 'var(--paper)' }}>
+          <div className="flex items-center justify-between mb-3">
+            <span className="font-sans text-[12px] font-semibold text-ink">Score over time</span>
+            <span className="font-sans text-[10px] font-semibold flex items-center gap-1" style={{ color: 'var(--ok)' }}>
+              <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12 19V5M5 12l7-7 7 7"/></svg>
+              +46 pts vs. previous
+            </span>
+          </div>
+          <svg viewBox={`0 0 ${w} ${h}`} className="w-full">
+            <defs>
+              <linearGradient id="trackGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+                <stop offset="0%" stopColor="var(--signal)" stopOpacity="0.18" />
+                <stop offset="100%" stopColor="var(--signal)" stopOpacity="0.02" />
+              </linearGradient>
+            </defs>
+            {/* Y-axis labels */}
+            {[40, 60, 80, 100].map((v) => {
+              const y = pad.top + ch - ((v - minS) / (maxS - minS)) * ch
+              return (
+                <g key={v}>
+                  <line x1={pad.left} y1={y} x2={w - pad.right} y2={y} stroke="var(--rule)" strokeWidth="0.5" strokeDasharray="3 3" />
+                  <text x={pad.left - 6} y={y + 3} textAnchor="end" fontSize="6" fill="var(--m-muted)" style={{ fontFamily: 'var(--font-sans, system-ui, sans-serif)' }}>{v}</text>
+                </g>
+              )
+            })}
+            <path d={areaPath} fill="url(#trackGrad)" />
+            <path d={linePath} fill="none" stroke="var(--signal)" strokeWidth={2} strokeLinejoin="round" strokeLinecap="round" />
+            {pts.map((p, i) => (
+              <g key={i}>
+                <circle cx={p.x} cy={p.y} r={3} fill="var(--paper)" stroke="var(--signal)" strokeWidth={1.5} />
+                <text x={p.x} y={pad.top + ch + 12} textAnchor="middle" fontSize="6" fill="var(--m-muted)" style={{ fontFamily: 'var(--font-sans, system-ui, sans-serif)' }}>{p.date}</text>
+              </g>
+            ))}
+            {/* Last point score label */}
+            <text x={pts[pts.length - 1].x} y={pts[pts.length - 1].y - 8} textAnchor="middle" fontSize="8" fontWeight="600" fill="var(--signal)" style={{ fontFamily: 'var(--font-sans, system-ui, sans-serif)' }}>87</text>
+          </svg>
+          <p className="font-sans text-[9px] text-m-muted mt-2">6 audits · 12/01/2026 → 15/04/2026</p>
+        </div>
+
+        {/* Issues card */}
+        <div className="rounded-lg border border-rule p-4 w-[140px]" style={{ background: 'var(--paper)' }}>
+          <span className="font-sans text-[12px] font-semibold text-ink">Issues</span>
+          <div className="mt-3 space-y-2.5">
+            <div className="flex items-center justify-between">
+              <span className="font-sans text-[11px] text-ink-2">Open</span>
+              <span className="font-sans text-[13px] font-semibold" style={{ color: 'var(--severe)' }}>2</span>
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="font-sans text-[11px] text-ink-2">Fixed</span>
+              <span className="font-sans text-[13px] font-semibold" style={{ color: 'var(--ok)' }}>14</span>
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="font-sans text-[11px] text-ink-2">Backlog</span>
+              <span className="font-sans text-[13px] font-semibold text-ink">3</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Recent audits card */}
+      <div className="mx-5 mb-5 rounded-lg border border-rule overflow-hidden" style={{ background: 'var(--paper)' }}>
+        <div className="px-4 py-3 flex items-center justify-between">
+          <span className="font-sans text-[12px] font-semibold text-ink">Recent audits</span>
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-[10px] font-sans font-medium bg-ink text-paper">
+            <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.3"/></svg>
+            Run re-audit
+          </span>
+        </div>
+        <div className="border-t border-rule">
           {[
-            { score: 42, date: 'Feb 3' },
-            { score: 55, date: 'Mar 1' },
-            { score: 62, date: 'Mar 22' },
-            { score: 71, date: 'Apr 10' },
-            { score: 78, date: 'May 2' },
-          ].map((audit, i) => (
-            <div key={i} className="flex-1 flex flex-col items-center gap-1.5">
-              <span className="font-mono text-[10px] font-medium" style={{ color: i === 4 ? 'var(--signal)' : 'var(--ink-2)' }}>{audit.score}</span>
-              <div
-                className="w-full rounded-[3px]"
-                style={{
-                  height: `${audit.score * 0.7}px`,
-                  background: i === 4 ? 'var(--signal)' : 'var(--rule-2)',
-                }}
-              />
-              <span className="font-mono text-[8px] text-m-muted">{audit.date}</span>
+            { date: '15/04/2026', score: 87 },
+            { date: '28/03/2026', score: 79 },
+            { date: '05/03/2026', score: 72 },
+            { date: '14/02/2026', score: 61 },
+          ].map((a, i) => (
+            <div key={i} className="px-4 py-2.5 flex items-center justify-between" style={{ borderTop: i > 0 ? '1px solid var(--rule)' : 'none', background: i === 0 ? 'color-mix(in srgb, var(--signal) 3%, var(--paper))' : 'var(--paper)' }}>
+              <div className="flex items-center gap-2">
+                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="var(--ink-2)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                <span className="font-sans text-[11px] text-ink">{a.date}</span>
+              </div>
+              <div className="flex items-center gap-3">
+                <span className="font-sans text-[12px] font-semibold" style={{ color: i === 0 ? 'var(--signal)' : 'var(--ink)' }}>{a.score}</span>
+                <span className="font-sans text-[10px] text-m-muted">View</span>
+              </div>
             </div>
           ))}
-        </div>
-
-        {/* Module comparison — last two audits */}
-        <div className="border-t border-rule pt-4 mb-4">
-          <p className="font-mono text-[9px] tracking-[0.08em] uppercase text-m-muted mb-3">Module changes (last audit)</p>
-          <div className="space-y-2">
-            {[
-              { name: 'Foundation', prev: 65, curr: 72, delta: '+7', color: '#3B82F6' },
-              { name: 'Human exp.', prev: 58, curr: 68, delta: '+10', color: '#EC4899' },
-              { name: 'Inclusive', prev: 74, curr: 81, delta: '+7', color: '#8B5CF6' },
-              { name: 'Future', prev: 51, curr: 59, delta: '+8', color: '#F59E0B' },
-              { name: 'Accessibility', prev: 60, curr: 68, delta: '+8', color: '#EF4444' },
-              { name: 'Brand', prev: 70, curr: 76, delta: '+6', color: '#06B6D4' },
-              { name: 'SEO', prev: 62, curr: 71, delta: '+9', color: '#10B981' },
-            ].map((mod) => (
-              <div key={mod.name} className="flex items-center gap-3">
-                <span className="font-sans text-[11px] text-ink-2 w-[80px] shrink-0">{mod.name}</span>
-                <div className="flex-1 h-1.5 rounded-full" style={{ background: 'var(--rule)' }}>
-                  <div className="h-full rounded-full" style={{ width: `${mod.curr}%`, background: mod.color }} />
-                </div>
-                <span className="font-mono text-[10px] text-signal w-[28px] text-right shrink-0">{mod.delta}</span>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* Summary stat */}
-        <div className="flex items-center justify-between pt-3 border-t border-rule">
-          <div className="flex items-center gap-2">
-            <span className="w-2 h-2 rounded-full bg-signal" />
-            <span className="font-sans text-[12px] text-ink">+36 points over 5 audits</span>
-          </div>
-          <span className="font-mono text-[10px] text-m-muted tracking-[0.06em] uppercase">19 findings resolved</span>
         </div>
       </div>
     </div>
@@ -218,74 +382,75 @@ export function ProductContent() {
     <main>
       {/* Hero */}
       <section className="py-[100px] border-b border-rule max-sm:py-16">
-        <div className="max-w-mkt mx-auto px-8 max-sm:px-5">
-          <SectionMarker number="00" label="The product" />
-          <h1 className="font-serif font-normal text-ink leading-[0.94] tracking-[-0.025em] mb-8" style={{ fontSize: 'clamp(48px, 7vw, 96px)' }}>
-            From real issues to{' '}
-            <em className="italic text-signal">real improvement.</em>
+        <div className="max-w-mkt mx-auto px-8 max-sm:px-5 text-center">
+          <SectionMarker number="00" label="The product" centered />
+          <h1
+            className="font-serif font-normal text-ink leading-[0.94] tracking-[-0.025em] mb-6"
+            style={{ fontSize: 'clamp(48px, 7vw, 96px)' }}
+          >
+            From issue to{' '}
+            <em className="italic text-signal">improvement.</em>
           </h1>
-          <p className="text-[19px] leading-[1.55] text-ink-2 max-w-[640px] font-sans mb-10">
-            Fixpath is not just an audit tool. It is the complete system from issue detection
-            to fix guidance to progress verification — built around truth, not noise.
+          <p className="text-[18px] leading-[1.6] text-ink-2 max-w-[560px] mx-auto font-sans mb-10">
+            One system to find what matters, fix it clearly, and track what changed.
           </p>
-          <div className="flex gap-3.5 max-sm:flex-col max-sm:items-stretch">
-            <Button href="/register">
+          <div className="flex gap-3.5 justify-center max-sm:flex-col max-sm:items-stretch">
+            <Button href="/register" size="large">
               Start free audit
               <ArrowRightIcon size={14} />
             </Button>
-            <Button href="/how-it-works" variant="ghost">
-              See how it works
+            <Button href="#find" variant="ghost" size="large">
+              See what we cover
             </Button>
           </div>
         </div>
       </section>
 
       {/* Step 1: Find */}
-      <section className="py-[100px] border-b border-rule max-sm:py-16">
+      <section id="find" className="py-[100px] border-b border-rule max-sm:py-16">
         <div className="max-w-mkt mx-auto px-8 max-sm:px-5">
+          <SectionMarker number="01" label="Find" centered />
+          <h2
+            className="font-serif font-normal text-ink leading-[0.94] tracking-[-0.025em] mb-6 text-center"
+            style={{ fontSize: 'clamp(48px, 7vw, 96px)' }}
+          >
+            Find what{' '}
+            <em className="italic text-signal">matters.</em>
+          </h2>
+          <p className="text-[18px] leading-[1.6] text-ink-2 max-w-[560px] mx-auto mb-16 font-sans text-center">
+            Fixpath crawls your site, checks every page, and surfaces the issues that actually need attention.
+          </p>
+
           <div className="grid lg:grid-cols-2 gap-16 items-start">
-            <div>
-              <SectionMarker number="01" label="Find" />
-              <h2 className="font-serif font-normal text-ink leading-[0.94] tracking-[-0.025em] mb-5" style={{ fontSize: 'clamp(36px, 5vw, 64px)' }}>
-                See what is actually{' '}
-                <em className="italic text-signal">hurting your site.</em>
-              </h2>
-              <p className="text-[18px] leading-[1.6] text-ink-2 font-sans mb-8">
-                Enter your URL. Fixpath crawls every page, runs 112 checkpoints across seven modules,
-                and surfaces only the issues that matter — ranked by severity with real evidence.
-                No noise. No inflated findings. Just useful truth about your site, in under ten minutes.
-              </p>
-              <h3 className="font-sans text-[16px] font-semibold text-ink mb-5">What the audit covers</h3>
-              <div className="grid sm:grid-cols-2 gap-3 mb-8">
-                {AUDIT_MODULES.map((mod) => {
-                  const tint = MODULE_TINTS[mod.name] || 'var(--signal)'
-                  return (
-                    <div key={mod.name} className="rounded-xl p-4" style={{ background: 'var(--card)', border: '1px solid var(--rule)' }}>
-                      <div className="flex items-center gap-2.5 mb-3">
-                        <span
-                          className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0"
-                          style={{ background: `color-mix(in srgb, ${tint} 12%, transparent)`, color: tint }}
-                        >
-                          <mod.Icon size={15} strokeWidth={1.5} />
-                        </span>
-                        <span className="font-sans text-[13px] font-semibold text-ink">{mod.name}</span>
-                      </div>
-                      <div className="flex flex-col gap-1.5">
-                        {mod.categories.map((cat) => (
-                          <div key={cat} className="flex items-start gap-2">
-                            <span className="w-1 h-1 rounded-full shrink-0 mt-[6px]" style={{ background: tint }} />
-                            <span className="font-sans text-[12px] text-ink-2 leading-snug">{cat}</span>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  )
-                })}
+            <div className="lg:sticky lg:top-32 space-y-5">
+              <div className="flex items-start gap-3.5">
+                <Layers size={18} strokeWidth={1.5} className="shrink-0 mt-0.5" style={{ color: 'var(--ink-2)' }} />
+                <div>
+                  <h3 className="font-sans text-[15px] font-semibold tracking-[-0.01em] mb-1" style={{ color: 'var(--ink)' }}>One audit across 7 modules</h3>
+                  <p className="font-sans text-[13px] leading-[1.55]" style={{ color: 'var(--m-muted)' }}>Foundation, human experience, inclusive design, accessibility, AI readiness, brand consistency, and SEO — 28 categories in a single run.</p>
+                </div>
               </div>
-              <p className="font-sans text-[14px] text-m-muted">
-                28 categories across seven modules. Every finding includes affected pages, evidence, and a
-                concrete recommendation.
-              </p>
+              <div className="flex items-start gap-3.5">
+                <Fingerprint size={18} strokeWidth={1.5} className="shrink-0 mt-0.5" style={{ color: 'var(--ink-2)' }} />
+                <div>
+                  <h3 className="font-sans text-[15px] font-semibold tracking-[-0.01em] mb-1" style={{ color: 'var(--ink)' }}>Evidence from the real site</h3>
+                  <p className="font-sans text-[13px] leading-[1.55]" style={{ color: 'var(--m-muted)' }}>Every issue includes the affected page, the element, and why it matters. Real evidence you can verify.</p>
+                </div>
+              </div>
+              <div className="flex items-start gap-3.5">
+                <ArrowUpDown size={18} strokeWidth={1.5} className="shrink-0 mt-0.5" style={{ color: 'var(--ink-2)' }} />
+                <div>
+                  <h3 className="font-sans text-[15px] font-semibold tracking-[-0.01em] mb-1" style={{ color: 'var(--ink)' }}>Ranked by severity</h3>
+                  <p className="font-sans text-[13px] leading-[1.55]" style={{ color: 'var(--m-muted)' }}>Critical issues surface first. Advisory items stay visible but never dominate.</p>
+                </div>
+              </div>
+              <div className="flex items-start gap-3.5">
+                <Lightbulb size={18} strokeWidth={1.5} className="shrink-0 mt-0.5" style={{ color: 'var(--ink-2)' }} />
+                <div>
+                  <h3 className="font-sans text-[15px] font-semibold tracking-[-0.01em] mb-1" style={{ color: 'var(--ink)' }}>Fix guidance included</h3>
+                  <p className="font-sans text-[13px] leading-[1.55]" style={{ color: 'var(--m-muted)' }}>Every finding comes with a concrete action — code diffs, copy suggestions, or clear next steps.</p>
+                </div>
+              </div>
             </div>
             <FindingMockup />
           </div>
@@ -295,41 +460,56 @@ export function ProductContent() {
       {/* Step 2: Fix */}
       <section className="py-[100px] border-b border-rule max-sm:py-16">
         <div className="max-w-mkt mx-auto px-8 max-sm:px-5">
+          <SectionMarker number="02" label="Fix" centered />
+          <h2
+            className="font-serif font-normal text-ink leading-[0.94] tracking-[-0.025em] mb-6 text-center"
+            style={{ fontSize: 'clamp(48px, 7vw, 96px)' }}
+          >
+            Fix what{' '}
+            <em className="italic text-signal">you find.</em>
+          </h2>
+          <p className="text-[18px] leading-[1.6] text-ink-2 max-w-[560px] mx-auto mb-16 font-sans text-center">
+            Deploy code fixes, send recommendations, or move work into your existing workflow.
+          </p>
+
           <div className="grid lg:grid-cols-2 gap-16 items-start">
             <div className="order-2 lg:order-1">
               <FixMockup />
             </div>
-            <div className="order-1 lg:order-2">
-              <SectionMarker number="02" label="Fix" />
-              <h2 className="font-serif font-normal text-ink leading-[0.94] tracking-[-0.025em] mb-5" style={{ fontSize: 'clamp(36px, 5vw, 64px)' }}>
-                Fix issues directly.{' '}
-                <em className="italic text-signal">Or send the fix path.</em>
-              </h2>
-              <p className="text-[18px] leading-[1.6] text-ink-2 font-sans mb-8">
-                Most audit tools stop at a list of problems. Fixpath turns every finding into an
-                action you can take right from the dashboard — or hand off to your team with full context.
-              </p>
-              <div className="space-y-6">
+            <div className="order-1 lg:order-2 lg:sticky lg:top-32 space-y-5">
+              <div className="flex items-start gap-3.5">
+                <Server size={18} strokeWidth={1.5} className="shrink-0 mt-0.5" style={{ color: 'var(--ink-2)' }} />
                 <div>
-                  <h3 className="font-sans text-[16px] font-semibold text-ink mb-1.5">Deploy code fixes directly</h3>
-                  <p className="font-sans text-[14px] text-ink-2 leading-relaxed">
-                    For code-level issues, Fixpath generates a surgical fix. Preview the diff, edit if needed,
-                    and deploy to your server via FTP or SFTP with one click.
-                  </p>
+                  <h3 className="font-sans text-[15px] font-semibold tracking-[-0.01em] mb-1" style={{ color: 'var(--ink)' }}>Connect your server</h3>
+                  <p className="font-sans text-[13px] leading-[1.55]" style={{ color: 'var(--m-muted)' }}>FTP or SFTP deployment from Fixpath.</p>
                 </div>
+              </div>
+              <div className="flex items-start gap-3.5">
+                <ShieldCheck size={18} strokeWidth={1.5} className="shrink-0 mt-0.5" style={{ color: 'var(--ink-2)' }} />
                 <div>
-                  <h3 className="font-sans text-[16px] font-semibold text-ink mb-1.5">Send clear recommendations</h3>
-                  <p className="font-sans text-[14px] text-ink-2 leading-relaxed">
-                    For content, strategy, or design issues, export findings as a PDF or Word report. Share a
-                    live link with stakeholders. Everyone sees the same evidence and priority.
-                  </p>
+                  <h3 className="font-sans text-[15px] font-semibold tracking-[-0.01em] mb-1" style={{ color: 'var(--ink)' }}>Deploy approved fixes</h3>
+                  <p className="font-sans text-[13px] leading-[1.55]" style={{ color: 'var(--m-muted)' }}>Review, edit, and push with control.</p>
                 </div>
+              </div>
+              <div className="flex items-start gap-3.5">
+                <Users size={18} strokeWidth={1.5} className="shrink-0 mt-0.5" style={{ color: 'var(--ink-2)' }} />
                 <div>
-                  <h3 className="font-sans text-[16px] font-semibold text-ink mb-1.5">WordPress integration</h3>
-                  <p className="font-sans text-[14px] text-ink-2 leading-relaxed">
-                    The Fixpath WordPress plugin surfaces recommendations directly in your admin panel.
-                    See which pages need attention and apply fixes without leaving your CMS.
-                  </p>
+                  <h3 className="font-sans text-[15px] font-semibold tracking-[-0.01em] mb-1" style={{ color: 'var(--ink)' }}>Send to your internal team or developer</h3>
+                  <p className="font-sans text-[13px] leading-[1.55]" style={{ color: 'var(--m-muted)' }}>Pass the issue and fix path to the right person.</p>
+                </div>
+              </div>
+              <div className="flex items-start gap-3.5">
+                <MessageSquareText size={18} strokeWidth={1.5} className="shrink-0 mt-0.5" style={{ color: 'var(--ink-2)' }} />
+                <div>
+                  <h3 className="font-sans text-[15px] font-semibold tracking-[-0.01em] mb-1" style={{ color: 'var(--ink)' }}>Share clear recommendations</h3>
+                  <p className="font-sans text-[13px] leading-[1.55]" style={{ color: 'var(--m-muted)' }}>Keep everyone aligned on what to fix next.</p>
+                </div>
+              </div>
+              <div className="flex items-start gap-3.5">
+                <Blocks size={18} strokeWidth={1.5} className="shrink-0 mt-0.5" style={{ color: 'var(--ink-2)' }} />
+                <div>
+                  <h3 className="font-sans text-[15px] font-semibold tracking-[-0.01em] mb-1" style={{ color: 'var(--ink)' }}>Use WordPress when that's your stack</h3>
+                  <p className="font-sans text-[13px] leading-[1.55]" style={{ color: 'var(--m-muted)' }}>Act inside your CMS workflow.</p>
                 </div>
               </div>
             </div>
@@ -340,38 +520,39 @@ export function ProductContent() {
       {/* Step 3: Track */}
       <section className="py-[100px] border-b border-rule max-sm:py-16">
         <div className="max-w-mkt mx-auto px-8 max-sm:px-5">
+          <SectionMarker number="03" label="Track" centered />
+          <h2
+            className="font-serif font-normal text-ink leading-[0.94] tracking-[-0.025em] mb-6 text-center"
+            style={{ fontSize: 'clamp(48px, 7vw, 96px)' }}
+          >
+            Track what{' '}
+            <em className="italic text-signal">changed.</em>
+          </h2>
+          <p className="text-[18px] leading-[1.6] text-ink-2 max-w-[560px] mx-auto mb-16 font-sans text-center">
+            Re-audit, compare results, and see what improved over time.
+          </p>
+
           <div className="grid lg:grid-cols-2 gap-16 items-start">
-            <div>
-              <SectionMarker number="03" label="Track" />
-              <h2 className="font-serif font-normal text-ink leading-[0.94] tracking-[-0.025em] mb-5" style={{ fontSize: 'clamp(36px, 5vw, 64px)' }}>
-                Track improvement.{' '}
-                <em className="italic text-signal">See what moved.</em>
-              </h2>
-              <p className="text-[18px] leading-[1.6] text-ink-2 font-sans mb-8">
-                Re-audit after making changes to confirm fixes landed. Compare scores side by side
-                and prove progress to your team with one clear metric.
-              </p>
-              <div className="space-y-6">
+            <div className="lg:sticky lg:top-32 space-y-5">
+              <div className="flex items-start gap-3.5">
+                <TrendingUp size={18} strokeWidth={1.5} className="shrink-0 mt-0.5" style={{ color: 'var(--ink-2)' }} />
                 <div>
-                  <h3 className="font-sans text-[16px] font-semibold text-ink mb-1.5">Score history</h3>
-                  <p className="font-sans text-[14px] text-ink-2 leading-relaxed">
-                    Track your Website Health Score over time. See which fixes had the biggest impact
-                    and identify trends across audit cycles.
-                  </p>
+                  <h3 className="font-sans text-[15px] font-semibold tracking-[-0.01em] mb-1" style={{ color: 'var(--ink)' }}>Score history</h3>
+                  <p className="font-sans text-[13px] leading-[1.55]" style={{ color: 'var(--m-muted)' }}>Track your Website Health Score over time. See which fixes moved the needle most.</p>
                 </div>
+              </div>
+              <div className="flex items-start gap-3.5">
+                <GitCompareArrows size={18} strokeWidth={1.5} className="shrink-0 mt-0.5" style={{ color: 'var(--ink-2)' }} />
                 <div>
-                  <h3 className="font-sans text-[16px] font-semibold text-ink mb-1.5">Before/after comparison</h3>
-                  <p className="font-sans text-[14px] text-ink-2 leading-relaxed">
-                    Compare any two audits side by side. See resolved findings, new issues, and
-                    score changes by module.
-                  </p>
+                  <h3 className="font-sans text-[15px] font-semibold tracking-[-0.01em] mb-1" style={{ color: 'var(--ink)' }}>Before / after comparison</h3>
+                  <p className="font-sans text-[13px] leading-[1.55]" style={{ color: 'var(--m-muted)' }}>Compare any two audits side by side. Resolved findings, new issues, score changes by module.</p>
                 </div>
+              </div>
+              <div className="flex items-start gap-3.5">
+                <Target size={18} strokeWidth={1.5} className="shrink-0 mt-0.5" style={{ color: 'var(--ink-2)' }} />
                 <div>
-                  <h3 className="font-sans text-[16px] font-semibold text-ink mb-1.5">Competitor benchmarking</h3>
-                  <p className="font-sans text-[14px] text-ink-2 leading-relaxed">
-                    See how your site stacks up against competitors across all seven modules.
-                    Identify where you lead and where to focus next.
-                  </p>
+                  <h3 className="font-sans text-[15px] font-semibold tracking-[-0.01em] mb-1" style={{ color: 'var(--ink)' }}>Competitor benchmarking</h3>
+                  <p className="font-sans text-[13px] leading-[1.55]" style={{ color: 'var(--m-muted)' }}>Audit a competitor and compare scores across all seven modules. See where you lead.</p>
                 </div>
               </div>
             </div>
@@ -380,76 +561,67 @@ export function ProductContent() {
         </div>
       </section>
 
-      {/* AI Visibility */}
+      {/* Supporting Proof — AI readiness, reports, and platform */}
       <section className="py-[100px] border-b border-rule max-sm:py-16">
         <div className="max-w-mkt mx-auto px-8 max-sm:px-5">
-          <SectionMarker number="04" label="AI readiness" />
-          <h2 className="font-serif font-normal text-ink leading-[0.94] tracking-[-0.025em] mb-5" style={{ fontSize: 'clamp(36px, 5vw, 64px)' }}>
-            How AI sees{' '}
-            <em className="italic text-signal">your site.</em>
+          <SectionMarker number="04" label="What else is included" centered />
+          <h2
+            className="font-serif font-normal text-ink leading-[0.94] tracking-[-0.025em] mb-6 text-center"
+            style={{ fontSize: 'clamp(48px, 7vw, 96px)' }}
+          >
+            AI readiness. Reports.{' '}
+            <em className="italic text-signal">All built in.</em>
           </h2>
-          <p className="text-[18px] leading-[1.6] text-ink-2 max-w-[600px] mb-12 font-sans">
-            AI agents are already reading your site for their users. Fixpath checks whether they
-            get it right, and gives you concrete steps to fix what they get wrong.
+          <p className="text-[18px] leading-[1.6] text-ink-2 max-w-[560px] mx-auto mb-16 font-sans text-center">
+            Beyond Find, Fix, Track — every audit includes AI visibility testing, professional
+            reporting, and competitive analysis out of the box.
           </p>
-          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            {[
-              { title: 'LLM probe testing', desc: 'We ask multiple AI models about your business and compare their answers to ground truth.', Icon: Bot, color: '#F59E0B' },
-              { title: 'Structured data audit', desc: 'Validates JSON-LD, Open Graph, and schema markup that AI agents rely on to understand your pages.', Icon: Database, color: '#8B5CF6' },
-              { title: 'AI discovery files', desc: 'Checks for llms.txt, robots.txt AI directives, and other files that guide AI crawlers.', Icon: FileCode, color: '#3B82F6' },
-              { title: 'Citation monitoring', desc: 'Tracks when and how AI models cite your content, and whether the citations are accurate.', Icon: Quote, color: '#10B981' },
-            ].map((item) => (
-              <div key={item.title} className="rounded-xl p-6" style={{ background: 'var(--card)', border: '1px solid var(--rule)' }}>
-                <span
-                  className="w-10 h-10 rounded-xl flex items-center justify-center mb-4"
-                  style={{ background: `color-mix(in srgb, ${item.color} 12%, transparent)`, color: item.color }}
-                >
-                  <item.Icon size={18} strokeWidth={1.5} />
-                </span>
-                <h3 className="font-sans text-[16px] font-semibold text-ink mb-2">{item.title}</h3>
-                <p className="font-sans text-[13px] text-ink-2 leading-relaxed">{item.desc}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
 
-      {/* Exports and reports */}
-      <section className="py-[100px] border-b border-rule max-sm:py-16">
-        <div className="max-w-mkt mx-auto px-8 max-sm:px-5">
-          <SectionMarker number="05" label="Reports" />
-          <h2 className="font-serif font-normal text-ink leading-[0.94] tracking-[-0.025em] mb-5" style={{ fontSize: 'clamp(36px, 5vw, 64px)' }}>
-            Share results{' '}
-            <em className="italic text-signal">your way.</em>
-          </h2>
-          <p className="text-[18px] leading-[1.6] text-ink-2 max-w-[560px] mb-12 font-sans">
-            Export your audit as a professional PDF or Word document. Share a live link with
-            clients or stakeholders. Every format includes the same severity-ranked findings,
-            evidence, and recommendations.
-          </p>
-          <div className="grid sm:grid-cols-3 gap-4">
-            {[
-              { format: 'PDF report', desc: 'Print-ready A4 document with cover page, executive summary, and detailed findings by module.', Icon: FileSearch, color: '#EC4899' },
-              { format: 'Word document', desc: 'Editable .docx format. Add your own notes, customise recommendations, and share with your team.', Icon: FileCode, color: '#3B82F6' },
-              { format: 'Shareable link', desc: 'A live web page anyone can view. No login required. Includes score, findings, and module breakdown.', Icon: Eye, color: '#10B981' },
-            ].map((item) => (
-              <div key={item.format} className="p-6 rounded-xl" style={{ background: 'var(--card)', border: '1px solid var(--rule)' }}>
-                <span
-                  className="w-10 h-10 rounded-xl flex items-center justify-center mb-4"
-                  style={{ background: `color-mix(in srgb, ${item.color} 12%, transparent)`, color: item.color }}
-                >
-                  <item.Icon size={18} strokeWidth={1.5} />
-                </span>
-                <h3 className="font-sans text-[16px] font-semibold text-ink mb-2">{item.format}</h3>
-                <p className="font-sans text-[13px] text-ink-2 leading-relaxed">{item.desc}</p>
-              </div>
-            ))}
+          <div
+            className="rounded-xl overflow-hidden"
+            style={{ border: '1px solid color-mix(in srgb, var(--ink) 8%, transparent)' }}
+          >
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
+              {PROOF_ITEMS.map((item, i) => {
+                const col = i % 3
+                const isTopRow = i < 3
+                return (
+                  <div
+                    key={item.title}
+                    className="flex flex-col items-center text-center px-8 py-10 max-sm:px-6 max-sm:py-8"
+                    style={{
+                      borderRight: col < 2 ? '1px solid color-mix(in srgb, var(--ink) 6%, transparent)' : 'none',
+                      borderBottom: isTopRow ? '1px solid color-mix(in srgb, var(--ink) 6%, transparent)' : 'none',
+                    }}
+                  >
+                    <item.Icon
+                      size={20}
+                      strokeWidth={1.5}
+                      style={{ color: 'var(--ink-2)' }}
+                      className="mb-4"
+                    />
+                    <h3
+                      className="font-sans text-[15px] font-semibold tracking-[-0.01em] mb-2"
+                      style={{ color: 'var(--ink)' }}
+                    >
+                      {item.title}
+                    </h3>
+                    <p
+                      className="font-sans text-[13px] leading-[1.55] max-w-[220px]"
+                      style={{ color: 'var(--m-muted)' }}
+                    >
+                      {item.desc}
+                    </p>
+                  </div>
+                )
+              })}
+            </div>
           </div>
         </div>
       </section>
 
       {/* FAQ */}
-      <FaqPreview sectionNumber="06" items={PRODUCT_FAQS} />
+      <FaqPreview sectionNumber="05" items={PRODUCT_FAQS} />
 
       {/* CTA */}
       <HomeCta />

@@ -291,7 +291,7 @@ export function Comparison() {
             </div>
             <div className="text-center sm:px-6">
               <p className="font-serif text-[48px] text-ink tracking-[-0.02em] leading-none mb-2">7</p>
-              <p className="font-mono text-[11px] text-m-muted tracking-[0.08em] uppercase">modules — foundation to AI readiness</p>
+              <p className="font-mono text-[11px] text-m-muted tracking-[0.08em] uppercase">categories — foundation to AI readiness</p>
             </div>
             <div className="text-center sm:px-6">
               <p className="font-serif text-[48px] text-ink tracking-[-0.02em] leading-none mb-2">$0</p>

@@ -3,11 +3,12 @@ import { MarketingBody } from '@/components/marketing/MarketingBody'
 import { Nav } from '@/components/marketing/Nav'
 import { HomeHero } from '@/components/marketing/HomeHero'
 import { HomeTrustStrip } from '@/components/marketing/HomeTrustStrip'
-import { HomeIdentity } from '@/components/marketing/HomeIdentity'
 import { HomeWorkflow } from '@/components/marketing/HomeWorkflow'
 import { HomeDifferentiator } from '@/components/marketing/HomeDifferentiator'
 import { HomeModules } from '@/components/marketing/HomeModules'
 import { HomeAudience } from '@/components/marketing/HomeAudience'
+import { HomeProof } from '@/components/marketing/HomeProof'
+import { HomeFaq } from '@/components/marketing/HomeFaq'
 import { HomeCta } from '@/components/marketing/HomeCta'
 import { Footer } from '@/components/marketing/Footer'
 import { HomeJsonLd } from '@/components/seo/JsonLd'
@@ -19,17 +20,16 @@ export const metadata: Metadata = {
 }
 
 /**
- * Homepage — structured as the brief's recommended sequence:
- * 1. Header (Nav)
- * 2. Hero
- * 3. Trust strip
- * 4. What Fixpath is
- * 5. How it works
- * 6. Why we are different
- * 7. Categories we cover (product proof)
- * 8. Who it is for / not for
+ * Homepage — structured for 5-second clarity:
+ * 1. Hero (product definition + animated dashboard)
+ * 2. Trust band (4 proof points)
+ * 3. Find. Fix. Track. (visual product walkthrough)
+ * 4. Built around truth, not noise (6 proof blocks)
+ * 5. What we cover (7 category chips)
+ * 6. Who it's for (4 audience cards)
+ * 7. Inside every audit (4 proof items)
+ * 8. FAQ (accordion)
  * 9. Final CTA
- * 10. Footer
  */
 export default function HomePage() {
   return (
@@ -39,11 +39,12 @@ export default function HomePage() {
       <main>
         <HomeHero />
         <HomeTrustStrip />
-        <HomeIdentity />
         <HomeWorkflow />
         <HomeDifferentiator />
         <HomeModules />
         <HomeAudience />
+        <HomeProof />
+        <HomeFaq />
         <HomeCta />
       </main>
       <Footer />

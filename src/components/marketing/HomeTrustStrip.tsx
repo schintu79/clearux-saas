@@ -1,57 +1,61 @@
-import { ShieldCheck, Wrench, TrendingUp, Zap } from 'lucide-react'
+'use client'
+
+import { Crosshair, Layers, Zap, RotateCcw } from 'lucide-react'
 
 /**
- * HomeTrustStrip — visual strip below the hero with dashboard-style cards.
- * Big icons + short headings to communicate product maturity at a glance.
+ * HomeTrustStrip — 4 proof points in a clean horizontal row.
+ * Monochrome icons, Geist font, tight and editorial.
  */
 
 const TRUST_ITEMS = [
-  {
-    Icon: ShieldCheck,
-    color: '#10B981',
-    label: 'Truth over hype',
-    desc: 'We never invent issues. If your site is strong, we say so.',
-  },
-  {
-    Icon: Wrench,
-    color: '#3B82F6',
-    label: 'Built for real fixes',
-    desc: 'Every finding includes a concrete action — not a vague suggestion.',
-  },
-  {
-    Icon: TrendingUp,
-    color: '#8B5CF6',
-    label: 'Progress, not one-off reports',
-    desc: 'Re-audit to confirm fixes landed and track improvement over time.',
-  },
-  {
-    Icon: Zap,
-    color: '#F59E0B',
-    label: 'Clarity in under 10 minutes',
-    desc: '112 checkpoints. Severity-ranked. Delivered fast enough to act on today.',
-  },
+  { Icon: Crosshair, value: '112', label: 'checkpoints per audit' },
+  { Icon: Layers, value: '7', label: 'audit categories' },
+  { Icon: Zap, value: 'Deploy', label: 'fixes directly to your site' },
+  { Icon: RotateCcw, value: 'Re-audit', label: 'track what actually improved' },
 ]
 
 export function HomeTrustStrip() {
   return (
-    <section className="py-12 border-b border-rule" style={{ background: 'var(--paper-2)' }}>
+    <section className="pt-16 pb-14 lg:pt-20 lg:pb-18">
       <div className="max-w-mkt mx-auto px-8 max-sm:px-5">
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          {TRUST_ITEMS.map((item) => (
+        <div className="grid grid-cols-2 lg:grid-cols-4">
+          {TRUST_ITEMS.map((item, i) => (
             <div
               key={item.label}
-              className="rounded-xl p-5 flex flex-col gap-3"
-              style={{ background: 'var(--card)', border: '1px solid var(--rule)' }}
+              className="flex items-center justify-center gap-4 py-4 max-sm:py-3"
+              style={{
+                borderRight: i < TRUST_ITEMS.length - 1 ? '1px solid color-mix(in srgb, var(--ink) 10%, transparent)' : 'none',
+              }}
             >
-              <span
-                className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0"
-                style={{ background: `color-mix(in srgb, ${item.color} 12%, transparent)`, color: item.color }}
+              {/* Icon */}
+              <div
+                className="w-11 h-11 rounded-xl flex items-center justify-center shrink-0"
+                style={{
+                  background: 'color-mix(in srgb, var(--ink) 5%, transparent)',
+                  border: '1px solid color-mix(in srgb, var(--ink) 8%, transparent)',
+                }}
               >
-                <item.Icon size={20} strokeWidth={1.5} />
-              </span>
+                <item.Icon
+                  size={20}
+                  strokeWidth={1.5}
+                  style={{ color: 'var(--ink-2)' }}
+                />
+              </div>
+
+              {/* Text */}
               <div>
-                <p className="font-sans text-[15px] font-semibold text-ink mb-1">{item.label}</p>
-                <p className="font-sans text-[13px] text-ink-2 leading-[1.55]">{item.desc}</p>
+                <p
+                  className="font-sans font-semibold leading-none tracking-[-0.02em] mb-0.5"
+                  style={{ fontSize: 'clamp(22px, 2.5vw, 28px)', color: 'var(--ink)' }}
+                >
+                  {item.value}
+                </p>
+                <p
+                  className="font-sans text-[12px] leading-[1.4]"
+                  style={{ color: 'var(--ink-2)' }}
+                >
+                  {item.label}
+                </p>
               </div>
             </div>
           ))}

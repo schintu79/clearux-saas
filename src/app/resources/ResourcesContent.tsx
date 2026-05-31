@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { SectionMarker } from '@/components/marketing/SectionMarker'
 import { Button } from '@/components/marketing/Button'
 import { ArrowRightIcon } from '@/components/marketing/icons'
+import { HomeCta } from '@/components/marketing/HomeCta'
 
 /* ── Static placeholder articles (will be replaced by Supabase CMS) ── */
 const ARTICLES = [
@@ -55,14 +56,14 @@ export function ResourcesContent() {
   return (
     <main>
       {/* Hero */}
-      <section className="py-20 sm:py-[100px] border-b border-rule">
-        <div className="max-w-mkt mx-auto px-8 max-sm:px-5">
-          <p className="font-mono text-[11px] tracking-[0.12em] uppercase text-signal mb-6">Resources</p>
-          <h1 className="font-serif font-normal text-ink leading-[0.94] tracking-[-0.025em] mb-6" style={{ fontSize: 'clamp(44px, 6vw, 80px)' }}>
+      <section className="py-[100px] border-b border-rule max-sm:py-16">
+        <div className="max-w-mkt mx-auto px-8 max-sm:px-5 text-center">
+          <SectionMarker number="00" label="Resources" centered />
+          <h1 className="font-serif font-normal text-ink leading-[0.94] tracking-[-0.025em] mb-6" style={{ fontSize: 'clamp(48px, 7vw, 96px)' }}>
             Learn how to improve{' '}
             <em className="italic text-signal">your site.</em>
           </h1>
-          <p className="text-[18px] leading-[1.6] text-ink-2 max-w-[560px] font-sans">
+          <p className="text-[18px] leading-[1.6] text-ink-2 max-w-[560px] mx-auto font-sans">
             Guides, tutorials, and best practices for improving website health, accessibility,
             SEO, and AI visibility.
           </p>
@@ -96,13 +97,16 @@ export function ResourcesContent() {
             <p className="font-sans text-[15px] text-m-muted">
               More resources coming soon. Want to be notified?
             </p>
-            <Button href="/register" className="mt-4">
+            <Button href="/register" size="large" className="mt-4">
               Create a free account
               <ArrowRightIcon size={14} />
             </Button>
           </div>
         </div>
       </section>
+
+      {/* CTA */}
+      <HomeCta />
     </main>
   )
 }

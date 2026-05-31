@@ -1,15 +1,10 @@
 'use client'
 
 import { SectionMarker } from '@/components/marketing/SectionMarker'
+import { HomeCta } from '@/components/marketing/HomeCta'
 
 /* ── Static placeholder entries (will be replaced by Supabase CMS) ── */
 const ENTRIES = [
-  {
-    date: '2026-05-18',
-    title: 'WordPress plugin beta',
-    description: 'The Fixpath WordPress plugin is now available in beta. Install it to see audit findings directly in your WordPress admin panel and apply content fixes without leaving your CMS.',
-    tags: ['New feature', 'WordPress'],
-  },
   {
     date: '2026-05-12',
     title: 'One-click deploy via FTP/SFTP',
@@ -51,13 +46,13 @@ export function ChangelogContent() {
     <main>
       {/* Hero */}
       <section className="py-[100px] border-b border-rule max-sm:py-16">
-        <div className="max-w-mkt mx-auto px-8 max-sm:px-5">
-          <SectionMarker number="00" label="Changelog" />
-          <h1 className="font-serif font-normal text-ink leading-[0.94] tracking-[-0.025em] mb-8" style={{ fontSize: 'clamp(48px, 7vw, 96px)' }}>
+        <div className="max-w-mkt mx-auto px-8 max-sm:px-5 text-center">
+          <SectionMarker number="00" label="Changelog" centered />
+          <h1 className="font-serif font-normal text-ink leading-[0.94] tracking-[-0.025em] mb-6" style={{ fontSize: 'clamp(48px, 7vw, 96px)' }}>
             What&apos;s{' '}
             <em className="italic text-signal">new.</em>
           </h1>
-          <p className="text-[19px] leading-[1.55] text-ink-2 max-w-[640px] mb-10 font-sans">
+          <p className="text-[18px] leading-[1.6] text-ink-2 max-w-[560px] mx-auto font-sans">
             Product updates, new features, and improvements to Fixpath.
           </p>
         </div>
@@ -92,6 +87,9 @@ export function ChangelogContent() {
           </div>
         </div>
       </section>
+
+      {/* CTA */}
+      <HomeCta />
     </main>
   )
 }

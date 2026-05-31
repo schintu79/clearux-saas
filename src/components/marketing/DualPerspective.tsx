@@ -127,8 +127,8 @@ export function DualPerspective() {
 
           {/* CTA */}
           <div className="flex justify-center mt-10">
-            <Button href="/how-it-works" variant="ghost">
-              See how it works
+            <Button href="/product" variant="ghost">
+              See the product
               <ArrowRightIcon size={13} />
             </Button>
           </div>

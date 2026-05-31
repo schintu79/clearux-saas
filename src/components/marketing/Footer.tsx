@@ -2,17 +2,15 @@ import { Logo } from './Logo'
 import Link from 'next/link'
 
 /**
- * Footer — structured and clean per the brief.
- * Four columns: Product, Company, Resources, Legal.
- * "Do not make the footer the place where all unresolved messaging goes to die."
+ * Footer — curated and brand-consistent.
+ * Five columns: Brand, Platform, Company, Resources, Legal.
+ * Only high-confidence links. No filler.
  */
 
-const productLinks = [
+const platformLinks = [
   { label: 'Product', href: '/product' },
-  { label: 'How it works', href: '/how-it-works' },
   { label: 'Pricing', href: '/pricing' },
   { label: 'WordPress plugin', href: '/wordpress' },
-  { label: 'Changelog', href: '/changelog' },
 ]
 
 const companyLinks = [
@@ -22,10 +20,9 @@ const companyLinks = [
 ]
 
 const resourceLinks = [
-  { label: 'Resources', href: '/resources' },
   { label: 'FAQ', href: '/faq' },
-  { label: 'What is a UX audit?', href: '/what-is-a-ux-audit' },
-  { label: 'UX audit checklist', href: '/ux-audit-checklist' },
+  { label: 'What Fixpath audits', href: '/product' },
+  { label: 'Changelog', href: '/changelog' },
 ]
 
 const legalLinks = [
@@ -34,64 +31,61 @@ const legalLinks = [
   { label: 'Cookies', href: '/cookies' },
 ]
 
+function FooterColumn({ title, links }: { title: string; links: { label: string; href: string }[] }) {
+  return (
+    <div>
+      <h4
+        className="font-sans text-[11px] font-semibold tracking-[0.06em] uppercase mb-5"
+        style={{ color: 'var(--ink)' }}
+      >
+        {title}
+      </h4>
+      <ul className="list-none">
+        {links.map((l) => (
+          <li key={l.label} className="mb-2.5">
+            <Link
+              href={l.href}
+              className="no-underline text-[13px] hover:text-signal transition-colors font-sans"
+              style={{ color: 'var(--m-muted)' }}
+            >
+              {l.label}
+            </Link>
+          </li>
+        ))}
+      </ul>
+    </div>
+  )
+}
+
 export function Footer() {
   return (
-    <footer className="bg-paper pt-12 pb-8">
+    <footer style={{ background: 'var(--paper)' }} className="pt-14 pb-8">
       <div className="max-w-mkt mx-auto px-8 max-sm:px-5">
-        <div className="grid grid-cols-[2fr_1fr_1fr_1fr_1fr] gap-10 pb-9 border-b border-rule max-md:grid-cols-2 max-sm:grid-cols-1">
+        <div
+          className="grid grid-cols-[2fr_1fr_1fr_1fr_1fr] gap-10 pb-10 max-md:grid-cols-2 max-sm:grid-cols-1"
+          style={{ borderBottom: '1px solid color-mix(in srgb, var(--ink) 8%, transparent)' }}
+        >
+          {/* Brand column */}
           <div>
-            <Logo height={64} className="mb-[18px]" />
-            <p className="text-[14px] text-m-muted max-w-[320px] leading-[1.6] font-sans">
-              A decision engine for real website and brand issues. Find what matters, fix it, and track improvement.
+            <Logo height={56} className="mb-5" />
+            <p
+              className="text-[13px] max-w-[280px] leading-[1.65] font-sans"
+              style={{ color: 'var(--m-muted)' }}
+            >
+              Find what matters. Fix what matters. Track what improves.
             </p>
           </div>
 
-          <div>
-            <h4 className="font-mono text-[10px] font-semibold tracking-[0.12em] uppercase text-ink mb-[18px]">Product</h4>
-            <ul className="list-none">
-              {productLinks.map((l) => (
-                <li key={l.label} className="mb-2.5">
-                  <Link href={l.href} className="text-ink-2 no-underline text-[14px] hover:text-signal transition-colors font-sans">{l.label}</Link>
-                </li>
-              ))}
-            </ul>
-          </div>
-
-          <div>
-            <h4 className="font-mono text-[10px] font-semibold tracking-[0.12em] uppercase text-ink mb-[18px]">Company</h4>
-            <ul className="list-none">
-              {companyLinks.map((l) => (
-                <li key={l.label} className="mb-2.5">
-                  <Link href={l.href} className="text-ink-2 no-underline text-[14px] hover:text-signal transition-colors font-sans">{l.label}</Link>
-                </li>
-              ))}
-            </ul>
-          </div>
-
-          <div>
-            <h4 className="font-mono text-[10px] font-semibold tracking-[0.12em] uppercase text-ink mb-[18px]">Resources</h4>
-            <ul className="list-none">
-              {resourceLinks.map((l) => (
-                <li key={l.label} className="mb-2.5">
-                  <Link href={l.href} className="text-ink-2 no-underline text-[14px] hover:text-signal transition-colors font-sans">{l.label}</Link>
-                </li>
-              ))}
-            </ul>
-          </div>
-
-          <div>
-            <h4 className="font-mono text-[10px] font-semibold tracking-[0.12em] uppercase text-ink mb-[18px]">Legal</h4>
-            <ul className="list-none">
-              {legalLinks.map((l) => (
-                <li key={l.label} className="mb-2.5">
-                  <Link href={l.href} className="text-ink-2 no-underline text-[14px] hover:text-signal transition-colors font-sans">{l.label}</Link>
-                </li>
-              ))}
-            </ul>
-          </div>
+          <FooterColumn title="Platform" links={platformLinks} />
+          <FooterColumn title="Company" links={companyLinks} />
+          <FooterColumn title="Resources" links={resourceLinks} />
+          <FooterColumn title="Legal" links={legalLinks} />
         </div>
 
-        <div className="mt-6 flex justify-between items-center font-mono text-[11px] text-m-muted tracking-[0.06em] uppercase">
+        <div
+          className="mt-6 flex justify-between items-center font-sans text-[11px] tracking-[0.02em]"
+          style={{ color: 'var(--m-muted)' }}
+        >
           <span>&copy; 2026 Fixpath</span>
           <span>SSL · GDPR · Stripe</span>
         </div>

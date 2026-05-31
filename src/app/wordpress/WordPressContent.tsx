@@ -21,8 +21,8 @@ export function WordPressContent() {
         <div className="max-w-mkt mx-auto px-8 max-sm:px-5">
           <div className="grid lg:grid-cols-2 gap-16 items-center">
             <div>
-              <p className="font-mono text-[11px] tracking-[0.12em] uppercase text-signal mb-6">WordPress plugin</p>
-              <h1 className="font-serif font-normal text-ink leading-[0.94] tracking-[-0.025em] mb-6" style={{ fontSize: 'clamp(44px, 6vw, 80px)' }}>
+              <SectionMarker number="00" label="WordPress plugin" />
+              <h1 className="font-serif font-normal text-ink leading-[0.94] tracking-[-0.025em] mb-6" style={{ fontSize: 'clamp(48px, 7vw, 96px)' }}>
                 Audit and fix your site{' '}
                 <em className="italic text-signal">inside WordPress.</em>
               </h1>
@@ -122,8 +122,8 @@ export function WordPressContent() {
       {/* How it works */}
       <section className="py-[100px] border-b border-rule max-sm:py-16">
         <div className="max-w-mkt mx-auto px-8 max-sm:px-5">
-          <SectionMarker number="01" label="How it works" />
-          <h2 className="font-serif font-normal text-ink leading-[0.94] tracking-[-0.025em] mb-12" style={{ fontSize: 'clamp(36px, 5vw, 64px)' }}>
+          <SectionMarker number="01" label="How it works" centered />
+          <h2 className="font-serif font-normal text-ink leading-[0.94] tracking-[-0.025em] mb-12 text-center" style={{ fontSize: 'clamp(48px, 7vw, 96px)' }}>
             Three steps to a{' '}
             <em className="italic text-signal">healthier WordPress site.</em>
           </h2>
@@ -149,7 +149,7 @@ export function WordPressContent() {
               <div key={s.step}>
                 <span
                   className="w-10 h-10 rounded-full inline-flex items-center justify-center font-mono text-[13px] font-semibold mb-4"
-                  style={{ background: 'var(--signal-soft)', color: 'var(--signal)' }}
+                  style={{ background: 'color-mix(in srgb, var(--ink) 6%, transparent)', color: 'var(--ink)' }}
                 >
                   {s.step}
                 </span>
@@ -164,8 +164,8 @@ export function WordPressContent() {
       {/* Features */}
       <section className="py-[100px] border-b border-rule max-sm:py-16">
         <div className="max-w-mkt mx-auto px-8 max-sm:px-5">
-          <SectionMarker number="02" label="Features" />
-          <h2 className="font-serif font-normal text-ink leading-[0.94] tracking-[-0.025em] mb-12" style={{ fontSize: 'clamp(36px, 5vw, 64px)' }}>
+          <SectionMarker number="02" label="Features" centered />
+          <h2 className="font-serif font-normal text-ink leading-[0.94] tracking-[-0.025em] mb-12 text-center" style={{ fontSize: 'clamp(48px, 7vw, 96px)' }}>
             Everything you need{' '}
             <em className="italic text-signal">inside your CMS.</em>
           </h2>

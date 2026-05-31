@@ -33,7 +33,7 @@ const rows = [
   },
   {
     label: 'Fixpath',
-    sub: '112 checkpoints · 7 modules',
+    sub: '112 checkpoints · 7 categories',
     cost: 'From $9.90',
     turn: '< 10 minutes',
     ai: { text: 'Native', cls: 'text-ok' },

@@ -31,7 +31,7 @@ export function Pricing() {
             One tool. <em className="italic text-signal">Two ways in.</em>
           </h2>
           <p className="text-[18px] text-ink-2 max-w-[560px] mx-auto leading-[1.55] mb-10 font-sans">
-            Subscribe for regular audits, or buy credit packs when you need them. Every audit gets all 112 checkpoints, all 7 modules, full exports. First audit free, always.
+            Subscribe for regular audits, or buy credit packs when you need them. Every audit gets all 112 checkpoints, all 7 categories, full exports. First audit free, always.
           </p>
 
           {/* Mode toggle */}

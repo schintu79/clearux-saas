@@ -231,7 +231,7 @@ export function SpecimenCard() {
           opacity: contentOpacity,
         }}
       >
-        <span>Scanning · module {slide.module}</span>
+        <span>Scanning · category {slide.module}</span>
         <span className="text-signal">{slide.moduleProgress}</span>
       </div>
     </div>

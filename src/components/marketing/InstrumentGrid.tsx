@@ -21,7 +21,7 @@ export function InstrumentGrid() {
           <div>
             <SectionMarker number="05" label="The instrument" />
             <h2 className="font-serif font-normal text-ink leading-[0.98] tracking-[-0.022em]" style={{ fontSize: 'clamp(40px, 5vw, 72px)' }}>
-              Seven modules. <em className="italic text-signal">One hundred twelve</em> checkpoints.
+              Seven categories. <em className="italic text-signal">One hundred twelve</em> checkpoints.
             </h2>
           </div>
           <p className="text-[17px] text-ink-2 leading-[1.55] max-w-[540px] font-sans">
@@ -59,10 +59,10 @@ export function InstrumentGrid() {
         {/* Product page link */}
         <div className="mt-10 flex items-center justify-between border border-dashed border-rule p-6 sm:p-8">
           <p className="text-[15px] text-ink-2 font-sans max-w-[480px]">
-            See how these modules translate into scores, findings, and actionable recommendations.
+            See how these categories translate into scores, findings, and actionable recommendations.
           </p>
-          <Button href="/how-it-works" variant="ghost" className="shrink-0 ml-6">
-            How it works
+          <Button href="/product" variant="ghost" className="shrink-0 ml-6">
+            See the product
             <ArrowRightIcon size={13} />
           </Button>
         </div>

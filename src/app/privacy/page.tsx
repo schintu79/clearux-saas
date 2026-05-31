@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import { MarketingBody } from '@/components/marketing/MarketingBody'
 import { Nav } from '@/components/marketing/Nav'
 import { Footer } from '@/components/marketing/Footer'
+import { SectionMarker } from '@/components/marketing/SectionMarker'
 
 export const metadata: Metadata = {
   title: 'Privacy Policy — Fixpath',
@@ -13,14 +14,14 @@ export default function PrivacyPage() {
     <MarketingBody>
       <Nav />
       <main>
-        <section className="py-[80px] border-b border-rule max-sm:py-14">
+        <section className="py-[100px] border-b border-rule max-sm:py-16">
           <div className="max-w-[760px] mx-auto px-8 max-sm:px-5">
-            <span className="font-mono text-[11px] tracking-[0.1em] uppercase text-signal mb-4 block">Legal</span>
-            <h1 className="font-serif font-normal text-ink leading-[0.96] tracking-[-0.02em] mb-3" style={{ fontSize: 'clamp(36px, 5vw, 56px)' }}>
+            <SectionMarker number="00" label="Legal" />
+            <h1 className="font-serif font-normal text-ink leading-[0.94] tracking-[-0.025em] mb-4" style={{ fontSize: 'clamp(48px, 7vw, 96px)' }}>
               Privacy policy
             </h1>
             <p className="font-mono text-[11px] text-m-muted tracking-[0.06em] uppercase mb-8">Last updated: May 2026</p>
-            <p className="font-sans text-[14px] text-ink-2 p-5 border border-signal/30 bg-signal/5 leading-[1.6]">
+            <p className="font-sans text-[14px] text-ink-2 p-5 rounded-xl leading-[1.6]" style={{ border: '1px solid color-mix(in srgb, var(--ink) 8%, transparent)', background: 'color-mix(in srgb, var(--ink) 2%, transparent)' }}>
               This policy is written in plain language so you can actually understand it. No legalese, no hidden clauses. If anything is unclear, email us and we will explain it.
             </p>
           </div>
