@@ -68,16 +68,20 @@ export default function BestUxAuditToolsPage() {
         <article className="max-w-3xl mx-auto px-4 py-16 sm:py-24">
           {/* ── H1 ── */}
           <h1 className="font-heading font-medium text-3xl sm:text-4xl text-text mb-6">
-            Best UX Audit Tools in 2026: A Practical Comparison
+            Best UX Audit Tools in 2026: Find the Right One for Your Team
           </h1>
+          <p className="text-lg text-muted mb-4 leading-relaxed">
+            You know your website has issues — the question is how to find
+            them fast, affordably, and with enough depth to actually fix
+            things. The right tool depends on your budget, frequency, and
+            what you need to evaluate.
+          </p>
           <p className="text-lg text-muted mb-12 leading-relaxed">
-            Choosing the right UX audit software depends on what you need to
-            evaluate, how much you can spend, and how often you plan to run
-            audits. This guide compares three approaches — manual
-            consultancies, single-purpose accessibility tools, and
-            comprehensive AI-powered platforms — so you can make an informed
-            decision. We're upfront: Fixpath is one of the tools covered,
-            but we've done our best to be fair and factual.
+            This guide compares three approaches: manual consultancies ($5K+,
+            weeks of waiting), single-purpose scanners (cheap but shallow),
+            and comprehensive AI platforms (fast, deep, affordable). We&apos;re
+            upfront — Fixpath is one of the tools covered — but the
+            comparison is factual so you can decide what fits your situation.
           </p>
 
           {/* ── Approach 1: Manual ── */}

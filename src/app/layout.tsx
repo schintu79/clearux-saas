@@ -6,6 +6,7 @@ import { AuthProvider } from '@/context/AuthContext'
 import CookieConsent from '@/components/ui/CookieConsent'
 import ScrollToTop from '@/components/ui/ScrollToTop'
 import CrispChat from '@/components/ui/CrispChat'
+import { OrganizationJsonLd } from '@/components/seo/JsonLd'
 import './globals.css'
 
 const justSans = localFont({
@@ -130,6 +131,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             __html: `(function(){try{var m=document.cookie.match(/(?:^|; )fixpath-theme=(light|dark)/);var t=m?m[1]:'dark';if(t==='dark')document.documentElement.classList.add('dark');else document.documentElement.classList.remove('dark')}catch(e){document.documentElement.classList.add('dark')}})()`,
           }}
         />
+        <OrganizationJsonLd />
       </head>
       <body suppressHydrationWarning className="font-body antialiased bg-surface text-text">
         <ThemeProvider>

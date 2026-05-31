@@ -262,20 +262,21 @@ export default function UxAuditChecklistPage() {
         <article className="max-w-3xl mx-auto px-4 py-16 sm:py-24">
           {/* ── H1 ── */}
           <h1 className="font-heading font-medium text-3xl sm:text-4xl text-text mb-6">
-            The Complete UX Audit Checklist: 28 Categories, 7 Modules
+            UX Audit Checklist: Every Issue Your Website Might Have
           </h1>
+          <p className="text-lg text-muted mb-4 leading-relaxed">
+            Most websites have problems they don&apos;t know about — accessibility
+            failures, trust gaps, broken mobile flows, slow pages. This
+            checklist covers all 28 categories across 7 modules, so nothing
+            gets missed.
+          </p>
           <p className="text-lg text-muted mb-12 leading-relaxed">
-            Running a{' '}
+            Use it as a manual review template, or let{' '}
             <Link href="/what-is-a-ux-audit" className="text-text font-medium underline decoration-brand decoration-2 underline-offset-2 hover:opacity-70 transition-opacity">
-              UX audit
+              Fixpath run the full checklist for you
             </Link>{' '}
-            without a checklist is like performing a code review without
-            linting rules — you will catch some issues, but you will miss far
-            more. This UX audit checklist covers the 28 categories that
-            Fixpath evaluates, organized into seven modules: Foundation, Human
-            Experience, Inclusive Design, Future Readiness, Accessibility Readiness,
-            Brand Consistency, and SEO Structure. Use it as a template for manual reviews, or
-            let Fixpath automate the entire process.
+            in under 10 minutes — 112 checkpoints, scored by severity, with
+            fix guidance for every finding.
           </p>
 
           {/* ── How to use ── */}

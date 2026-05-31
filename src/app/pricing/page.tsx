@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import { MarketingBody } from '@/components/marketing/MarketingBody'
 import { Nav } from '@/components/marketing/Nav'
 import { Footer } from '@/components/marketing/Footer'
+import { PricingJsonLd } from '@/components/seo/JsonLd'
 import PricingContent from './PricingContent'
 
 export const metadata: Metadata = {
@@ -12,6 +13,7 @@ export const metadata: Metadata = {
 export default function PricingPage() {
   return (
     <MarketingBody>
+      <PricingJsonLd />
       <Nav />
       <PricingContent />
       <Footer />

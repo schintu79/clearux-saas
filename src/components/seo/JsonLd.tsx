@@ -36,132 +36,256 @@ export function FaqJsonLd() {
   )
 }
 
-export function HomeJsonLd() {
+/**
+ * Standalone Organization schema — used in root layout so every page
+ * carries the company identity signal for search engines and AI systems.
+ */
+export function OrganizationJsonLd() {
   const data = {
     '@context': 'https://schema.org',
-    '@graph': [
+    '@type': 'Organization',
+    name: 'Fixpath',
+    url: siteUrl,
+    logo: {
+      '@type': 'ImageObject',
+      url: `${siteUrl}/logo.png`,
+      width: 512,
+      height: 512,
+    },
+    description: 'AI-powered UX audit tool that finds and prioritises website issues across clarity, trust, accessibility, and technical quality.',
+    foundingDate: '2024',
+    contactPoint: {
+      '@type': 'ContactPoint',
+      email: 'support@fixpath.ai',
+      contactType: 'Customer Support',
+      areaServed: 'Worldwide',
+      availableLanguage: ['English', 'Spanish', 'French', 'German', 'Italian', 'Portuguese'],
+    },
+    sameAs: [
+      'https://www.linkedin.com/company/fixpath',
+    ],
+  }
+
+  return (
+    <script
+      type="application/ld+json"
+      dangerouslySetInnerHTML={{ __html: JSON.stringify(data) }}
+    />
+  )
+}
+
+/**
+ * Homepage JSON-LD — individual typed blocks instead of @graph
+ * so every block has an explicit @type (avoids validator warnings).
+ */
+export function HomeJsonLd() {
+  const website = {
+    '@context': 'https://schema.org',
+    '@type': 'WebSite',
+    name: 'Fixpath',
+    url: siteUrl,
+    description: 'Fixpath is a decision engine for real website and brand issues. Find what matters, get fix guidance, and track improvement over time. First audit free.',
+    potentialAction: {
+      '@type': 'SearchAction',
+      target: `${siteUrl}/dashboard/new-audit?url={search_term_string}`,
+      'query-input': 'required name=search_term_string',
+    },
+  }
+
+  const software = {
+    '@context': 'https://schema.org',
+    '@type': 'SoftwareApplication',
+    name: 'Fixpath',
+    url: siteUrl,
+    applicationCategory: 'BusinessApplication',
+    operatingSystem: 'Web',
+    description: 'A decision engine for real website and brand issues. 112 checkpoints across 7 modules — Foundation, Human Experience, Inclusive Design, Future Readiness, Accessibility Readiness, Brand Consistency, SEO Structure. Severity-ranked findings, concrete fix guidance, and progress tracking.',
+    featureList: [
+      'Foundation: The structural and technical baseline a great experience is built on',
+      'Human Experience: How the product feels to use — clarity, flow, cognitive load, wellbeing',
+      'Inclusive Design: Accessibility and equity for every user, every ability, every context',
+      'Future Readiness: AI discoverability and how the product holds up as discovery shifts',
+      'Accessibility Readiness: WCAG compliance and assistive technology support across all pages',
+      'Brand Consistency: Whether what users see matches what the brand promises',
+      'SEO Structure: Whether the product is findable, legible, and ranked the way it deserves',
+      'Audit types: Website audits, Brand Identity audits, Design audits',
+    ],
+    offers: [
       {
-        '@type': 'WebSite',
-        name: 'Fixpath',
-        url: siteUrl,
-        description: 'Fixpath is a decision engine for real website and brand issues. Find what matters, get fix guidance, and track improvement over time. First audit free.',
-        potentialAction: {
-          '@type': 'SearchAction',
-          target: `${siteUrl}/dashboard/new-audit?url={search_term_string}`,
-          'query-input': 'required name=search_term_string',
+        '@type': 'Offer',
+        name: 'Free audit',
+        price: '0',
+        priceCurrency: 'USD',
+        description: 'First full 112-checkpoint audit free, no credit card required',
+        availability: 'https://schema.org/InStock',
+      },
+      {
+        '@type': 'Offer',
+        name: 'Starter subscription',
+        price: '29',
+        priceCurrency: 'USD',
+        description: '1 workspace, 4 re-audits per month, PDF + DOCX reports',
+        availability: 'https://schema.org/InStock',
+        priceSpecification: {
+          '@type': 'UnitPriceSpecification',
+          billingDuration: 'P1M',
         },
       },
       {
-        '@type': 'Organization',
-        name: 'Fixpath',
-        url: siteUrl,
-        logo: {
-          '@type': 'ImageObject',
-          url: `${siteUrl}/logo.png`,
-          width: 512,
-          height: 512,
+        '@type': 'Offer',
+        name: 'Pro subscription',
+        price: '59',
+        priceCurrency: 'USD',
+        description: '3 workspaces, 12 re-audits per month, priority processing',
+        availability: 'https://schema.org/InStock',
+        priceSpecification: {
+          '@type': 'UnitPriceSpecification',
+          billingDuration: 'P1M',
         },
-        description: 'A decision engine for real website and brand issues. Truth, trust, and usefulness — with severity-ranked findings, fix guidance, and progress tracking.',
-        contactPoint: {
-          '@type': 'ContactPoint',
-          email: 'support@fixpath.ai',
-          contactType: 'customer support',
-          areaServed: 'Worldwide',
-          availableLanguage: ['English', 'Spanish', 'French', 'German', 'Italian', 'Portuguese'],
-        },
-        sameAs: [
-          'https://www.linkedin.com/company/fixpath',
-        ],
       },
       {
-        '@type': 'SoftwareApplication',
-        name: 'Fixpath',
-        url: siteUrl,
-        applicationCategory: 'BusinessApplication',
-        operatingSystem: 'Web',
-        description: 'A decision engine for real website and brand issues. 112 checkpoints across 7 modules — Foundation, Human Experience, Inclusive Design, Future Readiness, Accessibility Readiness, Brand Consistency, SEO Structure. Severity-ranked findings, concrete fix guidance, and progress tracking.',
-        featureList: [
-          'Foundation: The structural and technical baseline a great experience is built on',
-          'Human Experience: How the product feels to use — clarity, flow, cognitive load, wellbeing',
-          'Inclusive Design: Accessibility and equity for every user, every ability, every context',
-          'Future Readiness: AI discoverability and how the product holds up as discovery shifts',
-          'Accessibility Readiness: WCAG compliance and assistive technology support across all pages',
-          'Brand Consistency: Whether what users see matches what the brand promises',
-          'SEO Structure: Whether the product is findable, legible, and ranked the way it deserves',
-          'Audit types: Website audits, Brand Identity audits, Design audits',
-        ],
-        offers: [
-          {
-            '@type': 'Offer',
-            name: 'Free audit',
-            price: '0',
-            priceCurrency: 'USD',
-            description: 'First full 112-checkpoint audit free, no credit card required',
-            availability: 'https://schema.org/InStock',
-          },
-          {
-            '@type': 'Offer',
-            name: 'Starter subscription',
-            price: '29',
-            priceCurrency: 'USD',
-            description: '3 audits per month, unlimited re-audits, PDF + DOCX reports',
-            availability: 'https://schema.org/InStock',
-            priceSpecification: {
-              '@type': 'UnitPriceSpecification',
-              billingDuration: 'P1M',
-            },
-          },
-          {
-            '@type': 'Offer',
-            name: 'Pro subscription',
-            price: '59',
-            priceCurrency: 'USD',
-            description: '3 workspaces, 12 re-audits per month, priority processing',
-            availability: 'https://schema.org/InStock',
-            priceSpecification: {
-              '@type': 'UnitPriceSpecification',
-              billingDuration: 'P1M',
-            },
-          },
-          {
-            '@type': 'Offer',
-            name: 'Growth credit pack',
-            price: '99',
-            priceCurrency: 'USD',
-            description: '10 audit credits at $9.90 each, never expire',
-            availability: 'https://schema.org/InStock',
-          },
-        ],
-        image: {
-          '@type': 'ImageObject',
-          url: `${siteUrl}/og-image.png`,
-          width: 1200,
-          height: 630,
+        '@type': 'Offer',
+        name: 'Team subscription',
+        price: '149',
+        priceCurrency: 'USD',
+        description: '10 workspaces, 40 re-audits per month, priority processing',
+        availability: 'https://schema.org/InStock',
+        priceSpecification: {
+          '@type': 'UnitPriceSpecification',
+          billingDuration: 'P1M',
         },
-        // aggregateRating: add back once real reviews exist on G2/Trustpilot
-        // to avoid Google penalties for unverified ratings
       },
       {
-        '@type': 'FAQPage',
-        mainEntity: FAQ_ITEMS.map(item => ({
-          '@type': 'Question',
-          name: item.q,
-          acceptedAnswer: {
-            '@type': 'Answer',
-            text: item.a,
-          },
-        })),
+        '@type': 'Offer',
+        name: 'Growth credit pack',
+        price: '99',
+        priceCurrency: 'USD',
+        description: '10 audit credits at $9.90 each, never expire',
+        availability: 'https://schema.org/InStock',
+      },
+    ],
+    image: {
+      '@type': 'ImageObject',
+      url: `${siteUrl}/og-image.png`,
+      width: 1200,
+      height: 630,
+    },
+  }
+
+  const faq = {
+    '@context': 'https://schema.org',
+    '@type': 'FAQPage',
+    mainEntity: FAQ_ITEMS.map(item => ({
+      '@type': 'Question',
+      name: item.q,
+      acceptedAnswer: {
+        '@type': 'Answer',
+        text: item.a,
+      },
+    })),
+  }
+
+  const breadcrumb = {
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      { '@type': 'ListItem', position: 1, name: 'Home', item: siteUrl },
+      { '@type': 'ListItem', position: 2, name: 'Product', item: `${siteUrl}/product` },
+      { '@type': 'ListItem', position: 3, name: 'Why Fixpath', item: `${siteUrl}/why-fixpath` },
+      { '@type': 'ListItem', position: 4, name: 'Pricing', item: `${siteUrl}/pricing` },
+      { '@type': 'ListItem', position: 5, name: 'About', item: `${siteUrl}/about` },
+      { '@type': 'ListItem', position: 6, name: 'Contact', item: `${siteUrl}/contact` },
+    ],
+  }
+
+  return (
+    <>
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(website) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(software) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faq) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumb) }} />
+    </>
+  )
+}
+
+/**
+ * Pricing page JSON-LD — server-rendered so crawlers that don't execute
+ * JS can still discover plan names, prices, and feature descriptions.
+ */
+export function PricingJsonLd() {
+  const data = {
+    '@context': 'https://schema.org',
+    '@type': 'Product',
+    name: 'Fixpath',
+    url: `${siteUrl}/pricing`,
+    description: 'AI-powered UX audit tool. Full 112-checkpoint audits from $9.90. Subscribe for ongoing monitoring or buy credit packs for project work.',
+    brand: { '@type': 'Organization', name: 'Fixpath' },
+    offers: [
+      {
+        '@type': 'Offer',
+        name: 'Free audit',
+        price: '0',
+        priceCurrency: 'USD',
+        description: 'First full 112-checkpoint audit free. No credit card required. All 7 modules, PDF and Word reports included.',
+        availability: 'https://schema.org/InStock',
+        url: `${siteUrl}/register`,
       },
       {
-        '@type': 'BreadcrumbList',
-        itemListElement: [
-          { '@type': 'ListItem', position: 1, name: 'Home', item: siteUrl },
-          { '@type': 'ListItem', position: 2, name: 'Product', item: `${siteUrl}/product` },
-          { '@type': 'ListItem', position: 3, name: 'Why Fixpath', item: `${siteUrl}/why-fixpath` },
-          { '@type': 'ListItem', position: 4, name: 'Pricing', item: `${siteUrl}/pricing` },
-          { '@type': 'ListItem', position: 5, name: 'About', item: `${siteUrl}/about` },
-          { '@type': 'ListItem', position: 6, name: 'Contact', item: `${siteUrl}/contact` },
-        ],
+        '@type': 'Offer',
+        name: 'Starter plan',
+        price: '29',
+        priceCurrency: 'USD',
+        description: '1 workspace, 4 re-audits per month. Monthly billing. Includes PDF and DOCX reports, progress tracking, and all 7 audit modules.',
+        availability: 'https://schema.org/InStock',
+        url: `${siteUrl}/pricing`,
+        priceSpecification: { '@type': 'UnitPriceSpecification', billingDuration: 'P1M', unitCode: 'MON' },
+      },
+      {
+        '@type': 'Offer',
+        name: 'Pro plan',
+        price: '59',
+        priceCurrency: 'USD',
+        description: '3 workspaces, 12 re-audits per month. Monthly billing. Priority processing, full reports, and fix guidance.',
+        availability: 'https://schema.org/InStock',
+        url: `${siteUrl}/pricing`,
+        priceSpecification: { '@type': 'UnitPriceSpecification', billingDuration: 'P1M', unitCode: 'MON' },
+      },
+      {
+        '@type': 'Offer',
+        name: 'Team plan',
+        price: '149',
+        priceCurrency: 'USD',
+        description: '10 workspaces, 40 re-audits per month. Monthly billing. Built for agencies and larger teams.',
+        availability: 'https://schema.org/InStock',
+        url: `${siteUrl}/pricing`,
+        priceSpecification: { '@type': 'UnitPriceSpecification', billingDuration: 'P1M', unitCode: 'MON' },
+      },
+      {
+        '@type': 'Offer',
+        name: 'Starter credit pack',
+        price: '49',
+        priceCurrency: 'USD',
+        description: '5 audit credits at $9.80 each. Credits never expire. One credit equals one full 112-checkpoint audit.',
+        availability: 'https://schema.org/InStock',
+        url: `${siteUrl}/pricing`,
+      },
+      {
+        '@type': 'Offer',
+        name: 'Growth credit pack',
+        price: '99',
+        priceCurrency: 'USD',
+        description: '10 audit credits at $9.90 each. Credits never expire. One credit equals one full 112-checkpoint audit.',
+        availability: 'https://schema.org/InStock',
+        url: `${siteUrl}/pricing`,
+      },
+      {
+        '@type': 'Offer',
+        name: 'Scale credit pack',
+        price: '199',
+        priceCurrency: 'USD',
+        description: '25 audit credits at $7.96 each. Credits never expire. One credit equals one full 112-checkpoint audit.',
+        availability: 'https://schema.org/InStock',
+        url: `${siteUrl}/pricing`,
       },
     ],
   }

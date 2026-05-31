@@ -659,7 +659,7 @@ export function HomeHero() {
     <section className="min-h-screen flex flex-col pt-[100px] pb-0 max-sm:pt-16">
       <div className="max-w-mkt mx-auto px-8 max-sm:px-5 w-full flex-1 flex flex-col">
         <div className="text-center max-w-[960px] mx-auto">
-          <SectionMarker number="00" label="Decision engine for website and brands" centered />
+          <SectionMarker number="00" label="AI decision engine for websites and brands" centered />
           <h1
             className="font-serif font-normal text-ink leading-[0.94] tracking-[-0.025em] mb-8"
             style={{ fontSize: 'clamp(48px, 7vw, 96px)' }}
@@ -668,8 +668,8 @@ export function HomeHero() {
             <em className="italic text-signal">Fix what matters.</em>
           </h1>
           <p className="text-[19px] leading-[1.55] text-ink-2 max-w-[640px] mx-auto font-sans mb-10">
-            Fixpath is a decision engine for real website and brand issues.
-            It finds what matters, helps you fix it, and tracks what improves.
+            Fixpath finds the issues affecting trust, clarity, and conversion
+            — then helps your team fix them and track progress over time.
           </p>
           <div className="flex gap-3.5 justify-center max-sm:flex-col max-sm:items-stretch">
             <Button href="/register" size="large">
