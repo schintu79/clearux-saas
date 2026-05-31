@@ -1996,6 +1996,30 @@ RULES FOR RE-AUDIT:
     // Hoisted here so quality gates (which run after both branches) can access it.
     let deepVerifiedFixedTitles: Set<string> = new Set()
 
+    // Helper: check if a brand identity has meaningful content beyond auto-populated fields
+    async function hasMeaningfulBrandDna(brandIdentityId: string): Promise<boolean> {
+      const db = getDb()
+      // Check for uploaded brand files
+      const { count } = await db
+        .from('brand_identity_files')
+        .select('id', { count: 'exact', head: true })
+        .eq('brand_identity_id', brandIdentityId)
+      if (count && count > 0) return true
+      // Check for manually filled fields beyond auto-populated name+website_url
+      const { data: identity } = await db
+        .from('brand_identities')
+        .select('description, brand_voice, tone_keywords, primary_colors, logo_url')
+        .eq('id', brandIdentityId)
+        .single()
+      if (!identity) return false
+      const hasDescription = !!identity.description?.trim()
+      const hasVoice = !!identity.brand_voice?.trim()
+      const hasTone = Array.isArray(identity.tone_keywords) && identity.tone_keywords.length > 0
+      const hasColors = Array.isArray(identity.primary_colors) && identity.primary_colors.length > 0
+      const hasLogo = !!identity.logo_url?.trim()
+      return hasDescription || hasVoice || hasTone || hasColors || hasLogo
+    }
+
     if (effectiveDepthMode === 'baseline') {
       // ════════════════════════════════════════════════════════════
       // BASELINE RE-AUDIT — NO AI ANALYSIS
@@ -2170,9 +2194,12 @@ RULES FOR RE-AUDIT:
       }
 
       // Brand Consistency dual-mode — same logic as deep audit path
-      const brandConsistencyModeBl = activeSlugsBl.includes('brand_consistency') && auditDetails.brandIdentityId
-        ? 'brand_dna'
-        : 'website_only'
+      // Only use brand_dna mode if the identity has meaningful content beyond auto-populated fields
+      let brandConsistencyModeBl: 'brand_dna' | 'website_only' = 'website_only'
+      if (activeSlugsBl.includes('brand_consistency') && auditDetails.brandIdentityId) {
+        const hasMeaningful = await hasMeaningfulBrandDna(auditDetails.brandIdentityId)
+        brandConsistencyModeBl = hasMeaningful ? 'brand_dna' : 'website_only'
+      }
 
       // Check which modules had coverage in the previous audit
       const prevCategoryNames = new Set(
@@ -2459,12 +2486,14 @@ RULES FOR RE-AUDIT:
 
       // Brand Consistency runs in two modes:
       // Mode A (website-only): always available — analyzes internal consistency
-      // Mode B (with Brand DNA): only when brand_identity_id is set AND user opted in
-      const brandConsistencyMode = activeSlugs.includes('brand_consistency') && auditDetails.brandIdentityId
-        ? 'brand_dna'
-        : 'website_only'
+      // Mode B (with Brand DNA): only when brand_identity_id is set AND identity has meaningful content
+      let brandConsistencyMode: 'brand_dna' | 'website_only' = 'website_only'
+      if (activeSlugs.includes('brand_consistency') && auditDetails.brandIdentityId) {
+        const hasMeaningful = await hasMeaningfulBrandDna(auditDetails.brandIdentityId)
+        brandConsistencyMode = hasMeaningful ? 'brand_dna' : 'website_only'
+      }
       await auditLog(auditId, 'brand_mode', 'info',
-        `Brand Consistency mode: ${brandConsistencyMode === 'brand_dna' ? 'Website + Brand DNA' : 'Website-only (internal consistency)'}`)
+        `Brand Consistency mode: ${brandConsistencyMode === 'brand_dna' ? 'Website + Brand DNA' : brandConsistencyMode === 'website_only' && auditDetails.brandIdentityId ? 'Website-only (auto-populated brand identity)' : 'Website-only (internal consistency)'}`)
 
       // Build the set of category indices to analyze
       const selectedIndices = new Set<number>()

@@ -40,24 +40,58 @@ function ScoreLine({ points }: { points: Array<{ score: number; date: string }> 
   if (points.length < 2) return null;
   const w = 600;
   const h = 120;
+  const PAD_B = 18;
+  const chartH = h - PAD_B;
   const max = Math.max(100, ...points.map((p) => p.score));
   const min = Math.min(0, ...points.map((p) => p.score));
   const range = Math.max(1, max - min);
   const stepX = w / Math.max(1, points.length - 1);
   const coords = points.map((p, i) => {
     const x = i * stepX;
-    const y = h - ((p.score - min) / range) * h;
+    const y = chartH - ((p.score - min) / range) * chartH;
     return [x, y] as const;
   });
   const path = coords.map(([x, y], i) => `${i === 0 ? 'M' : 'L'} ${x.toFixed(1)} ${y.toFixed(1)}`).join(' ');
+  const areaPath = `${path} L ${coords[coords.length - 1][0].toFixed(1)} ${chartH} L ${coords[0][0].toFixed(1)} ${chartH} Z`;
   return (
-    <svg viewBox={`0 0 ${w} ${h + 12}`} width="100%" height={h + 12} role="img" aria-label="Score trend">
-      <path d={path} fill="none" stroke="var(--signal)" strokeWidth={2} />
+    <svg viewBox={`0 0 ${w} ${h}`} width="100%" height={h} role="img" aria-label="Score trend">
+      <defs>
+        <linearGradient id="trackScoreAreaGrad" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor="var(--signal)" stopOpacity="0.12" />
+          <stop offset="100%" stopColor="var(--signal)" stopOpacity="0.02" />
+        </linearGradient>
+      </defs>
+      <path d={areaPath} fill="url(#trackScoreAreaGrad)" />
+      <path d={path} fill="none" stroke="var(--signal)" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" />
       {coords.map(([x, y], i) => (
-        <circle key={i} cx={x} cy={y} r={3} fill="var(--signal)" />
+        <circle key={i} cx={x} cy={y} r={3.5} fill="var(--paper)" stroke="var(--signal)" strokeWidth={2} />
       ))}
+      {/* Month labels on X axis */}
+      {coords.map(([x], i) => {
+        if (points.length > 6 && i !== 0 && i !== points.length - 1 && i !== Math.floor(points.length / 2)) return null;
+        const d = new Date(points[i].date);
+        const label = d.toLocaleString('en-US', { month: 'short' });
+        return (
+          <text key={i} x={x} y={h - 2} textAnchor="middle" fontSize="9" fill="var(--m-muted)" fontFamily="var(--font-inter)">{label}</text>
+        );
+      })}
     </svg>
   );
+}
+
+const moduleNames = ['Foundation', 'Human experience', 'Inclusive design', 'Future readiness', 'SEO structure', 'Accessibility readiness', 'Brand consistency'];
+
+function getModuleScores(report: any): Record<string, number> {
+  const scores: Record<string, number> = {};
+  const cats = report?.raw_json?.categoryScores as Array<{ name: string; score: number }> | undefined;
+  if (!cats) return scores;
+  for (let m = 0; m < moduleNames.length; m++) {
+    const moduleCats = cats.slice(m * 4, m * 4 + 4).filter((c: { score: number }) => c.score >= 0);
+    if (moduleCats.length > 0) {
+      scores[moduleNames[m]] = Math.round(moduleCats.reduce((s: number, c: { score: number }) => s + c.score, 0) / moduleCats.length);
+    }
+  }
+  return scores;
 }
 
 export default function TrackPage() {
@@ -159,6 +193,22 @@ export default function TrackPage() {
       date: h.audit.completed_at || h.audit.created_at,
     }));
 
+  const topModuleDeltas = useMemo(() => {
+    if (scopedHistory.length < 2) return [];
+    const latest = scopedHistory[scopedHistory.length - 1];
+    const previous = scopedHistory[scopedHistory.length - 2];
+    const latestScores = getModuleScores(latest.report);
+    const prevScores = getModuleScores(previous.report);
+    const deltas: Array<{ name: string; delta: number }> = [];
+    for (const mod of moduleNames) {
+      if (latestScores[mod] != null && prevScores[mod] != null) {
+        deltas.push({ name: mod, delta: latestScores[mod] - prevScores[mod] });
+      }
+    }
+    deltas.sort((a, b) => Math.abs(b.delta) - Math.abs(a.delta));
+    return deltas.filter(d => d.delta !== 0).slice(0, 3);
+  }, [scopedHistory]);
+
   const singleAudit = trendPoints.length < 2;
 
   return (
@@ -194,6 +244,22 @@ export default function TrackPage() {
               <p className="text-[11px] mt-2" style={{ color: 'var(--m-muted)' }}>
                 {trendPoints.length} audits · {new Date(trendPoints[0].date).toLocaleDateString()} → {new Date(trendPoints[trendPoints.length - 1].date).toLocaleDateString()}
               </p>
+              {topModuleDeltas.length > 0 && (
+                <div className="flex flex-wrap gap-2 mt-3">
+                  {topModuleDeltas.map(({ name, delta }) => (
+                    <span
+                      key={name}
+                      className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-[12px] font-medium"
+                      style={{
+                        background: 'color-mix(in srgb, var(--signal) 8%, transparent)',
+                        color: delta >= 0 ? 'var(--ok)' : 'var(--severe)',
+                      }}
+                    >
+                      {name} {delta >= 0 ? '+' : ''}{delta}
+                    </span>
+                  ))}
+                </div>
+              )}
             </>
           )}
         </DashCard>

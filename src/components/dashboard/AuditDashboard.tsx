@@ -52,7 +52,6 @@ export function ScoreOverTimeChart({ trend }: {
 
   return (
     <div className="flex-1 min-w-0">
-      <h3 className="text-sm font-medium text-text mb-3">Score Over Time</h3>
       <svg viewBox={`0 0 ${W} ${H}`} className="w-full h-auto" preserveAspectRatio="xMidYMid meet">
         {/* Grid */}
         {gridScores.map((s, i) => {
@@ -67,15 +66,15 @@ export function ScoreOverTimeChart({ trend }: {
 
         {/* Area fill */}
         <defs>
-          <linearGradient id="scoreAreaGrad" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stopColor="#6366F1" stopOpacity="0.18" />
-            <stop offset="100%" stopColor="#6366F1" stopOpacity="0.02" />
+          <linearGradient id="scoreAreaGradOlive" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor="var(--signal)" stopOpacity="0.12" />
+            <stop offset="100%" stopColor="var(--signal)" stopOpacity="0.02" />
           </linearGradient>
         </defs>
-        <path d={areaD} fill="url(#scoreAreaGrad)" />
+        <path d={areaD} fill="url(#scoreAreaGradOlive)" />
 
         {/* Line */}
-        <path d={pathD} fill="none" stroke="#6366F1" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+        <path d={pathD} fill="none" stroke="var(--signal)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
 
         {/* Hover hit areas + points */}
         {points.map((p, i) => {
@@ -94,15 +93,15 @@ export function ScoreOverTimeChart({ trend }: {
               <circle
                 cx={p.x} cy={p.y}
                 r={isHovered ? 5 : 3.5}
-                fill={isHovered ? '#6366F1' : 'var(--card)'}
-                stroke="#6366F1"
+                fill={isHovered ? 'var(--signal)' : 'var(--paper)'}
+                stroke="var(--signal)"
                 strokeWidth="2"
                 className="transition-all duration-150"
                 style={{ pointerEvents: 'none' }}
               />
               {showLabel && (
                 <g style={{ pointerEvents: 'none' }}>
-                  <rect x={p.x - 14} y={p.y - 20} width="28" height="15" rx="4" fill="#6366F1" />
+                  <rect x={p.x - 14} y={p.y - 20} width="28" height="15" rx="4" fill="var(--signal)" />
                   <text x={p.x} y={p.y - 10.5} textAnchor="middle" fontSize="8.5" fontWeight="500" fill="white" fontFamily="var(--font-inter)">{p.score}</text>
                 </g>
               )}
