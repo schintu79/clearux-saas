@@ -91,6 +91,10 @@ export async function PUT(
         ? brand_promise.trim().slice(0, 600) || null
         : null
     }
+    // Backfill workspace_id if provided (fixes orphaned records with NULL workspace_id)
+    if ('workspace_id' in (body || {}) && body.workspace_id) {
+      update.workspace_id = body.workspace_id
+    }
 
     const { data, error } = await db
       .from('brand_identities')

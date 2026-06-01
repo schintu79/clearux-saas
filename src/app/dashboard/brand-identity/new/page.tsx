@@ -133,7 +133,7 @@ const NewBrandPage: React.FC = () => {
       const res = await fetch('/api/brand-identities', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name: brandName.trim() }),
+        body: JSON.stringify({ name: brandName.trim(), workspace_id: workspace?.id ?? null }),
       });
 
       if (!res.ok) {

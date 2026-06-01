@@ -1268,12 +1268,19 @@ export async function generateReport(
     // Design Consistency (24-27) always runs — no brand identity gate needed.
     const activeIndices = new Set<number>()
     if (selectedModules && selectedModules.length > 0) {
+      // Selective re-audit: only the chosen modules + Design Consistency
       for (const mod of selectedModules) {
         const r = MODULE_RANGES_BL[mod]
         if (r) { for (let i = r[0]; i < r[1]; i++) activeIndices.add(i) }
       }
       // Ensure design_consistency indices are always active
       for (let i = 24; i < 28; i++) activeIndices.add(i)
+    } else {
+      // Complete re-audit (selectedModules is null): ALL 28 categories are active.
+      // This ensures categories added after the previous audit (e.g. Design
+      // Consistency 24-27) get gap-filled even for workspaces whose original
+      // audit predates those categories.
+      for (let i = 0; i < allCategoryNames.length; i++) activeIndices.add(i)
     }
 
     // Find categories that should be active but weren't in previous audit

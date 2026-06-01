@@ -301,7 +301,7 @@ const NewAuditInner: React.FC = () => {
       const createRes = await fetch('/api/brand-identities', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name: host, website_url: productUrl }),
+        body: JSON.stringify({ name: host, website_url: productUrl, workspace_id: workspace?.id ?? null }),
       });
       if (!createRes.ok) {
         console.warn('[new-audit] Failed to auto-create brand for', host);

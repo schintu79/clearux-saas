@@ -17,12 +17,17 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
     const db = createServiceSupabase()
-    const { data: identities, error } = await db
+    const workspace_id = request.nextUrl.searchParams.get('workspace_id')
+    let query = db
       .from('brand_identities')
       .select('*, brand_identity_files(id, file_name, file_type, file_size_bytes, created_at)')
       .eq('user_id', user.id)
       .is('deleted_at', null)
       .order('created_at', { ascending: false })
+    // Scope to workspace when provided
+    if (workspace_id) query = query.eq('workspace_id', workspace_id)
+
+    const { data: identities, error } = await query
 
     if (error) throw error
 
@@ -42,23 +47,27 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
     const body = await request.json()
-    const { name, description, website_url, brand_voice, tone_keywords, primary_colors, logo_url } = body || {}
+    const { name, description, website_url, brand_voice, tone_keywords, primary_colors, logo_url, workspace_id } = body || {}
     if (!name?.trim())
       return NextResponse.json({ error: 'Name is required' }, { status: 400 })
 
     const db = createServiceSupabase()
+    const insertPayload: Record<string, unknown> = {
+      user_id: user.id,
+      name: name.trim(),
+      description: typeof description === 'string' ? description.trim() || null : null,
+      website_url: normalizeUrl(website_url),
+      brand_voice: typeof brand_voice === 'string' ? brand_voice.trim().slice(0, 4000) || null : null,
+      tone_keywords: normalizeStringArray(tone_keywords),
+      primary_colors: normalizeColorArray(primary_colors),
+      logo_url: normalizeUrl(logo_url),
+    }
+    // Attach workspace_id when provided so the record is properly scoped
+    if (workspace_id) insertPayload.workspace_id = workspace_id
+
     const { data, error } = await db
       .from('brand_identities')
-      .insert({
-        user_id: user.id,
-        name: name.trim(),
-        description: typeof description === 'string' ? description.trim() || null : null,
-        website_url: normalizeUrl(website_url),
-        brand_voice: typeof brand_voice === 'string' ? brand_voice.trim().slice(0, 4000) || null : null,
-        tone_keywords: normalizeStringArray(tone_keywords),
-        primary_colors: normalizeColorArray(primary_colors),
-        logo_url: normalizeUrl(logo_url),
-      } as any)
+      .insert(insertPayload as any)
       .select()
       .single()
 
