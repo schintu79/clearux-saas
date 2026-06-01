@@ -167,6 +167,7 @@ interface BrandProfileSuggestion {
   description: string | null;
   brandGuideFile: string | null;
   logoFile: string | null;
+  logoFileUrl: string | null;
   files: ClassifiedFile[];
 }
 
@@ -251,19 +252,38 @@ const CATEGORY_TINTS: Record<string, { dot: string; bg: string; border: string }
 };
 
 /* ── Readiness requirements ──────────────────────────────── */
+// State model: Missing → Detected → Confirmed
+// Readiness checks consider both confirmed (identity) AND detected (suggestion) state.
 
 interface ReadinessItem {
   key: string;
   label: string;
-  check: (identity: BrandIdentity) => boolean;
+  check: (identity: BrandIdentity, suggestion: BrandProfileSuggestion | null) => boolean;
 }
 
 const READINESS_ITEMS: ReadinessItem[] = [
-  { key: 'logo', label: 'Logo', check: (i) => !!i.logo_url || i.brand_identity_files.some(f => (f.tag || '').toLowerCase() === 'logo') },
-  { key: 'voice', label: 'Voice', check: (i) => !!(i.brand_voice || (i.tone_keywords && i.tone_keywords.length > 0)) },
-  { key: 'guide', label: 'Brand guide', check: (i) => i.brand_identity_files.some(f => (f.tag || '').toLowerCase() === 'brand guide' || (f.tag || '').toLowerCase() === 'voice' || (f.tag || '').toLowerCase() === 'messaging') },
-  { key: 'colours', label: 'Colours', check: (i) => !!(i.primary_colors && i.primary_colors.length > 0) },
-  { key: 'promise', label: 'Promise', check: (i) => !!i.description },
+  { key: 'logo', label: 'Logo', check: (i, s) =>
+    !!i.logo_url
+    || i.brand_identity_files.some(f => (f.tag || '').toLowerCase() === 'logo')
+    || !!(s?.logoFile) },
+  { key: 'voice', label: 'Voice', check: (i, s) =>
+    !!i.brand_voice || !!(s?.brand_voice) },
+  { key: 'tone', label: 'Tone', check: (i, s) =>
+    (i.tone_keywords && i.tone_keywords.length > 0)
+    || (s?.tone_keywords && s.tone_keywords.length > 0)
+    || false },
+  { key: 'guide', label: 'Brand guide', check: (i, s) =>
+    i.brand_identity_files.some(f =>
+      (f.tag || '').toLowerCase() === 'brand guide'
+      || (f.tag || '').toLowerCase() === 'voice'
+      || (f.tag || '').toLowerCase() === 'messaging')
+    || !!(s?.brandGuideFile) },
+  { key: 'colours', label: 'Colours', check: (i, s) =>
+    !!(i.primary_colors && i.primary_colors.length > 0)
+    || (s?.primary_colors && s.primary_colors.length > 0)
+    || false },
+  { key: 'promise', label: 'Promise', check: (i, s) =>
+    !!i.description || !!(s?.description) },
 ];
 
 /* ══════════════════════════════════════════════════════════
@@ -562,20 +582,26 @@ export default function BrandDnaPage() {
     } finally { setAnalyzing(false); }
   };
 
-  /* ── Apply detected profile fields ── */
+  /* ── Apply detected profile fields (fast path — no re-classification) ── */
   const applyProfile = async () => {
-    if (!identity) return;
+    if (!identity || !suggestion) return;
     setApplyingProfile(true);
     try {
-      const res = await fetch(`/api/brand-identities/${identity.id}/analyze-files`, {
+      const res = await fetch(`/api/brand-identities/${identity.id}/apply-suggestion`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ apply: true }),
+        body: JSON.stringify({ suggestion }),
       });
       if (!res.ok) throw new Error();
-      // Reload identity to get updated fields
-      const updated = await loadIdentity();
-      if (updated) setIdentity(updated);
+      const data = await res.json();
+      // Update identity immediately from response (no reload needed)
+      if (data.identity) {
+        setIdentity(prev => prev ? { ...prev, ...data.identity } : prev);
+      } else {
+        // Fallback: reload from server
+        const updated = await loadIdentity();
+        if (updated) setIdentity(updated);
+      }
       setSuggestion(null);
     } catch {
       setError('Failed to apply profile data.');
@@ -690,8 +716,8 @@ export default function BrandDnaPage() {
   /* ── Readiness computation ── */
   const readinessChecks = useMemo(() => {
     if (!identity) return READINESS_ITEMS.map(r => ({ ...r, met: false }));
-    return READINESS_ITEMS.map(r => ({ ...r, met: r.check(identity) }));
-  }, [identity]);
+    return READINESS_ITEMS.map(r => ({ ...r, met: r.check(identity, suggestion) }));
+  }, [identity, suggestion]);
 
   const readinessPercent = useMemo(() => {
     const met = readinessChecks.filter(r => r.met).length;
@@ -714,8 +740,10 @@ export default function BrandDnaPage() {
     const recs: string[] = [];
     if (!identity.logo_url && !identity.brand_identity_files.some(f => (f.tag || '').toLowerCase() === 'logo'))
       recs.push('Add a logo file to enable logo consistency checks.');
-    if (!identity.brand_voice && (!identity.tone_keywords || identity.tone_keywords.length === 0))
-      recs.push('Define 3-5 voice traits to compare against website copy.');
+    if (!identity.brand_voice)
+      recs.push('Define your brand voice — describe how your brand sounds and communicates.');
+    if (!identity.tone_keywords || identity.tone_keywords.length === 0)
+      recs.push('Add 3-5 tone keywords (e.g. "direct, warm, confident") for copy analysis.');
     if (!identity.brand_identity_files.some(f => ['brand guide', 'voice', 'messaging'].includes((f.tag || '').toLowerCase()) || isDocFile(f.file_name)))
       recs.push('Upload a brand guide to unlock full analysis.');
     if (!identity.primary_colors || identity.primary_colors.length === 0)
@@ -1011,7 +1039,8 @@ export default function BrandDnaPage() {
                   <ProfileRow label="Name" value={identity.name} filled />
                   <ProfileRow label="Website" value={identity.website_url || 'Not set'} filled={!!identity.website_url} />
                   <ProfileRow label="Logo" value={identity.logo_url ? 'On file' : 'Not set'} filled={!!identity.logo_url} />
-                  <ProfileRow label="Voice" value={(identity.tone_keywords || []).length > 0 ? (identity.tone_keywords || []).slice(0, 3).join(', ') : (identity.brand_voice ? 'Defined' : 'Not set')} filled={!!(identity.brand_voice || (identity.tone_keywords || []).length)} />
+                  <ProfileRow label="Voice" value={identity.brand_voice ? (identity.brand_voice.length > 60 ? identity.brand_voice.slice(0, 58) + '...' : identity.brand_voice) : 'Not set'} filled={!!identity.brand_voice} />
+                  <ProfileRow label="Tone" value={(identity.tone_keywords || []).length > 0 ? (identity.tone_keywords || []).slice(0, 4).join(', ') : 'Not set'} filled={(identity.tone_keywords || []).length > 0} />
                   <ProfileRow label="Colours" value={(identity.primary_colors || []).length > 0 ? `${(identity.primary_colors || []).length} defined` : 'Not set'} filled={(identity.primary_colors || []).length > 0} colors={identity.primary_colors || undefined} />
                   <ProfileRow label="Promise" value={identity.description ? (identity.description.length > 50 ? identity.description.slice(0, 48) + '...' : identity.description) : 'Not set'} filled={!!identity.description} />
                 </div>

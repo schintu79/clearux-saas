@@ -473,6 +473,8 @@ export interface BrandProfileSuggestion {
   brandGuideFile: string | null
   /** Which file was identified as the logo */
   logoFile: string | null
+  /** Public URL of the detected logo file (for setting logo_url) */
+  logoFileUrl: string | null
   /** Per-file classifications */
   files: ClassifiedFile[]
 }
@@ -645,6 +647,11 @@ export async function classifyAndSuggestProfile(
   let bestPromiseConf = 0
   let brandGuideFile: string | null = null
   let logoFile: string | null = null
+  let logoFileUrl: string | null = null
+
+  // Build filename → URL lookup for logo resolution
+  const fileUrlMap = new Map<string, string>()
+  for (const f of files) fileUrlMap.set(f.file_name, f.file_url)
 
   const confScore = (c: string) => c === 'high' ? 3 : c === 'medium' ? 2 : 1
 
@@ -663,7 +670,10 @@ export async function classifyAndSuggestProfile(
       bestPromiseConf = cs
     }
     if (d.isBrandGuide && !brandGuideFile) brandGuideFile = cf.fileName
-    if (d.isLogo && !logoFile) logoFile = cf.fileName
+    if (d.isLogo && !logoFile) {
+      logoFile = cf.fileName
+      logoFileUrl = fileUrlMap.get(cf.fileName) || null
+    }
   }
 
   // Dedupe tone keywords and colours
@@ -677,6 +687,7 @@ export async function classifyAndSuggestProfile(
     description: bestPromise,
     brandGuideFile,
     logoFile,
+    logoFileUrl,
     files: classifications,
   }
 }
