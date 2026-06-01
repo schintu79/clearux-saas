@@ -48,10 +48,14 @@ import {
   Clock,
   Layers,
   BookOpen,
+  Brain,
+  Eye,
+  ArrowUpDown,
 } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { useAuditBundle } from '@/context/AuditBundleContext';
 import { useWorkspace } from '@/context/WorkspaceContext';
+import { createBrowserSupabase } from '@/lib/supabase-ssr';
 import ScoreCircle from '@/components/ui/ScoreCircle';
 import { AIProviderIcon, providerKeyToIcon } from '@/components/ui/AIProviderIcon';
 import EmptyAudit from '@/components/dashboard/v2/EmptyAudit';

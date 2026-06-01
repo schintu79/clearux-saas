@@ -41,6 +41,7 @@ function WorkspaceSwitcherInner() {
   const [showCreate, setShowCreate] = useState(false);
   const [archiving, setArchiving] = useState<string | null>(null);
   const [confirmArchive, setConfirmArchive] = useState<string | null>(null);
+  const [createError, setCreateError] = useState<string | null>(null);
 
   // Stripe callback → forward to first workspace
   useEffect(() => {
@@ -75,24 +76,30 @@ function WorkspaceSwitcherInner() {
   const handleCreate = async () => {
     if (!newName.trim() || !newDomain.trim()) return;
     setCreating(true);
+    setCreateError(null);
     try {
       const res = await fetch('/api/workspaces', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           name: newName.trim(),
-          primary_domain: newDomain.trim() || null,
+          primary_domain: newDomain.trim().replace(/^https?:\/\//i, '').replace(/^www\./i, '').replace(/\/.*$/, '') || null,
           workspace_type: newDomain.trim() ? 'website' : 'brand',
         }),
       });
+      const data = await res.json();
       if (res.ok) {
-        const data = await res.json();
         setShowCreate(false);
         setNewName('');
         setNewDomain('');
+        setCreateError(null);
         router.push(`/dashboard/${data.workspace.slug}/new-audit`);
+      } else {
+        setCreateError(data?.error || 'Failed to create workspace. Please try again.');
       }
-    } catch {}
+    } catch (err) {
+      setCreateError('Something went wrong. Please try again.');
+    }
     setCreating(false);
   };
 
@@ -136,21 +143,48 @@ function WorkspaceSwitcherInner() {
       {/* Create workspace form */}
       {showCreate && (
         <div
-          className="mb-6 rounded-lg p-5"
+          className="mb-6 rounded-xl p-5"
           style={{ background: 'var(--card)', border: '1px solid var(--rule)' }}
         >
           <div className="flex items-start justify-between gap-4 mb-4">
-            <h3 className="text-[15px] font-semibold" style={{ color: 'var(--ink)' }}>
-              Create workspace
-            </h3>
+            <div className="flex items-center gap-2.5">
+              <div
+                className="flex-shrink-0 flex items-center justify-center w-8 h-8 rounded-lg"
+                style={{ background: 'color-mix(in srgb, var(--ink) 6%, transparent)' }}
+              >
+                <PlusCircle size={16} strokeWidth={1.75} style={{ color: 'var(--ink)' }} />
+              </div>
+              <div>
+                <h3 className="text-[15px] font-semibold" style={{ color: 'var(--ink)' }}>
+                  Create workspace
+                </h3>
+                <p className="text-[12px]" style={{ color: 'var(--m-muted)' }}>
+                  Add a website or brand to start auditing.
+                </p>
+              </div>
+            </div>
             <button
-              onClick={() => setShowCreate(false)}
+              onClick={() => { setShowCreate(false); setCreateError(null); }}
               className="p-1 rounded hover:bg-black/5 transition-colors"
             >
               <X size={16} style={{ color: 'var(--m-muted)' }} />
             </button>
           </div>
-          <div className="flex flex-col sm:flex-row gap-3 max-w-2xl">
+
+          {createError && (
+            <div
+              className="mb-4 flex items-center gap-2 rounded-lg px-3.5 py-2.5 text-[13px]"
+              style={{
+                background: 'color-mix(in srgb, var(--severe) 8%, transparent)',
+                border: '1px solid color-mix(in srgb, var(--severe) 20%, transparent)',
+                color: 'var(--severe)',
+              }}
+            >
+              {createError}
+            </div>
+          )}
+
+          <div className="flex flex-col sm:flex-row gap-3">
             <div className="flex-1">
               <label className="block text-[11px] font-medium mb-1.5 uppercase tracking-wide" style={{ color: 'var(--m-muted)' }}>
                 Workspace name
@@ -158,9 +192,9 @@ function WorkspaceSwitcherInner() {
               <input
                 type="text"
                 value={newName}
-                onChange={(e) => setNewName(e.target.value)}
+                onChange={(e) => { setNewName(e.target.value); setCreateError(null); }}
                 placeholder="My website"
-                className="w-full px-3 py-2 rounded-md text-[14px]"
+                className="w-full px-3 py-2.5 rounded-md text-[14px] outline-none transition-colors focus:ring-1"
                 style={{ border: '1px solid var(--rule)', background: 'var(--paper)', color: 'var(--ink)' }}
                 autoFocus
                 onKeyDown={(e) => e.key === 'Enter' && handleCreate()}
@@ -173,9 +207,9 @@ function WorkspaceSwitcherInner() {
               <input
                 type="text"
                 value={newDomain}
-                onChange={(e) => setNewDomain(e.target.value)}
+                onChange={(e) => { setNewDomain(e.target.value); setCreateError(null); }}
                 placeholder="example.com"
-                className="w-full px-3 py-2 rounded-md text-[14px]"
+                className="w-full px-3 py-2.5 rounded-md text-[14px] outline-none transition-colors focus:ring-1"
                 style={{ border: '1px solid var(--rule)', background: 'var(--paper)', color: 'var(--ink)' }}
                 onKeyDown={(e) => e.key === 'Enter' && handleCreate()}
               />
@@ -184,7 +218,7 @@ function WorkspaceSwitcherInner() {
               <button
                 onClick={handleCreate}
                 disabled={creating || !newName.trim() || !newDomain.trim()}
-                className="px-4 py-2 rounded-md text-[13px] font-medium transition-all hover:opacity-90 disabled:opacity-50 whitespace-nowrap"
+                className="px-5 py-2.5 rounded-md text-[13px] font-medium transition-all hover:opacity-90 disabled:opacity-50 whitespace-nowrap"
                 style={{ background: 'var(--ink)', color: 'var(--paper)' }}
               >
                 {creating ? 'Creating...' : 'Create'}
@@ -203,7 +237,7 @@ function WorkspaceSwitcherInner() {
               <div key={ws.id} className="relative group">
                 <Link
                   href={`/dashboard/${ws.slug}/overview`}
-                  className="block rounded-lg p-5 transition-all hover:shadow-sm"
+                  className="block rounded-xl p-5 transition-all hover:shadow-sm"
                   style={{
                     background: 'var(--card)',
                     border: '1px solid var(--rule)',
@@ -290,7 +324,7 @@ function WorkspaceSwitcherInner() {
       ) : (
         !showCreate && (
           <div
-            className="rounded-lg p-12 text-center"
+            className="rounded-xl p-12 text-center"
             style={{ background: 'var(--card)', border: '1px solid var(--rule)' }}
           >
             <div
