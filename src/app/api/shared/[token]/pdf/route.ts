@@ -117,7 +117,7 @@ export async function GET(
       year: 'numeric', month: 'long', day: 'numeric',
     })
 
-    const scoredCats = categoryScores.filter(c => c.score > 0 || c.summary)
+    const scoredCats = categoryScores.filter(c => c.score >= 0)
     const overall = scoredCats.length > 0
       ? Math.round(scoredCats.reduce((s, c) => s + c.score, 0) / scoredCats.length)
       : (r.overall_score ?? 0)
@@ -158,7 +158,7 @@ export async function GET(
     // Pillar averages
     const pillarScores = PILLAR_NAMES.map((name, idx) => {
       const [start, end] = PILLAR_RANGES[idx]
-      const cats = categoryScores.filter((_, i) => i >= start && i < end)
+      const cats = categoryScores.filter((_, i) => i >= start && i < end).filter(c => c.score >= 0)
       const avg = cats.length > 0
         ? Math.round(cats.reduce((s, c) => s + c.score, 0) / cats.length) : 0
       return { name, avg, cats, findings: findingsByPillar[name] || [] }

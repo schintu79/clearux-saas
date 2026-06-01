@@ -471,7 +471,7 @@ export async function buildDocx(auditId: string): Promise<{ buffer: Buffer; safe
 
     // Pillar scores summary row on cover
     const pillarScores = PILLARS.map((p) => {
-      const cats = catScores.slice(p.start, Math.min(p.end, catScores.length))
+      const cats = catScores.slice(p.start, Math.min(p.end, catScores.length)).filter(c => c.score >= 0)
       return {
         ...p,
         avg: cats.length > 0 ? Math.round(cats.reduce((s, c) => s + c.score, 0) / cats.length) : 0,

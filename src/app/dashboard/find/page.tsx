@@ -184,9 +184,9 @@ function FindPageInner() {
     if (!rawJson?.categoryScores || !Array.isArray(rawJson.categoryScores)) return {};
     const out: Record<string, number> = {};
     for (let i = 0; i < PHASE1_MODULES.length; i++) {
-      const cats = rawJson.categoryScores.filter((_: any, idx: number) => Math.floor(idx / 4) === i);
+      const cats = rawJson.categoryScores.filter((_: any, idx: number) => Math.floor(idx / 4) === i).filter((c: any) => c.score >= 0);
       if (cats.length > 0) {
-        out[PHASE1_MODULES[i]] = Math.round(cats.reduce((s: number, c: any) => s + (c.score || 0), 0) / cats.length);
+        out[PHASE1_MODULES[i]] = Math.round(cats.reduce((s: number, c: any) => s + c.score, 0) / cats.length);
       }
     }
     return out;

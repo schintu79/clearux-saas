@@ -181,7 +181,7 @@ export default function AdminAuditDetailPage({ params }: { params: Promise<{ id:
 
   // Build pillar data
   const pillarData = PILLAR_STYLE.map((style, i) => {
-    const cats = categoryScores.slice(style.range[0], style.range[1])
+    const cats = categoryScores.slice(style.range[0], style.range[1]).filter(c => c.score >= 0)
     const avg = cats.length > 0 ? Math.round(cats.reduce((s, c) => s + c.score, 0) / cats.length) : 0
     const pillarFindings = findings.filter(f => {
       const catIdx = categoryScores.findIndex(c => {

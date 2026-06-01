@@ -221,7 +221,7 @@ function DomainAuditsInner({ params }: { params: Promise<{ domain: string }> }) 
   // Pillar scores for radar chart — only include modules that were actually audited
   const pillarScores = PILLAR_NAMES.map((name, i) => {
     const [start, end] = PILLAR_RANGES[i];
-    const cats = categoryScores.filter((_, idx) => idx >= start && idx < end);
+    const cats = categoryScores.filter((_, idx) => idx >= start && idx < end).filter(c => c.score >= 0);
     return {
       name,
       score: cats.length > 0 ? Math.round(cats.reduce((s, c) => s + c.score, 0) / cats.length) : -1,

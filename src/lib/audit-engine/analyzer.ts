@@ -1378,6 +1378,7 @@ export async function generateReport(
   function wasAnalyzed(idx: number): boolean {
     // Design Consistency (24-27) always runs — no brand identity gate.
     // It evaluates the live site's visual system consistency.
+    if (idx >= 24 && idx < 28) return true
     if (selectedModules && selectedModules.length > 0) {
       for (const mod of selectedModules) {
         const r = MODULE_RANGES[mod]
