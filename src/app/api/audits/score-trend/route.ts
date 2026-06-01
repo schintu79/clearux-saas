@@ -74,7 +74,17 @@ export async function GET(request: NextRequest) {
       let overallScore: number | null = r?.overall_score ?? null
       const rawJson = r?.raw_json as any
       if (rawJson?.categoryScores && Array.isArray(rawJson.categoryScores)) {
-        const analyzed = (rawJson.categoryScores as Array<{ score: number }>).filter(c => c.score >= 0)
+        const catScores = rawJson.categoryScores as Array<{ score: number }>
+        // Sanitize stale Design Consistency data (indices 24-27): if all four
+        // sub-categories scored between 0 and 5, the module predates the -1
+        // sentinel fix and should be excluded from the overall average.
+        const dcCats = catScores.slice(24, 28)
+        const dcStale = dcCats.length === 4 && dcCats.every(c => c.score >= 0 && c.score <= 5)
+        const analyzed = catScores.filter((c, idx) => {
+          if (c.score < 0) return false
+          if (dcStale && idx >= 24 && idx < 28) return false
+          return true
+        })
         if (analyzed.length > 0) {
           overallScore = Math.round(analyzed.reduce((s, c) => s + c.score, 0) / analyzed.length)
         }

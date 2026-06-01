@@ -314,7 +314,18 @@ function OverviewInner() {
 
     const rawJson = (bundle?.report?.raw_json || null) as any;
     if (rawJson?.categoryScores && Array.isArray(rawJson.categoryScores)) {
-      setCategoryScores(rawJson.categoryScores);
+      // Sanitize stale Design Consistency data: if ALL four sub-categories
+      // (indices 24-27) have scores between 0 and 5, the module wasn't
+      // properly analyzed (predates the -1 sentinel fix). Mark as -1 so
+      // downstream consumers skip it correctly.
+      const scores = [...rawJson.categoryScores];
+      const dcCats = scores.slice(24, 28);
+      if (dcCats.length === 4 && dcCats.every((c: any) => c.score >= 0 && c.score <= 5)) {
+        for (let i = 24; i < 28; i++) {
+          scores[i] = { ...scores[i], score: -1 };
+        }
+      }
+      setCategoryScores(scores);
     }
 
     // Load brand intelligence from report
@@ -323,7 +334,9 @@ function OverviewInner() {
 
     const productUrl = latestCompleted.product_url;
     if (productUrl) {
-      fetch(`/api/audits/score-trend?url=${encodeURIComponent(productUrl)}`)
+      const trendParams = new URLSearchParams({ url: productUrl });
+      if (workspace?.id) trendParams.set('workspace_id', workspace.id);
+      fetch(`/api/audits/score-trend?${trendParams}`)
         .then(r => r.json())
         .then(d => { if (d.trend) setScoreTrend(d.trend); })
         .catch(() => {});
