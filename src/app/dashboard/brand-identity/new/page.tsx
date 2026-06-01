@@ -78,7 +78,7 @@ function getFileTypeLabel(name: string): string {
 const NewBrandPage: React.FC = () => {
   const router = useRouter();
   const { user, loading: userLoading } = useAuth();
-  const { workspace, workspaceSlug } = useWorkspace();
+  const { workspace, workspaceSlug, refresh: refreshWorkspace } = useWorkspace();
   const dashPrefix = workspaceSlug ? `/dashboard/${workspaceSlug}` : '/dashboard';
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -144,13 +144,15 @@ const NewBrandPage: React.FC = () => {
       const { identity } = await res.json();
       const brandId = identity.id;
 
-      // 2. Link brand identity to workspace
+      // 2. Link brand identity to workspace and refresh context cache
       if (workspace?.id) {
         await fetch(`/api/workspaces/${workspace.id}`, {
           method: 'PATCH',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ active_brand_identity_id: brandId }),
         });
+        // Refresh workspace context so Brand DNA page sees updated active_brand_identity_id
+        refreshWorkspace();
       }
 
       // 3. Upload staged files

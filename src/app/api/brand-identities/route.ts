@@ -20,7 +20,7 @@ export async function GET(request: NextRequest) {
     const workspace_id = request.nextUrl.searchParams.get('workspace_id')
     let query = db
       .from('brand_identities')
-      .select('*, brand_identity_files(id, file_name, file_type, file_size_bytes, created_at)')
+      .select('*, brand_identity_files(id, file_name, file_type, file_size_bytes, created_at, tag)')
       .eq('user_id', user.id)
       .is('deleted_at', null)
       .order('created_at', { ascending: false })

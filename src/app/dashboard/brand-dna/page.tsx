@@ -365,13 +365,41 @@ export default function BrandDnaPage() {
   const loadIdentity = useCallback(async () => {
     if (!user || !workspace) return null;
     try {
+      // Path 1: workspace already has an active_brand_identity_id
       if (workspace.active_brand_identity_id) {
         const res = await fetch(`/api/brand-identities/${workspace.active_brand_identity_id}`);
-        if (res.status === 404) return null;
-        if (!res.ok) throw new Error('Failed to load brand DNA');
-        const data = await res.json();
-        return data.identity || null;
-      } else if (workspace.primary_domain) {
+        if (res.status === 404) { /* fall through */ }
+        else if (!res.ok) throw new Error('Failed to load brand DNA');
+        else {
+          const data = await res.json();
+          if (data.identity) return data.identity;
+        }
+      }
+
+      // Path 2: query brand_identities directly by workspace_id
+      // (catches stale workspace cache where active_brand_identity_id hasn't propagated)
+      {
+        const res = await fetch(`/api/brand-identities?workspace_id=${workspace.id}`);
+        if (res.ok) {
+          const data = await res.json();
+          const identities = data.identities || [];
+          if (identities.length > 0) {
+            const latest = identities[0]; // already sorted by created_at desc
+            // Backfill workspace.active_brand_identity_id if it was missing
+            if (!workspace.active_brand_identity_id) {
+              fetch(`/api/workspaces/${workspace.id}`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ active_brand_identity_id: latest.id }),
+              }).catch(() => {}); // fire-and-forget
+            }
+            return latest;
+          }
+        }
+      }
+
+      // Path 3: look for brand_identity_id on completed audits for this domain
+      if (workspace.primary_domain) {
         const supabase = createBrowserSupabase();
         const { data: audits } = await supabase
           .from('audits')
