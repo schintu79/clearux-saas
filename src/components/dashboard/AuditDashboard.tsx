@@ -74,7 +74,7 @@ export function ScoreOverTimeChart({ trend }: {
         <path d={areaD} fill="url(#scoreAreaGradOlive)" />
 
         {/* Line */}
-        <path d={pathD} fill="none" stroke="var(--signal)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+        <path d={pathD} fill="none" stroke="var(--signal)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
 
         {/* Hover hit areas + points */}
         {points.map((p, i) => {
@@ -92,10 +92,10 @@ export function ScoreOverTimeChart({ trend }: {
               />
               <circle
                 cx={p.x} cy={p.y}
-                r={isHovered ? 5 : 3.5}
+                r={isHovered ? 4 : 2.5}
                 fill={isHovered ? 'var(--signal)' : 'var(--paper)'}
                 stroke="var(--signal)"
-                strokeWidth="2"
+                strokeWidth="1.5"
                 className="transition-all duration-150"
                 style={{ pointerEvents: 'none' }}
               />

@@ -38,41 +38,76 @@ function deltaTone(d: number | null): string {
 
 function ScoreLine({ points }: { points: Array<{ score: number; date: string }> }) {
   if (points.length < 2) return null;
-  const w = 600;
-  const h = 120;
-  const PAD_B = 18;
-  const chartH = h - PAD_B;
-  const max = Math.max(100, ...points.map((p) => p.score));
-  const min = Math.min(0, ...points.map((p) => p.score));
-  const range = Math.max(1, max - min);
-  const stepX = w / Math.max(1, points.length - 1);
-  const coords = points.map((p, i) => {
-    const x = i * stepX;
-    const y = chartH - ((p.score - min) / range) * chartH;
-    return [x, y] as const;
-  });
-  const path = coords.map(([x, y], i) => `${i === 0 ? 'M' : 'L'} ${x.toFixed(1)} ${y.toFixed(1)}`).join(' ');
-  const areaPath = `${path} L ${coords[coords.length - 1][0].toFixed(1)} ${chartH} L ${coords[0][0].toFixed(1)} ${chartH} Z`;
+
+  const W = 420, H = 140, PAD_L = 28, PAD_R = 14, PAD_T = 18, PAD_B = 22;
+  const chartW = W - PAD_L - PAD_R;
+  const chartH = H - PAD_T - PAD_B;
+
+  const minScore = Math.max(0, Math.min(...points.map(p => p.score)) - 10);
+  const maxScore = Math.min(100, Math.max(...points.map(p => p.score)) + 10);
+  const range = maxScore - minScore || 1;
+
+  const coords = points.map((p, i) => ({
+    x: PAD_L + (points.length === 1 ? chartW / 2 : (i / (points.length - 1)) * chartW),
+    y: PAD_T + chartH - ((p.score - minScore) / range) * chartH,
+    score: p.score,
+    date: p.date,
+  }));
+
+  const pathD = coords.map((c, i) => `${i === 0 ? 'M' : 'L'} ${c.x.toFixed(1)} ${c.y.toFixed(1)}`).join(' ');
+  const areaD = `${pathD} L ${coords[coords.length - 1].x.toFixed(1)} ${PAD_T + chartH} L ${coords[0].x.toFixed(1)} ${PAD_T + chartH} Z`;
+
+  const gridLines = 4;
+  const gridScores = Array.from({ length: gridLines + 1 }, (_, i) => Math.round(minScore + (range * i) / gridLines));
+
   return (
-    <svg viewBox={`0 0 ${w} ${h}`} width="100%" height={h} role="img" aria-label="Score trend">
+    <svg viewBox={`0 0 ${W} ${H}`} className="w-full h-auto" preserveAspectRatio="xMidYMid meet" role="img" aria-label="Score trend">
+      {/* Grid */}
+      {gridScores.map((s, i) => {
+        const y = PAD_T + chartH - ((s - minScore) / range) * chartH;
+        return (
+          <g key={i}>
+            <line x1={PAD_L} y1={y} x2={W - PAD_R} y2={y} stroke="var(--border)" strokeWidth="0.5" strokeDasharray="3,3" opacity="0.5" />
+            <text x={PAD_L - 5} y={y + 2.5} textAnchor="end" fontSize="7" fill="var(--muted)" fontFamily="var(--font-inter)">{s}</text>
+          </g>
+        );
+      })}
+
+      {/* Area fill */}
       <defs>
         <linearGradient id="trackScoreAreaGrad" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stopColor="var(--signal)" stopOpacity="0.12" />
-          <stop offset="100%" stopColor="var(--signal)" stopOpacity="0.02" />
+          <stop offset="0%" stopColor="var(--signal)" stopOpacity="0.10" />
+          <stop offset="100%" stopColor="var(--signal)" stopOpacity="0.01" />
         </linearGradient>
       </defs>
-      <path d={areaPath} fill="url(#trackScoreAreaGrad)" />
-      <path d={path} fill="none" stroke="var(--signal)" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" />
-      {coords.map(([x, y], i) => (
-        <circle key={i} cx={x} cy={y} r={3.5} fill="var(--paper)" stroke="var(--signal)" strokeWidth={2} />
-      ))}
-      {/* Month labels on X axis */}
-      {coords.map(([x], i) => {
-        if (points.length > 6 && i !== 0 && i !== points.length - 1 && i !== Math.floor(points.length / 2)) return null;
-        const d = new Date(points[i].date);
-        const label = d.toLocaleString('en-US', { month: 'short' });
+      <path d={areaD} fill="url(#trackScoreAreaGrad)" />
+
+      {/* Line */}
+      <path d={pathD} fill="none" stroke="var(--signal)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+
+      {/* Points + last-point score badge */}
+      {coords.map((c, i) => {
+        const isLast = i === coords.length - 1;
         return (
-          <text key={i} x={x} y={h - 2} textAnchor="middle" fontSize="9" fill="var(--m-muted)" fontFamily="var(--font-inter)">{label}</text>
+          <g key={i}>
+            <circle cx={c.x} cy={c.y} r={2.5} fill="var(--paper)" stroke="var(--signal)" strokeWidth="1.5" />
+            {isLast && (
+              <g>
+                <rect x={c.x - 12} y={c.y - 17} width="24" height="13" rx="3.5" fill="var(--signal)" />
+                <text x={c.x} y={c.y - 8.5} textAnchor="middle" fontSize="7.5" fontWeight="600" fill="white" fontFamily="var(--font-inter)">{c.score}</text>
+              </g>
+            )}
+          </g>
+        );
+      })}
+
+      {/* X-axis date labels */}
+      {coords.map((c, i) => {
+        if (points.length > 6 && i !== 0 && i !== points.length - 1 && i !== Math.floor(points.length / 2)) return null;
+        const d = new Date(c.date);
+        const label = `${d.toLocaleString('en-US', { month: 'short' })} ${d.getDate()}`;
+        return (
+          <text key={i} x={c.x} y={H - 4} textAnchor="middle" fontSize="7" fill="var(--muted)" fontFamily="var(--font-inter)">{label}</text>
         );
       })}
     </svg>
