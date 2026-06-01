@@ -1731,9 +1731,13 @@ function calculateScoresFromFindings(findings: AuditFinding[], language: string 
       findingsPerCategory[categoryNames[ci]].push(f)
       continue
     }
-    // Keyword fallback
+    // Keyword fallback — skip Design Consistency (24-27) to prevent
+    // broad terms like "visual", "brand", "voice" from attracting
+    // unrelated findings and tanking scores. Matches generateReport() guard.
     let matched = false
-    for (const catName of categoryNames) {
+    for (let gi = 0; gi < categoryNames.length; gi++) {
+      if (gi >= 24 && gi < 28) continue // Guard: never keyword-match into Design Consistency
+      const catName = categoryNames[gi]
       const words = catName.toLowerCase().split(/[&,\s]+/).filter(w => w.length > 3)
       const text = `${f.title} ${f.description}`.toLowerCase()
       if (words.some(w => text.includes(w))) {
@@ -1743,13 +1747,29 @@ function calculateScoresFromFindings(findings: AuditFinding[], language: string 
       }
     }
     if (!matched) {
-      const idx = Math.min(Math.floor(f.sort_order / Math.max(1, findings.length / categoryNames.length)), categoryNames.length - 1)
+      // Sort-order distribution — cap at category 23 to prevent spillover into Design Consistency
+      const maxIdx = Math.min(categoryNames.length - 1, 23)
+      const idx = Math.min(Math.floor(f.sort_order / Math.max(1, findings.length / 24)), maxIdx)
       findingsPerCategory[categoryNames[idx]].push(f)
     }
   }
 
   // Calculate score per category — consistent with DEEP MODE formula
-  const categoryScores: CategoryScore[] = categoryNames.map(name => {
+  // Design Consistency categories (24-27) that have no explicit findings
+  // (category_index set by the analyzer) should be marked as -1 (unanalyzed)
+  // to prevent inflated or deflated scores in the fallback path.
+  const hasExplicitFindings = new Set<number>()
+  for (const f of findings) {
+    const ci = (f as any).category_index
+    if (ci != null && ci >= 24 && ci < 28) hasExplicitFindings.add(ci)
+  }
+
+  const categoryScores: CategoryScore[] = categoryNames.map((name, catIdx) => {
+    // Design Consistency categories without explicit analyzer-assigned findings
+    // should be treated as unanalyzed (sentinel -1), matching generateReport() behavior
+    if (catIdx >= 24 && catIdx < 28 && !hasExplicitFindings.has(catIdx)) {
+      return { name, score: -1, summary: '' }
+    }
     const catFindings = findingsPerCategory[name]
     if (catFindings.length === 0) {
       return { name, score: BASE_SCORE, summary: 'No specific issues identified — strong performance in this category.' }
@@ -1765,11 +1785,12 @@ function calculateScoresFromFindings(findings: AuditFinding[], language: string 
     return { name, score: Math.max(0, Math.min(100, Math.round(score))), summary }
   })
 
-  const allScores = categoryScores.map(c => c.score)
-  const overall = allScores.length > 0 ? Math.round(allScores.reduce((a, b) => a + b, 0) / allScores.length) : BASE_SCORE
+  // Filter out -1 sentinels (unanalyzed categories) for overall score
+  const analyzedScores = categoryScores.filter(c => c.score >= 0).map(c => c.score)
+  const overall = analyzedScores.length > 0 ? Math.round(analyzedScores.reduce((a, b) => a + b, 0) / analyzedScores.length) : BASE_SCORE
 
   const pillarAvg = (start: number, end: number) => {
-    const cats = categoryScores.slice(start, Math.min(end, categoryScores.length))
+    const cats = categoryScores.slice(start, Math.min(end, categoryScores.length)).filter(c => c.score >= 0)
     return cats.length > 0 ? Math.round(cats.reduce((s, c) => s + c.score, 0) / cats.length) : BASE_SCORE
   }
 

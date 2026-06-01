@@ -49,11 +49,17 @@ const CATEGORY_ROLE_MAP: Record<number, StakeholderRole[]> = {
   18: ['marketing'],                         // Social media / rich snippets
   19: ['marketing'],                         // Content strategy & keywords
 
+  // Accessibility Readiness (20-23)
+  20: ['engineering', 'product_ux'],         // WCAG compliance
+  21: ['product_ux'],                        // Assistive technology support
+  22: ['engineering', 'product_ux'],         // Keyboard & focus management
+  23: ['engineering'],                       // Accessible content structure
+
   // Design Consistency (24-27)
-  20: ['marketing', 'executive'],            // Brand identity
-  21: ['marketing', 'executive'],            // Brand experience & story
-  22: ['marketing', 'product_ux'],           // Brand visuals
-  23: ['marketing'],                         // Brand communication
+  24: ['marketing', 'executive'],            // Visual identity system
+  25: ['marketing', 'executive'],            // Brand experience & story
+  26: ['marketing', 'product_ux'],           // Design system coherence
+  27: ['marketing'],                         // Voice & messaging consistency
 }
 
 // ── Severity-to-role priority boost ──────────────────────────
