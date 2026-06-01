@@ -1,12 +1,15 @@
 'use client';
 
 /**
- * Brand DNA — unified workspace for brand identity + brand audit.
+ * Brand DNA Console — a clean workspace for managing brand identity inputs,
+ * assets, readiness state, and Brand DNA audit.
  *
- * Three zones:
- *  1. Brand DNA card — view / edit brand fields + inline file upload
- *  2. Run Brand Audit — trigger from this tab (audit lives only here)
- *  3. Audit results — score card + flat findings list
+ * Sections:
+ *  1. Readiness — completeness %, eligibility for Brand DNA Audit and Website Audit inclusion
+ *  2. Brand Profile — structured editable fields (name, website, logo, voice, colours, promise)
+ *  3. Assets — drag/drop upload, file list with type tagging
+ *  4. Brand DNA Audit — run, results, and recommendations
+ *  5. Include in Website Audit — eligibility control
  */
 
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
@@ -30,8 +33,11 @@ import {
   RefreshCw,
   ChevronDown,
   AlertTriangle,
-  Zap,
-  Download,
+  Sparkles,
+  MoreVertical,
+  File,
+  Image as ImageIcon,
+  Link2,
   Share2,
   Check,
   Eye,
@@ -40,13 +46,10 @@ import {
   Target,
   Layers,
   Type,
-  Sparkles,
-  TrendingUp,
   Lightbulb,
-  MoreVertical,
-  File,
-  Image as ImageIcon,
-  Link2,
+  CircleDot,
+  Tag,
+  Info,
 } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { createBrowserSupabase } from '@/lib/supabase-ssr';
@@ -54,8 +57,6 @@ import { useWorkspace } from '@/context/WorkspaceContext';
 import { BRAND_AUDIT_CATEGORIES } from '@/lib/brand-audit-modules';
 import ScoreCircle from '@/components/ui/ScoreCircle';
 import { useAuditProgress } from '@/hooks/useAuditProgress';
-import OverviewBreadcrumb from '@/components/dashboard/OverviewBreadcrumb';
-import OverviewTabs from '@/components/dashboard/OverviewTabs';
 import PageHeader from '@/components/dashboard/v2/PageHeader';
 import clsx from 'clsx';
 
@@ -67,6 +68,7 @@ interface BrandFile {
   file_type: string | null;
   file_size_bytes?: number | null;
   created_at?: string;
+  tag?: string | null;
 }
 
 interface BrandIdentity {
@@ -188,14 +190,6 @@ function scoreColor(s: number): string {
   return 'var(--severe)';
 }
 
-function sevCardBg(sev: string): string {
-  const v = sev === 'critical' ? 'var(--severe)'
-    : sev === 'high' ? 'var(--warn)'
-    : sev === 'low' ? 'var(--ok)'
-    : 'var(--signal)';
-  return `color-mix(in srgb, ${v} 4%, #ffffff)`;
-}
-
 function sevColor(sev: string): string {
   switch (sev) {
     case 'critical': return 'var(--severe)';
@@ -210,6 +204,11 @@ function sevLabel(sev: string): string {
 }
 
 const MAX_FILE_SIZE = 10 * 1024 * 1024;
+
+/* ── File tag options ──────────────────────────────────────── */
+
+const FILE_TAGS = ['Logo', 'Brand guide', 'Voice', 'Colours', 'Messaging', 'Other'] as const;
+type FileTag = typeof FILE_TAGS[number];
 
 /* ── Category UI config ──────────────────────────────────── */
 
@@ -230,6 +229,22 @@ const CATEGORY_TINTS: Record<string, { dot: string; bg: string; border: string }
   structure_organization: { dot: '#3B82F6', bg: 'rgba(59,130,246,0.04)', border: 'rgba(59,130,246,0.12)' },
   wording_quality: { dot: '#14B8A6', bg: 'rgba(20,184,166,0.04)', border: 'rgba(20,184,166,0.12)' },
 };
+
+/* ── Readiness requirements ──────────────────────────────── */
+
+interface ReadinessItem {
+  key: string;
+  label: string;
+  check: (identity: BrandIdentity) => boolean;
+}
+
+const READINESS_ITEMS: ReadinessItem[] = [
+  { key: 'logo', label: 'Logo', check: (i) => !!i.logo_url || i.brand_identity_files.some(f => (f.tag || '').toLowerCase() === 'logo') },
+  { key: 'voice', label: 'Voice', check: (i) => !!(i.brand_voice || (i.tone_keywords && i.tone_keywords.length > 0)) },
+  { key: 'guide', label: 'Brand identity guide', check: (i) => i.brand_identity_files.some(f => (f.tag || '').toLowerCase() === 'brand guide' || isDocFile(f.file_name)) },
+  { key: 'colours', label: 'Colours', check: (i) => !!(i.primary_colors && i.primary_colors.length > 0) },
+  { key: 'promise', label: 'Promise', check: (i) => !!i.description },
+];
 
 /* ══════════════════════════════════════════════════════════
    Main Page
@@ -272,10 +287,6 @@ export default function BrandDnaPage() {
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
 
-  /* ── Collapsible sections ── */
-  const [dnaOpen, setDnaOpen] = useState(true);
-  const [filesOpen, setFilesOpen] = useState(true);
-
   /* ── Close menu on outside click / Escape ── */
   useEffect(() => {
     if (!menuOpen) return;
@@ -302,7 +313,6 @@ export default function BrandDnaPage() {
         const data = await res.json();
         return data.identity || null;
       } else if (workspace.primary_domain) {
-        // workspace has a domain but no active brand identity — find linked brand identity
         const supabase = createBrowserSupabase();
         const { data: audits } = await supabase
           .from('audits')
@@ -378,15 +388,8 @@ export default function BrandDnaPage() {
         setIdentity(id);
         if (id) {
           setAuditLoading(true);
-          const loadedAudit = await loadBrandAudit(id.id);
-          if (!cancelled) {
-            setAuditLoading(false);
-            // Collapse DNA + files sections when audit exists
-            if (loadedAudit && (loadedAudit as any).status === 'completed') {
-              setDnaOpen(false);
-              setFilesOpen(false);
-            }
-          }
+          await loadBrandAudit(id.id);
+          if (!cancelled) setAuditLoading(false);
         }
       } catch {
         if (!cancelled) setError('Could not load Brand DNA.');
@@ -463,7 +466,6 @@ export default function BrandDnaPage() {
     }
     setUploading(false);
     if (fileInputRef.current) fileInputRef.current.value = '';
-    // Reload identity to get updated file list
     const updated = await loadIdentity();
     if (updated) setIdentity(updated);
     if (ok > 0 && !uploadMsg) setUploadMsg(`${ok} file${ok > 1 ? 's' : ''} uploaded`);
@@ -486,7 +488,6 @@ export default function BrandDnaPage() {
     if (!identity || !user) return;
     setTriggeringAudit(true);
     try {
-      // Check credits via the proper API (same as new-audit page)
       const creditCheck = await fetch('/api/credits');
       const creditData = await creditCheck.json();
       const canAudit = creditData.can_audit === true;
@@ -515,17 +516,13 @@ export default function BrandDnaPage() {
       if (err) throw err;
 
       if (canAudit) {
-        // Deduct credit and dispatch to Inngest for processing
         const creditRes = await fetch('/api/credits', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ audit_id: newAudit!.id, is_free_first: firstAuditFree }),
         });
-        if (!creditRes.ok) {
-          console.error('Failed to apply credit for brand audit');
-        }
+        if (!creditRes.ok) console.error('Failed to apply credit for brand audit');
       } else {
-        // No credits — redirect to Stripe checkout
         const checkoutRes = await fetch('/api/stripe/checkout', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -564,16 +561,6 @@ export default function BrandDnaPage() {
     } finally { setShareLoading(false); }
   };
 
-  /* ── Revoke share link ── */
-  const handleRevokeShare = async () => {
-    if (!audit) return;
-    if (!confirm('Revoke the share link? Anyone with the link will no longer be able to view this audit.')) return;
-    try {
-      await fetch(`/api/audits/${audit.id}/share`, { method: 'DELETE' });
-      setShareUrl(null);
-    } catch {}
-  };
-
   /* ── Delete audit (soft) ── */
   const handleDeleteAudit = async () => {
     if (!audit) return;
@@ -586,8 +573,6 @@ export default function BrandDnaPage() {
       setReport(null);
       setFindings([]);
       setShareUrl(null);
-      setDnaOpen(true);
-      setFilesOpen(true);
     } catch {
       setError('Failed to delete audit.');
     } finally { setDeletingAudit(false); }
@@ -603,31 +588,61 @@ export default function BrandDnaPage() {
 
   const categoryScores = useMemo(() => reportJson?.categoryResults || [], [reportJson]);
 
-  const selectedLabel = workspace?.active_brand_identity_id
-    ? (identity?.name || (workspace as any).brand_name || workspace.name)
-    : (workspace?.primary_domain || null);
-
-  const completion = useMemo(() => {
-    if (!identity) return 0;
-    const tone = identity.tone_keywords || [];
-    const colors = identity.primary_colors || [];
-    const slots = [identity.name, identity.description, identity.website_url, identity.brand_voice, tone.length > 0, colors.length > 0, identity.logo_url];
-    return Math.round((slots.filter(Boolean).length / slots.length) * 100);
+  /* ── Readiness computation ── */
+  const readinessChecks = useMemo(() => {
+    if (!identity) return READINESS_ITEMS.map(r => ({ ...r, met: false }));
+    return READINESS_ITEMS.map(r => ({ ...r, met: r.check(identity) }));
   }, [identity]);
 
-  const docs = useMemo(() => identity?.brand_identity_files.filter(f => isDocFile(f.file_name)) || [], [identity]);
-  const visuals = useMemo(() => identity?.brand_identity_files.filter(f => !isDocFile(f.file_name)) || [], [identity]);
+  const readinessPercent = useMemo(() => {
+    const met = readinessChecks.filter(r => r.met).length;
+    return Math.round((met / readinessChecks.length) * 100);
+  }, [readinessChecks]);
+
+  const readyForBrandAudit = useMemo(() => {
+    // Need at least one file to run the brand audit
+    return !!(identity && identity.brand_identity_files.length > 0);
+  }, [identity]);
+
+  const readyForWebsiteAudit = useMemo(() => {
+    // All 5 readiness items must be met
+    return readinessChecks.every(r => r.met);
+  }, [readinessChecks]);
+
+  const missingItems = useMemo(() => readinessChecks.filter(r => !r.met), [readinessChecks]);
+
+  /* ── Recommendations ── */
+  const recommendations = useMemo(() => {
+    if (!identity) return [];
+    const recs: string[] = [];
+    if (!identity.logo_url && !identity.brand_identity_files.some(f => (f.tag || '').toLowerCase() === 'logo'))
+      recs.push('Add a primary logo file to enable logo consistency checks.');
+    if (!identity.brand_voice && (!identity.tone_keywords || identity.tone_keywords.length === 0))
+      recs.push('Define 3-5 brand voice traits to compare against website copy.');
+    if (!identity.brand_identity_files.some(f => (f.tag || '').toLowerCase() === 'brand guide' || isDocFile(f.file_name)))
+      recs.push('Upload a brand identity guide to unlock full Brand DNA analysis.');
+    if (!identity.primary_colors || identity.primary_colors.length === 0)
+      recs.push('Add approved brand colours to compare live-site palette usage.');
+    if (!identity.description)
+      recs.push('Write a brand promise to enable value proposition checks.');
+    return recs;
+  }, [identity]);
+
+  /* ── Audit state ── */
+  const isAuditInProgress = audit && ['payment_received', 'crawling', 'analysing', 'generating_report'].includes(audit.status);
+  const isAuditCompleted = audit?.status === 'completed';
+  const isAuditFailed = audit?.status === 'failed';
+  const overallScore = report?.overall_score ?? null;
+  const hasFiles = identity ? identity.brand_identity_files.length > 0 : false;
 
   /* ── Skeleton ── */
   if (authLoading || loading || wsLoading) {
     return (
       <div>
-        <OverviewTabs />
-        <OverviewBreadcrumb current="Brand DNA" />
         <div className="h-7 w-32 rounded-lg animate-pulse mb-2" style={{ background: 'var(--paper-2)' }} />
         <div className="h-4 w-72 rounded-md animate-pulse mb-6" style={{ background: 'var(--paper-2)' }} />
         <div className="space-y-3">
-          {[1, 2].map(i => <div key={i} className="h-[100px] rounded-xl animate-pulse" style={{ background: 'var(--paper-2)' }} />)}
+          {[1, 2, 3].map(i => <div key={i} className="h-[80px] rounded-xl animate-pulse" style={{ background: 'var(--paper-2)' }} />)}
         </div>
       </div>
     );
@@ -637,15 +652,14 @@ export default function BrandDnaPage() {
   if (!workspace) {
     return (
       <div>
-        <OverviewTabs />
         <PageHeader
           icon={<Fingerprint size={18} strokeWidth={1.6} />}
           title="Brand DNA"
-          subtitle="Capture your brand identity so audits can score consistency."
+          subtitle="Manage your brand identity source of truth."
         />
         <EmptyState
-          title="Pick a brand to see its DNA"
-          body="Brand DNA is scoped to the brand you have selected in the sidebar."
+          title="Select a workspace"
+          body="Brand DNA is scoped to the workspace you have selected in the sidebar."
           ctaHref={`${dashPrefix}/new-audit`}
           ctaLabel="Run your first audit"
         />
@@ -656,120 +670,33 @@ export default function BrandDnaPage() {
   if (!identity) {
     return (
       <div>
-        <OverviewTabs />
         <PageHeader
           icon={<Fingerprint size={18} strokeWidth={1.6} />}
           title="Brand DNA"
-          subtitle={selectedLabel ? `Brand identity for ${selectedLabel}` : 'Capture your brand identity so audits can score consistency.'}
+          subtitle={siteLabel ? `Brand identity for ${siteLabel}` : 'Manage your brand identity source of truth.'}
         />
         <EmptyState
           title={!workspace.primary_domain ? 'No Brand DNA on file yet' : `No Brand DNA for ${siteLabel || 'this site'}`}
-          body="Add your brand name, voice, colours, and upload guidelines so we can audit design consistency against your brand standards."
+          body="Add your brand name, voice, colours, and upload guidelines so audits can score design consistency against your brand standards."
           ctaHref={`${dashPrefix}/brand-identity/new`}
-          ctaLabel="Add brand DNA"
+          ctaLabel="Add Brand DNA"
         />
       </div>
     );
   }
 
   /* ══════════════════════════════════════════════════════════
-     Full page — DNA card + file upload + audit section
+     Full page — Brand DNA Console
      ══════════════════════════════════════════════════════════ */
-
-  const isAuditInProgress = audit && ['payment_received', 'crawling', 'analysing', 'generating_report'].includes(audit.status);
-  const isAuditCompleted = audit?.status === 'completed';
-  const isAuditFailed = audit?.status === 'failed';
-  const overallScore = report?.overall_score ?? null;
-  const hasFiles = identity.brand_identity_files.length > 0;
-
-  /* ── Score label helper ── */
-  const brandScoreLabel = overallScore != null
-    ? overallScore >= 80 ? 'Strong' : overallScore >= 60 ? 'Moderate' : 'Needs work'
-    : null;
 
   return (
     <div>
-      <OverviewTabs />
-
-      {/* ── Page header with action buttons ── */}
+      {/* ── Page header ── */}
       <PageHeader
         icon={<Fingerprint size={18} strokeWidth={1.6} />}
         title="Brand DNA"
-        subtitle={selectedLabel ? `Brand identity for ${selectedLabel}` : 'Capture your brand identity so audits can score consistency.'}
-      >
-        {isAuditCompleted && report && (
-          <div className="flex items-center gap-2" ref={menuRef}>
-            <button
-              onClick={triggerAudit}
-              disabled={triggeringAudit}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-[12px] font-semibold transition-all"
-              style={{ background: 'var(--ink)', color: 'var(--paper)' }}
-            >
-              <RefreshCw size={11} /> Re-audit
-            </button>
-            <div className="relative">
-              <button
-                type="button"
-                onClick={() => setMenuOpen((v) => !v)}
-                className="w-8 h-8 inline-flex items-center justify-center rounded-lg bg-card border border-border text-text hover:bg-surface-alt transition-colors"
-                aria-label="More actions"
-                aria-haspopup="menu"
-                aria-expanded={menuOpen}
-              >
-                <MoreVertical size={14} />
-              </button>
-              {menuOpen && (
-                <div
-                  role="menu"
-                  className="absolute right-0 top-10 z-50 w-60 rounded-xl py-1.5 shadow-lg"
-                  style={{ background: 'var(--card)', border: '1px solid var(--rule)' }}
-                >
-                  <button
-                    type="button"
-                    onClick={() => { handleShare(); setMenuOpen(false); }}
-                    className="w-full flex items-center gap-2.5 px-3.5 py-2 text-xs hover:bg-black/[0.04] transition-colors text-left"
-                    style={{ color: 'var(--ink)' }}
-                  >
-                    <Share2 size={13} className="text-m-muted" />
-                    {shareUrl ? 'Copy share link' : 'Create share link'}
-                  </button>
-                  {shareUrl && (
-                    <button
-                      type="button"
-                      onClick={() => { handleRevokeShare(); setMenuOpen(false); }}
-                      className="w-full flex items-center gap-2.5 px-3.5 py-2 text-xs hover:bg-red-50 transition-colors text-left"
-                      style={{ color: 'var(--severe)' }}
-                    >
-                      <Link2 size={13} />
-                      Revoke share link
-                    </button>
-                  )}
-                  <div className="my-1 h-px" style={{ background: 'var(--rule)' }} />
-                  <button
-                    type="button"
-                    onClick={() => { setMenuOpen(false); handleDeleteAudit(); }}
-                    className="w-full flex items-center gap-2.5 px-3.5 py-2 text-xs hover:bg-red-50 transition-colors text-left"
-                    style={{ color: 'var(--severe)' }}
-                  >
-                    <Trash2 size={13} />
-                    Delete this audit
-                  </button>
-                </div>
-              )}
-            </div>
-          </div>
-        )}
-        {!isAuditCompleted && !isAuditInProgress && hasFiles && (
-          <button
-            onClick={triggerAudit}
-            disabled={triggeringAudit}
-            className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg text-[12px] font-semibold transition-all hover:opacity-90"
-            style={{ background: 'var(--ink)', color: 'var(--paper)', opacity: triggeringAudit ? 0.6 : 1 }}
-          >
-            {triggeringAudit ? <><Loader2 size={12} className="animate-spin" /> Starting...</> : <><Play size={12} /> Run brand audit</>}
-          </button>
-        )}
-      </PageHeader>
+        subtitle={siteLabel ? `Brand identity console for ${siteLabel}` : 'Your brand identity source of truth.'}
+      />
 
       {error && (
         <div className="rounded-xl p-3 mb-4 flex items-center gap-2" style={{ background: 'color-mix(in srgb, var(--severe) 6%, transparent)', border: '1px solid color-mix(in srgb, var(--severe) 14%, transparent)' }}>
@@ -778,148 +705,95 @@ export default function BrandDnaPage() {
         </div>
       )}
 
-      <div className="space-y-4">
+      <div className="space-y-5">
 
-      {/* ── 1. Hero score (when audit completed) ─────────── */}
-      {isAuditCompleted && report && (
+        {/* ══════════════════════════════════════════════════════
+           SECTION 1: Readiness
+           ══════════════════════════════════════════════════════ */}
         <section
           className="rounded-xl p-5"
           style={{ background: 'var(--card)', border: '1px solid var(--rule)' }}
         >
-          <div className="flex items-center gap-6">
-            <ScoreCircle score={overallScore || 0} size="big" />
-            <div className="flex-1 min-w-0">
-              <p className="text-[15px] font-semibold" style={{ color: 'var(--ink)' }}>Brand identity score</p>
-              {brandScoreLabel && (
-                <span
-                  className="inline-block mt-1 px-2 py-0.5 rounded-full text-[11px] font-semibold"
-                  style={{
-                    background: `color-mix(in srgb, ${overallScore != null ? scoreColor(overallScore) : 'var(--m-muted)'} 10%, transparent)`,
-                    color: overallScore != null ? scoreColor(overallScore) : 'var(--m-muted)',
-                  }}
-                >
-                  {brandScoreLabel}
+          <div className="flex items-start gap-5">
+            {/* Completion ring */}
+            <div className="flex-shrink-0">
+              <div className="relative w-16 h-16">
+                <svg viewBox="0 0 36 36" className="w-16 h-16 -rotate-90">
+                  <circle cx="18" cy="18" r="14" fill="none" stroke="var(--rule)" strokeWidth="3" />
+                  <circle
+                    cx="18" cy="18" r="14" fill="none"
+                    stroke={readinessPercent === 100 ? 'var(--ok)' : readinessPercent >= 60 ? 'var(--signal)' : 'var(--warn)'}
+                    strokeWidth="3"
+                    strokeDasharray={`${readinessPercent * 0.88} 88`}
+                    strokeLinecap="round"
+                  />
+                </svg>
+                <span className="absolute inset-0 flex items-center justify-center text-[14px] font-bold" style={{ color: 'var(--ink)' }}>
+                  {readinessPercent}%
                 </span>
-              )}
-              {report.total_issues > 0 && (
-                <div className="flex items-center gap-3 mt-2">
-                  {report.critical_count > 0 && <span className="text-[11px] font-semibold" style={{ color: 'var(--severe)' }}>{report.critical_count} critical</span>}
-                  {report.high_count > 0 && <span className="text-[11px] font-semibold" style={{ color: 'var(--warn)' }}>{report.high_count} high</span>}
-                  {(report.medium_count + report.low_count) > 0 && <span className="text-[11px]" style={{ color: 'var(--m-muted)' }}>{report.medium_count + report.low_count} more</span>}
+              </div>
+            </div>
+
+            {/* Status */}
+            <div className="flex-1 min-w-0">
+              <h3 className="text-[14px] font-semibold mb-2" style={{ color: 'var(--ink)' }}>Brand DNA readiness</h3>
+              <div className="flex flex-wrap gap-x-5 gap-y-1.5">
+                <StatusLine
+                  label="Brand DNA audit"
+                  ready={readyForBrandAudit}
+                  reason={readyForBrandAudit ? undefined : 'Upload at least one brand file'}
+                />
+                <StatusLine
+                  label="Include in website audit"
+                  ready={readyForWebsiteAudit}
+                  reason={readyForWebsiteAudit ? undefined : `${missingItems.length} item${missingItems.length === 1 ? '' : 's'} missing`}
+                />
+              </div>
+
+              {/* Missing items checklist */}
+              {missingItems.length > 0 && (
+                <div className="mt-3 flex flex-wrap gap-2">
+                  {readinessChecks.map(item => (
+                    <span
+                      key={item.key}
+                      className="inline-flex items-center gap-1.5 text-[11px] font-medium px-2.5 py-1 rounded-full"
+                      style={{
+                        background: item.met ? 'color-mix(in srgb, var(--ok) 8%, transparent)' : 'var(--paper-2)',
+                        color: item.met ? 'var(--ok)' : 'var(--m-muted)',
+                        border: `1px solid ${item.met ? 'color-mix(in srgb, var(--ok) 20%, transparent)' : 'var(--rule)'}`,
+                      }}
+                    >
+                      {item.met ? <CheckCircle2 size={10} /> : <CircleDot size={10} />}
+                      {item.label}
+                    </span>
+                  ))}
                 </div>
-              )}
-              {report.executive_summary && (
-                <p className="text-[12px] leading-relaxed mt-2 line-clamp-2" style={{ color: 'var(--m-muted)' }}>{report.executive_summary}</p>
               )}
             </div>
           </div>
         </section>
-      )}
 
-      {/* In progress — progressive skeleton */}
-      {isAuditInProgress && audit && (
-        <BrandAuditInProgress audit={audit} />
-      )}
-
-      {/* Failed */}
-      {isAuditFailed && audit && (
+        {/* ══════════════════════════════════════════════════════
+           SECTION 2: Brand Profile
+           ══════════════════════════════════════════════════════ */}
         <section
-          className="rounded-xl p-5 flex items-center justify-between gap-4"
+          className="rounded-xl overflow-hidden"
           style={{ background: 'var(--card)', border: '1px solid var(--rule)' }}
         >
-          <div className="flex items-center gap-3">
-            <AlertTriangle size={16} style={{ color: 'var(--severe)' }} />
-            <div>
-              <p className="text-[13px] font-semibold" style={{ color: 'var(--ink)' }}>Audit failed</p>
-              <p className="text-[12px]" style={{ color: 'var(--m-muted)' }}>{(audit as any).crawl_error || 'Something went wrong.'}</p>
-            </div>
-          </div>
-          <button onClick={triggerAudit} disabled={triggeringAudit} className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg text-[12px] font-semibold" style={{ background: 'var(--ink)', color: 'var(--paper)' }}>
-            <RefreshCw size={12} /> Retry
-          </button>
-        </section>
-      )}
-
-      {/* ── 2. Category scores (when audit completed) ────── */}
-      {isAuditCompleted && report && categoryScores.length > 0 && (
-        <section>
-          <div className="mb-2 flex items-center gap-2">
-            <Layers size={14} style={{ color: 'var(--m-muted)' }} />
-            <h4 className="text-[13px] font-semibold" style={{ color: 'var(--ink)' }}>Category scores</h4>
-          </div>
-          <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-6 gap-3">
-            {categoryScores.map(cat => {
-              const tint = CATEGORY_TINTS[cat.slug] || CATEGORY_TINTS.visual_consistency;
-              const CatIcon = CATEGORY_ICONS[cat.slug] || Target;
-              return (
-                <div
-                  key={cat.slug}
-                  className="rounded-xl overflow-hidden flex flex-col"
-                  style={{ background: tint.bg, border: `1px solid ${tint.border}` }}
-                >
-                  <div className="flex items-start gap-2 px-3 pt-3 pb-2">
-                    <div
-                      className="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0"
-                      style={{ background: `${tint.dot}15` }}
-                    >
-                      <CatIcon size={14} style={{ color: tint.dot }} />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <h3 className="font-sans font-semibold text-[12px] leading-tight truncate" style={{ color: 'var(--ink)' }}>
-                        {cat.name}
-                      </h3>
-                      <p className="text-[10px] leading-tight mt-0.5 line-clamp-1" style={{ color: 'var(--m-muted)' }}>
-                        {cat.summary?.slice(0, 40) || 'Scored'}
-                      </p>
-                    </div>
-                  </div>
-                  <div className="px-3 pb-3 pt-1">
-                    <span className="text-[28px] font-bold tabular-nums leading-none" style={{ color: scoreColor(cat.score) }}>{cat.score}</span>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </section>
-      )}
-
-      {/* ── 3. DNA Card (collapsible) ────────────────────── */}
-      <section
-        className="rounded-xl overflow-hidden"
-        style={{ background: 'var(--card)', border: '1px solid var(--rule)' }}
-      >
-        <button
-          onClick={() => { if (!editing) setDnaOpen(!dnaOpen); }}
-          className="w-full flex items-center justify-between p-5 text-left transition-colors hover:opacity-80"
-        >
-          <div className="flex items-center gap-2.5 min-w-0">
-            <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0" style={{ background: 'color-mix(in srgb, #8B5CF6 10%, transparent)' }}>
-              <Fingerprint size={15} strokeWidth={1.6} style={{ color: '#8B5CF6' }} />
-            </div>
-            <div className="min-w-0">
-              <h2 className="text-[14px] font-semibold truncate" style={{ color: 'var(--ink)' }}>{identity.name}</h2>
-              <p className="text-[11px]" style={{ color: 'var(--m-muted)' }}>
-                DNA captured: <span style={{ color: completion >= 70 ? 'var(--ok)' : completion >= 40 ? 'var(--warn)' : 'var(--severe)' }} className="font-semibold">{completion}%</span>
-              </p>
-            </div>
-          </div>
-          <div className="flex items-center gap-2 flex-shrink-0">
+          <div className="flex items-center justify-between p-4 pb-0">
+            <h3 className="text-[13px] font-semibold" style={{ color: 'var(--ink)' }}>Brand profile</h3>
             {!editing && (
               <button
-                onClick={e => { e.stopPropagation(); beginEdit(); if (!dnaOpen) setDnaOpen(true); }}
-                className="inline-flex items-center gap-1 text-[12px] font-semibold px-2.5 py-1 rounded-md"
+                onClick={beginEdit}
+                className="inline-flex items-center gap-1 text-[11px] font-semibold px-2 py-1 rounded-md transition-colors hover:opacity-80"
                 style={{ background: 'var(--paper-2)', color: 'var(--ink)', border: '1px solid var(--rule)' }}
               >
-                <Edit2 size={11} /> Edit
+                <Edit2 size={10} /> Edit
               </button>
             )}
-            <ChevronDown size={14} className="flex-shrink-0 transition-transform" style={{ color: 'var(--m-muted)', transform: dnaOpen ? 'rotate(180deg)' : 'none' }} />
           </div>
-        </button>
 
-        {dnaOpen && (
-          <div className="px-5 pb-5">
-            {/* Edit form */}
+          <div className="p-4">
             {editing && editState ? (
               <div className="space-y-3">
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -930,22 +804,22 @@ export default function BrandDnaPage() {
                     <input value={editState.website_url} onChange={e => setEditState({ ...editState, website_url: e.target.value })} placeholder="https://example.com" className="w-full px-3 py-2 rounded-lg text-[13px] outline-none" style={{ background: 'var(--paper-2)', border: '1px solid var(--rule)', color: 'var(--ink)' }} maxLength={2048} />
                   </Field>
                 </div>
-                <Field label="Brand promise" full>
-                  <textarea value={editState.description} onChange={e => setEditState({ ...editState, description: e.target.value })} placeholder="Who you serve and the change you create." rows={2} className="w-full px-3 py-2 rounded-lg text-[13px] resize-y outline-none" style={{ background: 'var(--paper-2)', border: '1px solid var(--rule)', color: 'var(--ink)' }} maxLength={600} />
+                <Field label="Logo URL">
+                  <input value={editState.logo_url} onChange={e => setEditState({ ...editState, logo_url: e.target.value })} placeholder="https://cdn.example.com/logo.svg or upload in Assets" className="w-full px-3 py-2 rounded-lg text-[13px] outline-none" style={{ background: 'var(--paper-2)', border: '1px solid var(--rule)', color: 'var(--ink)' }} maxLength={2048} />
                 </Field>
-                <Field label="Brand voice" full>
-                  <textarea value={editState.brand_voice} onChange={e => setEditState({ ...editState, brand_voice: e.target.value })} placeholder="How does your brand sound? Confident but not corporate." rows={2} className="w-full px-3 py-2 rounded-lg text-[13px] resize-y outline-none" style={{ background: 'var(--paper-2)', border: '1px solid var(--rule)', color: 'var(--ink)' }} maxLength={4000} />
+                <Field label="Brand voice">
+                  <textarea value={editState.brand_voice} onChange={e => setEditState({ ...editState, brand_voice: e.target.value })} placeholder="How does your brand sound? e.g. Confident but approachable, technical but not cold." rows={2} className="w-full px-3 py-2 rounded-lg text-[13px] resize-y outline-none" style={{ background: 'var(--paper-2)', border: '1px solid var(--rule)', color: 'var(--ink)' }} maxLength={4000} />
                 </Field>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <Field label="Tone keywords">
                     <input value={editState.tone_keywords} onChange={e => setEditState({ ...editState, tone_keywords: e.target.value })} placeholder="confident, warm, direct" className="w-full px-3 py-2 rounded-lg text-[13px] outline-none" style={{ background: 'var(--paper-2)', border: '1px solid var(--rule)', color: 'var(--ink)' }} />
                   </Field>
                   <Field label="Brand colours">
-                    <input value={editState.primary_colors} onChange={e => setEditState({ ...editState, primary_colors: e.target.value })} placeholder="#0A84FF, #111111" className="w-full px-3 py-2 rounded-lg text-[13px] outline-none" style={{ background: 'var(--paper-2)', border: '1px solid var(--rule)', color: 'var(--ink)' }} />
+                    <input value={editState.primary_colors} onChange={e => setEditState({ ...editState, primary_colors: e.target.value })} placeholder="#0A84FF, #111111, #F5F5F5" className="w-full px-3 py-2 rounded-lg text-[13px] outline-none" style={{ background: 'var(--paper-2)', border: '1px solid var(--rule)', color: 'var(--ink)' }} />
                   </Field>
                 </div>
-                <Field label="Logo URL" full>
-                  <input value={editState.logo_url} onChange={e => setEditState({ ...editState, logo_url: e.target.value })} placeholder="https://cdn.example.com/logo.svg" className="w-full px-3 py-2 rounded-lg text-[13px] outline-none" style={{ background: 'var(--paper-2)', border: '1px solid var(--rule)', color: 'var(--ink)' }} maxLength={2048} />
+                <Field label="Brand promise">
+                  <textarea value={editState.description} onChange={e => setEditState({ ...editState, description: e.target.value })} placeholder="Who you serve and the change you create." rows={2} className="w-full px-3 py-2 rounded-lg text-[13px] resize-y outline-none" style={{ background: 'var(--paper-2)', border: '1px solid var(--rule)', color: 'var(--ink)' }} maxLength={600} />
                 </Field>
                 {saveError && (
                   <div className="rounded-lg px-3 py-2 text-[12px]" style={{ background: 'color-mix(in srgb, var(--severe) 8%, transparent)', color: 'var(--severe)' }}>{saveError}</div>
@@ -960,176 +834,364 @@ export default function BrandDnaPage() {
                 </div>
               </div>
             ) : (
-              /* View mode — compact grid */
-              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2">
-                <Slot icon={Fingerprint} label="Name" value={identity.name} filled />
-                <Slot icon={GlobeIcon} label="Website" value={identity.website_url || 'Not set'} filled={!!identity.website_url} />
-                <Slot icon={Volume2} label="Voice" value={(identity.tone_keywords || []).length > 0 ? (identity.tone_keywords || []).slice(0, 3).join(', ') : (identity.brand_voice ? 'On file' : 'Not set')} filled={!!(identity.brand_voice || (identity.tone_keywords || []).length)} />
-                <Slot icon={Palette} label="Colours" value={(identity.primary_colors || []).length > 0 ? `${(identity.primary_colors || []).length} colour${(identity.primary_colors || []).length === 1 ? '' : 's'}` : 'Not set'} filled={(identity.primary_colors || []).length > 0} colors={identity.primary_colors || undefined} />
-                <Slot icon={ImageIcon} label="Logo" value={identity.logo_url ? 'On file' : 'Not set'} filled={!!identity.logo_url} />
-                <Slot icon={FileText} label="Promise" value={identity.description ? (identity.description.length > 32 ? identity.description.slice(0, 30) + '...' : identity.description) : 'Not set'} filled={!!identity.description} />
-                <Slot icon={FileText} label="Documents" value={`${docs.length} file${docs.length === 1 ? '' : 's'}`} filled={docs.length > 0} />
-                <Slot icon={ImageIcon} label="Assets" value={`${visuals.length} file${visuals.length === 1 ? '' : 's'}`} filled={visuals.length > 0} />
+              /* View mode — compact two-column grid */
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                <ProfileSlot label="Name" value={identity.name} filled />
+                <ProfileSlot label="Website" value={identity.website_url || 'Not set'} filled={!!identity.website_url} />
+                <ProfileSlot label="Logo" value={identity.logo_url ? 'On file' : 'Not set'} filled={!!identity.logo_url} />
+                <ProfileSlot label="Voice" value={(identity.tone_keywords || []).length > 0 ? (identity.tone_keywords || []).slice(0, 3).join(', ') : (identity.brand_voice ? 'Defined' : 'Not set')} filled={!!(identity.brand_voice || (identity.tone_keywords || []).length)} />
+                <ProfileSlot label="Colours" value={(identity.primary_colors || []).length > 0 ? `${(identity.primary_colors || []).length} defined` : 'Not set'} filled={(identity.primary_colors || []).length > 0} colors={identity.primary_colors || undefined} />
+                <ProfileSlot label="Promise" value={identity.description ? (identity.description.length > 40 ? identity.description.slice(0, 38) + '...' : identity.description) : 'Not set'} filled={!!identity.description} />
               </div>
             )}
           </div>
-        )}
-      </section>
+        </section>
 
-      {/* ── 4. Brand files (collapsible) ─────────────────── */}
-      {!editing && (
+        {/* ══════════════════════════════════════════════════════
+           SECTION 3: Assets
+           ══════════════════════════════════════════════════════ */}
+        {!editing && (
+          <section
+            className="rounded-xl overflow-hidden"
+            style={{ background: 'var(--card)', border: '1px solid var(--rule)' }}
+          >
+            <div className="p-4 pb-0">
+              <div className="flex items-center justify-between">
+                <h3 className="text-[13px] font-semibold" style={{ color: 'var(--ink)' }}>
+                  Assets
+                  <span className="ml-2 text-[11px] font-normal" style={{ color: 'var(--m-muted)' }}>
+                    {identity.brand_identity_files.length} file{identity.brand_identity_files.length === 1 ? '' : 's'}
+                  </span>
+                </h3>
+              </div>
+            </div>
+
+            <div className="p-4">
+              {/* Drop zone */}
+              <div
+                onDragOver={e => { e.preventDefault(); setDragOver(true); }}
+                onDragLeave={() => setDragOver(false)}
+                onDrop={e => { e.preventDefault(); setDragOver(false); if (e.dataTransfer.files) uploadFiles(e.dataTransfer.files); }}
+                onClick={() => !uploading && fileInputRef.current?.click()}
+                className="flex items-center justify-center gap-3 px-5 py-5 rounded-xl border-2 border-dashed transition-all cursor-pointer"
+                style={{
+                  borderColor: dragOver ? 'var(--signal)' : 'color-mix(in srgb, var(--signal) 30%, var(--rule))',
+                  background: dragOver ? 'color-mix(in srgb, var(--signal) 6%, transparent)' : 'color-mix(in srgb, var(--signal) 2%, transparent)',
+                }}
+              >
+                {uploading ? (
+                  <>
+                    <Loader2 size={18} className="animate-spin" style={{ color: 'var(--signal)' }} />
+                    <span className="text-[12px] font-medium" style={{ color: 'var(--ink)' }}>Uploading...</span>
+                  </>
+                ) : (
+                  <>
+                    <div className="w-8 h-8 rounded-full flex items-center justify-center" style={{ background: 'color-mix(in srgb, var(--signal) 10%, transparent)' }}>
+                      <Upload size={14} style={{ color: 'var(--signal)' }} />
+                    </div>
+                    <div>
+                      <p className="text-[12px] font-semibold" style={{ color: 'var(--ink)' }}>
+                        Drop files or click to browse
+                      </p>
+                      <p className="text-[10px] mt-0.5" style={{ color: 'var(--m-muted)' }}>
+                        Brand guides, logos, style assets (PDF, DOCX, PNG, JPG, SVG)
+                      </p>
+                    </div>
+                  </>
+                )}
+              </div>
+              <input ref={fileInputRef} type="file" accept=".pdf,.doc,.docx,.txt,.png,.jpg,.jpeg,.svg,.webp" multiple onChange={e => { if (e.target.files) uploadFiles(e.target.files); }} className="hidden" />
+
+              {uploadMsg && (
+                <p className="text-[11px] mt-2" style={{ color: uploadMsg.includes('Failed') || uploadMsg.includes('exceeds') ? 'var(--severe)' : 'var(--ok)' }}>{uploadMsg}</p>
+              )}
+
+              {/* File list */}
+              {identity.brand_identity_files.length > 0 && (
+                <div className="mt-3 space-y-1">
+                  {identity.brand_identity_files.map(f => (
+                    <div key={f.id} className="flex items-center gap-2.5 px-3 py-2 rounded-lg group transition-all" style={{ background: 'var(--paper-2)', border: '1px solid var(--rule)' }}>
+                      <div className="w-6 h-6 rounded flex items-center justify-center flex-shrink-0" style={{ background: 'var(--card)' }}>
+                        {isDocFile(f.file_name) ? <FileText size={11} style={{ color: 'var(--m-muted)' }} /> : <ImageIcon size={11} style={{ color: 'var(--m-muted)' }} />}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-[12px] font-medium truncate" style={{ color: 'var(--ink)' }}>{f.file_name}</p>
+                        <div className="flex items-center gap-1.5 text-[10px]" style={{ color: 'var(--m-muted)' }}>
+                          <span>{fileTypeLabel(f.file_name)}</span>
+                          {f.file_size_bytes && <><span style={{ color: 'var(--rule)' }}>·</span><span>{formatBytes(f.file_size_bytes)}</span></>}
+                          {f.tag && <><span style={{ color: 'var(--rule)' }}>·</span><span className="font-medium" style={{ color: 'var(--signal)' }}>{f.tag}</span></>}
+                        </div>
+                      </div>
+                      <button
+                        onClick={e => { e.stopPropagation(); deleteFile(f.id); }}
+                        disabled={deletingFileId === f.id}
+                        className="p-1 rounded opacity-0 group-hover:opacity-100 transition-all"
+                        style={{ color: 'var(--m-muted)' }}
+                      >
+                        {deletingFileId === f.id ? <Loader2 size={11} className="animate-spin" /> : <Trash2 size={11} />}
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </section>
+        )}
+
+        {/* ══════════════════════════════════════════════════════
+           SECTION 4: Brand DNA Audit
+           ══════════════════════════════════════════════════════ */}
         <section
           className="rounded-xl overflow-hidden"
           style={{ background: 'var(--card)', border: '1px solid var(--rule)' }}
         >
-          <button
-            onClick={() => setFilesOpen(!filesOpen)}
-            className="w-full flex items-center justify-between p-5 text-left transition-colors hover:opacity-80"
-          >
-            <div className="flex items-center gap-2.5">
-              <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0" style={{ background: 'color-mix(in srgb, var(--signal) 10%, transparent)' }}>
-                <Upload size={15} strokeWidth={1.6} style={{ color: 'var(--signal)' }} />
-              </div>
+          <div className="p-4">
+            <div className="flex items-center justify-between mb-3">
               <div>
-                <h3 className="text-[14px] font-semibold" style={{ color: 'var(--ink)' }}>Brand files</h3>
-                <p className="text-[11px]" style={{ color: 'var(--m-muted)' }}>
-                  {identity.brand_identity_files.length} file{identity.brand_identity_files.length === 1 ? '' : 's'} uploaded
+                <h3 className="text-[13px] font-semibold" style={{ color: 'var(--ink)' }}>Brand DNA audit</h3>
+                <p className="text-[11px] mt-0.5" style={{ color: 'var(--m-muted)' }}>
+                  Checks uploaded brand identity, assets, and structured inputs for completeness, consistency, and usability.
                 </p>
               </div>
+
+              {/* Audit actions */}
+              <div className="flex items-center gap-2 flex-shrink-0" ref={menuRef}>
+                {isAuditCompleted && (
+                  <>
+                    <button
+                      onClick={triggerAudit}
+                      disabled={triggeringAudit}
+                      className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-md text-[11px] font-semibold transition-all hover:opacity-80"
+                      style={{ background: 'var(--ink)', color: 'var(--paper)' }}
+                    >
+                      <RefreshCw size={10} /> Re-audit
+                    </button>
+                    <div className="relative">
+                      <button
+                        type="button"
+                        onClick={() => setMenuOpen(v => !v)}
+                        className="w-7 h-7 inline-flex items-center justify-center rounded-lg transition-colors"
+                        style={{ background: 'var(--paper-2)', border: '1px solid var(--rule)', color: 'var(--m-muted)' }}
+                        aria-label="More actions"
+                      >
+                        <MoreVertical size={12} />
+                      </button>
+                      {menuOpen && (
+                        <div
+                          role="menu"
+                          className="absolute right-0 top-9 z-50 w-52 rounded-xl py-1 shadow-lg"
+                          style={{ background: 'var(--card)', border: '1px solid var(--rule)' }}
+                        >
+                          <button
+                            type="button"
+                            onClick={() => { handleShare(); setMenuOpen(false); }}
+                            className="w-full flex items-center gap-2 px-3 py-2 text-[11px] hover:bg-black/[0.03] transition-colors text-left"
+                            style={{ color: 'var(--ink)' }}
+                          >
+                            <Share2 size={11} className="text-m-muted" />
+                            {shareUrl ? 'Copy share link' : 'Create share link'}
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => { setMenuOpen(false); handleDeleteAudit(); }}
+                            className="w-full flex items-center gap-2 px-3 py-2 text-[11px] hover:bg-red-50 transition-colors text-left"
+                            style={{ color: 'var(--severe)' }}
+                          >
+                            <Trash2 size={11} />
+                            Delete audit
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  </>
+                )}
+                {!isAuditCompleted && !isAuditInProgress && (
+                  <button
+                    onClick={triggerAudit}
+                    disabled={triggeringAudit || !readyForBrandAudit}
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-[11px] font-semibold transition-all"
+                    style={{
+                      background: readyForBrandAudit ? 'var(--ink)' : 'var(--paper-2)',
+                      color: readyForBrandAudit ? 'var(--paper)' : 'var(--m-muted)',
+                      opacity: triggeringAudit ? 0.6 : 1,
+                      cursor: readyForBrandAudit ? 'pointer' : 'not-allowed',
+                    }}
+                  >
+                    {triggeringAudit ? <><Loader2 size={11} className="animate-spin" /> Starting...</> : <><Play size={11} /> Run Brand DNA audit</>}
+                  </button>
+                )}
+              </div>
             </div>
-            <ChevronDown size={14} className="flex-shrink-0 transition-transform" style={{ color: 'var(--m-muted)', transform: filesOpen ? 'rotate(180deg)' : 'none' }} />
-          </button>
 
-          {filesOpen && (
-          <div className="px-5 pb-5">
-
-          {/* Drop zone */}
-          <div
-            onDragOver={e => { e.preventDefault(); setDragOver(true); }}
-            onDragLeave={() => setDragOver(false)}
-            onDrop={e => { e.preventDefault(); setDragOver(false); if (e.dataTransfer.files) uploadFiles(e.dataTransfer.files); }}
-            onClick={() => !uploading && fileInputRef.current?.click()}
-            className="flex flex-col items-center justify-center gap-3 px-6 py-8 rounded-xl border-2 border-dashed transition-all cursor-pointer"
-            style={{
-              borderColor: dragOver ? 'var(--signal)' : 'color-mix(in srgb, var(--signal) 30%, var(--rule))',
-              background: dragOver ? 'color-mix(in srgb, var(--signal) 6%, transparent)' : 'color-mix(in srgb, var(--signal) 3%, transparent)',
-            }}
-          >
-            {uploading ? (
-              <>
-                <Loader2 size={24} className="animate-spin" style={{ color: 'var(--signal)' }} />
-                <span className="text-[13px] font-medium" style={{ color: 'var(--ink)' }}>Uploading...</span>
-              </>
-            ) : (
-              <>
-                <div className="w-11 h-11 rounded-full flex items-center justify-center" style={{ background: 'color-mix(in srgb, var(--signal) 10%, transparent)' }}>
-                  <Upload size={20} style={{ color: 'var(--signal)' }} />
-                </div>
-                <div className="text-center">
-                  <p className="text-[13px] font-semibold" style={{ color: 'var(--ink)' }}>
-                    Drop files here or click to browse
-                  </p>
-                  <p className="text-[11px] mt-1" style={{ color: 'var(--m-muted)' }}>
-                    Brand guidelines, logos, style guides, assets (PDF, DOCX, PNG, JPG, SVG)
-                  </p>
-                </div>
-              </>
+            {/* Audit in progress */}
+            {isAuditInProgress && audit && (
+              <BrandAuditInProgress audit={audit} />
             )}
-          </div>
-          <input ref={fileInputRef} type="file" accept=".pdf,.doc,.docx,.txt,.png,.jpg,.jpeg,.svg,.webp" multiple onChange={e => { if (e.target.files) uploadFiles(e.target.files); }} className="hidden" />
 
-          {uploadMsg && (
-            <p className="text-[11px] mt-2" style={{ color: uploadMsg.includes('Failed') ? 'var(--severe)' : 'var(--ok)' }}>{uploadMsg}</p>
-          )}
-
-          {/* File list */}
-          {identity.brand_identity_files.length > 0 && (
-            <div className="mt-4 space-y-1.5">
-              {identity.brand_identity_files.map(f => (
-                <div key={f.id} className="flex items-center gap-2.5 px-3 py-2 rounded-lg group transition-all" style={{ background: 'var(--paper-2)', border: '1px solid var(--rule)' }}>
-                  <div className="w-6 h-6 rounded flex items-center justify-center flex-shrink-0" style={{ background: 'var(--card)' }}>
-                    {isDocFile(f.file_name) ? <FileText size={11} style={{ color: 'var(--m-muted)' }} /> : <File size={11} style={{ color: 'var(--m-muted)' }} />}
+            {/* Audit failed */}
+            {isAuditFailed && audit && (
+              <div className="rounded-lg p-3 flex items-center justify-between gap-3" style={{ background: 'color-mix(in srgb, var(--severe) 4%, transparent)', border: '1px solid color-mix(in srgb, var(--severe) 12%, transparent)' }}>
+                <div className="flex items-center gap-2">
+                  <AlertTriangle size={13} style={{ color: 'var(--severe)' }} />
+                  <div>
+                    <p className="text-[12px] font-semibold" style={{ color: 'var(--ink)' }}>Audit failed</p>
+                    <p className="text-[11px]" style={{ color: 'var(--m-muted)' }}>{(audit as any).crawl_error || 'Something went wrong.'}</p>
                   </div>
+                </div>
+                <button onClick={triggerAudit} disabled={triggeringAudit} className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-md text-[11px] font-semibold" style={{ background: 'var(--ink)', color: 'var(--paper)' }}>
+                  <RefreshCw size={10} /> Retry
+                </button>
+              </div>
+            )}
+
+            {/* Audit completed — score + categories */}
+            {isAuditCompleted && report && (
+              <div className="space-y-4">
+                {/* Score summary */}
+                <div className="flex items-center gap-4">
+                  <ScoreCircle score={overallScore || 0} size="big" />
                   <div className="flex-1 min-w-0">
-                    <p className="text-[12px] font-medium truncate" style={{ color: 'var(--ink)' }}>{f.file_name}</p>
-                    <div className="flex items-center gap-1.5 text-[10px]" style={{ color: 'var(--m-muted)' }}>
-                      <span>{fileTypeLabel(f.file_name)}</span>
-                      {f.file_size_bytes && <><span style={{ color: 'var(--rule)' }}>·</span><span>{formatBytes(f.file_size_bytes)}</span></>}
-                      {f.created_at && <><span style={{ color: 'var(--rule)' }}>·</span><span>{new Date(f.created_at).toLocaleDateString()}</span></>}
+                    <p className="text-[13px] font-semibold" style={{ color: 'var(--ink)' }}>Brand identity score</p>
+                    {report.total_issues > 0 && (
+                      <div className="flex items-center gap-2 mt-1">
+                        {report.critical_count > 0 && <span className="text-[10px] font-semibold" style={{ color: 'var(--severe)' }}>{report.critical_count} critical</span>}
+                        {report.high_count > 0 && <span className="text-[10px] font-semibold" style={{ color: 'var(--warn)' }}>{report.high_count} high</span>}
+                        {(report.medium_count + report.low_count) > 0 && <span className="text-[10px]" style={{ color: 'var(--m-muted)' }}>{report.medium_count + report.low_count} more</span>}
+                      </div>
+                    )}
+                    {report.executive_summary && (
+                      <p className="text-[11px] leading-relaxed mt-1.5 line-clamp-2" style={{ color: 'var(--m-muted)' }}>{report.executive_summary}</p>
+                    )}
+                  </div>
+                </div>
+
+                {/* Category scores */}
+                {categoryScores.length > 0 && (
+                  <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-6 gap-2">
+                    {categoryScores.map(cat => {
+                      const tint = CATEGORY_TINTS[cat.slug] || CATEGORY_TINTS.visual_consistency;
+                      const CatIcon = CATEGORY_ICONS[cat.slug] || Target;
+                      return (
+                        <div
+                          key={cat.slug}
+                          className="rounded-lg p-2.5"
+                          style={{ background: tint.bg, border: `1px solid ${tint.border}` }}
+                        >
+                          <div className="flex items-center gap-1.5 mb-1">
+                            <CatIcon size={11} style={{ color: tint.dot }} />
+                            <span className="text-[10px] font-semibold truncate" style={{ color: 'var(--ink)' }}>{cat.name}</span>
+                          </div>
+                          <span className="text-[22px] font-bold tabular-nums leading-none" style={{ color: scoreColor(cat.score) }}>{cat.score}</span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+
+                {/* Top findings */}
+                {findings.length > 0 && (
+                  <div>
+                    <p className="text-[11px] font-semibold mb-2" style={{ color: 'var(--m-muted)' }}>
+                      Top findings ({findings.filter(f => !f.dismissed).length})
+                    </p>
+                    <div className="space-y-1">
+                      {findings.filter(f => !f.dismissed).slice(0, 5).map(f => (
+                        <div key={f.id} className="flex items-start gap-2 px-3 py-2 rounded-lg" style={{ background: 'var(--paper-2)', border: '1px solid var(--rule)' }}>
+                          <span className="flex-shrink-0 mt-0.5 w-1.5 h-1.5 rounded-full" style={{ background: sevColor(f.severity) }} />
+                          <div className="flex-1 min-w-0">
+                            <p className="text-[12px] font-medium leading-snug" style={{ color: 'var(--ink)' }}>{f.title}</p>
+                            {f.recommendation && (
+                              <p className="text-[10px] leading-relaxed mt-0.5 line-clamp-1" style={{ color: 'var(--m-muted)' }}>{f.recommendation}</p>
+                            )}
+                          </div>
+                          <span className="text-[9px] font-semibold flex-shrink-0 px-1.5 py-0.5 rounded" style={{ background: `color-mix(in srgb, ${sevColor(f.severity)} 10%, transparent)`, color: sevColor(f.severity) }}>
+                            {sevLabel(f.severity)}
+                          </span>
+                        </div>
+                      ))}
+                      {findings.filter(f => !f.dismissed).length > 5 && (
+                        <p className="text-[10px] pl-3 pt-1" style={{ color: 'var(--m-muted)' }}>
+                          + {findings.filter(f => !f.dismissed).length - 5} more findings
+                        </p>
+                      )}
                     </div>
                   </div>
-                  <button
-                    onClick={e => { e.stopPropagation(); deleteFile(f.id); }}
-                    disabled={deletingFileId === f.id}
-                    className="p-1 rounded opacity-0 group-hover:opacity-100 transition-all"
-                    style={{ color: 'var(--m-muted)' }}
-                  >
-                    {deletingFileId === f.id ? <Loader2 size={11} className="animate-spin" /> : <Trash2 size={11} />}
-                  </button>
+                )}
+              </div>
+            )}
+
+            {/* No audit yet */}
+            {!audit && !auditLoading && !isAuditInProgress && (
+              <div className="text-center py-4">
+                <p className="text-[11px]" style={{ color: 'var(--m-muted)' }}>
+                  {readyForBrandAudit
+                    ? 'Run a Brand DNA audit to score your brand materials across 6 categories.'
+                    : 'Upload brand files above to enable auditing.'}
+                </p>
+              </div>
+            )}
+          </div>
+        </section>
+
+        {/* ══════════════════════════════════════════════════════
+           SECTION 5: Include in Website Audit
+           ══════════════════════════════════════════════════════ */}
+        <section
+          className="rounded-xl p-4"
+          style={{ background: 'var(--card)', border: '1px solid var(--rule)' }}
+        >
+          <div className="flex items-center justify-between">
+            <div>
+              <h3 className="text-[13px] font-semibold" style={{ color: 'var(--ink)' }}>Include in website audit</h3>
+              <p className="text-[11px] mt-0.5" style={{ color: 'var(--m-muted)' }}>
+                When enabled, your website audit will check design consistency against your brand standards.
+              </p>
+            </div>
+            <div className="flex-shrink-0 ml-4">
+              {readyForWebsiteAudit ? (
+                <span className="inline-flex items-center gap-1.5 text-[11px] font-semibold px-2.5 py-1.5 rounded-md" style={{ background: 'color-mix(in srgb, var(--ok) 8%, transparent)', color: 'var(--ok)', border: '1px solid color-mix(in srgb, var(--ok) 20%, transparent)' }}>
+                  <CheckCircle2 size={11} /> Available
+                </span>
+              ) : (
+                <span className="inline-flex items-center gap-1.5 text-[11px] font-medium px-2.5 py-1.5 rounded-md" style={{ background: 'var(--paper-2)', color: 'var(--m-muted)', border: '1px solid var(--rule)' }}>
+                  <AlertCircle size={11} /> Not ready
+                </span>
+              )}
+            </div>
+          </div>
+          {!readyForWebsiteAudit && missingItems.length > 0 && (
+            <div className="mt-3 rounded-lg p-2.5" style={{ background: 'var(--paper-2)', border: '1px solid var(--rule)' }}>
+              <p className="text-[10px] font-semibold mb-1.5" style={{ color: 'var(--m-muted)' }}>Missing requirements:</p>
+              <div className="flex flex-wrap gap-1.5">
+                {missingItems.map(item => (
+                  <span key={item.key} className="text-[10px] font-medium px-2 py-0.5 rounded-full" style={{ background: 'color-mix(in srgb, var(--warn) 8%, transparent)', color: 'var(--warn)', border: '1px solid color-mix(in srgb, var(--warn) 15%, transparent)' }}>
+                    {item.label}
+                  </span>
+                ))}
+              </div>
+            </div>
+          )}
+        </section>
+
+        {/* ══════════════════════════════════════════════════════
+           SECTION 6: Recommendations
+           ══════════════════════════════════════════════════════ */}
+        {recommendations.length > 0 && (
+          <section
+            className="rounded-xl p-4"
+            style={{ background: 'var(--card)', border: '1px solid var(--rule)' }}
+          >
+            <h3 className="text-[13px] font-semibold mb-3" style={{ color: 'var(--ink)' }}>Recommendations</h3>
+            <div className="space-y-1.5">
+              {recommendations.map((rec, i) => (
+                <div key={i} className="flex items-start gap-2 px-3 py-2 rounded-lg" style={{ background: 'color-mix(in srgb, var(--signal) 3%, transparent)', border: '1px solid color-mix(in srgb, var(--signal) 10%, transparent)' }}>
+                  <Lightbulb size={11} className="flex-shrink-0 mt-0.5" style={{ color: 'var(--signal)' }} />
+                  <p className="text-[12px] leading-snug" style={{ color: 'var(--ink)' }}>{rec}</p>
                 </div>
               ))}
             </div>
-          )}
-
-          </div>
-          )}
-        </section>
-      )}
-
-      {/* ── 5. Findings (when audit completed) ───────────── */}
-      {isAuditCompleted && report && findings.length > 0 && (
-        <section>
-          <div className="mb-2 flex items-center gap-2">
-            <AlertTriangle size={14} style={{ color: 'var(--m-muted)' }} />
-            <h4 className="text-[13px] font-semibold" style={{ color: 'var(--ink)' }}>Findings</h4>
-            <span className="text-[11px]" style={{ color: 'var(--m-muted)' }}>{findings.filter(f => !f.dismissed).length} total</span>
-          </div>
-          <div className="rounded-xl overflow-hidden" style={{ background: 'var(--card)', border: '1px solid var(--rule)' }}>
-            {findings.filter(f => !f.dismissed).map(f => (
-              <FindingRow key={f.id} finding={f} categoryScores={categoryScores} />
-            ))}
-          </div>
-          {findings.filter(f => f.dismissed).length > 0 && (
-            <p className="text-[11px] mt-2 px-1" style={{ color: 'var(--m-muted)' }}>
-              {findings.filter(f => f.dismissed).length} dismissed
-            </p>
-          )}
-        </section>
-      )}
-
-      {/* No audit yet — trigger CTA (only when no audit at all) */}
-      {!audit && !auditLoading && !isAuditInProgress && (
-        <section
-          className="rounded-xl p-5 text-center"
-          style={{ background: 'var(--card)', border: '1px solid var(--rule)' }}
-        >
-          <div className="w-10 h-10 rounded-lg flex items-center justify-center mx-auto mb-3" style={{ background: 'color-mix(in srgb, var(--signal) 8%, transparent)' }}>
-            <Sparkles size={18} style={{ color: 'var(--signal)' }} />
-          </div>
-          <p className="text-[14px] font-semibold mb-1" style={{ color: 'var(--ink)' }}>Audit your brand identity</p>
-          <p className="text-[12px] mb-4 max-w-sm mx-auto" style={{ color: 'var(--m-muted)' }}>
-            {hasFiles
-              ? 'We will analyze your brand files across 6 categories and score consistency, voice, and professionalism.'
-              : 'Upload brand guidelines or assets first, then run an audit to score your brand identity.'}
-          </p>
-          <button
-            onClick={triggerAudit}
-            disabled={triggeringAudit || !hasFiles}
-            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg text-[13px] font-semibold transition-all"
-            style={{
-              background: hasFiles ? 'var(--ink)' : 'var(--paper-2)',
-              color: hasFiles ? 'var(--paper)' : 'var(--m-muted)',
-              opacity: triggeringAudit ? 0.6 : 1,
-              cursor: hasFiles ? 'pointer' : 'not-allowed',
-            }}
-          >
-            {triggeringAudit ? <><Loader2 size={13} className="animate-spin" /> Starting...</> : <><Play size={13} /> Run brand audit</>}
-          </button>
-          {!hasFiles && (
-            <p className="text-[11px] mt-2" style={{ color: 'var(--m-muted)' }}>Upload at least one brand file to enable auditing.</p>
-          )}
-        </section>
-      )}
+          </section>
+        )}
 
       </div>
     </div>
@@ -1139,8 +1201,6 @@ export default function BrandDnaPage() {
 /* ══════════════════════════════════════════════════════════
    Sub-components
    ══════════════════════════════════════════════════════════ */
-
-/* Header component removed — now using PageHeader */
 
 function EmptyState({ title, body, ctaHref, ctaLabel }: { title: string; body: string; ctaHref: string; ctaLabel: string }) {
   return (
@@ -1157,12 +1217,30 @@ function EmptyState({ title, body, ctaHref, ctaLabel }: { title: string; body: s
   );
 }
 
-function Slot({ icon: Icon, label, value, filled, colors }: { icon: React.ElementType; label: string; value: string; filled: boolean; colors?: string[] }) {
+function StatusLine({ label, ready, reason }: { label: string; ready: boolean; reason?: string }) {
+  return (
+    <div className="flex items-center gap-1.5">
+      {ready ? (
+        <CheckCircle2 size={11} style={{ color: 'var(--ok)' }} />
+      ) : (
+        <AlertCircle size={11} style={{ color: 'var(--warn)' }} />
+      )}
+      <span className="text-[12px] font-medium" style={{ color: 'var(--ink)' }}>{label}</span>
+      {ready ? (
+        <span className="text-[10px] font-semibold" style={{ color: 'var(--ok)' }}>Ready</span>
+      ) : reason ? (
+        <span className="text-[10px]" style={{ color: 'var(--m-muted)' }}>— {reason}</span>
+      ) : null}
+    </div>
+  );
+}
+
+function ProfileSlot({ label, value, filled, colors }: { label: string; value: string; filled: boolean; colors?: string[] }) {
   return (
     <div className="rounded-lg px-3 py-2 min-w-0" style={{ background: 'var(--paper-2)', border: '1px solid var(--rule)' }}>
       <div className="flex items-center justify-between gap-1 mb-0.5">
-        <span className="inline-flex items-center gap-1 text-[10px] font-semibold tracking-[0.04em] uppercase" style={{ color: 'var(--m-muted)' }}>
-          <Icon size={9} strokeWidth={1.6} /> {label}
+        <span className="text-[10px] font-semibold tracking-[0.04em] uppercase" style={{ color: 'var(--m-muted)' }}>
+          {label}
         </span>
         {filled && <CheckCircle2 size={9} style={{ color: 'var(--ok)' }} />}
       </div>
@@ -1178,9 +1256,9 @@ function Slot({ icon: Icon, label, value, filled, colors }: { icon: React.Elemen
   );
 }
 
-function Field({ label, required, full, children }: { label: string; required?: boolean; full?: boolean; children: React.ReactNode }) {
+function Field({ label, required, children }: { label: string; required?: boolean; children: React.ReactNode }) {
   return (
-    <label className={`block ${full ? 'md:col-span-2' : ''}`}>
+    <label className="block">
       <span className="block text-[10px] font-semibold tracking-[0.06em] uppercase mb-1" style={{ color: 'var(--m-muted)' }}>
         {label}{required && <span style={{ color: 'var(--severe)' }}> *</span>}
       </span>
@@ -1189,225 +1267,36 @@ function Field({ label, required, full, children }: { label: string; required?: 
   );
 }
 
-/* ── Finding Row ─────────────────────────────────────────── */
-
-function FindingRow({ finding: f, categoryScores }: { finding: FindingRecord; categoryScores: BrandCategoryScore[] }) {
-  const [open, setOpen] = useState(false);
-  const [status, setStatus] = useState(f.status);
-  const [updating, setUpdating] = useState(false);
-
-  // Estimate category from sort_order
-  const catIndex = categoryScores.length > 0
-    ? Math.min(Math.floor((f.sort_order || 0) / Math.max(1, 100 / categoryScores.length)), categoryScores.length - 1)
-    : 0;
-  const cat = categoryScores[catIndex];
-  const tint = cat ? (CATEGORY_TINTS[cat.slug] || CATEGORY_TINTS.visual_consistency) : CATEGORY_TINTS.visual_consistency;
-  const CatIcon = cat ? (CATEGORY_ICONS[cat.slug] || Sparkles) : Sparkles;
-
-  const handleStatus = async (s: string) => {
-    setUpdating(true);
-    try {
-      const res = await fetch(`/api/findings/${f.id}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ status: s }),
-      });
-      if (res.ok) setStatus(s);
-    } catch {}
-    setUpdating(false);
-  };
-
-  return (
-    <div style={{ borderBottom: '1px solid var(--rule)', background: sevCardBg(f.severity) }}>
-      {/* Row header */}
-      <button
-        onClick={() => setOpen(!open)}
-        className="w-full flex items-center gap-3 px-4 text-left transition-colors"
-        style={{ background: open ? 'var(--paper-2)' : 'transparent', paddingTop: '1rem', paddingBottom: '1rem' }}
-      >
-        <div className="flex-1 min-w-0">
-          <p className="text-[13px] font-semibold leading-snug truncate" style={{ color: 'var(--ink)' }}>{f.title}</p>
-          <div className="flex items-center gap-x-2 text-[11px]" style={{ color: 'var(--m-muted)', marginTop: '0.6rem' }}>
-            <span className="font-semibold" style={{ color: sevColor(f.severity) }}>{sevLabel(f.severity)}</span>
-            {cat && (
-              <>
-                <span style={{ color: 'var(--rule)' }}>|</span>
-                <span className="flex items-center gap-1"><CatIcon size={9} style={{ color: tint.dot }} /> {cat.name}</span>
-              </>
-            )}
-          </div>
-        </div>
-        {/* Status chip */}
-        <span
-          className="text-[10px] font-semibold px-2 py-0.5 rounded-full flex-shrink-0"
-          style={{
-            background: status === 'fixed' ? 'color-mix(in srgb, var(--ok) 12%, transparent)' : status === 'in_progress' ? 'color-mix(in srgb, var(--signal) 12%, transparent)' : 'var(--paper-2)',
-            color: status === 'fixed' ? 'var(--ok)' : status === 'in_progress' ? 'var(--signal)' : 'var(--m-muted)',
-          }}
-        >
-          {status === 'in_progress' ? 'In progress' : status === 'fixed' ? 'Fixed' : 'Open'}
-        </span>
-        <ChevronDown size={13} className="flex-shrink-0 transition-transform" style={{ color: 'var(--m-muted)', transform: open ? 'rotate(180deg)' : 'none' }} />
-      </button>
-
-      {/* Expanded detail */}
-      {open && (
-        <div className="px-4 pb-4 space-y-3">
-          {/* Issue + Fix */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-            <div className="rounded-lg p-3" style={{ background: 'var(--paper-2)', border: '1px solid var(--rule)' }}>
-              <div className="flex items-center gap-1.5 mb-1.5">
-                <AlertTriangle size={11} style={{ color: sevColor(f.severity) }} />
-                <span className="text-[10px] font-semibold uppercase tracking-[0.06em]" style={{ color: 'var(--ink)' }}>Issue</span>
-              </div>
-              <p className="text-[12px] leading-relaxed" style={{ color: 'var(--m-muted)' }}>{f.description}</p>
-            </div>
-            <div className="rounded-lg p-3" style={{ background: 'color-mix(in srgb, var(--ok) 3%, var(--paper-2))', border: '1px solid var(--rule)' }}>
-              <div className="flex items-center gap-1.5 mb-1.5">
-                <Lightbulb size={11} style={{ color: tint.dot }} />
-                <span className="text-[10px] font-semibold uppercase tracking-[0.06em]" style={{ color: 'var(--ink)' }}>How to fix</span>
-              </div>
-              <p className="text-[12px] leading-relaxed" style={{ color: 'var(--m-muted)' }}>{f.recommendation || 'No specific recommendation.'}</p>
-            </div>
-          </div>
-
-          {/* Status bar */}
-          <div className="flex items-center gap-2">
-            <span className="text-[10px]" style={{ color: 'var(--m-muted)' }}>Status:</span>
-            {['open', 'in_progress', 'fixed'].map(s => (
-              <button
-                key={s}
-                onClick={() => handleStatus(s)}
-                disabled={updating}
-                className="text-[11px] font-medium px-2 py-1 rounded-md transition-colors capitalize"
-                style={{
-                  background: status === s
-                    ? s === 'fixed' ? 'color-mix(in srgb, var(--ok) 12%, transparent)' : s === 'in_progress' ? 'color-mix(in srgb, var(--signal) 12%, transparent)' : 'var(--paper-2)'
-                    : 'transparent',
-                  color: status === s
-                    ? s === 'fixed' ? 'var(--ok)' : s === 'in_progress' ? 'var(--signal)' : 'var(--ink)'
-                    : 'var(--m-muted)',
-                  border: status === s ? '1px solid var(--rule)' : '1px solid transparent',
-                }}
-              >
-                {s === 'in_progress' ? 'In progress' : s === 'fixed' ? 'Fixed' : 'Open'}
-              </button>
-            ))}
-          </div>
-        </div>
-      )}
-    </div>
-  );
-}
-
-/* ── Brand audit in-progress with progressive skeleton ── */
+/* ── Brand audit in-progress ── */
 
 function BrandAuditInProgress({ audit }: { audit: AuditRecord }) {
-  const { data: progress } = useAuditProgress(audit.id)
+  const { data: progress } = useAuditProgress(audit.id);
 
-  const steps = ['payment_received', 'crawling', 'analysing', 'generating_report'] as const
-  const currentIdx = steps.indexOf(audit.status as any)
+  const steps = ['payment_received', 'crawling', 'analysing', 'generating_report'] as const;
+  const currentIdx = steps.indexOf(audit.status as any);
   const stageLabels: Record<string, string> = {
     payment_received: 'Queued...',
     crawling: 'Extracting brand files...',
     analysing: 'Analyzing brand identity...',
     generating_report: 'Generating report...',
-  }
+  };
 
-  const progressPct = progress?.progress || Math.round(((currentIdx + 1) / steps.length) * 100)
+  const progressPct = progress?.progress || Math.round(((currentIdx + 1) / steps.length) * 100);
 
   return (
-    <div className="space-y-4">
-      {/* Status banner */}
-      <div
-        className="rounded-xl p-4 flex items-start gap-3"
-        style={{
-          background: 'color-mix(in srgb, var(--signal) 7%, transparent)',
-          border: '1px solid color-mix(in srgb, var(--signal) 22%, transparent)',
-        }}
-      >
-        <span
-          className="w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0"
-          style={{ background: 'color-mix(in srgb, var(--signal) 14%, transparent)', color: 'var(--signal)' }}
-        >
-          <Loader2 size={16} className="animate-spin" />
-        </span>
+    <div className="rounded-lg p-3" style={{ background: 'color-mix(in srgb, var(--signal) 4%, transparent)', border: '1px solid color-mix(in srgb, var(--signal) 15%, transparent)' }}>
+      <div className="flex items-center gap-2.5">
+        <Loader2 size={14} className="animate-spin flex-shrink-0" style={{ color: 'var(--signal)' }} />
         <div className="flex-1 min-w-0">
-          <p className="text-[13px] font-semibold leading-tight" style={{ color: 'var(--ink)' }}>
+          <p className="text-[12px] font-semibold" style={{ color: 'var(--ink)' }}>
             {stageLabels[audit.status] || 'Processing...'}
           </p>
-          <p className="text-[11px] mt-1" style={{ color: 'var(--m-muted)' }}>
-            Results will appear as they are ready. This page updates automatically.
-          </p>
-          {/* Progress bar */}
-          <div className="mt-2 h-1 w-full rounded-full overflow-hidden" style={{ background: 'color-mix(in srgb, var(--signal) 15%, transparent)' }}>
+          <div className="mt-1.5 h-1 w-full rounded-full overflow-hidden" style={{ background: 'color-mix(in srgb, var(--signal) 12%, transparent)' }}>
             <div
               className="h-full rounded-full transition-all duration-700 ease-out"
               style={{ width: `${progressPct}%`, background: 'var(--signal)' }}
             />
           </div>
-        </div>
-      </div>
-
-      {/* Skeleton category cards */}
-      <div>
-        <div className="mb-2 flex items-center gap-2">
-          <Layers size={14} style={{ color: 'var(--m-muted)' }} />
-          <h4 className="text-[13px] font-semibold" style={{ color: 'var(--ink)' }}>Category scores</h4>
-          <span className="text-[11px]" style={{ color: 'var(--m-muted)' }}>populating</span>
-        </div>
-        <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-6 gap-3">
-          {Object.entries(CATEGORY_TINTS).map(([slug, tint]) => {
-            const CatIcon = CATEGORY_ICONS[slug] || Target;
-            const catDef = BRAND_AUDIT_CATEGORIES.find(c => c.slug === slug);
-            return (
-              <div
-                key={slug}
-                className="rounded-xl overflow-hidden flex flex-col"
-                style={{ background: tint.bg, border: `1px solid ${tint.border}` }}
-              >
-                <div className="flex items-start gap-2 px-3 pt-3 pb-2">
-                  <div
-                    className="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0"
-                    style={{ background: `${tint.dot}15` }}
-                  >
-                    <CatIcon size={14} style={{ color: tint.dot }} />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <h3 className="font-sans font-semibold text-[12px] leading-tight truncate" style={{ color: 'var(--ink)' }}>
-                      {catDef?.name || slug.replace(/_/g, ' ')}
-                    </h3>
-                    <p className="text-[10px] leading-tight mt-0.5" style={{ color: 'var(--m-muted)' }}>
-                      Auditing...
-                    </p>
-                  </div>
-                </div>
-                <div className="px-3 pb-3 pt-1">
-                  <div
-                    className="h-5 w-12 rounded-md shimmer-pulse"
-                    style={{ background: 'color-mix(in srgb, var(--ink) 6%, transparent)' }}
-                  />
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      </div>
-
-      {/* Skeleton findings placeholder */}
-      <div
-        className="rounded-xl p-4"
-        style={{ background: 'var(--card)', border: '1px solid var(--rule)' }}
-      >
-        <div className="flex items-center gap-2 mb-3">
-          <AlertTriangle size={14} style={{ color: 'var(--m-muted)' }} />
-          <span className="text-[13px] font-semibold" style={{ color: 'var(--ink)' }}>Findings</span>
-          <span className="text-[11px]" style={{ color: 'var(--m-muted)' }}>will appear here</span>
-        </div>
-        <div className="space-y-2">
-          <div className="h-4 w-3/4 rounded shimmer-pulse" style={{ background: 'color-mix(in srgb, var(--ink) 5%, transparent)' }} />
-          <div className="h-4 w-1/2 rounded shimmer-pulse" style={{ background: 'color-mix(in srgb, var(--ink) 5%, transparent)', animationDelay: '150ms' }} />
-          <div className="h-4 w-2/3 rounded shimmer-pulse" style={{ background: 'color-mix(in srgb, var(--ink) 5%, transparent)', animationDelay: '300ms' }} />
         </div>
       </div>
     </div>
