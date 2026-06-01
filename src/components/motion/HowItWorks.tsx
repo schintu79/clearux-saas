@@ -350,7 +350,7 @@ const STEPS = [
   {
     number: '02',
     title: 'Our AI runs 112 checkpoints',
-    description: 'Each page is evaluated across seven modules: Foundation, Human Experience, Inclusive Design, Future Readiness, Accessibility Readiness, Brand Consistency, and SEO Structure.',
+    description: 'Each page is evaluated across seven modules: Foundation, Human Experience, Inclusive Design, Future Readiness, Accessibility Readiness, Design Consistency, and SEO Structure.',
   },
   {
     number: '03',

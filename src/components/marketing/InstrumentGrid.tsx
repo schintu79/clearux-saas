@@ -8,7 +8,7 @@ const modules = [
   { num: '03', name: 'Inclusive Design', desc: 'WCAG compliance, cognitive accessibility, mobile context, equity across abilities. Every user, every context.', count: 18, range: 'ID-01 → ID-18' },
   { num: '04', name: 'Future Readiness', desc: 'How LLMs and AI agents read your product. Performance, agent readiness, internationalisation. The discovery layer of the next decade.', count: 14, range: 'FR-01 → FR-14' },
   { num: '05', name: 'Accessibility Readiness', desc: 'Keyboard navigation, screen-reader compatibility, color-contrast ratios, ARIA landmarks. Whether every user can operate your product without barriers.', count: 16, range: 'AR-01 → AR-16' },
-  { num: '06', name: 'Brand Consistency', desc: 'Voice, visual identity, tone alignment. Whether what users see matches what your brand promises — surface to surface.', count: 14, range: 'BC-01 → BC-14' },
+  { num: '06', name: 'Design Consistency', desc: 'Font families, color usage, spacing rhythm, button styles. Whether your visual system is internally consistent — surface to surface.', count: 14, range: 'DC-01 → DC-14' },
   { num: '07', name: 'SEO Structure', desc: 'Heading hierarchy, meta tags, structured data, crawlability. Whether your product is findable, legible, and ranked the way it deserves.', count: 12, range: 'SEO-01 → SEO-12' },
 ]
 

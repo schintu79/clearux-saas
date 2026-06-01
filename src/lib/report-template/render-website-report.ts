@@ -15,7 +15,7 @@ const PILLAR_DEFS = [
   { key: 'Future Readiness',        color: '#22C55E', bg: '#F0FDF4', border: '#BBF7D0', cssClass: 'future' },
   { key: 'SEO Structure & Rules',   color: '#06B6D4', bg: '#ECFEFF', border: '#A5F3FC', cssClass: 'seo' },
   { key: 'Accessibility Readiness', color: '#14B8A6', bg: '#F0FDFA', border: '#99F6E4', cssClass: 'accessibility' },
-  { key: 'Brand Consistency',       color: '#F43F5E', bg: '#FFF1F2', border: '#FECDD3', cssClass: 'brand' },
+  { key: 'Design Consistency',       color: '#F43F5E', bg: '#FFF1F2', border: '#FECDD3', cssClass: 'design' },
 ]
 
 /* ── Helpers ──────────────────────────────────────────────── */

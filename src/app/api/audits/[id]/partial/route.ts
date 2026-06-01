@@ -20,7 +20,7 @@ const PHASE1_MODULES = [
   'Future Readiness',
   'SEO Structure & Rules',
   'Accessibility Readiness',
-  'Brand Consistency',
+  'Design Consistency',
 ] as const
 
 /**

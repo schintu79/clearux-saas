@@ -81,7 +81,7 @@ async function describeImage(
 
 File name: ${fileName}
 
-Be thorough — this description will be used by another AI to evaluate brand consistency.`,
+Be thorough — this description will be used by another AI to evaluate design consistency against brand standards.`,
           },
         ],
       },
@@ -137,7 +137,7 @@ Based on this text, provide a structured brand analysis:
 4. **Brand guidelines**: Any rules, do's/don'ts, usage specifications found.
 5. **Document structure**: How well-organized is this document? What sections does it contain?
 
-Be thorough — this will be used for automated brand consistency analysis.`,
+Be thorough — this will be used for automated design consistency analysis.`,
       },
     ],
   })

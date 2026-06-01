@@ -125,7 +125,7 @@ const CATEGORY_ICONS: React.ElementType[] = [
   Gauge, Search, Zap, Globe,                        // Future Readiness (12-15)
   FileSearch, LinkIcon, Share2, Scale,              // SEO Structure & Rules (16-19)
   Eye, Keyboard, FileText, Code2,                   // Accessibility Readiness (20-23)
-  Eye, MessageSquare, Target, CheckCircle2,         // Brand Consistency (24-27)
+  Eye, MessageSquare, Target, CheckCircle2,         // Design Consistency (24-27)
 ];
 
 /* Module tint colors for hero card dots and pillar sections */
@@ -1713,8 +1713,8 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
   const auditSelectedPillars: number[] | null = rawJson?.selectedPillars ?? (audit as any)?.selected_pillars ?? null;
   const auditSelectedModules: string[] | null = rawJson?.selectedModules ?? (audit as any)?.selected_modules ?? null;
   // Module slug order must match PILLAR_STYLE order
-  const MODULE_SLUG_ORDER = ['foundation', 'human_experience', 'inclusive_design', 'future_readiness', 'seo_structure', 'accessibility_readiness', 'brand_consistency'];
-  // Total possible modules: 7 (or 6 if brand_consistency not applicable)
+  const MODULE_SLUG_ORDER = ['foundation', 'human_experience', 'inclusive_design', 'future_readiness', 'seo_structure', 'accessibility_readiness', 'design_consistency'];
+  // Total possible modules: 7
   const totalModuleCount = PILLAR_STYLE.length; // 7
   // Count pillars that actually have category score data
   const pillarsWithData = PILLAR_STYLE.filter(p =>

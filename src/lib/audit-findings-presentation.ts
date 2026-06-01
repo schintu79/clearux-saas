@@ -146,7 +146,7 @@ export function weaknessLabel(score: number): string | null {
 /**
  * Brand Clarity Signals — fallback mode detection.
  *
- * When Brand Consistency module (indices 20-23) is NOT included in the audit,
+ * When Design Consistency module (indices 24-27) is NOT included in the audit,
  * the canonical `brand` category still receives findings from category 1
  * (Value Proposition & Messaging). This helper flags that the brand score
  * is based on limited signals so the UI can show an appropriate qualifier.
@@ -156,7 +156,7 @@ export function weaknessLabel(score: number): string | null {
  */
 export function isBrandScorePartial(auditedModuleSlugs: string[] | null): boolean {
   if (!auditedModuleSlugs) return false; // all modules included
-  return !auditedModuleSlugs.includes('brand_consistency');
+  return !auditedModuleSlugs.includes('brand_consistency') && !auditedModuleSlugs.includes('design_consistency');
 }
 
 /* ── Reconciliation-Aware Sort ─────────────────────────────── */

@@ -19,7 +19,7 @@ const SCAN_STAGES = [
   'Future Readiness',
   'SEO',
   'Accessibility',
-  'Brand Consistency',
+  'Design Consistency',
   'Generating report',
 ]
 

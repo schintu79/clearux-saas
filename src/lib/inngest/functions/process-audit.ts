@@ -354,7 +354,7 @@ export const processAuditFn = inngest.createFunction(
         ? rawPillars.filter((v: any) => typeof v === 'number' && v >= 0 && v <= 3)
         : null
 
-      // Brand identity ID for brand consistency module
+      // Brand identity ID for Design Consistency Brand DNA enrichment
       const brandIdentityId: string | null = (audit as any).brand_identity_id || null
 
       return {
@@ -367,7 +367,7 @@ export const processAuditFn = inngest.createFunction(
         depthMode: ((audit as any).depth_mode as string) || 'standard',
         selectedModules, // null = complete audit, ['foundation', 'seo_structure'] = partial
         selectedPillars, // legacy fallback
-        brandIdentityId, // for brand consistency module
+        brandIdentityId, // for Design Consistency Brand DNA enrichment
       }
     })
 
@@ -2173,7 +2173,7 @@ RULES FOR RE-AUDIT:
       // Detect those gaps and run fresh AI analysis on just the
       // missing categories so re-audits include full coverage.
       // ════════════════════════════════════════════════════════════
-      const MODULE_SLUG_ORDER_BL = ['foundation', 'human_experience', 'inclusive_design', 'future_readiness', 'seo_structure', 'accessibility_readiness', 'brand_consistency']
+      const MODULE_SLUG_ORDER_BL = ['foundation', 'human_experience', 'inclusive_design', 'future_readiness', 'seo_structure', 'accessibility_readiness', 'design_consistency']
 
       // Determine which modules should be active for this audit
       let activeSlugsBl: string[]
@@ -2193,12 +2193,17 @@ RULES FOR RE-AUDIT:
         activeSlugsBl = [...COMPLETE_AUDIT_SLUGS]
       }
 
-      // Brand Consistency dual-mode — same logic as deep audit path
-      // Only use brand_dna mode if the identity has meaningful content beyond auto-populated fields
-      let brandConsistencyModeBl: 'brand_dna' | 'website_only' = 'website_only'
+      // Design Consistency always runs. Brand DNA enrichment only when explicitly enabled.
+      let includeBrandDnaEnrichmentBl = false
       if (activeSlugsBl.includes('brand_consistency') && auditDetails.brandIdentityId) {
         const hasMeaningful = await hasMeaningfulBrandDna(auditDetails.brandIdentityId)
-        brandConsistencyModeBl = hasMeaningful ? 'brand_dna' : 'website_only'
+        includeBrandDnaEnrichmentBl = hasMeaningful
+      }
+      // Normalize slug: 'brand_consistency' → 'design_consistency' for category resolution
+      activeSlugsBl = activeSlugsBl.map(s => s === 'brand_consistency' ? 'design_consistency' : s)
+      // Ensure design_consistency is always in the active set for baseline re-audits
+      if (!activeSlugsBl.includes('design_consistency')) {
+        activeSlugsBl.push('design_consistency')
       }
 
       // Check which modules had coverage in the previous audit
@@ -2240,38 +2245,34 @@ RULES FOR RE-AUDIT:
         const llmProbeBlockBl = llmProbeResult.summary ? `\n\n${llmProbeResult.summary}` : ''
         const contentWithContextBl = `${siteContext.context}\n\n${crawlResult.pageContent}${aiDiscoveryBlockBl}${structuredDataBlockBl}${llmProbeBlockBl}`
 
-        // Handle brand context for brand_consistency gap fill — dual-mode
-        let brandContentBl = contentWithContextBl
-        const brandCategoryNamesBl = new Set(UX_CATEGORY_NAMES.slice(24, 28))
-        if (missingModuleSlugs.includes('brand_consistency')) {
-          if (brandConsistencyModeBl === 'brand_dna' && auditDetails.brandIdentityId) {
-            try {
-              const db = getDb()
-              const { data: brandFiles } = await db
-                .from('brand_identity_files')
-                .select('file_name, file_url, file_type')
-                .eq('brand_identity_id', auditDetails.brandIdentityId)
+        // Design Consistency gap fill — uses standard content by default.
+        // When Brand DNA enrichment is enabled, prepend brand guidelines for comparison.
+        let designConsistencyContentBl = contentWithContextBl
+        const designConsistencyCategoryNamesBl = new Set(UX_CATEGORY_NAMES.slice(24, 28))
+        if (missingModuleSlugs.includes('design_consistency') && includeBrandDnaEnrichmentBl && auditDetails.brandIdentityId) {
+          try {
+            const db = getDb()
+            const { data: brandFiles } = await db
+              .from('brand_identity_files')
+              .select('file_name, file_url, file_type')
+              .eq('brand_identity_id', auditDetails.brandIdentityId)
 
-              if (brandFiles && brandFiles.length > 0) {
-                const extracted = await extractAllBrandFiles(
-                  brandFiles.map((f: any) => ({
-                    file_name: f.file_name as string,
-                    file_url: f.file_url as string,
-                    file_type: f.file_type as string | null,
-                  })),
-                )
-                const textParts = extracted
-                  .filter(e => e.textContent && e.textContent.length > 0)
-                  .map(e => `[Brand file: ${e.fileName}]\n${e.textContent}`)
-                const brandCtx = textParts.join('\n\n---\n\n')
-                brandContentBl = `=== BRAND IDENTITY GUIDELINES ===\n${brandCtx}\n\n=== WEBSITE CONTENT ===\n${contentWithContextBl}`
-              }
-            } catch (err) {
-              console.error('[inngest] Brand file extraction error in gap fill (non-fatal):', err)
+            if (brandFiles && brandFiles.length > 0) {
+              const extracted = await extractAllBrandFiles(
+                brandFiles.map((f: any) => ({
+                  file_name: f.file_name as string,
+                  file_url: f.file_url as string,
+                  file_type: f.file_type as string | null,
+                })),
+              )
+              const textParts = extracted
+                .filter(e => e.textContent && e.textContent.length > 0)
+                .map(e => `[Brand file: ${e.fileName}]\n${e.textContent}`)
+              const brandCtx = textParts.join('\n\n---\n\n')
+              designConsistencyContentBl = `=== BRAND IDENTITY GUIDELINES ===\n${brandCtx}\n\n=== ADDITIONAL INSTRUCTION ===\nIn addition to checking the site's internal design consistency, ALSO compare against the uploaded brand guidelines above. Flag any deviations from the brand standards.\n\n=== WEBSITE CONTENT ===\n${contentWithContextBl}`
             }
-          } else {
-            // Website-only mode — instruct AI to analyze internal consistency
-            brandContentBl = `=== BRAND CONSISTENCY MODE: WEBSITE-ONLY ===\nNo external brand guidelines were provided for this audit. Analyze the website's own internal brand consistency — evaluate how coherent the site is across its own messaging, tone, offer naming, CTA language, positioning, visual style, and structure. Score the consistency of the website as it presents itself. Do NOT penalize for missing external brand documents. Instead, check whether the site contradicts itself across pages.\n\n=== WEBSITE CONTENT ===\n${contentWithContextBl}`
+          } catch (err) {
+            console.error('[inngest] Brand file extraction error in gap fill (non-fatal):', err)
           }
         }
 
@@ -2288,8 +2289,8 @@ RULES FOR RE-AUDIT:
 
           const gapResults = await Promise.all(
             gapCategories.map(async (categoryName) => {
-              const isBrandCategory = brandCategoryNamesBl.has(categoryName)
-              const content = isBrandCategory ? brandContentBl : contentWithContextBl
+              const isDesignConsistencyCategory = designConsistencyCategoryNamesBl.has(categoryName)
+              const content = isDesignConsistencyCategory ? designConsistencyContentBl : contentWithContextBl
               try {
                 const result = await withTimeout(
                   analyzeCategory(
@@ -2459,8 +2460,8 @@ RULES FOR RE-AUDIT:
       // ── Determine which modules (and thus categories) to analyze ──
       // Module slug → category index mapping (each module = 4 categories):
       //   foundation → 0-3, human_experience → 4-7, inclusive_design → 8-11,
-      //   future_readiness → 12-15, seo_structure → 16-19, accessibility_readiness → 20-23, brand_consistency → 24-27
-      const MODULE_SLUG_ORDER = ['foundation', 'human_experience', 'inclusive_design', 'future_readiness', 'seo_structure', 'accessibility_readiness', 'brand_consistency']
+      //   future_readiness → 12-15, seo_structure → 16-19, accessibility_readiness → 20-23, design_consistency → 24-27
+      const MODULE_SLUG_ORDER = ['foundation', 'human_experience', 'inclusive_design', 'future_readiness', 'seo_structure', 'accessibility_readiness', 'design_consistency']
 
       let activeSlugs: string[]
       if (auditDetails.selectedModules) {
@@ -2484,16 +2485,22 @@ RULES FOR RE-AUDIT:
         activeSlugs = [...COMPLETE_AUDIT_SLUGS]
       }
 
-      // Brand Consistency runs in two modes:
-      // Mode A (website-only): always available — analyzes internal consistency
-      // Mode B (with Brand DNA): only when brand_identity_id is set AND identity has meaningful content
-      let brandConsistencyMode: 'brand_dna' | 'website_only' = 'website_only'
+      // Design Consistency always runs (categories 24-27) — evaluates the live site's
+      // visual system consistency. Brand DNA enrichment is ONLY added when the user
+      // explicitly enabled brand_consistency AND meaningful brand files exist.
+      let includeBrandDnaEnrichment = false
       if (activeSlugs.includes('brand_consistency') && auditDetails.brandIdentityId) {
         const hasMeaningful = await hasMeaningfulBrandDna(auditDetails.brandIdentityId)
-        brandConsistencyMode = hasMeaningful ? 'brand_dna' : 'website_only'
+        includeBrandDnaEnrichment = hasMeaningful
       }
-      await auditLog(auditId, 'brand_mode', 'info',
-        `Brand Consistency mode: ${brandConsistencyMode === 'brand_dna' ? 'Website + Brand DNA' : brandConsistencyMode === 'website_only' && auditDetails.brandIdentityId ? 'Website-only (auto-populated brand identity)' : 'Website-only (internal consistency)'}`)
+      // Normalize slug: 'brand_consistency' → 'design_consistency' for category resolution
+      activeSlugs = activeSlugs.map(s => s === 'brand_consistency' ? 'design_consistency' : s)
+      // Ensure design_consistency is always in the active set
+      if (!activeSlugs.includes('design_consistency')) {
+        activeSlugs.push('design_consistency')
+      }
+      await auditLog(auditId, 'design_mode', 'info',
+        `Design Consistency: always active. Brand DNA enrichment: ${includeBrandDnaEnrichment ? 'enabled (meaningful brand files found)' : 'disabled'}`)
 
       // Build the set of category indices to analyze
       const selectedIndices = new Set<number>()
@@ -2507,9 +2514,9 @@ RULES FOR RE-AUDIT:
 
       let categoriesToAnalyze = UX_CATEGORY_NAMES.filter((_, idx) => selectedIndices.has(idx))
 
-      // ── Fetch brand content only in Brand DNA mode ──
+      // ── Fetch brand content only when user explicitly enabled Brand DNA comparison ──
       let brandContext = ''
-      if (brandConsistencyMode === 'brand_dna' && auditDetails.brandIdentityId) {
+      if (includeBrandDnaEnrichment && auditDetails.brandIdentityId) {
         try {
           const db = getDb()
           const { data: brandFiles } = await db
@@ -2550,14 +2557,13 @@ RULES FOR RE-AUDIT:
       const llmProbeBlock = llmProbeResult.summary ? `\n\n${llmProbeResult.summary}` : ''
       // Use patchedContext (which has [VERIFIED FIXED] labels) instead of siteContext.context
       const contentWithContext = `${patchedContext}\n\n${crawlResult.pageContent}${aiDiscoveryBlock}${structuredDataBlock}${llmProbeBlock}`
-      // Brand consistency categories get different context based on mode:
-      // Mode A (website-only): instruction to analyze internal consistency only
-      // Mode B (Brand DNA): prepend uploaded brand guidelines for comparison
-      const brandContentWithContext = brandContext
-        ? `=== BRAND IDENTITY GUIDELINES ===\n${brandContext}\n\n=== WEBSITE CONTENT ===\n${contentWithContext}`
-        : `=== BRAND CONSISTENCY MODE: WEBSITE-ONLY ===\nNo external brand guidelines were provided for this audit. Analyze the website's own internal brand consistency — evaluate how coherent the site is across its own messaging, tone, offer naming, CTA language, positioning, visual style, and structure. Score the consistency of the website as it presents itself. Do NOT penalize for missing external brand documents. Instead, check whether the site contradicts itself across pages.\n\n=== WEBSITE CONTENT ===\n${contentWithContext}`
-      // Brand consistency category names (indices 24-27)
-      const brandCategoryNames = new Set(
+      // Design Consistency categories use standard content by default.
+      // When Brand DNA enrichment is enabled, prepend brand guidelines for comparison.
+      const designConsistencyContent = brandContext
+        ? `=== BRAND IDENTITY GUIDELINES ===\n${brandContext}\n\n=== ADDITIONAL INSTRUCTION ===\nIn addition to checking the site's internal design consistency, ALSO compare against the uploaded brand guidelines above. Flag any deviations from the brand standards.\n\n=== WEBSITE CONTENT ===\n${contentWithContext}`
+        : contentWithContext
+      // Design Consistency category names (indices 24-27)
+      const designConsistencyCategoryNames = new Set(
         UX_CATEGORY_NAMES.slice(24, 28)
       )
 
@@ -2575,8 +2581,8 @@ RULES FOR RE-AUDIT:
           const CATEGORY_TIMEOUT_MS = 45_000 // 45s hard budget per category
           const batchResults = await Promise.all(
             batch.map(async (categoryName) => {
-              const content = brandCategoryNames.has(categoryName)
-                ? brandContentWithContext
+              const content = designConsistencyCategoryNames.has(categoryName)
+                ? designConsistencyContent
                 : contentWithContext
               try {
                 const result = await withTimeout(

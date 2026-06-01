@@ -52,12 +52,12 @@ const PILLAR_COLORS = [
   '#F59E0B', // Future Readiness
   '#10B981', // SEO Structure & Rules
   '#14B8A6', // Accessibility Readiness
-  '#06B6D4', // Brand Consistency
+  '#06B6D4', // Design Consistency
 ]
 
 const PILLAR_NAMES = [
   'Foundation', 'Human Experience', 'Inclusive Design',
-  'Future Readiness', 'SEO Structure & Rules', 'Accessibility Readiness', 'Brand Consistency',
+  'Future Readiness', 'SEO Structure & Rules', 'Accessibility Readiness', 'Design Consistency',
 ]
 const PILLAR_RANGES: [number, number][] = [
   [0, 4], [4, 8], [8, 12], [12, 16], [16, 20], [20, 24], [24, 28],

@@ -664,7 +664,7 @@ export default function BrandDnaPage() {
         />
         <EmptyState
           title={!workspace.primary_domain ? 'No Brand DNA on file yet' : `No Brand DNA for ${siteLabel || 'this site'}`}
-          body="Add your brand name, voice, colours, and upload guidelines so we can audit brand consistency."
+          body="Add your brand name, voice, colours, and upload guidelines so we can audit design consistency against your brand standards."
           ctaHref={`${dashPrefix}/brand-identity/new`}
           ctaLabel="Add brand DNA"
         />

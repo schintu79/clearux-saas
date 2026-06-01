@@ -123,7 +123,7 @@ export interface Audit {
   depth_mode:         AuditDepthMode
   // Pillar selection: null = all pillars (full audit), array of indices = partial audit
   selected_pillars:   number[] | null
-  // Brand identity for brand consistency auditing
+  // Brand identity for Design Consistency Brand DNA enrichment
   brand_identity_id:  string | null
   // Module selection (slug-based): null = complete audit
   selected_modules:   string[] | null

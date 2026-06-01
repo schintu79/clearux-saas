@@ -69,7 +69,7 @@ export async function GET(request: NextRequest) {
       const aiVis = r?.ai_visibility_breakdown as any
 
       // Recompute overall score from categoryScores, filtering out -1 sentinel
-      // values (unanalyzed categories like Brand Consistency without Brand DNA).
+      // values (unanalyzed categories like Design Consistency without Brand DNA in legacy audits).
       // The stored overall_score may include -1 values, dragging the average down.
       let overallScore: number | null = r?.overall_score ?? null
       const rawJson = r?.raw_json as any

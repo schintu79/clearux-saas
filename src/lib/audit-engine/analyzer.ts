@@ -249,7 +249,7 @@ Return ONLY valid JSON:
 //   FUTURE READINESS (12-15): Is the site ready for what's next?
 //   SEO STRUCTURE & RULES (16-19): Is the site search-engine friendly?
 //   ACCESSIBILITY READINESS (20-23): Is the site accessible to all users?
-//   BRAND CONSISTENCY (24-27): Does the site match the brand? (requires brand files)
+//   DESIGN CONSISTENCY (24-27): Is the visual system internally consistent?
 export const UX_CATEGORIES = [
   // ═══ PILLAR 1: FOUNDATION ═══════════════════════════════════
   // Core visual design, messaging, navigation, and content quality
@@ -509,47 +509,48 @@ export const UX_CATEGORIES = [
     ],
   },
 
-  // ═══ MODULE 7: BRAND CONSISTENCY ═══════════════════════════
-  // Mode A (website-only): internal consistency of tone, style, messaging
-  // Mode B (with Brand DNA): also compares against uploaded brand guidelines
+  // ═══ MODULE 7: DESIGN CONSISTENCY ═══════════════════════════
+  // Evaluates whether the site applies its own visual system consistently.
+  // This is a systems audit — not a taste audit, not brand strategy.
+  // Strictly: does the site use its own patterns consistently across pages?
   {
-    name: 'Visual Identity Alignment',
-    pillar: 'Brand Consistency',
+    name: 'Typography & Type System',
+    pillar: 'Design Consistency',
     items: [
-      'COLOR PALETTE MATCH: Compare the website\'s color usage against the brand guidelines. Are the primary, secondary, and accent colors used correctly and consistently? Check: hero sections, buttons, links, backgrounds, and text colors. Flag any colors used prominently on the website that don\'t appear in the brand palette, or brand colors that are absent from the website.',
-      'TYPOGRAPHY CONSISTENCY: Does the website use the fonts specified in the brand guidelines? Check: heading fonts, body text fonts, font weights, and font sizes. If the brand specifies a particular typeface, is it actually loaded and used on the site? Flag: wrong fonts, missing web font loading, inconsistent font usage across pages, or font sizes that don\'t match brand specifications.',
-      'LOGO USAGE: Is the logo used correctly according to brand guidelines? Check: proper logo version (full color, monochrome, icon-only), minimum clear space around the logo, logo sizing, and placement. Flag: distorted logos, logos on incorrect backgrounds, logos too small/large, or logo placement that violates brand rules.',
-      'IMAGERY & VISUAL STYLE: Does the website\'s visual style (photography, illustrations, icons, graphics) match the brand\'s visual language? Check: image style consistency, icon style matching brand guidelines, use of brand-specific visual elements, and overall aesthetic alignment. Flag: stock photos that clash with brand personality, inconsistent illustration styles, or visual elements that feel off-brand.',
+      'FONT FAMILY CONSISTENCY: Does the site use a consistent set of font families across all pages? Check if the same heading font and body font are used everywhere, or if different pages load different typefaces. Flag: pages that introduce a font not used elsewhere, fallback system fonts appearing where a web font should load, or mixed serif/sans-serif usage without clear intent.',
+      'HEADING HIERARCHY CONSISTENCY: Is the heading hierarchy (H1–H6) styled consistently across all pages? Check: are H1s the same size/weight on every page, are H2s styled the same way in blog posts as on landing pages? Flag: heading sizes that vary between pages, inconsistent use of heading levels (H2 on one page looks like H3 on another), or heading styles that break the established pattern.',
+      'TYPE SCALE CONSISTENCY: Does the site use a consistent type scale (a defined set of font sizes)? Check: body text, captions, labels, navigation items, and UI text. Flag: arbitrary font sizes that don\'t follow a scale, text elements that are nearly-but-not-quite the same size (16px vs 15px vs 14px without clear purpose), or inconsistent line-height ratios.',
+      'FONT WEIGHT & STYLE CONSISTENCY: Are font weights (bold, semibold, regular, light) applied consistently for the same purposes? Check: is bold always used for emphasis the same way, are link styles consistent, are navigation items the same weight? Flag: inconsistent use of bold/semibold for similar elements, italic used arbitrarily, or uppercase styling applied inconsistently.',
     ],
   },
   {
-    name: 'Voice & Tone Alignment',
-    pillar: 'Brand Consistency',
+    name: 'Color & Visual Language',
+    pillar: 'Design Consistency',
     items: [
-      'BRAND VOICE MATCH: Does the website copy reflect the brand\'s defined voice and personality? If the brand is described as "professional yet approachable," does the website copy feel that way? Compare actual website copy against brand voice guidelines. Quote specific examples of copy that aligns well and copy that misaligns with the stated brand voice.',
-      'TONE CONSISTENCY ACROSS PAGES: Is the tone of voice consistent across all pages, or does it shift unexpectedly? The homepage might be energetic while the pricing page is dry and corporate. Check all crawled pages for tonal consistency. Flag jarring shifts in tone that could confuse users about the brand\'s personality.',
-      'AUDIENCE LANGUAGE FIT: Does the website use language appropriate for the brand\'s target audience as defined in the brand materials? If the brand targets enterprise clients but the website uses casual slang, that\'s a mismatch. Compare the website\'s reading level and vocabulary against the audience defined in brand documents.',
-      'BRAND TERMINOLOGY: Does the website consistently use the brand\'s preferred terminology for its products, features, and services? Check: product names, feature names, industry terms, and brand-specific vocabulary. Flag: inconsistent naming (calling the same thing different names on different pages), or using generic terms instead of branded terminology defined in brand materials.',
+      'COLOR USAGE CONSISTENCY: Does the site use its primary, secondary, and accent colors consistently for the same purposes? Check: is the primary color always used for primary CTAs, is the accent color always used for highlights, do background colors follow a pattern? Flag: the same color meaning different things on different pages, or multiple competing accent colors without hierarchy.',
+      'PRIMARY CTA COLOR CONSISTENCY: Are primary call-to-action buttons always the same color, size class, and style? Check: hero CTAs, form submit buttons, checkout buttons, sign-up buttons. Flag: primary CTAs that change color between pages, buttons that look like primary CTAs but use a different color, or inconsistent hover/active states.',
+      'SECONDARY CTA & LINK CONSISTENCY: Are secondary buttons and text links styled consistently? Check: do secondary buttons always use the same outline/ghost style, are text links always the same color and underline treatment? Flag: secondary buttons that look different on different pages, links that are sometimes underlined and sometimes not, or competing link colors.',
+      'BACKGROUND & SURFACE TREATMENT: Are page backgrounds, card surfaces, and section treatments applied consistently? Check: do content cards always use the same background, border, and shadow treatment? Are section backgrounds alternating consistently? Flag: cards with different border-radius on different pages, inconsistent shadow depths, or surface colors that vary without purpose.',
     ],
   },
   {
-    name: 'Messaging & Value Prop Alignment',
-    pillar: 'Brand Consistency',
+    name: 'Component & Pattern Consistency',
+    pillar: 'Design Consistency',
     items: [
-      'CORE MESSAGE ALIGNMENT: Does the website\'s primary messaging (hero headline, tagline, key selling points) align with the brand\'s documented value proposition and positioning? Compare the website\'s stated benefits against the brand\'s defined value proposition. Flag: messaging that contradicts brand positioning, missing key selling points, or value props that don\'t appear anywhere on the site.',
-      'KEY MESSAGES PRESENCE: Are the brand\'s key messages and talking points represented on the website? Check if the most important brand messages (as defined in brand documents) appear prominently on the site. Flag: key messages that are buried or absent, messaging that introduces claims not supported by brand documents, or critical differentiators that are missing from the website.',
-      'COMPETITIVE POSITIONING: Does the website\'s competitive positioning match what\'s defined in the brand materials? If the brand positions itself as premium, does the website communicate premium value? If the brand emphasizes innovation, is that reflected in the site\'s messaging and design? Flag disconnects between stated positioning and how the website actually presents the brand.',
-      'PROMISE CONSISTENCY: Are the promises and claims made on the website consistent with what the brand documents state? Check: pricing claims, feature descriptions, guarantees, and customer promises. Flag: website promises that exceed brand documentation (overpromising), or brand commitments that aren\'t reflected on the website (missed opportunities).',
+      'BUTTON SIZE & STYLE CONSISTENCY: Are buttons of the same importance always the same size and shape? Check: do all primary buttons share the same height, padding, border-radius, and text style? Are icon buttons consistently sized? Flag: buttons that should be the same tier but have different heights, inconsistent border-radius (some rounded, some pill-shaped, some square), or varying padding.',
+      'CARD & COMPONENT PATTERN CONSISTENCY: Are recurring UI patterns (cards, list items, testimonials, feature blocks) styled consistently? Check: do all product cards use the same layout, spacing, and typography? Flag: the same component type rendered differently in different sections, inconsistent image aspect ratios in grids, or card layouts that shift between pages.',
+      'FORM FIELD CONSISTENCY: Are input fields, selects, checkboxes, and other form elements styled consistently? Check: do all text inputs have the same height, border style, focus state, and label placement? Flag: form inputs that look different on the contact page vs the signup page, inconsistent error state styling, or varying placeholder text styles.',
+      'ICON & IMAGERY STYLE CONSISTENCY: Do icons follow a consistent style (line vs filled, same stroke width, same grid size)? Check: are icons from the same icon set, or are mixed styles used? Are photos treated consistently (filters, crops, overlays)? Flag: mixing thin-line icons with filled icons, inconsistent icon sizes in navigation, or photos with different treatment (some have overlays, some don\'t).',
     ],
   },
   {
-    name: 'Brand Standards Compliance',
-    pillar: 'Brand Consistency',
+    name: 'Layout & Spacing System',
+    pillar: 'Design Consistency',
     items: [
-      'BRAND GUIDELINE ADHERENCE: Does the website follow the specific rules laid out in the brand guidelines? This includes: spacing rules, grid systems, component styles, and any do\'s and don\'ts specified in brand documents. Flag specific violations of documented brand standards with references to which guideline is being violated.',
-      'CONTENT FORMAT STANDARDS: Does the website follow the brand\'s content formatting standards? Check: date formats, number formatting, capitalization rules (Title Case vs sentence case), abbreviation usage, and any editorial style guide rules. Consistency in these details signals professionalism and brand discipline.',
-      'CROSS-PAGE CONSISTENCY: Is the brand applied consistently across ALL pages of the website, or do some pages feel "off-brand"? Inner pages, blog posts, and utility pages (404, login, terms) often deviate from brand standards. Check every crawled page against brand guidelines. Flag pages that feel like they belong to a different brand.',
-      'BRAND EVOLUTION GAPS: Are there signs that the brand has evolved but the website hasn\'t caught up? Check for: old logos still appearing somewhere, outdated color schemes on legacy pages, messaging that uses old positioning language, or visual elements from a previous brand iteration. These gaps erode brand credibility and confuse users about the current brand identity.',
+      'SPACING RHYTHM CONSISTENCY: Does the site use a consistent spacing scale (e.g., 8px grid)? Check: are margins and padding between sections consistent, do cards have the same internal padding, is the gap between elements predictable? Flag: arbitrary spacing values that don\'t follow a system, sections with dramatically different vertical spacing without clear reason, or padding that varies between similar components.',
+      'LAYOUT & ALIGNMENT CONSISTENCY: Are page layouts aligned to a consistent grid system? Check: do content sections use the same max-width, are elements aligned to the same vertical grid, is the overall page structure predictable? Flag: content that shifts width between pages, inconsistent sidebar/main proportions, or elements that break the grid without purpose.',
+      'NAVIGATION CONSISTENCY: Is the navigation structure and styling consistent across all pages? Check: does the header look the same on every page, are breadcrumbs styled consistently, is the footer layout identical throughout? Flag: navigation items that change style on different pages, inconsistent active-state indicators, or mobile navigation that differs from desktop in unnecessary ways.',
+      'RESPONSIVE PATTERN CONSISTENCY: Do breakpoint behaviors follow consistent rules across all pages? Check: do all grids collapse at the same breakpoints, are text sizes scaled consistently on mobile, do all cards stack the same way? Flag: pages that break differently at the same viewport, inconsistent mobile padding, or components that hide on mobile without clear pattern.',
     ],
   },
 ]
@@ -1088,7 +1089,7 @@ Analyze this category and return the JSON array now.`
 /**
  * Run full analysis across UX categories in parallel batches.
  * Processes categories one at a time to avoid rate limits.
- * Skips Brand Consistency (24-27) unless brand identity files are attached.
+ * Skips Design Consistency (24-27) only when Brand DNA enrichment is explicitly enabled but no brand files are attached.
  * Respects selected_modules if provided.
  */
 export async function runFullAnalysis(
@@ -1109,24 +1110,24 @@ export async function runFullAnalysis(
     future_readiness: [12, 16],
     seo_structure: [16, 20],
     accessibility_readiness: [20, 24],
+    design_consistency: [24, 28],
+    // Legacy alias — historical audits stored 'brand_consistency' in selected_modules
     brand_consistency: [24, 28],
   }
 
   // Determine which categories to analyze
   const selectedModules: string[] | null = (audit as any).selected_modules ?? null
 
-  const hasBrandIdentity = !!(audit as any).brand_identity_id
-
   function shouldAnalyze(categoryIndex: number): boolean {
-    // Brand Consistency (24-27) requires brand identity material — skip without it
-    if (categoryIndex >= 24 && categoryIndex < 28 && !hasBrandIdentity) return false
-
+    // Design Consistency (24-27) always runs — no brand identity gate needed.
     // If selected_modules specified, only analyze those modules
     if (selectedModules && selectedModules.length > 0) {
       for (const mod of selectedModules) {
         const range = MODULE_RANGES[mod]
         if (range && categoryIndex >= range[0] && categoryIndex < range[1]) return true
       }
+      // Always include design_consistency categories even if not explicitly selected
+      if (categoryIndex >= 24 && categoryIndex < 28) return true
       return false
     }
 
@@ -1254,22 +1255,25 @@ export async function generateReport(
     const allCategoryNames = getCategoryNames(language)
     const prevCatNameSet = new Set(prev.previousCategoryScores.map(c => c.name))
     const selectedModules: string[] | null = (auditData as any).selected_modules ?? null
-    const hasBrandIdentity = !!(auditData as any).brand_identity_id
 
     const MODULE_RANGES_BL: Record<string, [number, number]> = {
       foundation: [0, 4], human_experience: [4, 8], inclusive_design: [8, 12],
       future_readiness: [12, 16], seo_structure: [16, 20], accessibility_readiness: [20, 24],
+      design_consistency: [24, 28],
+      // Legacy alias — historical audits stored 'brand_consistency' in selected_modules
       brand_consistency: [24, 28],
     }
 
     // Determine which category indices should be active for this audit
+    // Design Consistency (24-27) always runs — no brand identity gate needed.
     const activeIndices = new Set<number>()
     if (selectedModules && selectedModules.length > 0) {
       for (const mod of selectedModules) {
-        if (mod === 'brand_consistency' && !hasBrandIdentity) continue
         const r = MODULE_RANGES_BL[mod]
         if (r) { for (let i = r[0]; i < r[1]; i++) activeIndices.add(i) }
       }
+      // Ensure design_consistency indices are always active
+      for (let i = 24; i < 28; i++) activeIndices.add(i)
     }
 
     // Find categories that should be active but weren't in previous audit
@@ -1363,20 +1367,19 @@ export async function generateReport(
   // ════════════════════════════════════════════════════════════════
 
   const allCategoryNames = getCategoryNames(language)
-  const hasBrandIdentity = !!(auditData as any).brand_identity_id
   const selectedModules: string[] | null = (auditData as any).selected_modules ?? null
   const MODULE_RANGES: Record<string, [number, number]> = {
     foundation: [0, 4], human_experience: [4, 8], inclusive_design: [8, 12],
     future_readiness: [12, 16], seo_structure: [16, 20], accessibility_readiness: [20, 24],
+    design_consistency: [24, 28],
+    // Legacy alias — historical audits stored 'brand_consistency' in selected_modules
     brand_consistency: [24, 28],
   }
   function wasAnalyzed(idx: number): boolean {
-    // Brand Consistency (24-27) requires brand identity material — skip without it
-    if (idx >= 24 && idx < 28 && !hasBrandIdentity) return false
+    // Design Consistency (24-27) always runs — no brand identity gate.
+    // It evaluates the live site's visual system consistency.
     if (selectedModules && selectedModules.length > 0) {
       for (const mod of selectedModules) {
-        // Also skip brand_consistency in selectedModules when no brand identity
-        if (mod === 'brand_consistency' && !hasBrandIdentity) continue
         const r = MODULE_RANGES[mod]
         if (r && idx >= r[0] && idx < r[1]) return true
       }

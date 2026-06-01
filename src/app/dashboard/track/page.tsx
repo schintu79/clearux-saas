@@ -114,7 +114,7 @@ function ScoreLine({ points }: { points: Array<{ score: number; date: string }> 
   );
 }
 
-const moduleNames = ['Foundation', 'Human experience', 'Inclusive design', 'Future readiness', 'SEO structure', 'Accessibility readiness', 'Brand consistency'];
+const moduleNames = ['Foundation', 'Human experience', 'Inclusive design', 'Future readiness', 'SEO structure', 'Accessibility readiness', 'Design consistency'];
 
 function getModuleScores(report: any): Record<string, number> {
   const scores: Record<string, number> = {};

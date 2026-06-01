@@ -11,7 +11,7 @@
 //   12-15: Future Readiness
 //   16-19: SEO Structure & Rules
 //   20-23: Accessibility Readiness
-//   24-27: Brand Consistency
+//   24-27: Design Consistency
 // ============================================================
 
 /**
@@ -56,11 +56,11 @@ export const CATEGORY_KEYWORDS: Record<number, string[]> = {
   22: ['form label', 'input label', 'error message', 'error identification', 'help text', 'instructions', 'predictable', 'understandable', 'language', 'lang attribute', 'page title', 'heading hierarchy'],
   23: ['aria', 'aria-label', 'aria-role', 'semantic html', 'landmark', 'nav element', 'main element', 'robust', 'compatibility', 'assistive technology', 'screen reader', 'valid html'],
 
-  // ── Brand Consistency (24-27) ─────────────────────────
-  24: ['brand consistency', 'brand identity', 'logo', 'brand color', 'brand voice', 'brand guideline', 'visual identity'],
-  25: ['brand experience', 'brand story', 'mission', 'about page', 'company value', 'voice', 'tone alignment'],
-  26: ['brand visual', 'icon style', 'illustration', 'imagery', 'photo style', 'brand asset'],
-  27: ['brand communication', 'brand tone', 'brand language', 'brand message', 'tagline'],
+  // ── Design Consistency (24-27) ─────────────────────────
+  24: ['font', 'typeface', 'type scale', 'heading hierarchy', 'typography', 'font family', 'font size', 'font weight', 'type system'],
+  25: ['color usage', 'color palette', 'color consistency', 'primary color', 'accent color', 'visual language', 'background color', 'surface treatment'],
+  26: ['component', 'pattern', 'card', 'button style', 'form field', 'icon style', 'cta style', 'link style', 'navigation pattern', 'component consistency'],
+  27: ['spacing', 'layout', 'alignment', 'grid', 'rhythm', 'margin', 'padding', 'whitespace', 'layout consistency', 'responsive layout'],
 }
 
 /**

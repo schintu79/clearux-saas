@@ -264,10 +264,10 @@ export async function buildDocx(auditId: string): Promise<{ buffer: Buffer; safe
       17: ['local seo', 'schema markup', 'rich snippet', 'open graph', 'social media', 'twitter card', 'og:'],
       18: ['keyword', 'search intent', 'content gap', 'long-tail', 'topic cluster', 'semantic'],
       19: ['link', 'backlink', 'internal link', 'anchor text', 'broken link', '404', 'redirect', 'crawl'],
-      20: ['brand consistency', 'brand identity', 'logo', 'brand color', 'brand voice', 'brand guideline'],
-      21: ['brand experience', 'brand story', 'mission', 'about page', 'company value'],
-      22: ['brand visual', 'icon style', 'illustration', 'imagery', 'photo style', 'brand asset'],
-      23: ['brand communication', 'brand tone', 'brand language', 'brand message', 'tagline'],
+      20: ['design consistency', 'font family', 'type scale', 'heading hierarchy', 'typography', 'font weight'],
+      21: ['color usage', 'color palette', 'primary color', 'accent color', 'surface color', 'color system'],
+      22: ['button style', 'cta style', 'component pattern', 'card style', 'icon style', 'spacing rhythm'],
+      23: ['layout consistency', 'alignment', 'grid', 'navigation style', 'form field style', 'visual system'],
     }
 
     function assignFindings() {

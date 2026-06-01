@@ -455,7 +455,7 @@ async function _processAuditInner(auditId: string): Promise<void> {
         }
       } catch (brandErr) {
         console.error('[audit-engine] Brand file extraction error (non-fatal):', brandErr)
-        await log(db, auditId, 'brand_files_error', 'warning', 'Failed to extract brand files — brand consistency analysis will be limited')
+        await log(db, auditId, 'brand_files_error', 'warning', 'Failed to extract brand files — design consistency analysis will be limited')
       }
     }
 
@@ -465,7 +465,7 @@ async function _processAuditInner(auditId: string): Promise<void> {
     let sortOrder = 0
 
     console.log('[audit-engine] Running built-in 24-category analysis')
-    // Use brand-enriched content for analysis so brand consistency categories get brand context
+    // Use brand-enriched content for analysis so design consistency categories get brand context
     // Stream incremental progress per category so the loader doesn't sit at 35% for minutes
     const findings = await runFullAnalysis(
       brandContent,

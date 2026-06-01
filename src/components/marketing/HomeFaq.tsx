@@ -5,7 +5,7 @@ import { FaqPreview } from '@/components/marketing/FaqPreview'
 const HOME_FAQS = [
   {
     q: 'What does Fixpath actually check?',
-    a: 'Seven categories — Foundation, Human Experience, Inclusive Design, Accessibility Readiness, Future Readiness, SEO Structure, and Brand Consistency. 112 checkpoints total, covering technical quality, usability, and brand perception in one run.',
+    a: 'Seven categories — Foundation, Human Experience, Inclusive Design, Accessibility Readiness, Future Readiness, SEO Structure, and Design Consistency. 112 checkpoints total, covering technical quality, usability, and visual system consistency in one run.',
   },
   {
     q: 'How is this different from a standard SEO or accessibility tool?',

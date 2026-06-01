@@ -56,7 +56,7 @@ function scoreColor(s: number) {
 }
 
 /* ── Pillar config for brand audits (6 pillars) ──────────── */
-const PILLAR_NAMES = ['Foundation', 'Human Experience', 'Inclusive Design', 'Future Readiness', 'SEO Structure & Rules', 'Brand Consistency'];
+const PILLAR_NAMES = ['Foundation', 'Human Experience', 'Inclusive Design', 'Future Readiness', 'SEO Structure & Rules', 'Accessibility Readiness', 'Design Consistency'];
 
 /* ── Main Component ───────────────────────────────────────── */
 

@@ -84,7 +84,7 @@ import SiteFavicon from '@/components/ui/SiteFavicon';
 import OverviewTabs from '@/components/dashboard/OverviewTabs';
 
 /* ── Pillar / module config (mirrors audit detail page) ─── */
-const PILLAR_NAMES = ['Foundation', 'Human Experience', 'Inclusive Design', 'Future Readiness', 'SEO Structure & Rules', 'Accessibility Readiness', 'Brand Consistency'];
+const PILLAR_NAMES = ['Foundation', 'Human Experience', 'Inclusive Design', 'Future Readiness', 'SEO Structure & Rules', 'Accessibility Readiness', 'Design Consistency'];
 const PILLAR_RANGES: [number, number][] = [[0, 4], [4, 8], [8, 12], [12, 16], [16, 20], [20, 24], [24, 28]];
 const PILLAR_ICONS: React.ElementType[] = [Scale, Heart, Accessibility, Brain, FileSearch, ShieldCheck, Eye];
 
@@ -1004,7 +1004,7 @@ function OverviewInner() {
             );
           })}
 
-          {/* Brand Consistency is now always included — no "not included" fallback needed */}
+          {/* Design Consistency is always included — no "not included" fallback needed */}
         </div>
       )}
 

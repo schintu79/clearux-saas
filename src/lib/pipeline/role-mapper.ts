@@ -49,7 +49,7 @@ const CATEGORY_ROLE_MAP: Record<number, StakeholderRole[]> = {
   18: ['marketing'],                         // Social media / rich snippets
   19: ['marketing'],                         // Content strategy & keywords
 
-  // Brand Consistency (20-23)
+  // Design Consistency (24-27)
   20: ['marketing', 'executive'],            // Brand identity
   21: ['marketing', 'executive'],            // Brand experience & story
   22: ['marketing', 'product_ux'],           // Brand visuals

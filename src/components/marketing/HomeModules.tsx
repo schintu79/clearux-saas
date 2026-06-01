@@ -8,7 +8,7 @@ const CATEGORIES = [
   { Icon: Accessibility, name: 'Accessibility readiness', count: 16 },
   { Icon: Cpu, name: 'Future readiness', count: 14 },
   { Icon: Search, name: 'SEO structure', count: 12 },
-  { Icon: Fingerprint, name: 'Brand consistency', count: 14 },
+  { Icon: Fingerprint, name: 'Design consistency', count: 14 },
 ]
 
 export function HomeModules() {

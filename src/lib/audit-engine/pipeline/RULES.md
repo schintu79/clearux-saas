@@ -11,7 +11,7 @@ when modifying any part of the audit pipeline.
 
 A re-audit (baseline mode) copies scores from the previous audit. But if the
 user selects modules that were NOT in the previous audit (e.g. they add SEO
-Structure or Brand Consistency), the gap-fill step in `process-audit.ts` creates
+Structure or Design Consistency), the gap-fill step in `process-audit.ts` creates
 new findings for those modules. The report generator MUST also produce scores
 for those gap-filled categories.
 
@@ -65,10 +65,10 @@ is still supported for old audits but new code should always check
 `selected_modules` first.
 
 Module slugs: `foundation`, `human_experience`, `inclusive_design`,
-`future_readiness`, `seo_structure`, `brand_consistency`.
+`future_readiness`, `seo_structure`, `accessibility_readiness`, `design_consistency`.
 
 Each module maps to 4 consecutive category indices (0–3, 4–7, 8–11, 12–15,
-16–19, 20–23).
+16–19, 20–23, 24–27).
 
 ---
 

@@ -195,9 +195,9 @@ const pillars: { title: string; intro: string; categories: Category[] }[] = [
     ],
   },
   {
-    title: 'Module 6: Brand Consistency',
+    title: 'Module 6: Design Consistency',
     intro:
-      'Brand Consistency examines whether every touchpoint reinforces a cohesive identity. Inconsistent design erodes trust and makes products feel unfinished.',
+      'Design Consistency examines whether your visual system is internally coherent. Inconsistent styling erodes trust and makes products feel unfinished.',
     categories: [
       {
         name: 'Visual Identity & Design Tokens',

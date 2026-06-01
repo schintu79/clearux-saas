@@ -220,7 +220,7 @@ export function moduleNameForFinding(f: AuditFinding): string {
   const idx = f.category_index
   if (idx == null) return 'General'
   const moduleIdx = Math.floor(idx / 4)
-  const names = ['Foundation', 'Human Experience', 'Inclusive Design', 'Future Readiness', 'SEO Structure & Rules', 'Accessibility Readiness', 'Brand Consistency']
+  const names = ['Foundation', 'Human Experience', 'Inclusive Design', 'Future Readiness', 'SEO Structure & Rules', 'Accessibility Readiness', 'Design Consistency']
   return names[moduleIdx] || 'General'
 }
 
@@ -237,7 +237,7 @@ export const MODULE_TINTS = [
   { dot: '#F59E0B', bg: 'rgba(245, 158, 11, 0.08)', border: 'rgba(245, 158, 11, 0.18)' },  // Future Readiness
   { dot: '#10B981', bg: 'rgba(16, 185, 129, 0.08)', border: 'rgba(16, 185, 129, 0.18)' },  // SEO Structure & Rules
   { dot: '#14B8A6', bg: 'rgba(20, 184, 166, 0.08)', border: 'rgba(20, 184, 166, 0.18)' },  // Accessibility Readiness
-  { dot: '#06B6D4', bg: 'rgba(6, 182, 212, 0.08)', border: 'rgba(6, 182, 212, 0.18)' },    // Brand Consistency
+  { dot: '#06B6D4', bg: 'rgba(6, 182, 212, 0.08)', border: 'rgba(6, 182, 212, 0.18)' },    // Design Consistency
 ] as const
 
 export const PHASE1_MODULES = [
@@ -247,7 +247,7 @@ export const PHASE1_MODULES = [
   'Future Readiness',
   'SEO Structure & Rules',
   'Accessibility Readiness',
-  'Brand Consistency',
+  'Design Consistency',
 ] as const
 
 /**
@@ -279,7 +279,7 @@ export function moduleScoresFromReport(
     { name: 'Future Readiness', score: report.ai_discoverability_score ?? null },
     { name: 'SEO Structure & Rules', score: report.conversion_score ?? null },
     { name: 'Accessibility Readiness', score: null },
-    { name: 'Brand Consistency', score: null },
+    { name: 'Design Consistency', score: null },
   ]
 
   if (!findings || findings.length === 0) return legacy()

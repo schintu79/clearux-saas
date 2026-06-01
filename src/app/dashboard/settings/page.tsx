@@ -904,7 +904,7 @@ const SettingsPage: React.FC = () => {
                 <h2 className="text-lg font-normal font-sans text-text">Recalculate scores</h2>
               </div>
               <p className="text-sm text-muted">
-                Some older audits may have incorrect overall scores due to unanalyzed categories (e.g. Brand Consistency without Brand DNA) being counted as zero. This recalculates all scores by excluding those sentinel values.
+                Some older audits may have incorrect overall scores due to unanalyzed categories (e.g. Design Consistency without Brand DNA in legacy audits) being counted as zero. This recalculates all scores by excluding those sentinel values.
               </p>
 
               {cleanupStats && cleanupStats.scoreMismatches > 0 && (

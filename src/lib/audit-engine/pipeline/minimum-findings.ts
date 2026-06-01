@@ -50,6 +50,8 @@ const MODULE_RANGES: Record<string, [number, number]> = {
   future_readiness: [12, 16],
   seo_structure: [16, 20],
   accessibility_readiness: [20, 24],
+  design_consistency: [24, 28],
+  // Legacy alias
   brand_consistency: [24, 28],
 }
 

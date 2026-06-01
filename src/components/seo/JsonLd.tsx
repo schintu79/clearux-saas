@@ -2,7 +2,7 @@ const siteUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'https://www.fixpath.ai'
 
 const FAQ_ITEMS = [
   { q: 'How long does an audit take?', a: 'Most audits complete in under 10 minutes. Our AI crawls your website, analyses every page against 112 checkpoints across seven modules, and generates a full professional report with prioritised recommendations.' },
-  { q: 'What does the audit cover?', a: 'We evaluate 28 categories across seven modules: Foundation (the structural and technical baseline), Human Experience (how the product feels to use — clarity, flow, cognitive load, wellbeing), Inclusive Design (accessibility and equity for every user), Future Readiness (AI discoverability and agent readiness), Accessibility Readiness (WCAG compliance and assistive technology support), Brand Consistency (whether what users see matches what the brand promises), and SEO Structure (findability, legibility, and ranking). Available for websites, brand identity materials, and design files.' },
+  { q: 'What does the audit cover?', a: 'We evaluate 28 categories across seven modules: Foundation (the structural and technical baseline), Human Experience (how the product feels to use — clarity, flow, cognitive load, wellbeing), Inclusive Design (accessibility and equity for every user), Future Readiness (AI discoverability and agent readiness), Accessibility Readiness (WCAG compliance and assistive technology support), Design Consistency (whether the visual system is internally consistent — fonts, colours, spacing, components), and SEO Structure (findability, legibility, and ranking). Available for websites, brand identity materials, and design files.' },
   { q: 'How do credits work?', a: 'One credit equals one full audit of any website. Credits never expire. There are no feature tiers or limits — every audit includes all seven modules, 112 checkpoints, PDF & Word reports, and prioritised recommendations.' },
   { q: 'What format is the report?', a: 'You get both a professional PDF report and a downloadable Word document. Reports include an overall score, module breakdowns, detailed findings with severity levels, and actionable recommendations for each issue.' },
   { q: 'Can I audit any website?', a: 'Yes. Fixpath works with any publicly accessible URL. Our crawler handles JavaScript-rendered sites, single-page applications, and multi-page websites. We automatically detect your industry, tech stack, and target audience.' },
@@ -99,14 +99,14 @@ export function HomeJsonLd() {
     url: siteUrl,
     applicationCategory: 'BusinessApplication',
     operatingSystem: 'Web',
-    description: 'A decision engine for real website and brand issues. 112 checkpoints across 7 modules — Foundation, Human Experience, Inclusive Design, Future Readiness, Accessibility Readiness, Brand Consistency, SEO Structure. Severity-ranked findings, concrete fix guidance, and progress tracking.',
+    description: 'A decision engine for real website and brand issues. 112 checkpoints across 7 modules — Foundation, Human Experience, Inclusive Design, Future Readiness, Accessibility Readiness, Design Consistency, SEO Structure. Severity-ranked findings, concrete fix guidance, and progress tracking.',
     featureList: [
       'Foundation: The structural and technical baseline a great experience is built on',
       'Human Experience: How the product feels to use — clarity, flow, cognitive load, wellbeing',
       'Inclusive Design: Accessibility and equity for every user, every ability, every context',
       'Future Readiness: AI discoverability and how the product holds up as discovery shifts',
       'Accessibility Readiness: WCAG compliance and assistive technology support across all pages',
-      'Brand Consistency: Whether what users see matches what the brand promises',
+      'Design Consistency: Whether your visual system is internally consistent across every page',
       'SEO Structure: Whether the product is findable, legible, and ranked the way it deserves',
       'Audit types: Website audits, Brand Identity audits, Design audits',
     ],

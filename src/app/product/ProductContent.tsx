@@ -13,7 +13,7 @@ const PRODUCT_FAQS = [
   { q: 'Can I fix issues directly through Fixpath?', a: 'Yes. Every finding includes a concrete fix. For code-level issues, Fixpath generates a surgical fix you can preview, edit, and deploy directly to your server via FTP or SFTP. For content and strategy issues, you get clear recommendations to share with your team.' },
   { q: 'What is the Website Health Score?', a: 'Your Website Health Score is a composite metric across all seven audit modules. It gives your team a single number to track over time. Re-audit after making fixes and see exactly how your score improves.' },
   { q: 'Does Fixpath check AI visibility?', a: 'Yes. The Future Readiness module checks how LLMs interpret your pages, validates structured data for AI consumption, probes multiple AI models for accuracy, and audits your llms.txt and AI discovery files.' },
-  { q: 'How is this different from Lighthouse or PageSpeed?', a: 'Lighthouse focuses on performance and basic accessibility. Fixpath covers 112 checkpoints across UX, accessibility, AI readiness, brand consistency, SEO, and more. It also helps you fix issues and tracks improvement, rather than just listing problems.' },
+  { q: 'How is this different from Lighthouse or PageSpeed?', a: 'Lighthouse focuses on performance and basic accessibility. Fixpath covers 112 checkpoints across UX, accessibility, AI readiness, design consistency, SEO, and more. It also helps you fix issues and tracks improvement, rather than just listing problems.' },
 ]
 
 /* ── Supporting proof data ── */
@@ -427,7 +427,7 @@ export function ProductContent() {
                 <Layers size={18} strokeWidth={1.5} className="shrink-0 mt-0.5" style={{ color: 'var(--ink-2)' }} />
                 <div>
                   <h3 className="font-sans text-[15px] font-semibold tracking-[-0.01em] mb-1" style={{ color: 'var(--ink)' }}>One audit across 7 modules</h3>
-                  <p className="font-sans text-[13px] leading-[1.55]" style={{ color: 'var(--m-muted)' }}>Foundation, human experience, inclusive design, accessibility, AI readiness, brand consistency, and SEO — 28 categories in a single run.</p>
+                  <p className="font-sans text-[13px] leading-[1.55]" style={{ color: 'var(--m-muted)' }}>Foundation, human experience, inclusive design, accessibility, AI readiness, design consistency, and SEO — 28 categories in a single run.</p>
                 </div>
               </div>
               <div className="flex items-start gap-3.5">

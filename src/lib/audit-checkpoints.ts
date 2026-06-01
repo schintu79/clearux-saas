@@ -35,7 +35,7 @@ export const CHECKPOINT_LABELS: Record<string, string[]> = {
   'Operable — Keyboard & Navigation': ['Keyboard accessibility', 'Focus management', 'Skip links & bypass', 'Touch target sizing'],
   'Understandable — Labels & Errors': ['Form label association', 'Error identification', 'Help text & instructions', 'Consistent navigation'],
   'Robust — ARIA & Semantic HTML': ['ARIA usage correctness', 'Landmark regions', 'Semantic element structure', 'Assistive technology support'],
-  // Brand Consistency
+  // Design Consistency
   'Visual Identity Alignment': ['Logo usage & placement', 'Colour palette adherence', 'Typography consistency', 'Imagery & iconography style'],
   'Voice & Tone Alignment': ['Brand voice consistency', 'Tone-to-audience fit', 'Messaging hierarchy', 'Copy style guide adherence'],
   'Messaging & Value Prop Alignment': ['Core value proposition clarity', 'Tagline & headline alignment', 'Feature-benefit framing', 'Competitive differentiation'],
@@ -68,8 +68,8 @@ export const PILLAR_FOR_CATEGORY: Record<string, string> = {
   'Operable — Keyboard & Navigation': 'Accessibility Readiness',
   'Understandable — Labels & Errors': 'Accessibility Readiness',
   'Robust — ARIA & Semantic HTML': 'Accessibility Readiness',
-  'Visual Identity Alignment': 'Brand Consistency',
-  'Voice & Tone Alignment': 'Brand Consistency',
-  'Messaging & Value Prop Alignment': 'Brand Consistency',
-  'Brand Standards Compliance': 'Brand Consistency',
+  'Visual Identity Alignment': 'Design Consistency',
+  'Voice & Tone Alignment': 'Design Consistency',
+  'Messaging & Value Prop Alignment': 'Design Consistency',
+  'Brand Standards Compliance': 'Design Consistency',
 }

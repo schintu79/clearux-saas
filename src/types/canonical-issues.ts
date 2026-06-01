@@ -296,11 +296,11 @@ export const CATEGORY_INDEX_TO_KEY: Record<number, IssueCategoryKey> = {
   21: 'accessibility', // Operable — Keyboard & Navigation
   22: 'accessibility', // Understandable — Labels & Errors
   23: 'accessibility', // Robust — ARIA & Semantic HTML
-  // Brand Consistency (24-27)
-  24: 'brand',        // Visual Identity Alignment
-  25: 'brand',        // Voice & Tone Alignment
-  26: 'brand',        // Messaging & Value Prop Alignment
-  27: 'brand',        // Brand Standards Compliance
+  // Design Consistency (24-27)
+  24: 'brand',        // Typography & Type System
+  25: 'brand',        // Color & Visual Language
+  26: 'brand',        // Component & Pattern Consistency
+  27: 'brand',        // Layout & Spacing System
 }
 
 /* ── Scoring Constants ───────────────────────────────────────── */

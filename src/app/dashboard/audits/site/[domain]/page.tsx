@@ -60,8 +60,8 @@ function scoreColor(s: number) {
 }
 
 /* ── Pillar config (must match audit detail page) ────────── */
-const PILLAR_NAMES = ['Foundation', 'Human Experience', 'Inclusive Design', 'Future Readiness', 'SEO Structure', 'Brand Consistency'];
-const PILLAR_RANGES: [number, number][] = [[0, 4], [4, 8], [8, 12], [12, 16], [16, 20], [20, 24]];
+const PILLAR_NAMES = ['Foundation', 'Human Experience', 'Inclusive Design', 'Future Readiness', 'SEO Structure', 'Accessibility Readiness', 'Design Consistency'];
+const PILLAR_RANGES: [number, number][] = [[0, 4], [4, 8], [8, 12], [12, 16], [16, 20], [20, 24], [24, 28]];
 
 /* ── Main Component ───────────────────────────────────────── */
 

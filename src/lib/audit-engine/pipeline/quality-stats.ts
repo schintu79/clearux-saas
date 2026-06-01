@@ -85,7 +85,7 @@ function detectTopic(title: string, description: string): string | null {
 // Module detection from sort_order (each module = 4 categories)
 const MODULE_NAMES = [
   'foundation', 'human_experience', 'inclusive_design',
-  'future_readiness', 'seo_structure', 'brand_consistency',
+  'future_readiness', 'seo_structure', 'accessibility_readiness', 'design_consistency',
 ]
 
 function detectModule(sortOrder: number): string {

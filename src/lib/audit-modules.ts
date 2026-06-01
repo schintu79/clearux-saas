@@ -58,9 +58,9 @@ export const AUDIT_MODULES: AuditModule[] = [
     includedInComplete: true,
   },
   {
-    slug: 'brand_consistency',
-    name: 'Brand Consistency',
-    description: 'Evaluates brand consistency across your live website. When Brand DNA is included, also checks alignment with uploaded brand guidelines.',
+    slug: 'design_consistency',
+    name: 'Design Consistency',
+    description: 'Checks whether your site uses a consistent visual system across pages and components.',
     legacyPillarIndex: null,
     requiresBrandIdentity: false,
     includedInComplete: true,

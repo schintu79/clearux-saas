@@ -311,7 +311,7 @@ function MockCategoryScores() {
     { name: 'Inclusive Design', score: 74, dot: '#10B981' },
     { name: 'Future Readiness', score: 55, dot: '#F59E0B' },
     { name: 'Accessibility Readiness', score: 68, dot: '#8B5CF6' },
-    { name: 'Brand Consistency', score: 78, dot: '#3B82F6' },
+    { name: 'Design Consistency', score: 78, dot: '#3B82F6' },
     { name: 'SEO Structure', score: 70, dot: '#06B6D4' },
   ]
   return (
@@ -344,7 +344,7 @@ function MockRadarChart() {
     { name: 'Future Readiness', score: 75, color: '#2D6A4F' },
     { name: 'Accessibility Readiness', score: 68, color: '#8B5CF6' },
     { name: 'SEO Structure', score: 76, color: '#06B6D4' },
-    { name: 'Brand Consistency', score: 75, color: '#10B981' },
+    { name: 'Design Consistency', score: 75, color: '#10B981' },
   ]
   const n = modules.length
   const cx = 170, cy = 150, R = 70
@@ -675,7 +675,7 @@ const MODULES = [
   { num: '03', title: 'Inclusive Design', desc: 'Can everyone use your site? Accessibility, mobile support, screen readers, touch targets, and cognitive accessibility — all checked.', count: 18 },
   { num: '04', title: 'Future Readiness', desc: 'Can AI understand your site? We test how AI models read your content, plus performance, structured data, and agent compatibility.', count: 14 },
   { num: '05', title: 'Accessibility Readiness', desc: 'How mature is your accessibility practice? We evaluate compliance depth, assistive technology support, and organisational readiness beyond baseline checks.', count: 16 },
-  { num: '06', title: 'Brand Consistency', desc: 'Does your site match your brand? We compare what you say your brand is against what is actually live — colors, tone, logo usage, and more.', count: 14 },
+  { num: '06', title: 'Design Consistency', desc: 'Is your visual system consistent? We check font families, color usage, spacing rhythm, button styles, and component patterns across every page.', count: 14 },
   { num: '07', title: 'SEO Structure', desc: 'Can search engines find and rank you? Headings, meta tags, structured data, and crawlability — the technical foundation of being discoverable.', count: 12 },
 ]
 
@@ -1183,7 +1183,7 @@ export default function HowItWorksContent() {
       <FaqPreview
         sectionNumber="08"
         items={[
-          { q: 'What does the audit cover?', a: 'We evaluate 28 categories across seven modules: Foundation (the structural and technical baseline), Human Experience (how your product feels to use), Inclusive Design (accessibility and equity), Future Readiness (AI discoverability), Accessibility Readiness (compliance depth and assistive technology support), Brand Consistency (whether what users see matches the brand), and SEO Structure (findability and rankings).' },
+          { q: 'What does the audit cover?', a: 'We evaluate 28 categories across seven modules: Foundation (the structural and technical baseline), Human Experience (how your product feels to use), Inclusive Design (accessibility and equity), Future Readiness (AI discoverability), Accessibility Readiness (compliance depth and assistive technology support), Design Consistency (whether your visual system is internally consistent), and SEO Structure (findability and rankings).' },
           { q: 'How does the AI analysis work?', a: 'Our engine crawls your site, then runs each page through specialised AI models trained on UX best practices, WCAG guidelines, dark pattern databases, and conversion research. Each page is evaluated across seven modules and 112 checkpoints. Every finding includes severity scoring, evidence, and a specific recommendation.' },
           { q: 'What AI powers the audits?', a: "Fixpath uses Anthropic's Claude as its core analysis engine — but the AI is only the final layer. Behind every audit is a proprietary evaluation framework built on years of UX research, accessibility consulting, and conversion optimisation." },
           { q: 'What format is the report?', a: 'You get a professional PDF and a Word document (DOCX). Both include an overall score, executive summary, top 3 priority recommendations, module score breakdown, and detailed findings ranked by severity with specific recommendations and impact estimates.' },

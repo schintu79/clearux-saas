@@ -55,7 +55,7 @@ const NewAuditInner: React.FC = () => {
   const [scopeOpen, setScopeOpen] = useState(false);
   const isCompleteAudit = COMPLETE_AUDIT_SLUGS.every((s) => selectedModules.includes(s));
 
-  // Brand consistency — workspace-scoped Brand DNA check
+  // Design consistency — workspace-scoped Brand DNA enrichment check
   const [workspaceBrandId, setWorkspaceBrandId] = useState<string | null>(null);
   const [workspaceBrandHasFiles, setWorkspaceBrandHasFiles] = useState(false);
   const [includeBrandConsistency, setIncludeBrandConsistency] = useState(false);
@@ -364,7 +364,7 @@ const NewAuditInner: React.FC = () => {
         insertPayload.product_url = productUrl;
         insertPayload.depth_mode = (isReAuditMode || isDigDeeperMode) ? depthMode : 'standard';
         insertPayload.selected_modules = selectedModules;
-        // Use workspace brand if brand consistency is checked, otherwise
+        // Use workspace brand if design consistency Brand DNA is checked, otherwise
         // auto-create (or reuse) a brand for this domain so the sidebar
         // always has a proper brand tab for the user to navigate to.
         const brandId = (includeBrandConsistency && workspaceBrandId)
@@ -688,7 +688,7 @@ const NewAuditInner: React.FC = () => {
                 </span>
                 {workspaceBrandHasFiles ? (
                   <p className="text-xs mt-0.5" style={{ color: 'var(--m-muted)' }}>
-                    Compare your website against uploaded brand guidelines. Without this, Brand Consistency still runs but scores based on the website's own internal consistency.
+                    Compare your website against uploaded brand guidelines. Without this, Design Consistency still runs but scores based on the website's own internal visual consistency.
                   </p>
                 ) : (
                   <p className="text-xs mt-0.5" style={{ color: 'var(--m-muted)' }}>
@@ -696,7 +696,7 @@ const NewAuditInner: React.FC = () => {
                     <Link href={`${dashPrefix}/brand-dna`} className="font-medium hover:underline" style={{ color: 'var(--ink)' }}>
                       Brand DNA tab
                     </Link>{' '}
-                    to enable Brand DNA comparison. Brand Consistency will still run based on your website's internal consistency.
+                    to enable Brand DNA comparison. Design Consistency will still run based on your website's internal visual consistency.
                   </p>
                 )}
               </div>

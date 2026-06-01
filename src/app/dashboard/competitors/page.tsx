@@ -136,8 +136,8 @@ function SectionDesc({ children }: { children: React.ReactNode }) {
 
 /* ── Pillar computation (mirrors overview page logic) ── */
 
-const PILLAR_NAMES = ['Foundation', 'Human Experience', 'Inclusive Design', 'Future Readiness', 'SEO Structure & Rules', 'Brand Consistency'];
-const PILLAR_RANGES: [number, number][] = [[0, 4], [4, 8], [8, 12], [12, 16], [16, 20], [20, 24]];
+const PILLAR_NAMES = ['Foundation', 'Human Experience', 'Inclusive Design', 'Future Readiness', 'SEO Structure & Rules', 'Accessibility Readiness', 'Design Consistency'];
+const PILLAR_RANGES: [number, number][] = [[0, 4], [4, 8], [8, 12], [12, 16], [16, 20], [20, 24], [24, 28]];
 
 function computePillarScores(report: any): Array<{ name: string; score: number }> {
   const rawJson = report?.raw_json || report?.rawJson;

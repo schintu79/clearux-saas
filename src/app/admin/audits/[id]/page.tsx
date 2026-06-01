@@ -89,7 +89,7 @@ const PILLAR_STYLE = [
   { name: 'Future Readiness', color: 'var(--ok)', gradient: 'from-emerald-500 to-emerald-700', bg: 'bg-emerald-500/10', text: '[color:var(--ok)]', Icon: Brain, range: [12, 16] as [number, number] },
   { name: 'SEO Structure & Rules', color: '#10B981', gradient: 'from-emerald-500 to-emerald-600', bg: 'bg-emerald-500/10', text: 'text-emerald-500', Icon: FileSearch, range: [16, 20] as [number, number] },
   { name: 'Accessibility Readiness', color: '#14B8A6', gradient: 'from-teal-500 to-teal-600', bg: 'bg-teal-500/10', text: 'text-teal-500', Icon: ShieldCheck, range: [20, 24] as [number, number] },
-  { name: 'Brand Consistency', color: '#06B6D4', gradient: 'from-cyan-500 to-cyan-600', bg: 'bg-cyan-500/10', text: 'text-cyan-500', Icon: Eye, range: [24, 28] as [number, number] },
+  { name: 'Design Consistency', color: '#06B6D4', gradient: 'from-cyan-500 to-cyan-600', bg: 'bg-cyan-500/10', text: 'text-cyan-500', Icon: Eye, range: [24, 28] as [number, number] },
 ]
 
 const SEVERITY_CONFIG = {

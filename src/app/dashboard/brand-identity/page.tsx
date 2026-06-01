@@ -194,7 +194,7 @@ const BrandIdentityPage: React.FC = () => {
             </div>
             <h3 className="text-base font-medium text-text mb-1">No brand identities yet</h3>
             <p className="text-sm text-muted mb-5 max-w-md mx-auto">
-              Create a brand identity and upload your brand documents. When running an audit, select it to check brand consistency.
+              Create a brand identity and upload your brand documents. When running an audit, enable Brand DNA to check design consistency against your brand standards.
             </p>
             <Link href={`${dashPrefix}/brand-identity/new`}>
               <Button variant="primary" size="md">
