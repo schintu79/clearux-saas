@@ -1,15 +1,14 @@
 'use client';
 
 /**
- * Brand DNA Console — a clean workspace for managing brand identity inputs,
- * assets, readiness state, and Brand DNA audit.
+ * Brand DNA Console — workspace for managing brand identity inputs, assets,
+ * readiness state, and Brand DNA audit.
  *
- * Sections:
- *  1. Readiness — completeness %, eligibility for Brand DNA Audit and Website Audit inclusion
- *  2. Brand Profile — structured editable fields (name, website, logo, voice, colours, promise)
- *  3. Assets — drag/drop upload, file list with type tagging
- *  4. Brand DNA Audit — run, results, and recommendations
- *  5. Include in Website Audit — eligibility control
+ * Layout (redesigned):
+ *  1. Top summary row — large readiness score (left), recommendations (right)
+ *  2. Main row — Brand profile (left col) + Assets (right col)
+ *  3. Brand DNA Audit — results section
+ *  4. "Use in Website Audit" — popover CTA in page header
  */
 
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
@@ -23,9 +22,7 @@ import {
   Edit2,
   Save,
   X,
-  Globe as GlobeIcon,
   Palette,
-  Volume2,
   Upload,
   Trash2,
   Loader2,
@@ -35,11 +32,8 @@ import {
   AlertTriangle,
   Sparkles,
   MoreVertical,
-  File,
   Image as ImageIcon,
-  Link2,
   Share2,
-  Check,
   Eye,
   MessageSquare,
   ShieldCheck,
@@ -48,8 +42,8 @@ import {
   Type,
   Lightbulb,
   CircleDot,
-  Tag,
-  Info,
+  Zap,
+  Check,
 } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { createBrowserSupabase } from '@/lib/supabase-ssr';
@@ -145,6 +139,37 @@ interface FindingRecord {
   dismissal_reason: string | null;
 }
 
+interface ClassifiedFileDetection {
+  hasVoice: boolean;
+  voice: string | null;
+  toneKeywords: string[];
+  hasColours: boolean;
+  colours: string[];
+  hasPromise: boolean;
+  promise: string | null;
+  isLogo: boolean;
+  isIcon: boolean;
+  isBrandGuide: boolean;
+  classificationLabel: string;
+  confidence: 'high' | 'medium' | 'low';
+}
+
+interface ClassifiedFile {
+  fileName: string;
+  fileType: string;
+  detection: ClassifiedFileDetection;
+}
+
+interface BrandProfileSuggestion {
+  brand_voice: string | null;
+  tone_keywords: string[];
+  primary_colors: string[];
+  description: string | null;
+  brandGuideFile: string | null;
+  logoFile: string | null;
+  files: ClassifiedFile[];
+}
+
 /* ── Helpers ─────────────────────────────────────────────── */
 
 function toEditState(b: BrandIdentity): BrandEditState {
@@ -205,11 +230,6 @@ function sevLabel(sev: string): string {
 
 const MAX_FILE_SIZE = 10 * 1024 * 1024;
 
-/* ── File tag options ──────────────────────────────────────── */
-
-const FILE_TAGS = ['Logo', 'Brand guide', 'Voice', 'Colours', 'Messaging', 'Other'] as const;
-type FileTag = typeof FILE_TAGS[number];
-
 /* ── Category UI config ──────────────────────────────────── */
 
 const CATEGORY_ICONS: Record<string, React.ElementType> = {
@@ -241,7 +261,7 @@ interface ReadinessItem {
 const READINESS_ITEMS: ReadinessItem[] = [
   { key: 'logo', label: 'Logo', check: (i) => !!i.logo_url || i.brand_identity_files.some(f => (f.tag || '').toLowerCase() === 'logo') },
   { key: 'voice', label: 'Voice', check: (i) => !!(i.brand_voice || (i.tone_keywords && i.tone_keywords.length > 0)) },
-  { key: 'guide', label: 'Brand identity guide', check: (i) => i.brand_identity_files.some(f => (f.tag || '').toLowerCase() === 'brand guide' || isDocFile(f.file_name)) },
+  { key: 'guide', label: 'Brand guide', check: (i) => i.brand_identity_files.some(f => (f.tag || '').toLowerCase() === 'brand guide' || (f.tag || '').toLowerCase() === 'voice' || (f.tag || '').toLowerCase() === 'messaging') },
   { key: 'colours', label: 'Colours', check: (i) => !!(i.primary_colors && i.primary_colors.length > 0) },
   { key: 'promise', label: 'Promise', check: (i) => !!i.description },
 ];
@@ -272,6 +292,11 @@ export default function BrandDnaPage() {
   const [dragOver, setDragOver] = useState(false);
   const [deletingFileId, setDeletingFileId] = useState<string | null>(null);
 
+  /* ── Content analysis state ── */
+  const [analyzing, setAnalyzing] = useState(false);
+  const [suggestion, setSuggestion] = useState<BrandProfileSuggestion | null>(null);
+  const [applyingProfile, setApplyingProfile] = useState(false);
+
   /* ── Brand audit state ── */
   const [audit, setAudit] = useState<AuditRecord | null>(null);
   const [report, setReport] = useState<ReportRecord | null>(null);
@@ -279,7 +304,7 @@ export default function BrandDnaPage() {
   const [auditLoading, setAuditLoading] = useState(false);
   const [triggeringAudit, setTriggeringAudit] = useState(false);
 
-  /* ── Share / delete state ── */
+  /* ── Share / delete / menu state ── */
   const [shareUrl, setShareUrl] = useState<string | null>(null);
   const [shareCopied, setShareCopied] = useState(false);
   const [shareLoading, setShareLoading] = useState(false);
@@ -287,20 +312,27 @@ export default function BrandDnaPage() {
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
 
+  /* ── Website audit popover state ── */
+  const [popoverOpen, setPopoverOpen] = useState(false);
+  const popoverRef = useRef<HTMLDivElement>(null);
+
   /* ── Close menu on outside click / Escape ── */
   useEffect(() => {
-    if (!menuOpen) return;
+    if (!menuOpen && !popoverOpen) return;
     const onClick = (e: MouseEvent) => {
-      if (menuRef.current && !menuRef.current.contains(e.target as Node)) setMenuOpen(false);
+      if (menuOpen && menuRef.current && !menuRef.current.contains(e.target as Node)) setMenuOpen(false);
+      if (popoverOpen && popoverRef.current && !popoverRef.current.contains(e.target as Node)) setPopoverOpen(false);
     };
-    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') setMenuOpen(false); };
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') { setMenuOpen(false); setPopoverOpen(false); }
+    };
     document.addEventListener('mousedown', onClick);
     document.addEventListener('keydown', onKey);
     return () => {
       document.removeEventListener('mousedown', onClick);
       document.removeEventListener('keydown', onKey);
     };
-  }, [menuOpen]);
+  }, [menuOpen, popoverOpen]);
 
   /* ── Load brand identity ── */
   const loadIdentity = useCallback(async () => {
@@ -378,6 +410,7 @@ export default function BrandDnaPage() {
     setAudit(null);
     setReport(null);
     setFindings([]);
+    setSuggestion(null);
 
     (async () => {
       if (!workspace) { if (!cancelled) setLoading(false); return; }
@@ -470,6 +503,33 @@ export default function BrandDnaPage() {
     if (updated) setIdentity(updated);
     if (ok > 0 && !uploadMsg) setUploadMsg(`${ok} file${ok > 1 ? 's' : ''} uploaded`);
     setTimeout(() => setUploadMsg(null), 3000);
+
+    // Auto-trigger content analysis after successful upload
+    if (ok > 0 && updated) {
+      autoAnalyzeAfterUpload(updated.id);
+    }
+  };
+
+  /* ── Auto-analyze after upload (fire-and-forget) ── */
+  const autoAnalyzeAfterUpload = async (brandId: string) => {
+    setAnalyzing(true);
+    setSuggestion(null);
+    try {
+      const res = await fetch(`/api/brand-identities/${brandId}/analyze-files`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({}),
+      });
+      if (!res.ok) throw new Error('Analysis failed');
+      const data = await res.json();
+      setSuggestion(data.suggestion || null);
+      // Reload identity to pick up file tags from classification
+      const refreshed = await loadIdentity();
+      if (refreshed) setIdentity(refreshed);
+    } catch {
+      // Silently fail — user can still trigger manually
+      console.warn('Auto-analysis after upload failed');
+    } finally { setAnalyzing(false); }
   };
 
   const deleteFile = async (fileId: string) => {
@@ -481,6 +541,45 @@ export default function BrandDnaPage() {
       setIdentity(prev => prev ? { ...prev, brand_identity_files: prev.brand_identity_files.filter(f => f.id !== fileId) } : prev);
     } catch { setUploadMsg('Failed to delete file'); }
     setDeletingFileId(null);
+  };
+
+  /* ── Analyze files (content-based classification) ── */
+  const analyzeFiles = async () => {
+    if (!identity) return;
+    setAnalyzing(true);
+    setSuggestion(null);
+    try {
+      const res = await fetch(`/api/brand-identities/${identity.id}/analyze-files`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({}),
+      });
+      if (!res.ok) throw new Error('Analysis failed');
+      const data = await res.json();
+      setSuggestion(data.suggestion || null);
+    } catch {
+      setError('File analysis failed. Try again.');
+    } finally { setAnalyzing(false); }
+  };
+
+  /* ── Apply detected profile fields ── */
+  const applyProfile = async () => {
+    if (!identity) return;
+    setApplyingProfile(true);
+    try {
+      const res = await fetch(`/api/brand-identities/${identity.id}/analyze-files`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ apply: true }),
+      });
+      if (!res.ok) throw new Error();
+      // Reload identity to get updated fields
+      const updated = await loadIdentity();
+      if (updated) setIdentity(updated);
+      setSuggestion(null);
+    } catch {
+      setError('Failed to apply profile data.');
+    } finally { setApplyingProfile(false); }
   };
 
   /* ── Trigger brand audit ── */
@@ -600,12 +699,10 @@ export default function BrandDnaPage() {
   }, [readinessChecks]);
 
   const readyForBrandAudit = useMemo(() => {
-    // Need at least one file to run the brand audit
     return !!(identity && identity.brand_identity_files.length > 0);
   }, [identity]);
 
   const readyForWebsiteAudit = useMemo(() => {
-    // All 5 readiness items must be met
     return readinessChecks.every(r => r.met);
   }, [readinessChecks]);
 
@@ -616,15 +713,15 @@ export default function BrandDnaPage() {
     if (!identity) return [];
     const recs: string[] = [];
     if (!identity.logo_url && !identity.brand_identity_files.some(f => (f.tag || '').toLowerCase() === 'logo'))
-      recs.push('Add a primary logo file to enable logo consistency checks.');
+      recs.push('Add a logo file to enable logo consistency checks.');
     if (!identity.brand_voice && (!identity.tone_keywords || identity.tone_keywords.length === 0))
-      recs.push('Define 3-5 brand voice traits to compare against website copy.');
-    if (!identity.brand_identity_files.some(f => (f.tag || '').toLowerCase() === 'brand guide' || isDocFile(f.file_name)))
-      recs.push('Upload a brand identity guide to unlock full Brand DNA analysis.');
+      recs.push('Define 3-5 voice traits to compare against website copy.');
+    if (!identity.brand_identity_files.some(f => ['brand guide', 'voice', 'messaging'].includes((f.tag || '').toLowerCase()) || isDocFile(f.file_name)))
+      recs.push('Upload a brand guide to unlock full analysis.');
     if (!identity.primary_colors || identity.primary_colors.length === 0)
-      recs.push('Add approved brand colours to compare live-site palette usage.');
+      recs.push('Add approved brand colours to check palette usage.');
     if (!identity.description)
-      recs.push('Write a brand promise to enable value proposition checks.');
+      recs.push('Write a brand promise for value proposition checks.');
     return recs;
   }, [identity]);
 
@@ -652,17 +749,8 @@ export default function BrandDnaPage() {
   if (!workspace) {
     return (
       <div>
-        <PageHeader
-          icon={<Fingerprint size={18} strokeWidth={1.6} />}
-          title="Brand DNA"
-          subtitle="Manage your brand identity source of truth."
-        />
-        <EmptyState
-          title="Select a workspace"
-          body="Brand DNA is scoped to the workspace you have selected in the sidebar."
-          ctaHref={`${dashPrefix}/new-audit`}
-          ctaLabel="Run your first audit"
-        />
+        <PageHeader icon={<Fingerprint size={18} strokeWidth={1.6} />} title="Brand DNA" subtitle="Manage your brand identity source of truth." />
+        <EmptyState title="Select a workspace" body="Brand DNA is scoped to the workspace you have selected in the sidebar." ctaHref={`${dashPrefix}/new-audit`} ctaLabel="Run your first audit" />
       </div>
     );
   }
@@ -670,17 +758,8 @@ export default function BrandDnaPage() {
   if (!identity) {
     return (
       <div>
-        <PageHeader
-          icon={<Fingerprint size={18} strokeWidth={1.6} />}
-          title="Brand DNA"
-          subtitle={siteLabel ? `Brand identity for ${siteLabel}` : 'Manage your brand identity source of truth.'}
-        />
-        <EmptyState
-          title={!workspace.primary_domain ? 'No Brand DNA on file yet' : `No Brand DNA for ${siteLabel || 'this site'}`}
-          body="Add your brand name, voice, colours, and upload guidelines so audits can score design consistency against your brand standards."
-          ctaHref={`${dashPrefix}/brand-identity/new`}
-          ctaLabel="Add Brand DNA"
-        />
+        <PageHeader icon={<Fingerprint size={18} strokeWidth={1.6} />} title="Brand DNA" subtitle={siteLabel ? `Brand identity for ${siteLabel}` : 'Manage your brand identity source of truth.'} />
+        <EmptyState title={!workspace.primary_domain ? 'No Brand DNA on file yet' : `No Brand DNA for ${siteLabel || 'this site'}`} body="Add your brand name, voice, colours, and upload guidelines so audits can score design consistency against your brand standards." ctaHref={`${dashPrefix}/brand-identity/new`} ctaLabel="Add Brand DNA" />
       </div>
     );
   }
@@ -691,12 +770,94 @@ export default function BrandDnaPage() {
 
   return (
     <div>
-      {/* ── Page header ── */}
+      {/* ── Page header with "Use in Website Audit" popover ── */}
       <PageHeader
         icon={<Fingerprint size={18} strokeWidth={1.6} />}
         title="Brand DNA"
         subtitle={siteLabel ? `Brand identity console for ${siteLabel}` : 'Your brand identity source of truth.'}
-      />
+      >
+        {/* "Use in Website Audit" CTA — popover in header */}
+        <div className="relative" ref={popoverRef}>
+          <button
+            onClick={() => setPopoverOpen(v => !v)}
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[12px] font-semibold transition-all hover:opacity-90"
+            style={{
+              background: readyForWebsiteAudit ? 'var(--ink)' : 'var(--paper-2)',
+              color: readyForWebsiteAudit ? 'var(--paper)' : 'var(--m-muted)',
+              border: readyForWebsiteAudit ? 'none' : '1px solid var(--rule)',
+            }}
+          >
+            <Zap size={11} />
+            Use in website audit
+            <ChevronDown size={10} className={clsx('transition-transform', popoverOpen && 'rotate-180')} />
+          </button>
+
+          {popoverOpen && (
+            <div
+              className="absolute right-0 top-10 z-50 w-80 rounded-xl p-4 shadow-lg"
+              style={{ background: 'var(--card)', border: '1px solid var(--rule)' }}
+            >
+              <p className="text-[13px] font-semibold mb-1" style={{ color: 'var(--ink)' }}>
+                Design consistency check
+              </p>
+              <p className="text-[11px] leading-relaxed mb-3" style={{ color: 'var(--m-muted)' }}>
+                When enabled, your next website audit will include a Design Consistency module that checks your live site against these brand standards.
+              </p>
+
+              {/* Readiness status */}
+              <div className="rounded-lg p-2.5 mb-3" style={{ background: 'var(--paper-2)', border: '1px solid var(--rule)' }}>
+                <div className="flex items-center gap-2 mb-1.5">
+                  {readyForWebsiteAudit ? (
+                    <>
+                      <CheckCircle2 size={12} style={{ color: 'var(--ok)' }} />
+                      <span className="text-[11px] font-semibold" style={{ color: 'var(--ok)' }}>Ready to use</span>
+                    </>
+                  ) : (
+                    <>
+                      <AlertCircle size={12} style={{ color: 'var(--warn)' }} />
+                      <span className="text-[11px] font-semibold" style={{ color: 'var(--warn)' }}>
+                        {missingItems.length} item{missingItems.length === 1 ? '' : 's'} missing
+                      </span>
+                    </>
+                  )}
+                </div>
+                {!readyForWebsiteAudit && (
+                  <div className="flex flex-wrap gap-1">
+                    {readinessChecks.map(item => (
+                      <span
+                        key={item.key}
+                        className="inline-flex items-center gap-1 text-[10px] font-medium px-2 py-0.5 rounded-full"
+                        style={{
+                          background: item.met ? 'color-mix(in srgb, var(--ok) 8%, transparent)' : 'color-mix(in srgb, var(--warn) 8%, transparent)',
+                          color: item.met ? 'var(--ok)' : 'var(--warn)',
+                        }}
+                      >
+                        {item.met ? <Check size={8} /> : <CircleDot size={8} />}
+                        {item.label}
+                      </span>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {readyForWebsiteAudit ? (
+                <Link
+                  href={`${dashPrefix}/new-audit`}
+                  className="w-full inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg text-[12px] font-semibold transition-all hover:opacity-90"
+                  style={{ background: 'var(--ink)', color: 'var(--paper)' }}
+                  onClick={() => setPopoverOpen(false)}
+                >
+                  <Play size={11} /> Run website audit with Brand DNA
+                </Link>
+              ) : (
+                <p className="text-[10px] text-center" style={{ color: 'var(--m-muted)' }}>
+                  Complete the missing items above to enable this feature.
+                </p>
+              )}
+            </div>
+          )}
+        </div>
+      </PageHeader>
 
       {error && (
         <div className="rounded-xl p-3 mb-4 flex items-center gap-2" style={{ background: 'color-mix(in srgb, var(--severe) 6%, transparent)', border: '1px solid color-mix(in srgb, var(--severe) 14%, transparent)' }}>
@@ -708,238 +869,300 @@ export default function BrandDnaPage() {
       <div className="space-y-5">
 
         {/* ══════════════════════════════════════════════════════
-           SECTION 1: Readiness
+           TOP SUMMARY ROW — Readiness score (left) + Recommendations (right)
            ══════════════════════════════════════════════════════ */}
         <section
           className="rounded-xl p-5"
           style={{ background: 'var(--card)', border: '1px solid var(--rule)' }}
         >
-          <div className="flex items-start gap-5">
-            {/* Completion ring */}
-            <div className="flex-shrink-0">
-              <div className="relative w-16 h-16">
-                <svg viewBox="0 0 36 36" className="w-16 h-16 -rotate-90">
-                  <circle cx="18" cy="18" r="14" fill="none" stroke="var(--rule)" strokeWidth="3" />
-                  <circle
-                    cx="18" cy="18" r="14" fill="none"
-                    stroke={readinessPercent === 100 ? 'var(--ok)' : readinessPercent >= 60 ? 'var(--signal)' : 'var(--warn)'}
-                    strokeWidth="3"
-                    strokeDasharray={`${readinessPercent * 0.88} 88`}
-                    strokeLinecap="round"
-                  />
-                </svg>
-                <span className="absolute inset-0 flex items-center justify-center text-[14px] font-bold" style={{ color: 'var(--ink)' }}>
-                  {readinessPercent}%
-                </span>
-              </div>
-            </div>
-
-            {/* Status */}
-            <div className="flex-1 min-w-0">
-              <h3 className="text-[14px] font-semibold mb-2" style={{ color: 'var(--ink)' }}>Brand DNA readiness</h3>
-              <div className="flex flex-wrap gap-x-5 gap-y-1.5">
-                <StatusLine
-                  label="Brand DNA audit"
-                  ready={readyForBrandAudit}
-                  reason={readyForBrandAudit ? undefined : 'Upload at least one brand file'}
-                />
-                <StatusLine
-                  label="Include in website audit"
-                  ready={readyForWebsiteAudit}
-                  reason={readyForWebsiteAudit ? undefined : `${missingItems.length} item${missingItems.length === 1 ? '' : 's'} missing`}
-                />
+          <div className="flex flex-col lg:flex-row gap-5">
+            {/* Left — Readiness score */}
+            <div className="flex items-center gap-5 flex-1 min-w-0">
+              {/* Completion ring — larger */}
+              <div className="flex-shrink-0">
+                <div className="relative w-20 h-20">
+                  <svg viewBox="0 0 36 36" className="w-20 h-20 -rotate-90">
+                    <circle cx="18" cy="18" r="14" fill="none" stroke="var(--rule)" strokeWidth="2.5" />
+                    <circle
+                      cx="18" cy="18" r="14" fill="none"
+                      stroke={readinessPercent === 100 ? 'var(--ok)' : readinessPercent >= 60 ? 'var(--signal)' : 'var(--warn)'}
+                      strokeWidth="2.5"
+                      strokeDasharray={`${readinessPercent * 0.88} 88`}
+                      strokeLinecap="round"
+                    />
+                  </svg>
+                  <span className="absolute inset-0 flex items-center justify-center text-[18px] font-bold tabular-nums" style={{ color: 'var(--ink)' }}>
+                    {readinessPercent}%
+                  </span>
+                </div>
               </div>
 
-              {/* Missing items checklist */}
-              {missingItems.length > 0 && (
-                <div className="mt-3 flex flex-wrap gap-2">
+              <div className="min-w-0">
+                <h2 className="text-[16px] font-semibold" style={{ color: 'var(--ink)' }}>Brand DNA readiness</h2>
+                {/* Status pills — small and secondary */}
+                <div className="flex flex-wrap gap-1.5 mt-2">
                   {readinessChecks.map(item => (
                     <span
                       key={item.key}
-                      className="inline-flex items-center gap-1.5 text-[11px] font-medium px-2.5 py-1 rounded-full"
+                      className="inline-flex items-center gap-1 text-[10px] font-medium px-2 py-0.5 rounded-full"
                       style={{
                         background: item.met ? 'color-mix(in srgb, var(--ok) 8%, transparent)' : 'var(--paper-2)',
                         color: item.met ? 'var(--ok)' : 'var(--m-muted)',
                         border: `1px solid ${item.met ? 'color-mix(in srgb, var(--ok) 20%, transparent)' : 'var(--rule)'}`,
                       }}
                     >
-                      {item.met ? <CheckCircle2 size={10} /> : <CircleDot size={10} />}
+                      {item.met ? <CheckCircle2 size={8} /> : <CircleDot size={8} />}
                       {item.label}
                     </span>
                   ))}
                 </div>
-              )}
+              </div>
             </div>
-          </div>
-        </section>
 
-        {/* ══════════════════════════════════════════════════════
-           SECTION 2: Brand Profile
-           ══════════════════════════════════════════════════════ */}
-        <section
-          className="rounded-xl overflow-hidden"
-          style={{ background: 'var(--card)', border: '1px solid var(--rule)' }}
-        >
-          <div className="flex items-center justify-between p-4 pb-0">
-            <h3 className="text-[13px] font-semibold" style={{ color: 'var(--ink)' }}>Brand profile</h3>
-            {!editing && (
-              <button
-                onClick={beginEdit}
-                className="inline-flex items-center gap-1 text-[11px] font-semibold px-2 py-1 rounded-md transition-colors hover:opacity-80"
-                style={{ background: 'var(--paper-2)', color: 'var(--ink)', border: '1px solid var(--rule)' }}
-              >
-                <Edit2 size={10} /> Edit
-              </button>
-            )}
-          </div>
-
-          <div className="p-4">
-            {editing && editState ? (
-              <div className="space-y-3">
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  <Field label="Brand name" required>
-                    <input value={editState.name} onChange={e => setEditState({ ...editState, name: e.target.value })} className="w-full px-3 py-2 rounded-lg text-[13px] outline-none" style={{ background: 'var(--paper-2)', border: '1px solid var(--rule)', color: 'var(--ink)' }} maxLength={120} />
-                  </Field>
-                  <Field label="Website URL">
-                    <input value={editState.website_url} onChange={e => setEditState({ ...editState, website_url: e.target.value })} placeholder="https://example.com" className="w-full px-3 py-2 rounded-lg text-[13px] outline-none" style={{ background: 'var(--paper-2)', border: '1px solid var(--rule)', color: 'var(--ink)' }} maxLength={2048} />
-                  </Field>
+            {/* Right — Recommendations */}
+            {recommendations.length > 0 && (
+              <div className="lg:w-[340px] flex-shrink-0 lg:border-l lg:pl-5" style={{ borderColor: 'var(--rule)' }}>
+                <h3 className="text-[11px] font-semibold tracking-[0.04em] uppercase mb-2" style={{ color: 'var(--m-muted)' }}>
+                  Recommendations
+                </h3>
+                <div className="space-y-1">
+                  {recommendations.map((rec, i) => (
+                    <div key={i} className="flex items-start gap-1.5">
+                      <Lightbulb size={10} className="flex-shrink-0 mt-0.5" style={{ color: 'var(--signal)' }} />
+                      <p className="text-[11px] leading-snug" style={{ color: 'var(--ink)' }}>{rec}</p>
+                    </div>
+                  ))}
                 </div>
-                <Field label="Logo URL">
-                  <input value={editState.logo_url} onChange={e => setEditState({ ...editState, logo_url: e.target.value })} placeholder="https://cdn.example.com/logo.svg or upload in Assets" className="w-full px-3 py-2 rounded-lg text-[13px] outline-none" style={{ background: 'var(--paper-2)', border: '1px solid var(--rule)', color: 'var(--ink)' }} maxLength={2048} />
-                </Field>
-                <Field label="Brand voice">
-                  <textarea value={editState.brand_voice} onChange={e => setEditState({ ...editState, brand_voice: e.target.value })} placeholder="How does your brand sound? e.g. Confident but approachable, technical but not cold." rows={2} className="w-full px-3 py-2 rounded-lg text-[13px] resize-y outline-none" style={{ background: 'var(--paper-2)', border: '1px solid var(--rule)', color: 'var(--ink)' }} maxLength={4000} />
-                </Field>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  <Field label="Tone keywords">
-                    <input value={editState.tone_keywords} onChange={e => setEditState({ ...editState, tone_keywords: e.target.value })} placeholder="confident, warm, direct" className="w-full px-3 py-2 rounded-lg text-[13px] outline-none" style={{ background: 'var(--paper-2)', border: '1px solid var(--rule)', color: 'var(--ink)' }} />
-                  </Field>
-                  <Field label="Brand colours">
-                    <input value={editState.primary_colors} onChange={e => setEditState({ ...editState, primary_colors: e.target.value })} placeholder="#0A84FF, #111111, #F5F5F5" className="w-full px-3 py-2 rounded-lg text-[13px] outline-none" style={{ background: 'var(--paper-2)', border: '1px solid var(--rule)', color: 'var(--ink)' }} />
-                  </Field>
-                </div>
-                <Field label="Brand promise">
-                  <textarea value={editState.description} onChange={e => setEditState({ ...editState, description: e.target.value })} placeholder="Who you serve and the change you create." rows={2} className="w-full px-3 py-2 rounded-lg text-[13px] resize-y outline-none" style={{ background: 'var(--paper-2)', border: '1px solid var(--rule)', color: 'var(--ink)' }} maxLength={600} />
-                </Field>
-                {saveError && (
-                  <div className="rounded-lg px-3 py-2 text-[12px]" style={{ background: 'color-mix(in srgb, var(--severe) 8%, transparent)', color: 'var(--severe)' }}>{saveError}</div>
-                )}
-                <div className="flex items-center gap-2 pt-1">
-                  <button onClick={cancelEdit} disabled={saving} className="inline-flex items-center gap-1 text-[12px] font-semibold px-2.5 py-1.5 rounded-md" style={{ color: 'var(--m-muted)', border: '1px solid var(--rule)' }}>
-                    <X size={11} /> Cancel
-                  </button>
-                  <button onClick={saveEdit} disabled={saving} className="inline-flex items-center gap-1 text-[12px] font-semibold px-3 py-1.5 rounded-md" style={{ background: 'var(--ink)', color: 'var(--paper)', opacity: saving ? 0.6 : 1 }}>
-                    <Save size={11} /> {saving ? 'Saving...' : 'Save'}
-                  </button>
-                </div>
-              </div>
-            ) : (
-              /* View mode — compact two-column grid */
-              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-                <ProfileSlot label="Name" value={identity.name} filled />
-                <ProfileSlot label="Website" value={identity.website_url || 'Not set'} filled={!!identity.website_url} />
-                <ProfileSlot label="Logo" value={identity.logo_url ? 'On file' : 'Not set'} filled={!!identity.logo_url} />
-                <ProfileSlot label="Voice" value={(identity.tone_keywords || []).length > 0 ? (identity.tone_keywords || []).slice(0, 3).join(', ') : (identity.brand_voice ? 'Defined' : 'Not set')} filled={!!(identity.brand_voice || (identity.tone_keywords || []).length)} />
-                <ProfileSlot label="Colours" value={(identity.primary_colors || []).length > 0 ? `${(identity.primary_colors || []).length} defined` : 'Not set'} filled={(identity.primary_colors || []).length > 0} colors={identity.primary_colors || undefined} />
-                <ProfileSlot label="Promise" value={identity.description ? (identity.description.length > 40 ? identity.description.slice(0, 38) + '...' : identity.description) : 'Not set'} filled={!!identity.description} />
               </div>
             )}
           </div>
         </section>
 
         {/* ══════════════════════════════════════════════════════
-           SECTION 3: Assets
+           MAIN ROW — Brand Profile (left) + Assets (right)
            ══════════════════════════════════════════════════════ */}
-        {!editing && (
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+
+          {/* ── Brand Profile ── */}
           <section
             className="rounded-xl overflow-hidden"
             style={{ background: 'var(--card)', border: '1px solid var(--rule)' }}
           >
-            <div className="p-4 pb-0">
-              <div className="flex items-center justify-between">
-                <h3 className="text-[13px] font-semibold" style={{ color: 'var(--ink)' }}>
-                  Assets
-                  <span className="ml-2 text-[11px] font-normal" style={{ color: 'var(--m-muted)' }}>
-                    {identity.brand_identity_files.length} file{identity.brand_identity_files.length === 1 ? '' : 's'}
-                  </span>
-                </h3>
+            <div className="flex items-center justify-between p-4 pb-0">
+              <div className="flex items-center gap-2">
+                <div className="w-6 h-6 rounded-md flex items-center justify-center" style={{ background: 'color-mix(in srgb, var(--ink) 6%, transparent)' }}>
+                  <Fingerprint size={12} style={{ color: 'var(--ink)' }} />
+                </div>
+                <h3 className="text-[14px] font-semibold" style={{ color: 'var(--ink)' }}>Brand profile</h3>
               </div>
+              {!editing && (
+                <button
+                  onClick={beginEdit}
+                  className="inline-flex items-center gap-1 text-[11px] font-semibold px-2 py-1 rounded-md transition-colors hover:opacity-80"
+                  style={{ background: 'var(--paper-2)', color: 'var(--ink)', border: '1px solid var(--rule)' }}
+                >
+                  <Edit2 size={10} /> Edit
+                </button>
+              )}
             </div>
 
             <div className="p-4">
-              {/* Drop zone */}
-              <div
-                onDragOver={e => { e.preventDefault(); setDragOver(true); }}
-                onDragLeave={() => setDragOver(false)}
-                onDrop={e => { e.preventDefault(); setDragOver(false); if (e.dataTransfer.files) uploadFiles(e.dataTransfer.files); }}
-                onClick={() => !uploading && fileInputRef.current?.click()}
-                className="flex items-center justify-center gap-3 px-5 py-5 rounded-xl border-2 border-dashed transition-all cursor-pointer"
-                style={{
-                  borderColor: dragOver ? 'var(--signal)' : 'color-mix(in srgb, var(--signal) 30%, var(--rule))',
-                  background: dragOver ? 'color-mix(in srgb, var(--signal) 6%, transparent)' : 'color-mix(in srgb, var(--signal) 2%, transparent)',
-                }}
-              >
-                {uploading ? (
-                  <>
-                    <Loader2 size={18} className="animate-spin" style={{ color: 'var(--signal)' }} />
-                    <span className="text-[12px] font-medium" style={{ color: 'var(--ink)' }}>Uploading...</span>
-                  </>
-                ) : (
-                  <>
-                    <div className="w-8 h-8 rounded-full flex items-center justify-center" style={{ background: 'color-mix(in srgb, var(--signal) 10%, transparent)' }}>
-                      <Upload size={14} style={{ color: 'var(--signal)' }} />
-                    </div>
-                    <div>
-                      <p className="text-[12px] font-semibold" style={{ color: 'var(--ink)' }}>
-                        Drop files or click to browse
-                      </p>
-                      <p className="text-[10px] mt-0.5" style={{ color: 'var(--m-muted)' }}>
-                        Brand guides, logos, style assets (PDF, DOCX, PNG, JPG, SVG)
-                      </p>
-                    </div>
-                  </>
-                )}
-              </div>
-              <input ref={fileInputRef} type="file" accept=".pdf,.doc,.docx,.txt,.png,.jpg,.jpeg,.svg,.webp" multiple onChange={e => { if (e.target.files) uploadFiles(e.target.files); }} className="hidden" />
-
-              {uploadMsg && (
-                <p className="text-[11px] mt-2" style={{ color: uploadMsg.includes('Failed') || uploadMsg.includes('exceeds') ? 'var(--severe)' : 'var(--ok)' }}>{uploadMsg}</p>
-              )}
-
-              {/* File list */}
-              {identity.brand_identity_files.length > 0 && (
-                <div className="mt-3 space-y-1">
-                  {identity.brand_identity_files.map(f => (
-                    <div key={f.id} className="flex items-center gap-2.5 px-3 py-2 rounded-lg group transition-all" style={{ background: 'var(--paper-2)', border: '1px solid var(--rule)' }}>
-                      <div className="w-6 h-6 rounded flex items-center justify-center flex-shrink-0" style={{ background: 'var(--card)' }}>
-                        {isDocFile(f.file_name) ? <FileText size={11} style={{ color: 'var(--m-muted)' }} /> : <ImageIcon size={11} style={{ color: 'var(--m-muted)' }} />}
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-[12px] font-medium truncate" style={{ color: 'var(--ink)' }}>{f.file_name}</p>
-                        <div className="flex items-center gap-1.5 text-[10px]" style={{ color: 'var(--m-muted)' }}>
-                          <span>{fileTypeLabel(f.file_name)}</span>
-                          {f.file_size_bytes && <><span style={{ color: 'var(--rule)' }}>·</span><span>{formatBytes(f.file_size_bytes)}</span></>}
-                          {f.tag && <><span style={{ color: 'var(--rule)' }}>·</span><span className="font-medium" style={{ color: 'var(--signal)' }}>{f.tag}</span></>}
-                        </div>
-                      </div>
-                      <button
-                        onClick={e => { e.stopPropagation(); deleteFile(f.id); }}
-                        disabled={deletingFileId === f.id}
-                        className="p-1 rounded opacity-0 group-hover:opacity-100 transition-all"
-                        style={{ color: 'var(--m-muted)' }}
-                      >
-                        {deletingFileId === f.id ? <Loader2 size={11} className="animate-spin" /> : <Trash2 size={11} />}
-                      </button>
-                    </div>
-                  ))}
+              {editing && editState ? (
+                <div className="space-y-3">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <Field label="Brand name" required>
+                      <input value={editState.name} onChange={e => setEditState({ ...editState, name: e.target.value })} className="w-full px-3 py-2 rounded-lg text-[13px] outline-none" style={{ background: 'var(--paper-2)', border: '1px solid var(--rule)', color: 'var(--ink)' }} maxLength={120} />
+                    </Field>
+                    <Field label="Website URL">
+                      <input value={editState.website_url} onChange={e => setEditState({ ...editState, website_url: e.target.value })} placeholder="https://example.com" className="w-full px-3 py-2 rounded-lg text-[13px] outline-none" style={{ background: 'var(--paper-2)', border: '1px solid var(--rule)', color: 'var(--ink)' }} maxLength={2048} />
+                    </Field>
+                  </div>
+                  <Field label="Logo URL">
+                    <input value={editState.logo_url} onChange={e => setEditState({ ...editState, logo_url: e.target.value })} placeholder="https://cdn.example.com/logo.svg" className="w-full px-3 py-2 rounded-lg text-[13px] outline-none" style={{ background: 'var(--paper-2)', border: '1px solid var(--rule)', color: 'var(--ink)' }} maxLength={2048} />
+                  </Field>
+                  <Field label="Brand voice">
+                    <textarea value={editState.brand_voice} onChange={e => setEditState({ ...editState, brand_voice: e.target.value })} placeholder="How does your brand sound?" rows={2} className="w-full px-3 py-2 rounded-lg text-[13px] resize-y outline-none" style={{ background: 'var(--paper-2)', border: '1px solid var(--rule)', color: 'var(--ink)' }} maxLength={4000} />
+                  </Field>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <Field label="Tone keywords">
+                      <input value={editState.tone_keywords} onChange={e => setEditState({ ...editState, tone_keywords: e.target.value })} placeholder="confident, warm, direct" className="w-full px-3 py-2 rounded-lg text-[13px] outline-none" style={{ background: 'var(--paper-2)', border: '1px solid var(--rule)', color: 'var(--ink)' }} />
+                    </Field>
+                    <Field label="Brand colours">
+                      <input value={editState.primary_colors} onChange={e => setEditState({ ...editState, primary_colors: e.target.value })} placeholder="#0A84FF, #111111" className="w-full px-3 py-2 rounded-lg text-[13px] outline-none" style={{ background: 'var(--paper-2)', border: '1px solid var(--rule)', color: 'var(--ink)' }} />
+                    </Field>
+                  </div>
+                  <Field label="Brand promise">
+                    <textarea value={editState.description} onChange={e => setEditState({ ...editState, description: e.target.value })} placeholder="Who you serve and the change you create." rows={2} className="w-full px-3 py-2 rounded-lg text-[13px] resize-y outline-none" style={{ background: 'var(--paper-2)', border: '1px solid var(--rule)', color: 'var(--ink)' }} maxLength={600} />
+                  </Field>
+                  {saveError && (
+                    <div className="rounded-lg px-3 py-2 text-[12px]" style={{ background: 'color-mix(in srgb, var(--severe) 8%, transparent)', color: 'var(--severe)' }}>{saveError}</div>
+                  )}
+                  <div className="flex items-center gap-2 pt-1">
+                    <button onClick={cancelEdit} disabled={saving} className="inline-flex items-center gap-1 text-[12px] font-semibold px-2.5 py-1.5 rounded-md" style={{ color: 'var(--m-muted)', border: '1px solid var(--rule)' }}>
+                      <X size={11} /> Cancel
+                    </button>
+                    <button onClick={saveEdit} disabled={saving} className="inline-flex items-center gap-1 text-[12px] font-semibold px-3 py-1.5 rounded-md" style={{ background: 'var(--ink)', color: 'var(--paper)', opacity: saving ? 0.6 : 1 }}>
+                      <Save size={11} /> {saving ? 'Saving...' : 'Save'}
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <div className="space-y-1.5">
+                  <ProfileRow label="Name" value={identity.name} filled />
+                  <ProfileRow label="Website" value={identity.website_url || 'Not set'} filled={!!identity.website_url} />
+                  <ProfileRow label="Logo" value={identity.logo_url ? 'On file' : 'Not set'} filled={!!identity.logo_url} />
+                  <ProfileRow label="Voice" value={(identity.tone_keywords || []).length > 0 ? (identity.tone_keywords || []).slice(0, 3).join(', ') : (identity.brand_voice ? 'Defined' : 'Not set')} filled={!!(identity.brand_voice || (identity.tone_keywords || []).length)} />
+                  <ProfileRow label="Colours" value={(identity.primary_colors || []).length > 0 ? `${(identity.primary_colors || []).length} defined` : 'Not set'} filled={(identity.primary_colors || []).length > 0} colors={identity.primary_colors || undefined} />
+                  <ProfileRow label="Promise" value={identity.description ? (identity.description.length > 50 ? identity.description.slice(0, 48) + '...' : identity.description) : 'Not set'} filled={!!identity.description} />
                 </div>
               )}
             </div>
           </section>
-        )}
+
+          {/* ── Assets ── */}
+          {!editing && (
+            <section
+              className="rounded-xl overflow-hidden"
+              style={{ background: 'var(--card)', border: '1px solid var(--rule)' }}
+            >
+              <div className="p-4 pb-0">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <div className="w-6 h-6 rounded-md flex items-center justify-center" style={{ background: 'color-mix(in srgb, var(--ink) 6%, transparent)' }}>
+                      <Upload size={12} style={{ color: 'var(--ink)' }} />
+                    </div>
+                    <h3 className="text-[14px] font-semibold" style={{ color: 'var(--ink)' }}>
+                      Assets
+                      <span className="ml-2 text-[11px] font-normal" style={{ color: 'var(--m-muted)' }}>
+                        {identity.brand_identity_files.length} file{identity.brand_identity_files.length === 1 ? '' : 's'}
+                      </span>
+                    </h3>
+                  </div>
+                  {/* Analyze button */}
+                  {identity.brand_identity_files.length > 0 && !suggestion && (
+                    <button
+                      onClick={analyzeFiles}
+                      disabled={analyzing}
+                      className="inline-flex items-center gap-1 text-[11px] font-semibold px-2.5 py-1 rounded-md transition-all hover:opacity-80"
+                      style={{ background: 'color-mix(in srgb, var(--signal) 10%, transparent)', color: 'var(--signal)', border: '1px solid color-mix(in srgb, var(--signal) 20%, transparent)' }}
+                    >
+                      {analyzing ? <><Loader2 size={10} className="animate-spin" /> Analyzing...</> : <><Sparkles size={10} /> Detect brand info</>}
+                    </button>
+                  )}
+                </div>
+              </div>
+
+              <div className="p-4">
+                {/* Drop zone */}
+                <div
+                  onDragOver={e => { e.preventDefault(); setDragOver(true); }}
+                  onDragLeave={() => setDragOver(false)}
+                  onDrop={e => { e.preventDefault(); setDragOver(false); if (e.dataTransfer.files) uploadFiles(e.dataTransfer.files); }}
+                  onClick={() => !uploading && fileInputRef.current?.click()}
+                  className="flex items-center justify-center gap-3 px-4 py-4 rounded-xl border-2 border-dashed transition-all cursor-pointer"
+                  style={{
+                    borderColor: dragOver ? 'var(--signal)' : 'color-mix(in srgb, var(--signal) 30%, var(--rule))',
+                    background: dragOver ? 'color-mix(in srgb, var(--signal) 6%, transparent)' : 'color-mix(in srgb, var(--signal) 2%, transparent)',
+                  }}
+                >
+                  {uploading ? (
+                    <>
+                      <Loader2 size={16} className="animate-spin" style={{ color: 'var(--signal)' }} />
+                      <span className="text-[12px] font-medium" style={{ color: 'var(--ink)' }}>Uploading...</span>
+                    </>
+                  ) : (
+                    <>
+                      <div className="w-7 h-7 rounded-full flex items-center justify-center" style={{ background: 'color-mix(in srgb, var(--signal) 10%, transparent)' }}>
+                        <Upload size={12} style={{ color: 'var(--signal)' }} />
+                      </div>
+                      <div>
+                        <p className="text-[12px] font-semibold" style={{ color: 'var(--ink)' }}>Drop files or click to browse</p>
+                        <p className="text-[10px] mt-0.5" style={{ color: 'var(--m-muted)' }}>Brand guides, logos, style assets</p>
+                      </div>
+                    </>
+                  )}
+                </div>
+                <input ref={fileInputRef} type="file" accept=".pdf,.doc,.docx,.txt,.png,.jpg,.jpeg,.svg,.webp" multiple onChange={e => { if (e.target.files) uploadFiles(e.target.files); }} className="hidden" />
+
+                {uploadMsg && (
+                  <p className="text-[11px] mt-2" style={{ color: uploadMsg.includes('Failed') || uploadMsg.includes('exceeds') ? 'var(--severe)' : 'var(--ok)' }}>{uploadMsg}</p>
+                )}
+
+                {/* Content analysis suggestion banner */}
+                {suggestion && (
+                  <div className="mt-3 rounded-lg p-3" style={{ background: 'color-mix(in srgb, var(--signal) 4%, transparent)', border: '1px solid color-mix(in srgb, var(--signal) 15%, transparent)' }}>
+                    <div className="flex items-center gap-2 mb-2">
+                      <Sparkles size={12} style={{ color: 'var(--signal)' }} />
+                      <span className="text-[12px] font-semibold" style={{ color: 'var(--ink)' }}>Brand info detected</span>
+                    </div>
+                    <div className="space-y-1 mb-3">
+                      {suggestion.brand_voice && <DetectedField label="Voice" value={suggestion.brand_voice.slice(0, 80) + (suggestion.brand_voice.length > 80 ? '...' : '')} />}
+                      {suggestion.tone_keywords.length > 0 && <DetectedField label="Tone" value={suggestion.tone_keywords.join(', ')} />}
+                      {suggestion.primary_colors.length > 0 && <DetectedField label="Colours" value={suggestion.primary_colors.join(', ')} colors={suggestion.primary_colors} />}
+                      {suggestion.description && <DetectedField label="Promise" value={suggestion.description.slice(0, 80) + (suggestion.description.length > 80 ? '...' : '')} />}
+                      {suggestion.brandGuideFile && <DetectedField label="Brand guide" value={suggestion.brandGuideFile} />}
+                      {suggestion.logoFile && <DetectedField label="Logo" value={suggestion.logoFile} />}
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={applyProfile}
+                        disabled={applyingProfile}
+                        className="inline-flex items-center gap-1 text-[11px] font-semibold px-2.5 py-1.5 rounded-md transition-all"
+                        style={{ background: 'var(--ink)', color: 'var(--paper)', opacity: applyingProfile ? 0.6 : 1 }}
+                      >
+                        {applyingProfile ? <><Loader2 size={10} className="animate-spin" /> Applying...</> : <><Check size={10} /> Apply to profile</>}
+                      </button>
+                      <button
+                        onClick={() => setSuggestion(null)}
+                        className="text-[11px] font-medium px-2 py-1.5 rounded-md"
+                        style={{ color: 'var(--m-muted)' }}
+                      >
+                        Dismiss
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+                {/* File list */}
+                {identity.brand_identity_files.length > 0 && (
+                  <div className="mt-3 space-y-1">
+                    {identity.brand_identity_files.map(f => {
+                      const classified = suggestion?.files.find(cf => cf.fileName === f.file_name);
+                      return (
+                        <div key={f.id} className="flex items-center gap-2.5 px-3 py-2 rounded-lg group transition-all" style={{ background: 'var(--paper-2)', border: '1px solid var(--rule)' }}>
+                          <div className="w-6 h-6 rounded flex items-center justify-center flex-shrink-0" style={{ background: 'var(--card)' }}>
+                            {isDocFile(f.file_name) ? <FileText size={11} style={{ color: 'var(--m-muted)' }} /> : <ImageIcon size={11} style={{ color: 'var(--m-muted)' }} />}
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-[12px] font-medium truncate" style={{ color: 'var(--ink)' }}>{f.file_name}</p>
+                            <div className="flex items-center gap-1.5 text-[10px]" style={{ color: 'var(--m-muted)' }}>
+                              <span>{fileTypeLabel(f.file_name)}</span>
+                              {f.file_size_bytes && <><span style={{ color: 'var(--rule)' }}>·</span><span>{formatBytes(f.file_size_bytes)}</span></>}
+                              {(f.tag || classified?.detection.classificationLabel) && (
+                                <><span style={{ color: 'var(--rule)' }}>·</span><span className="font-medium" style={{ color: 'var(--signal)' }}>{f.tag || classified?.detection.classificationLabel}</span></>
+                              )}
+                            </div>
+                          </div>
+                          <button
+                            onClick={e => { e.stopPropagation(); deleteFile(f.id); }}
+                            disabled={deletingFileId === f.id}
+                            className="p-1 rounded opacity-0 group-hover:opacity-100 transition-all"
+                            style={{ color: 'var(--m-muted)' }}
+                          >
+                            {deletingFileId === f.id ? <Loader2 size={11} className="animate-spin" /> : <Trash2 size={11} />}
+                          </button>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            </section>
+          )}
+        </div>
 
         {/* ══════════════════════════════════════════════════════
-           SECTION 4: Brand DNA Audit
+           Brand DNA Audit
            ══════════════════════════════════════════════════════ */}
         <section
           className="rounded-xl overflow-hidden"
@@ -947,11 +1170,16 @@ export default function BrandDnaPage() {
         >
           <div className="p-4">
             <div className="flex items-center justify-between mb-3">
-              <div>
-                <h3 className="text-[13px] font-semibold" style={{ color: 'var(--ink)' }}>Brand DNA audit</h3>
-                <p className="text-[11px] mt-0.5" style={{ color: 'var(--m-muted)' }}>
-                  Checks uploaded brand identity, assets, and structured inputs for completeness, consistency, and usability.
-                </p>
+              <div className="flex items-center gap-2">
+                <div className="w-6 h-6 rounded-md flex items-center justify-center" style={{ background: 'color-mix(in srgb, var(--ink) 6%, transparent)' }}>
+                  <Target size={12} style={{ color: 'var(--ink)' }} />
+                </div>
+                <div>
+                  <h3 className="text-[14px] font-semibold" style={{ color: 'var(--ink)' }}>Brand DNA audit</h3>
+                  <p className="text-[11px] mt-0.5" style={{ color: 'var(--m-muted)' }}>
+                    Scores your brand materials across 6 categories.
+                  </p>
+                </div>
               </div>
 
               {/* Audit actions */}
@@ -977,26 +1205,12 @@ export default function BrandDnaPage() {
                         <MoreVertical size={12} />
                       </button>
                       {menuOpen && (
-                        <div
-                          role="menu"
-                          className="absolute right-0 top-9 z-50 w-52 rounded-xl py-1 shadow-lg"
-                          style={{ background: 'var(--card)', border: '1px solid var(--rule)' }}
-                        >
-                          <button
-                            type="button"
-                            onClick={() => { handleShare(); setMenuOpen(false); }}
-                            className="w-full flex items-center gap-2 px-3 py-2 text-[11px] hover:bg-black/[0.03] transition-colors text-left"
-                            style={{ color: 'var(--ink)' }}
-                          >
-                            <Share2 size={11} className="text-m-muted" />
+                        <div role="menu" className="absolute right-0 top-9 z-50 w-52 rounded-xl py-1 shadow-lg" style={{ background: 'var(--card)', border: '1px solid var(--rule)' }}>
+                          <button type="button" onClick={() => { handleShare(); setMenuOpen(false); }} className="w-full flex items-center gap-2 px-3 py-2 text-[11px] hover:bg-black/[0.03] transition-colors text-left" style={{ color: 'var(--ink)' }}>
+                            <Share2 size={11} style={{ color: 'var(--m-muted)' }} />
                             {shareUrl ? 'Copy share link' : 'Create share link'}
                           </button>
-                          <button
-                            type="button"
-                            onClick={() => { setMenuOpen(false); handleDeleteAudit(); }}
-                            className="w-full flex items-center gap-2 px-3 py-2 text-[11px] hover:bg-red-50 transition-colors text-left"
-                            style={{ color: 'var(--severe)' }}
-                          >
+                          <button type="button" onClick={() => { setMenuOpen(false); handleDeleteAudit(); }} className="w-full flex items-center gap-2 px-3 py-2 text-[11px] hover:bg-red-50 transition-colors text-left" style={{ color: 'var(--severe)' }}>
                             <Trash2 size={11} />
                             Delete audit
                           </button>
@@ -1024,9 +1238,7 @@ export default function BrandDnaPage() {
             </div>
 
             {/* Audit in progress */}
-            {isAuditInProgress && audit && (
-              <BrandAuditInProgress audit={audit} />
-            )}
+            {isAuditInProgress && audit && <BrandAuditInProgress audit={audit} />}
 
             {/* Audit failed */}
             {isAuditFailed && audit && (
@@ -1047,7 +1259,6 @@ export default function BrandDnaPage() {
             {/* Audit completed — score + categories */}
             {isAuditCompleted && report && (
               <div className="space-y-4">
-                {/* Score summary */}
                 <div className="flex items-center gap-4">
                   <ScoreCircle score={overallScore || 0} size="big" />
                   <div className="flex-1 min-w-0">
@@ -1065,18 +1276,13 @@ export default function BrandDnaPage() {
                   </div>
                 </div>
 
-                {/* Category scores */}
                 {categoryScores.length > 0 && (
                   <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-6 gap-2">
                     {categoryScores.map(cat => {
                       const tint = CATEGORY_TINTS[cat.slug] || CATEGORY_TINTS.visual_consistency;
                       const CatIcon = CATEGORY_ICONS[cat.slug] || Target;
                       return (
-                        <div
-                          key={cat.slug}
-                          className="rounded-lg p-2.5"
-                          style={{ background: tint.bg, border: `1px solid ${tint.border}` }}
-                        >
+                        <div key={cat.slug} className="rounded-lg p-2.5" style={{ background: tint.bg, border: `1px solid ${tint.border}` }}>
                           <div className="flex items-center gap-1.5 mb-1">
                             <CatIcon size={11} style={{ color: tint.dot }} />
                             <span className="text-[10px] font-semibold truncate" style={{ color: 'var(--ink)' }}>{cat.name}</span>
@@ -1088,7 +1294,6 @@ export default function BrandDnaPage() {
                   </div>
                 )}
 
-                {/* Top findings */}
                 {findings.length > 0 && (
                   <div>
                     <p className="text-[11px] font-semibold mb-2" style={{ color: 'var(--m-muted)' }}>
@@ -1124,74 +1329,12 @@ export default function BrandDnaPage() {
             {!audit && !auditLoading && !isAuditInProgress && (
               <div className="text-center py-4">
                 <p className="text-[11px]" style={{ color: 'var(--m-muted)' }}>
-                  {readyForBrandAudit
-                    ? 'Run a Brand DNA audit to score your brand materials across 6 categories.'
-                    : 'Upload brand files above to enable auditing.'}
+                  {readyForBrandAudit ? 'Run a Brand DNA audit to score your brand materials across 6 categories.' : 'Upload brand files above to enable auditing.'}
                 </p>
               </div>
             )}
           </div>
         </section>
-
-        {/* ══════════════════════════════════════════════════════
-           SECTION 5: Include in Website Audit
-           ══════════════════════════════════════════════════════ */}
-        <section
-          className="rounded-xl p-4"
-          style={{ background: 'var(--card)', border: '1px solid var(--rule)' }}
-        >
-          <div className="flex items-center justify-between">
-            <div>
-              <h3 className="text-[13px] font-semibold" style={{ color: 'var(--ink)' }}>Include in website audit</h3>
-              <p className="text-[11px] mt-0.5" style={{ color: 'var(--m-muted)' }}>
-                When enabled, your website audit will check design consistency against your brand standards.
-              </p>
-            </div>
-            <div className="flex-shrink-0 ml-4">
-              {readyForWebsiteAudit ? (
-                <span className="inline-flex items-center gap-1.5 text-[11px] font-semibold px-2.5 py-1.5 rounded-md" style={{ background: 'color-mix(in srgb, var(--ok) 8%, transparent)', color: 'var(--ok)', border: '1px solid color-mix(in srgb, var(--ok) 20%, transparent)' }}>
-                  <CheckCircle2 size={11} /> Available
-                </span>
-              ) : (
-                <span className="inline-flex items-center gap-1.5 text-[11px] font-medium px-2.5 py-1.5 rounded-md" style={{ background: 'var(--paper-2)', color: 'var(--m-muted)', border: '1px solid var(--rule)' }}>
-                  <AlertCircle size={11} /> Not ready
-                </span>
-              )}
-            </div>
-          </div>
-          {!readyForWebsiteAudit && missingItems.length > 0 && (
-            <div className="mt-3 rounded-lg p-2.5" style={{ background: 'var(--paper-2)', border: '1px solid var(--rule)' }}>
-              <p className="text-[10px] font-semibold mb-1.5" style={{ color: 'var(--m-muted)' }}>Missing requirements:</p>
-              <div className="flex flex-wrap gap-1.5">
-                {missingItems.map(item => (
-                  <span key={item.key} className="text-[10px] font-medium px-2 py-0.5 rounded-full" style={{ background: 'color-mix(in srgb, var(--warn) 8%, transparent)', color: 'var(--warn)', border: '1px solid color-mix(in srgb, var(--warn) 15%, transparent)' }}>
-                    {item.label}
-                  </span>
-                ))}
-              </div>
-            </div>
-          )}
-        </section>
-
-        {/* ══════════════════════════════════════════════════════
-           SECTION 6: Recommendations
-           ══════════════════════════════════════════════════════ */}
-        {recommendations.length > 0 && (
-          <section
-            className="rounded-xl p-4"
-            style={{ background: 'var(--card)', border: '1px solid var(--rule)' }}
-          >
-            <h3 className="text-[13px] font-semibold mb-3" style={{ color: 'var(--ink)' }}>Recommendations</h3>
-            <div className="space-y-1.5">
-              {recommendations.map((rec, i) => (
-                <div key={i} className="flex items-start gap-2 px-3 py-2 rounded-lg" style={{ background: 'color-mix(in srgb, var(--signal) 3%, transparent)', border: '1px solid color-mix(in srgb, var(--signal) 10%, transparent)' }}>
-                  <Lightbulb size={11} className="flex-shrink-0 mt-0.5" style={{ color: 'var(--signal)' }} />
-                  <p className="text-[12px] leading-snug" style={{ color: 'var(--ink)' }}>{rec}</p>
-                </div>
-              ))}
-            </div>
-          </section>
-        )}
 
       </div>
     </div>
@@ -1217,41 +1360,39 @@ function EmptyState({ title, body, ctaHref, ctaLabel }: { title: string; body: s
   );
 }
 
-function StatusLine({ label, ready, reason }: { label: string; ready: boolean; reason?: string }) {
+function ProfileRow({ label, value, filled, colors }: { label: string; value: string; filled: boolean; colors?: string[] }) {
   return (
-    <div className="flex items-center gap-1.5">
-      {ready ? (
-        <CheckCircle2 size={11} style={{ color: 'var(--ok)' }} />
-      ) : (
-        <AlertCircle size={11} style={{ color: 'var(--warn)' }} />
-      )}
-      <span className="text-[12px] font-medium" style={{ color: 'var(--ink)' }}>{label}</span>
-      {ready ? (
-        <span className="text-[10px] font-semibold" style={{ color: 'var(--ok)' }}>Ready</span>
-      ) : reason ? (
-        <span className="text-[10px]" style={{ color: 'var(--m-muted)' }}>— {reason}</span>
-      ) : null}
+    <div className="flex items-center gap-3 px-3 py-2 rounded-lg" style={{ background: 'var(--paper-2)', border: '1px solid var(--rule)' }}>
+      <span className="text-[10px] font-semibold tracking-[0.04em] uppercase w-16 flex-shrink-0" style={{ color: 'var(--m-muted)' }}>
+        {label}
+      </span>
+      <div className="flex items-center gap-2 flex-1 min-w-0">
+        {colors && colors.length > 0 && (
+          <div className="flex items-center gap-1">
+            {colors.slice(0, 6).map((c, i) => (
+              <span key={`${c}-${i}`} className="w-3 h-3 rounded-sm flex-shrink-0" style={{ background: c, border: '1px solid var(--rule)' }} title={c} />
+            ))}
+          </div>
+        )}
+        <p className="text-[12px] truncate font-medium" style={{ color: filled ? 'var(--ink)' : 'var(--m-muted)' }}>{value}</p>
+      </div>
+      {filled && <CheckCircle2 size={10} className="flex-shrink-0" style={{ color: 'var(--ok)' }} />}
     </div>
   );
 }
 
-function ProfileSlot({ label, value, filled, colors }: { label: string; value: string; filled: boolean; colors?: string[] }) {
+function DetectedField({ label, value, colors }: { label: string; value: string; colors?: string[] }) {
   return (
-    <div className="rounded-lg px-3 py-2 min-w-0" style={{ background: 'var(--paper-2)', border: '1px solid var(--rule)' }}>
-      <div className="flex items-center justify-between gap-1 mb-0.5">
-        <span className="text-[10px] font-semibold tracking-[0.04em] uppercase" style={{ color: 'var(--m-muted)' }}>
-          {label}
-        </span>
-        {filled && <CheckCircle2 size={9} style={{ color: 'var(--ok)' }} />}
-      </div>
+    <div className="flex items-center gap-2">
+      <span className="text-[10px] font-semibold tracking-[0.04em] uppercase w-14 flex-shrink-0" style={{ color: 'var(--signal)' }}>{label}</span>
       {colors && colors.length > 0 && (
-        <div className="flex items-center gap-1 mb-0.5">
+        <div className="flex items-center gap-0.5">
           {colors.slice(0, 6).map((c, i) => (
-            <span key={`${c}-${i}`} className="w-2.5 h-2.5 rounded-sm" style={{ background: c, border: '1px solid var(--rule)' }} title={c} />
+            <span key={`${c}-${i}`} className="w-2.5 h-2.5 rounded-sm flex-shrink-0" style={{ background: c, border: '1px solid rgba(0,0,0,0.1)' }} />
           ))}
         </div>
       )}
-      <p className="text-[12px] truncate font-medium" style={{ color: filled ? 'var(--ink)' : 'var(--m-muted)' }}>{value}</p>
+      <span className="text-[11px] truncate" style={{ color: 'var(--ink)' }}>{value}</span>
     </div>
   );
 }

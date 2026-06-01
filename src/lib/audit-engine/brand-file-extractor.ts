@@ -422,3 +422,261 @@ export async function extractAllBrandFiles(
 
   return results
 }
+
+// ── Content-based file classification ─────────────────────────
+// Classifies files by CONTENT, not filename. Detects what brand
+// information a file contains and extracts structured fields.
+
+export interface BrandFieldDetection {
+  /** Whether this file contains voice / tone guidance */
+  hasVoice: boolean
+  /** Extracted voice description, if found */
+  voice: string | null
+  /** Extracted tone keywords, if found */
+  toneKeywords: string[]
+  /** Whether this file contains brand colour definitions */
+  hasColours: boolean
+  /** Extracted colour hex values, if found */
+  colours: string[]
+  /** Whether this file contains a brand promise or positioning statement */
+  hasPromise: boolean
+  /** Extracted promise / positioning text, if found */
+  promise: string | null
+  /** Whether this file is likely the primary logo asset */
+  isLogo: boolean
+  /** Whether this file is likely an icon / mark (not the full logo) */
+  isIcon: boolean
+  /** Whether this file is a comprehensive brand identity guide */
+  isBrandGuide: boolean
+  /** Short label describing what kind of file this is */
+  classificationLabel: string
+  /** Confidence: 'high' | 'medium' | 'low' */
+  confidence: 'high' | 'medium' | 'low'
+}
+
+export interface ClassifiedFile {
+  fileName: string
+  fileType: string
+  detection: BrandFieldDetection
+}
+
+export interface BrandProfileSuggestion {
+  /** Voice description aggregated from all files */
+  brand_voice: string | null
+  /** Tone keywords aggregated from all files */
+  tone_keywords: string[]
+  /** Primary/secondary/accent colours aggregated from all files */
+  primary_colors: string[]
+  /** Brand promise / positioning aggregated from all files */
+  description: string | null
+  /** Which file was identified as the brand guide */
+  brandGuideFile: string | null
+  /** Which file was identified as the logo */
+  logoFile: string | null
+  /** Per-file classifications */
+  files: ClassifiedFile[]
+}
+
+/** Classify a single file's extracted content to detect brand information */
+async function classifyFileContent(
+  extracted: ExtractedContent,
+): Promise<BrandFieldDetection> {
+  const content = (extracted.textContent || '') + '\n' + (extracted.visualDescription || '')
+  const isImage = ['png', 'jpg', 'jpeg', 'webp', 'svg'].includes(extracted.fileType)
+
+  // For images, use a simpler heuristic + any vision description
+  if (isImage && content.trim().length < 50) {
+    // Minimal content — likely a logo or icon image
+    const nameLower = extracted.fileName.toLowerCase()
+    const looksLikeLogo = /logo|logotype|wordmark|brand.?mark/i.test(nameLower) || /logo|logotype|wordmark/i.test(content)
+    const looksLikeIcon = /icon|favicon|mark|symbol/i.test(nameLower) || /icon|favicon|app.?icon/i.test(content)
+    return {
+      hasVoice: false, voice: null, toneKeywords: [],
+      hasColours: false, colours: [],
+      hasPromise: false, promise: null,
+      isLogo: looksLikeLogo && !looksLikeIcon,
+      isIcon: looksLikeIcon,
+      isBrandGuide: false,
+      classificationLabel: looksLikeLogo ? 'Logo' : looksLikeIcon ? 'Icon / mark' : 'Image asset',
+      confidence: 'medium',
+    }
+  }
+
+  // For images with vision descriptions, classify from the description
+  if (isImage && content.trim().length >= 50) {
+    const hasLogo = /logo|logotype|wordmark|brand.?mark/i.test(content)
+    const hasIcon = /icon|favicon|app.?icon|symbol/i.test(content)
+    const hexMatches = content.match(/#(?:[0-9a-fA-F]{3}){1,2}\b/g) || []
+    return {
+      hasVoice: false, voice: null, toneKeywords: [],
+      hasColours: hexMatches.length > 0,
+      colours: [...new Set(hexMatches.map(c => c.toUpperCase()))].slice(0, 12),
+      hasPromise: false, promise: null,
+      isLogo: hasLogo && !hasIcon,
+      isIcon: hasIcon,
+      isBrandGuide: false,
+      classificationLabel: hasLogo ? 'Logo' : hasIcon ? 'Icon / mark' : 'Image asset',
+      confidence: hexMatches.length > 0 ? 'medium' : 'low',
+    }
+  }
+
+  // For documents (PDF, DOCX, TXT), use Claude to classify content
+  if (content.trim().length < 20) {
+    return {
+      hasVoice: false, voice: null, toneKeywords: [],
+      hasColours: false, colours: [],
+      hasPromise: false, promise: null,
+      isLogo: false, isIcon: false, isBrandGuide: false,
+      classificationLabel: 'Empty or unreadable',
+      confidence: 'low',
+    }
+  }
+
+  try {
+    const client = getAnthropicClient()
+    const truncated = content.slice(0, 15_000)
+
+    const response = await client.messages.create({
+      model: 'claude-haiku-4-5-20251001',
+      max_tokens: 2000,
+      messages: [
+        {
+          role: 'user',
+          content: `Analyze this document content and classify what brand identity information it contains. Respond ONLY with valid JSON matching this exact schema — no markdown, no explanation:
+
+{
+  "hasVoice": boolean,
+  "voice": "extracted voice/tone description or null",
+  "toneKeywords": ["keyword1", "keyword2"],
+  "hasColours": boolean,
+  "colours": ["#HEX1", "#HEX2"],
+  "hasPromise": boolean,
+  "promise": "extracted brand promise/positioning statement or null",
+  "isBrandGuide": boolean,
+  "classificationLabel": "short label like: Brand identity guide, Voice guidelines, Colour palette, Messaging document, Style guide, Mission statement, etc.",
+  "confidence": "high" | "medium" | "low"
+}
+
+Rules:
+- hasVoice: true if the document defines brand voice, tone, communication style, or personality traits.
+- voice: if hasVoice, extract a concise description of the voice (1-3 sentences). Null otherwise.
+- toneKeywords: if hasVoice, extract 3-5 tone keywords (e.g. "confident", "approachable"). Empty array otherwise.
+- hasColours: true if the document specifies brand colours with hex values, RGB, or named colours.
+- colours: extract ONLY hex colour values (#RRGGBB format). Include primary, secondary, accent only. Max 6. Empty if no colours found.
+- hasPromise: true if the document contains a brand promise, positioning statement, mission, vision, or value proposition.
+- promise: if hasPromise, extract the most concise version (1-2 sentences). Null otherwise.
+- isBrandGuide: true if this is a comprehensive brand identity guide covering multiple brand elements (logo usage, colours, typography, voice, etc.)
+- classificationLabel: a short human-readable label for what this document is.
+- confidence: "high" if the content clearly and explicitly defines brand elements, "medium" if it contains some brand info mixed with other content, "low" if brand info is inferred or sparse.
+
+Document file name (use as a WEAK hint only — classify primarily by content):
+"${extracted.fileName}"
+
+--- DOCUMENT CONTENT ---
+${truncated}
+--- END ---`,
+        },
+      ],
+    })
+
+    const textBlock = response.content.find((b) => b.type === 'text')
+    const raw = (textBlock?.text || '').trim()
+
+    // Parse JSON — handle cases where Claude wraps in markdown code blocks
+    let jsonStr = raw
+    const codeBlockMatch = raw.match(/```(?:json)?\s*([\s\S]*?)```/)
+    if (codeBlockMatch) jsonStr = codeBlockMatch[1].trim()
+
+    const parsed = JSON.parse(jsonStr)
+
+    return {
+      hasVoice: !!parsed.hasVoice,
+      voice: typeof parsed.voice === 'string' ? parsed.voice.trim() || null : null,
+      toneKeywords: Array.isArray(parsed.toneKeywords) ? parsed.toneKeywords.filter((k: unknown) => typeof k === 'string').slice(0, 8) : [],
+      hasColours: !!parsed.hasColours,
+      colours: Array.isArray(parsed.colours) ? parsed.colours.filter((c: unknown) => typeof c === 'string' && /^#[0-9a-fA-F]{3,8}$/.test(c as string)).slice(0, 12) : [],
+      hasPromise: !!parsed.hasPromise,
+      promise: typeof parsed.promise === 'string' ? parsed.promise.trim() || null : null,
+      isLogo: false,
+      isIcon: false,
+      isBrandGuide: !!parsed.isBrandGuide,
+      classificationLabel: typeof parsed.classificationLabel === 'string' ? parsed.classificationLabel : 'Document',
+      confidence: ['high', 'medium', 'low'].includes(parsed.confidence) ? parsed.confidence : 'medium',
+    }
+  } catch (err) {
+    console.warn(`[brand-classifier] Classification failed for ${extracted.fileName}:`, (err as Error).message)
+    // Fallback: use basic heuristic from content
+    const hexMatches = content.match(/#(?:[0-9a-fA-F]{3}){1,2}\b/g) || []
+    return {
+      hasVoice: false, voice: null, toneKeywords: [],
+      hasColours: hexMatches.length > 0,
+      colours: [...new Set(hexMatches.map(c => c.toUpperCase()))].slice(0, 12),
+      hasPromise: false, promise: null,
+      isLogo: false, isIcon: false, isBrandGuide: false,
+      classificationLabel: 'Document',
+      confidence: 'low',
+    }
+  }
+}
+
+/**
+ * Classify all brand files by content and build a brand profile suggestion.
+ * Aggregates detected fields across all files into a single suggestion.
+ */
+export async function classifyAndSuggestProfile(
+  files: Array<{ file_name: string; file_url: string; file_type: string | null }>,
+): Promise<BrandProfileSuggestion> {
+  // Step 1: Extract content from all files
+  const extractions = await extractAllBrandFiles(files, 3)
+
+  // Step 2: Classify each file by content
+  const classifications: ClassifiedFile[] = []
+  for (const ext of extractions) {
+    const detection = await classifyFileContent(ext)
+    classifications.push({ fileName: ext.fileName, fileType: ext.fileType, detection })
+  }
+
+  // Step 3: Aggregate — pick the highest-confidence data for each field
+  let bestVoice: string | null = null
+  let bestVoiceConf = 0
+  const allToneKeywords: string[] = []
+  const allColours: string[] = []
+  let bestPromise: string | null = null
+  let bestPromiseConf = 0
+  let brandGuideFile: string | null = null
+  let logoFile: string | null = null
+
+  const confScore = (c: string) => c === 'high' ? 3 : c === 'medium' ? 2 : 1
+
+  for (const cf of classifications) {
+    const d = cf.detection
+    const cs = confScore(d.confidence)
+
+    if (d.hasVoice && d.voice && cs > bestVoiceConf) {
+      bestVoice = d.voice
+      bestVoiceConf = cs
+    }
+    if (d.toneKeywords.length > 0) allToneKeywords.push(...d.toneKeywords)
+    if (d.hasColours && d.colours.length > 0) allColours.push(...d.colours)
+    if (d.hasPromise && d.promise && cs > bestPromiseConf) {
+      bestPromise = d.promise
+      bestPromiseConf = cs
+    }
+    if (d.isBrandGuide && !brandGuideFile) brandGuideFile = cf.fileName
+    if (d.isLogo && !logoFile) logoFile = cf.fileName
+  }
+
+  // Dedupe tone keywords and colours
+  const uniqueKeywords = [...new Set(allToneKeywords.map(k => k.toLowerCase()))].slice(0, 8)
+  const uniqueColours = [...new Set(allColours.map(c => c.toUpperCase()))].slice(0, 6)
+
+  return {
+    brand_voice: bestVoice,
+    tone_keywords: uniqueKeywords,
+    primary_colors: uniqueColours,
+    description: bestPromise,
+    brandGuideFile,
+    logoFile,
+    files: classifications,
+  }
+}
