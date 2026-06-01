@@ -74,6 +74,9 @@ interface BrandIdentity {
   tone_keywords: string[] | null;
   primary_colors: string[] | null;
   logo_url: string | null;
+  logo_file_id: string | null;
+  brand_guide_file_id: string | null;
+  brand_promise: string | null;
   created_at: string;
   updated_at: string;
   brand_identity_files: BrandFile[];
@@ -87,6 +90,7 @@ interface BrandEditState {
   tone_keywords: string;
   primary_colors: string;
   logo_url: string;
+  brand_promise: string;
 }
 
 interface BrandCategoryScore {
@@ -182,6 +186,7 @@ function toEditState(b: BrandIdentity): BrandEditState {
     tone_keywords: (b.tone_keywords || []).join(', '),
     primary_colors: (b.primary_colors || []).join(', '),
     logo_url: b.logo_url || '',
+    brand_promise: b.brand_promise || '',
   };
 }
 
@@ -264,6 +269,7 @@ interface ReadinessItem {
 const READINESS_ITEMS: ReadinessItem[] = [
   { key: 'logo', label: 'Logo', check: (i, s) =>
     !!i.logo_url
+    || !!i.logo_file_id
     || i.brand_identity_files.some(f => (f.tag || '').toLowerCase() === 'logo')
     || !!(s?.logoFile) },
   { key: 'voice', label: 'Voice', check: (i, s) =>
@@ -273,7 +279,8 @@ const READINESS_ITEMS: ReadinessItem[] = [
     || (s?.tone_keywords && s.tone_keywords.length > 0)
     || false },
   { key: 'guide', label: 'Brand guide', check: (i, s) =>
-    i.brand_identity_files.some(f =>
+    !!i.brand_guide_file_id
+    || i.brand_identity_files.some(f =>
       (f.tag || '').toLowerCase() === 'brand guide'
       || (f.tag || '').toLowerCase() === 'voice'
       || (f.tag || '').toLowerCase() === 'messaging')
@@ -283,7 +290,7 @@ const READINESS_ITEMS: ReadinessItem[] = [
     || (s?.primary_colors && s.primary_colors.length > 0)
     || false },
   { key: 'promise', label: 'Promise', check: (i, s) =>
-    !!i.description || !!(s?.description) },
+    !!i.brand_promise || !!i.description || !!(s?.description) },
 ];
 
 /* ══════════════════════════════════════════════════════════
@@ -483,6 +490,7 @@ export default function BrandDnaPage() {
         tone_keywords: editState.tone_keywords.split(',').map(s => s.trim()).filter(Boolean),
         primary_colors: editState.primary_colors.split(',').map(s => s.trim()).filter(Boolean),
         logo_url: editState.logo_url.trim() || null,
+        brand_promise: editState.brand_promise.trim() || null,
       };
       const res = await fetch(`/api/brand-identities/${identity.id}`, {
         method: 'PUT',
@@ -738,17 +746,17 @@ export default function BrandDnaPage() {
   const recommendations = useMemo(() => {
     if (!identity) return [];
     const recs: string[] = [];
-    if (!identity.logo_url && !identity.brand_identity_files.some(f => (f.tag || '').toLowerCase() === 'logo'))
+    if (!identity.logo_url && !identity.logo_file_id && !identity.brand_identity_files.some(f => (f.tag || '').toLowerCase() === 'logo'))
       recs.push('Add a logo file to enable logo consistency checks.');
     if (!identity.brand_voice)
       recs.push('Define your brand voice — describe how your brand sounds and communicates.');
     if (!identity.tone_keywords || identity.tone_keywords.length === 0)
       recs.push('Add 3-5 tone keywords (e.g. "direct, warm, confident") for copy analysis.');
-    if (!identity.brand_identity_files.some(f => ['brand guide', 'voice', 'messaging'].includes((f.tag || '').toLowerCase()) || isDocFile(f.file_name)))
+    if (!identity.brand_guide_file_id && !identity.brand_identity_files.some(f => ['brand guide', 'voice', 'messaging'].includes((f.tag || '').toLowerCase()) || isDocFile(f.file_name)))
       recs.push('Upload a brand guide to unlock full analysis.');
     if (!identity.primary_colors || identity.primary_colors.length === 0)
       recs.push('Add approved brand colours to check palette usage.');
-    if (!identity.description)
+    if (!identity.brand_promise && !identity.description)
       recs.push('Write a brand promise for value proposition checks.');
     return recs;
   }, [identity]);
@@ -1020,7 +1028,7 @@ export default function BrandDnaPage() {
                     </Field>
                   </div>
                   <Field label="Brand promise">
-                    <textarea value={editState.description} onChange={e => setEditState({ ...editState, description: e.target.value })} placeholder="Who you serve and the change you create." rows={2} className="w-full px-3 py-2 rounded-lg text-[13px] resize-y outline-none" style={{ background: 'var(--paper-2)', border: '1px solid var(--rule)', color: 'var(--ink)' }} maxLength={600} />
+                    <textarea value={editState.brand_promise} onChange={e => setEditState({ ...editState, brand_promise: e.target.value })} placeholder="Who you serve and the change you create." rows={2} className="w-full px-3 py-2 rounded-lg text-[13px] resize-y outline-none" style={{ background: 'var(--paper-2)', border: '1px solid var(--rule)', color: 'var(--ink)' }} maxLength={600} />
                   </Field>
                   {saveError && (
                     <div className="rounded-lg px-3 py-2 text-[12px]" style={{ background: 'color-mix(in srgb, var(--severe) 8%, transparent)', color: 'var(--severe)' }}>{saveError}</div>
@@ -1038,11 +1046,11 @@ export default function BrandDnaPage() {
                 <div className="space-y-1.5">
                   <ProfileRow label="Name" value={identity.name} filled />
                   <ProfileRow label="Website" value={identity.website_url || 'Not set'} filled={!!identity.website_url} />
-                  <ProfileRow label="Logo" value={identity.logo_url ? 'On file' : 'Not set'} filled={!!identity.logo_url} />
+                  <ProfileRow label="Logo" value={(identity.logo_url || identity.logo_file_id) ? 'On file' : 'Not set'} filled={!!(identity.logo_url || identity.logo_file_id)} />
                   <ProfileRow label="Voice" value={identity.brand_voice ? (identity.brand_voice.length > 60 ? identity.brand_voice.slice(0, 58) + '...' : identity.brand_voice) : 'Not set'} filled={!!identity.brand_voice} />
                   <ProfileRow label="Tone" value={(identity.tone_keywords || []).length > 0 ? (identity.tone_keywords || []).slice(0, 4).join(', ') : 'Not set'} filled={(identity.tone_keywords || []).length > 0} />
                   <ProfileRow label="Colours" value={(identity.primary_colors || []).length > 0 ? `${(identity.primary_colors || []).length} defined` : 'Not set'} filled={(identity.primary_colors || []).length > 0} colors={identity.primary_colors || undefined} />
-                  <ProfileRow label="Promise" value={identity.description ? (identity.description.length > 50 ? identity.description.slice(0, 48) + '...' : identity.description) : 'Not set'} filled={!!identity.description} />
+                  <ProfileRow label="Promise" value={(identity.brand_promise || identity.description) ? ((identity.brand_promise || identity.description || '').length > 50 ? (identity.brand_promise || identity.description || '').slice(0, 48) + '...' : (identity.brand_promise || identity.description || '')) : 'Not set'} filled={!!(identity.brand_promise || identity.description)} />
                 </div>
               )}
             </div>

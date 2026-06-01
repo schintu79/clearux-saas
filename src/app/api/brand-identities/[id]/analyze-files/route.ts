@@ -73,8 +73,20 @@ export async function POST(
       if (suggestion.primary_colors.length > 0 && (!id.primary_colors || id.primary_colors.length === 0)) {
         updates.primary_colors = normalizeColorArray(suggestion.primary_colors)
       }
-      if (suggestion.description && !id.description) {
-        updates.description = suggestion.description.slice(0, 600)
+      if (suggestion.description) {
+        if (!id.brand_promise) updates.brand_promise = suggestion.description.slice(0, 600)
+        if (!id.description) updates.description = suggestion.description.slice(0, 600)
+      }
+
+      // Resolve file IDs for logo and brand guide
+      const filesArr = ((identity as any).brand_identity_files || []) as Array<{ id: string; file_name: string }>
+      if (suggestion.logoFile && !id.logo_file_id) {
+        const logoRec = filesArr.find(f => f.file_name === suggestion.logoFile)
+        if (logoRec?.id) updates.logo_file_id = logoRec.id
+      }
+      if (suggestion.brandGuideFile && !id.brand_guide_file_id) {
+        const guideRec = filesArr.find(f => f.file_name === suggestion.brandGuideFile)
+        if (guideRec?.id) updates.brand_guide_file_id = guideRec.id
       }
 
       // Only write if there's something new to add

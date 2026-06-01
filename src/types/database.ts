@@ -760,6 +760,10 @@ export interface BrandIdentity {
   tone_keywords:  string[]
   primary_colors: string[]
   logo_url:       string | null
+  // Phase 2 Brand DNA columns (Supabase migration).
+  logo_file_id:        string | null
+  brand_guide_file_id: string | null
+  brand_promise:       string | null
   created_at:     string
   updated_at:     string
   deleted_at:     string | null

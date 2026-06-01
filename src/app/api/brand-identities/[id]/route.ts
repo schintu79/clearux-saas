@@ -52,7 +52,7 @@ export async function PUT(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
     const body = await request.json()
-    const { name, description, website_url, brand_voice, tone_keywords, primary_colors, logo_url } = body || {}
+    const { name, description, website_url, brand_voice, tone_keywords, primary_colors, logo_url, brand_promise } = body || {}
     if (!name?.trim())
       return NextResponse.json({ error: 'Name is required' }, { status: 400 })
 
@@ -86,6 +86,11 @@ export async function PUT(
     if ('tone_keywords' in (body || {})) update.tone_keywords = normalizeStringArray(tone_keywords)
     if ('primary_colors' in (body || {})) update.primary_colors = normalizeColorArray(primary_colors)
     if ('logo_url' in (body || {})) update.logo_url = normalizeUrl(logo_url)
+    if ('brand_promise' in (body || {})) {
+      update.brand_promise = typeof brand_promise === 'string'
+        ? brand_promise.trim().slice(0, 600) || null
+        : null
+    }
 
     const { data, error } = await db
       .from('brand_identities')

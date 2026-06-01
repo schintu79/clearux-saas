@@ -33,10 +33,10 @@ export async function POST(
 
     const db = createServiceSupabase()
 
-    // Fetch current brand identity to check ownership and current field values
+    // Fetch current brand identity with files to check ownership and resolve file IDs
     const { data: identity, error: fetchErr } = await db
       .from('brand_identities')
-      .select('*')
+      .select('*, brand_identity_files(*)')
       .eq('id', brandIdentityId)
       .eq('user_id', user.id)
       .single()
@@ -66,14 +66,32 @@ export async function POST(
       updates.primary_colors = normalizeColorArray(suggestion.primary_colors)
     }
 
-    // Promise / description — only populate if currently empty
-    if (suggestion.description && !id.description) {
-      updates.description = (suggestion.description as string).slice(0, 600)
+    // Promise / description — populate brand_promise (preferred) and description
+    if (suggestion.description) {
+      const promiseText = (suggestion.description as string).slice(0, 600)
+      if (!id.brand_promise) updates.brand_promise = promiseText
+      if (!id.description) updates.description = promiseText
     }
 
     // Logo — set logo_url from detected logo file URL if currently empty
     if (suggestion.logoFileUrl && !id.logo_url) {
       updates.logo_url = normalizeUrl(suggestion.logoFileUrl)
+    }
+
+    // Logo file ID — resolve the detected logo file to its DB file ID
+    if (suggestion.logoFile && !id.logo_file_id) {
+      const logoFileRecord = ((identity as any).brand_identity_files || []).find(
+        (f: any) => f.file_name === suggestion.logoFile
+      )
+      if (logoFileRecord?.id) updates.logo_file_id = logoFileRecord.id
+    }
+
+    // Brand guide file ID — resolve the detected brand guide file to its DB file ID
+    if (suggestion.brandGuideFile && !id.brand_guide_file_id) {
+      const guideFileRecord = ((identity as any).brand_identity_files || []).find(
+        (f: any) => f.file_name === suggestion.brandGuideFile
+      )
+      if (guideFileRecord?.id) updates.brand_guide_file_id = guideFileRecord.id
     }
 
     // Only write if there are actual changes beyond the timestamp
