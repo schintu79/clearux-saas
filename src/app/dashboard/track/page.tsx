@@ -68,7 +68,7 @@ function ScoreLine({ points }: { points: Array<{ score: number; date: string }> 
         return (
           <g key={i}>
             <line x1={PAD_L} y1={y} x2={W - PAD_R} y2={y} stroke="var(--border)" strokeWidth="0.5" strokeDasharray="3,3" opacity="0.5" />
-            <text x={PAD_L - 5} y={y + 2.5} textAnchor="end" fontSize="7" fill="var(--muted)" fontFamily="var(--font-inter)">{s}</text>
+            <text x={PAD_L - 5} y={y + 2.5} textAnchor="end" fontSize="6" fill="var(--muted)" fontFamily="var(--font-inter)">{s}</text>
           </g>
         );
       })}
@@ -83,18 +83,18 @@ function ScoreLine({ points }: { points: Array<{ score: number; date: string }> 
       <path d={areaD} fill="url(#trackScoreAreaGrad)" />
 
       {/* Line */}
-      <path d={pathD} fill="none" stroke="var(--signal)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+      <path d={pathD} fill="none" stroke="var(--signal)" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round" />
 
       {/* Points + last-point score badge */}
       {coords.map((c, i) => {
         const isLast = i === coords.length - 1;
         return (
           <g key={i}>
-            <circle cx={c.x} cy={c.y} r={2.5} fill="var(--paper)" stroke="var(--signal)" strokeWidth="1.5" />
+            <circle cx={c.x} cy={c.y} r={2} fill="var(--paper)" stroke="var(--signal)" strokeWidth="1" />
             {isLast && (
               <g>
-                <rect x={c.x - 12} y={c.y - 17} width="24" height="13" rx="3.5" fill="var(--signal)" />
-                <text x={c.x} y={c.y - 8.5} textAnchor="middle" fontSize="7.5" fontWeight="600" fill="white" fontFamily="var(--font-inter)">{c.score}</text>
+                <rect x={c.x - 11} y={c.y - 16} width="22" height="12" rx="3" fill="var(--signal)" />
+                <text x={c.x} y={c.y - 8} textAnchor="middle" fontSize="7" fontWeight="600" fill="white" fontFamily="var(--font-inter)">{c.score}</text>
               </g>
             )}
           </g>
@@ -107,7 +107,7 @@ function ScoreLine({ points }: { points: Array<{ score: number; date: string }> 
         const d = new Date(c.date);
         const label = `${d.toLocaleString('en-US', { month: 'short' })} ${d.getDate()}`;
         return (
-          <text key={i} x={c.x} y={H - 4} textAnchor="middle" fontSize="7" fill="var(--muted)" fontFamily="var(--font-inter)">{label}</text>
+          <text key={i} x={c.x} y={H - 4} textAnchor="middle" fontSize="6" fill="var(--muted)" fontFamily="var(--font-inter)">{label}</text>
         );
       })}
     </svg>
@@ -185,6 +185,29 @@ export default function TrackPage() {
     [diff],
   );
 
+  const trendPoints = useMemo(() => scopedHistory
+    .filter((h) => h.report?.overall_score != null)
+    .map((h) => ({
+      score: h.report!.overall_score as number,
+      date: h.audit.completed_at || h.audit.created_at,
+    })), [scopedHistory]);
+
+  const topModuleDeltas = useMemo(() => {
+    if (scopedHistory.length < 2) return [];
+    const latest = scopedHistory[scopedHistory.length - 1];
+    const previous = scopedHistory[scopedHistory.length - 2];
+    const latestScores = getModuleScores(latest.report);
+    const prevScores = getModuleScores(previous.report);
+    const deltas: Array<{ name: string; delta: number }> = [];
+    for (const mod of moduleNames) {
+      if (latestScores[mod] != null && prevScores[mod] != null) {
+        deltas.push({ name: mod, delta: latestScores[mod] - prevScores[mod] });
+      }
+    }
+    deltas.sort((a, b) => Math.abs(b.delta) - Math.abs(a.delta));
+    return deltas.filter(d => d.delta !== 0).slice(0, 3);
+  }, [scopedHistory]);
+
   if (loading) {
     return (
       <div>
@@ -220,29 +243,6 @@ export default function TrackPage() {
 
   const persistedOnly = failedFixes.filter((f) => f.diffStatus === 'persisted' && f.previous?.status === 'fixed');
   const regressed = failedFixes.filter((f) => f.diffStatus === 'regressed');
-
-  const trendPoints = scopedHistory
-    .filter((h) => h.report?.overall_score != null)
-    .map((h) => ({
-      score: h.report!.overall_score as number,
-      date: h.audit.completed_at || h.audit.created_at,
-    }));
-
-  const topModuleDeltas = useMemo(() => {
-    if (scopedHistory.length < 2) return [];
-    const latest = scopedHistory[scopedHistory.length - 1];
-    const previous = scopedHistory[scopedHistory.length - 2];
-    const latestScores = getModuleScores(latest.report);
-    const prevScores = getModuleScores(previous.report);
-    const deltas: Array<{ name: string; delta: number }> = [];
-    for (const mod of moduleNames) {
-      if (latestScores[mod] != null && prevScores[mod] != null) {
-        deltas.push({ name: mod, delta: latestScores[mod] - prevScores[mod] });
-      }
-    }
-    deltas.sort((a, b) => Math.abs(b.delta) - Math.abs(a.delta));
-    return deltas.filter(d => d.delta !== 0).slice(0, 3);
-  }, [scopedHistory]);
 
   const singleAudit = trendPoints.length < 2;
 

@@ -59,7 +59,7 @@ export function ScoreOverTimeChart({ trend }: {
           return (
             <g key={i}>
               <line x1={PAD_L} y1={y} x2={W - PAD_R} y2={y} stroke="var(--border)" strokeWidth="0.5" strokeDasharray="3,3" opacity="0.5" />
-              <text x={PAD_L - 6} y={y + 3} textAnchor="end" fontSize="8" fill="var(--muted)" fontFamily="var(--font-inter)">{s}</text>
+              <text x={PAD_L - 6} y={y + 3} textAnchor="end" fontSize="7" fill="var(--muted)" fontFamily="var(--font-inter)">{s}</text>
             </g>
           );
         })}
@@ -74,7 +74,7 @@ export function ScoreOverTimeChart({ trend }: {
         <path d={areaD} fill="url(#scoreAreaGradOlive)" />
 
         {/* Line */}
-        <path d={pathD} fill="none" stroke="var(--signal)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+        <path d={pathD} fill="none" stroke="var(--signal)" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round" />
 
         {/* Hover hit areas + points */}
         {points.map((p, i) => {
@@ -92,17 +92,17 @@ export function ScoreOverTimeChart({ trend }: {
               />
               <circle
                 cx={p.x} cy={p.y}
-                r={isHovered ? 4 : 2.5}
+                r={isHovered ? 3 : 2}
                 fill={isHovered ? 'var(--signal)' : 'var(--paper)'}
                 stroke="var(--signal)"
-                strokeWidth="1.5"
+                strokeWidth="1"
                 className="transition-all duration-150"
                 style={{ pointerEvents: 'none' }}
               />
               {showLabel && (
                 <g style={{ pointerEvents: 'none' }}>
-                  <rect x={p.x - 14} y={p.y - 20} width="28" height="15" rx="4" fill="var(--signal)" />
-                  <text x={p.x} y={p.y - 10.5} textAnchor="middle" fontSize="8.5" fontWeight="500" fill="white" fontFamily="var(--font-inter)">{p.score}</text>
+                  <rect x={p.x - 12} y={p.y - 18} width="24" height="13" rx="3.5" fill="var(--signal)" />
+                  <text x={p.x} y={p.y - 9.5} textAnchor="middle" fontSize="7.5" fontWeight="500" fill="white" fontFamily="var(--font-inter)">{p.score}</text>
                 </g>
               )}
             </g>
@@ -115,7 +115,7 @@ export function ScoreOverTimeChart({ trend }: {
           const d = new Date(p.date);
           const label = `${d.toLocaleString('en-US', { month: 'short' })} ${d.getDate()}`;
           return (
-            <text key={i} x={p.x} y={H - 4} textAnchor="middle" fontSize="7.5" fill="var(--muted)" fontFamily="var(--font-inter)">{label}</text>
+            <text key={i} x={p.x} y={H - 4} textAnchor="middle" fontSize="6.5" fill="var(--muted)" fontFamily="var(--font-inter)">{label}</text>
           );
         })}
       </svg>
