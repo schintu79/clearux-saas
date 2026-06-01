@@ -1376,9 +1376,6 @@ export async function generateReport(
     brand_consistency: [24, 28],
   }
   function wasAnalyzed(idx: number): boolean {
-    // Design Consistency (24-27) always runs — no brand identity gate.
-    // It evaluates the live site's visual system consistency.
-    if (idx >= 24 && idx < 28) return true
     if (selectedModules && selectedModules.length > 0) {
       for (const mod of selectedModules) {
         const r = MODULE_RANGES[mod]
@@ -1423,6 +1420,11 @@ export async function generateReport(
       let bestScore = 0
       for (let gi = 0; gi < allCategoryNames.length; gi++) {
         if (!wasAnalyzed(gi)) continue
+        // Never keyword-match into Design Consistency (24-27) — those broad
+        // category names ("visual", "brand", "voice", "messaging") attract
+        // unrelated findings and tank scores. Only explicit category_index
+        // assignments should land there.
+        if (gi >= 24 && gi < 28) continue
         const words = allCategoryNames[gi].toLowerCase().split(/[&,\s]+/).filter(w => w.length > 3)
         const matches = words.filter(w => text.includes(w)).length
         if (matches > bestScore) { bestScore = matches; bestIdx = gi }
