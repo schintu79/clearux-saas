@@ -34,13 +34,13 @@ export function HomeSignals() {
 
         <h2
           className="font-serif font-normal text-ink leading-[0.94] tracking-[-0.025em] mb-6 text-center"
-          style={{ fontSize: 'clamp(48px, 7vw, 96px)' }}
+          style={{ fontSize: 'clamp(36px, 7vw, 96px)' }}
         >
           We don{"'"}t grade taste.{' '}
           <em className="italic text-signal">We measure signals.</em>
         </h2>
 
-        <p className="text-[18px] leading-[1.6] text-ink-2 max-w-[560px] mx-auto mb-14 font-sans text-center">
+        <p className="text-[18px] max-sm:text-[15px] leading-[1.6] text-ink-2 max-w-[560px] mx-auto mb-14 max-sm:mb-8 font-sans text-center">
           A site can look expensive and still confuse users. Fixpath evaluates
           design and first impression through hierarchy, layout, messaging
           clarity, consistency, and trust signals — not aesthetic bias.
@@ -51,7 +51,7 @@ export function HomeSignals() {
           {SIGNALS.map((s) => (
             <div
               key={s.text}
-              className="flex items-center gap-2.5 px-5 py-3 rounded-full font-sans text-[13px] font-medium"
+              className="flex items-center gap-2.5 px-5 py-3 max-sm:px-4 max-sm:py-2.5 rounded-full font-sans text-[13px] max-sm:text-[12px] font-medium"
               style={{
                 color: 'var(--ink)',
                 background: 'color-mix(in srgb, var(--ink) 3%, var(--paper))',

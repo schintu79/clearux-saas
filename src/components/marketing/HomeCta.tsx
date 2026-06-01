@@ -24,20 +24,20 @@ export function HomeCta() {
       style={{
         background: isDark ? 'var(--paper-2)' : 'var(--ink)',
         color: fg,
-        padding: '100px 0',
+        padding: 'clamp(64px, 10vw, 100px) 0',
       }}
     >
       <div className="max-w-mkt mx-auto px-8 max-sm:px-5 relative">
         <div className="max-w-[680px] mx-auto text-center">
           <h2
             className="font-serif font-normal leading-[0.94] tracking-[-0.025em] mb-6"
-            style={{ fontSize: 'clamp(48px, 7vw, 96px)', color: fg }}
+            style={{ fontSize: 'clamp(36px, 7vw, 96px)', color: fg }}
           >
             See what needs{' '}
             <em className="italic" style={{ color: accent }}>attention.</em>
           </h2>
           <p
-            className="text-[18px] leading-[1.6] mb-10 font-sans max-w-[480px] mx-auto"
+            className="text-[18px] max-sm:text-[15px] leading-[1.6] mb-10 max-sm:mb-7 font-sans max-w-[480px] mx-auto"
             style={{ color: muted }}
           >
             Your first audit is free. Severity-ranked findings, clear fix
@@ -65,7 +65,7 @@ export function HomeCta() {
 
         {/* Micro-proof row */}
         <div
-          className="mt-16 pt-6 flex justify-between font-sans text-[12px] tracking-[0.02em]"
+          className="mt-16 max-sm:mt-10 pt-6 flex justify-between max-sm:flex-col max-sm:items-center max-sm:gap-2 font-sans text-[12px] tracking-[0.02em]"
           style={{ borderTop: `1px solid ${divider}`, color: muted }}
         >
           <span>112 checkpoints · 7 categories</span>

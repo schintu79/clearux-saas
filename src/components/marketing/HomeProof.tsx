@@ -38,12 +38,12 @@ export function HomeProof() {
         <SectionMarker number="07" label="What you get" centered />
         <h2
           className="font-serif font-normal text-ink leading-[0.94] tracking-[-0.025em] mb-6 text-center"
-          style={{ fontSize: 'clamp(48px, 7vw, 96px)' }}
+          style={{ fontSize: 'clamp(36px, 7vw, 96px)' }}
         >
           Inside{' '}
           <em className="italic text-signal">Fixpath.</em>
         </h2>
-        <p className="text-[18px] leading-[1.6] text-ink-2 max-w-[520px] mx-auto mb-14 font-sans text-center">
+        <p className="text-[18px] max-sm:text-[15px] leading-[1.6] text-ink-2 max-w-[520px] mx-auto mb-14 max-sm:mb-8 font-sans text-center">
           Not just findings. A system to prioritize, fix, and track.
         </p>
 
@@ -52,7 +52,7 @@ export function HomeProof() {
           {PROOF_ITEMS.map((item) => (
             <div
               key={item.title}
-              className="flex flex-col items-center text-center px-6 py-8 rounded-xl"
+              className="flex flex-col items-center text-center px-6 py-8 max-sm:px-5 max-sm:py-6 rounded-xl"
               style={{ border: '1px solid color-mix(in srgb, var(--ink) 8%, transparent)' }}
             >
               <item.Icon

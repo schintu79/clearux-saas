@@ -40,15 +40,15 @@ function FindingMockup() {
       </div>
 
       {/* Category header — tinted background */}
-      <div className="px-5 py-3.5 flex items-center justify-between" style={{ background: 'color-mix(in srgb, var(--severe) 6%, var(--paper))' }}>
-        <div className="flex items-center gap-3">
-          <span className="w-7 h-7 rounded-md inline-flex items-center justify-center" style={{ background: 'color-mix(in srgb, var(--severe) 12%, transparent)' }}>
+      <div className="px-5 py-3.5 max-sm:px-4 flex items-center justify-between max-sm:flex-wrap max-sm:gap-2" style={{ background: 'color-mix(in srgb, var(--severe) 6%, var(--paper))' }}>
+        <div className="flex items-center gap-3 max-sm:gap-2">
+          <span className="w-7 h-7 max-sm:w-6 max-sm:h-6 rounded-md inline-flex items-center justify-center shrink-0" style={{ background: 'color-mix(in srgb, var(--severe) 12%, transparent)' }}>
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--severe)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
           </span>
-          <div className="flex items-center gap-2.5">
-            <span className="font-sans text-[13px] font-semibold text-ink">Human Experience</span>
-            <span className="font-sans text-[12px] text-m-muted">62<span className="text-[10px]">/100</span></span>
-            <span className="font-sans text-[11px] text-m-muted">· 3 findings</span>
+          <div className="flex items-center gap-2.5 max-sm:gap-1.5 flex-wrap">
+            <span className="font-sans text-[13px] max-sm:text-[12px] font-semibold text-ink">Human Experience</span>
+            <span className="font-sans text-[12px] max-sm:text-[11px] text-m-muted">62<span className="text-[10px]">/100</span></span>
+            <span className="font-sans text-[11px] max-sm:text-[10px] text-m-muted">· 3 findings</span>
           </div>
         </div>
         <div className="flex items-center gap-2">
@@ -60,11 +60,11 @@ function FindingMockup() {
 
       {/* Finding row — expanded */}
       <div className="border-t border-rule">
-        <div className="flex items-center px-5 py-3.5" style={{ borderLeft: '3px solid var(--severe)' }}>
+        <div className="flex items-center max-sm:flex-col max-sm:items-start max-sm:gap-3 px-5 max-sm:px-4 py-3.5" style={{ borderLeft: '3px solid var(--severe)' }}>
           <div className="flex items-center gap-3 flex-1 min-w-0">
             <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ background: 'var(--signal)' }} />
             <div className="min-w-0">
-              <p className="font-sans text-[13px] font-semibold text-ink leading-tight">Login flow uses 3 dark-pattern signals that erode trust</p>
+              <p className="font-sans text-[13px] max-sm:text-[12px] font-semibold text-ink leading-tight">Login flow uses 3 dark-pattern signals that erode trust</p>
               <div className="flex items-center gap-2 mt-1">
                 <span className="font-sans text-[10px] font-semibold" style={{ color: 'var(--severe)' }}>Critical</span>
                 <span className="font-sans text-[10px] text-m-muted">·</span>
@@ -75,7 +75,7 @@ function FindingMockup() {
               </div>
             </div>
           </div>
-          <div className="flex items-center gap-2 shrink-0">
+          <div className="flex items-center gap-2 shrink-0 max-sm:ml-5">
             <span className="font-sans text-[10px] font-medium px-2.5 py-1 rounded-md border border-rule text-ink">Console</span>
             <span className="font-sans text-[10px] font-medium px-2.5 py-1 rounded-md border border-rule text-ink flex items-center gap-1">
               <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
@@ -90,8 +90,8 @@ function FindingMockup() {
         </div>
 
         {/* Expanded detail — What we found + Why it matters */}
-        <div className="px-5 pb-5 pt-1">
-          <div className="grid grid-cols-2 gap-3">
+        <div className="px-5 max-sm:px-4 pb-5 pt-1">
+          <div className="grid grid-cols-2 max-sm:grid-cols-1 gap-3">
             <div className="rounded-lg p-4" style={{ background: 'var(--paper-2)' }}>
               <p className="font-sans text-[9px] font-semibold uppercase tracking-[0.08em] text-m-muted mb-2">What we found</p>
               <p className="font-sans text-[12px] text-ink-2 leading-[1.55]">
@@ -386,7 +386,7 @@ export function ProductContent() {
           <SectionMarker number="00" label="The product" centered />
           <h1
             className="font-serif font-normal text-ink leading-[0.94] tracking-[-0.025em] mb-6"
-            style={{ fontSize: 'clamp(48px, 7vw, 96px)' }}
+            style={{ fontSize: 'clamp(36px, 7vw, 96px)' }}
           >
             From issue to{' '}
             <em className="italic text-signal">improvement.</em>
@@ -412,7 +412,7 @@ export function ProductContent() {
           <SectionMarker number="01" label="Find" centered />
           <h2
             className="font-serif font-normal text-ink leading-[0.94] tracking-[-0.025em] mb-6 text-center"
-            style={{ fontSize: 'clamp(48px, 7vw, 96px)' }}
+            style={{ fontSize: 'clamp(36px, 7vw, 96px)' }}
           >
             Find what{' '}
             <em className="italic text-signal">matters.</em>
@@ -463,7 +463,7 @@ export function ProductContent() {
           <SectionMarker number="02" label="Fix" centered />
           <h2
             className="font-serif font-normal text-ink leading-[0.94] tracking-[-0.025em] mb-6 text-center"
-            style={{ fontSize: 'clamp(48px, 7vw, 96px)' }}
+            style={{ fontSize: 'clamp(36px, 7vw, 96px)' }}
           >
             Fix what{' '}
             <em className="italic text-signal">you find.</em>
@@ -523,7 +523,7 @@ export function ProductContent() {
           <SectionMarker number="03" label="Track" centered />
           <h2
             className="font-serif font-normal text-ink leading-[0.94] tracking-[-0.025em] mb-6 text-center"
-            style={{ fontSize: 'clamp(48px, 7vw, 96px)' }}
+            style={{ fontSize: 'clamp(36px, 7vw, 96px)' }}
           >
             Track what{' '}
             <em className="italic text-signal">changed.</em>
@@ -567,7 +567,7 @@ export function ProductContent() {
           <SectionMarker number="04" label="What else is included" centered />
           <h2
             className="font-serif font-normal text-ink leading-[0.94] tracking-[-0.025em] mb-6 text-center"
-            style={{ fontSize: 'clamp(48px, 7vw, 96px)' }}
+            style={{ fontSize: 'clamp(36px, 7vw, 96px)' }}
           >
             AI readiness. Reports.{' '}
             <em className="italic text-signal">All built in.</em>

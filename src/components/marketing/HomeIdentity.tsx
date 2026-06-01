@@ -51,7 +51,7 @@ export function HomeIdentity() {
           Not just an audit.{' '}
           <em className="italic text-signal">A complete system.</em>
         </h2>
-        <p className="text-[18px] leading-[1.6] text-ink-2 max-w-[560px] mb-14 font-sans">
+        <p className="text-[18px] max-sm:text-[15px] leading-[1.6] text-ink-2 max-w-[560px] mb-14 max-sm:mb-8 font-sans">
           Fixpath is a decision engine for real website and brand issues. It finds what
           matters, tells you how to fix it, and tracks whether things improve.
         </p>

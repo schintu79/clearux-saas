@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useRef, useEffect, useCallback } from 'react'
 import { SectionMarker } from '@/components/marketing/SectionMarker'
 import { ArrowRightIcon } from '@/components/marketing/icons'
 import { HomeCta } from '@/components/marketing/HomeCta'
@@ -112,6 +112,20 @@ export default function FaqContent() {
 
   const tabs = [TAB_ALL, ...FAQ_SECTIONS.map(s => s.title)]
 
+  /* ── Sticky tab bar scroll refs ── */
+  const scrollRef = useRef<HTMLDivElement>(null)
+  const btnRefs = useRef<(HTMLButtonElement | null)[]>([])
+
+  const scrollActiveBtn = useCallback((idx: number) => {
+    const btn = btnRefs.current[idx]
+    const container = scrollRef.current
+    if (!btn || !container) return
+    const cRect = container.getBoundingClientRect()
+    const bRect = btn.getBoundingClientRect()
+    const offset = bRect.left - cRect.left - cRect.width / 2 + bRect.width / 2
+    container.scrollBy({ left: offset, behavior: 'smooth' })
+  }, [])
+
   const { visibleSections, totalVisible } = useMemo(() => {
     const query = searchQuery.toLowerCase().trim()
 
@@ -151,7 +165,7 @@ export default function FaqContent() {
       <section className="py-[100px] border-b border-rule max-sm:py-16">
         <div className="max-w-mkt mx-auto px-8 max-sm:px-5">
           <SectionMarker number="00" label="Support centre" />
-          <h1 className="font-serif font-normal text-ink leading-[0.94] tracking-[-0.025em] mb-8" style={{ fontSize: 'clamp(48px, 7vw, 96px)' }}>
+          <h1 className="font-serif font-normal text-ink leading-[0.94] tracking-[-0.025em] mb-8" style={{ fontSize: 'clamp(36px, 7vw, 96px)' }}>
             Frequently asked <em className="italic text-signal">questions.</em>
           </h1>
           <p className="text-[19px] leading-[1.55] text-ink-2 max-w-[640px] mb-10 font-sans">
@@ -186,10 +200,51 @@ export default function FaqContent() {
       </section>
 
       {/* Tabs + Questions */}
-      <section className="py-[80px] max-sm:py-12">
-        <div className="max-w-mkt mx-auto px-8 max-sm:px-5">
-          {/* Category tabs */}
-          <div className="flex flex-wrap items-center gap-2 mb-12">
+      <section className="py-[80px] max-sm:py-0">
+        {/* ── Mobile: sticky horizontal scroll tab bar ── */}
+        <div
+          className="lg:hidden sticky z-20"
+          style={{ top: '64px' }}
+        >
+          <div
+            className="backdrop-blur-md"
+            style={{
+              background: 'color-mix(in srgb, var(--paper) 88%, transparent)',
+              borderBottom: '1px solid color-mix(in srgb, var(--ink) 8%, transparent)',
+            }}
+          >
+            <div
+              ref={scrollRef}
+              className="flex gap-1 overflow-x-auto px-5 py-3 scrollbar-hide"
+              style={{ WebkitOverflowScrolling: 'touch' }}
+            >
+              {tabs.map((tab, i) => {
+                const isActive = activeTab === tab
+                return (
+                  <button
+                    key={tab}
+                    ref={(el) => { btnRefs.current[i] = el }}
+                    onClick={() => { setActiveTab(tab); setOpenItems(new Set()); scrollActiveBtn(i) }}
+                    className="font-sans text-[12px] font-medium whitespace-nowrap px-3 py-2 rounded-full transition-all duration-150 cursor-pointer shrink-0"
+                    style={{
+                      color: isActive ? 'var(--paper)' : 'var(--ink-2)',
+                      background: isActive ? 'var(--ink)' : 'transparent',
+                      border: isActive
+                        ? '1px solid var(--ink)'
+                        : '1px solid color-mix(in srgb, var(--ink) 10%, transparent)',
+                    }}
+                  >
+                    {tab === TAB_ALL ? `All (${totalQuestions})` : tab}
+                  </button>
+                )
+              })}
+            </div>
+          </div>
+        </div>
+
+        <div className="max-w-mkt mx-auto px-8 max-sm:px-5 max-sm:pt-8">
+          {/* ── Desktop: wrapped tab row ── */}
+          <div className="hidden lg:flex flex-wrap items-center gap-2 mb-12">
             {tabs.map((tab) => (
               <button
                 key={tab}

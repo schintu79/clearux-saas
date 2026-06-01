@@ -62,8 +62,8 @@ export function FaqPreview({
       <div className="max-w-mkt mx-auto px-8 max-sm:px-5">
         <SectionMarker number={sectionNumber} label="FAQ" centered />
         <h2
-          className="font-serif font-normal text-ink leading-[0.94] tracking-[-0.025em] mb-12 text-center"
-          style={{ fontSize: 'clamp(48px, 7vw, 96px)' }}
+          className="font-serif font-normal text-ink leading-[0.94] tracking-[-0.025em] mb-12 max-sm:mb-8 text-center"
+          style={{ fontSize: 'clamp(36px, 7vw, 96px)' }}
         >
           Common <em className="italic text-signal">questions.</em>
         </h2>

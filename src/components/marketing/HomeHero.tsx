@@ -412,7 +412,7 @@ function AuditAnimation() {
           </div>
         </div>
 
-        <div className="p-5 sm:p-6 lg:p-8 relative" style={{ minHeight: 480 }}>
+        <div className="p-5 sm:p-6 lg:p-8 relative" style={{ minHeight: 'min(480px, 70vh)' }}>
 
           {/* ── Scanning overlay ───────────────────────── */}
           {scanOpacity > 0.01 && (
@@ -667,7 +667,7 @@ export function HomeHero() {
             Find what hurts trust.{' '}
             <em className="italic text-signal">Fix what matters.</em>
           </h1>
-          <p className="text-[19px] leading-[1.55] text-ink-2 max-w-[640px] mx-auto font-sans mb-10">
+          <p className="text-[19px] max-sm:text-[15px] leading-[1.55] text-ink-2 max-w-[640px] mx-auto font-sans mb-10 max-sm:mb-7">
             Fixpath finds the issues affecting trust, clarity, and conversion
             — then helps your team fix them and track progress over time.
           </p>

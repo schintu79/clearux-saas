@@ -62,11 +62,11 @@ export function Footer() {
     <footer style={{ background: 'var(--paper)' }} className="pt-14 pb-8">
       <div className="max-w-mkt mx-auto px-8 max-sm:px-5">
         <div
-          className="grid grid-cols-[2fr_1fr_1fr_1fr_1fr] gap-10 pb-10 max-md:grid-cols-2 max-sm:grid-cols-1"
+          className="grid grid-cols-[2fr_1fr_1fr_1fr_1fr] gap-10 max-sm:gap-6 pb-10 max-md:grid-cols-2"
           style={{ borderBottom: '1px solid color-mix(in srgb, var(--ink) 8%, transparent)' }}
         >
-          {/* Brand column */}
-          <div>
+          {/* Brand column — full width on mobile so link cols sit below */}
+          <div className="max-md:col-span-2 max-md:mb-2">
             <Logo height={56} className="mb-5" />
             <p
               className="text-[13px] max-w-[280px] leading-[1.65] font-sans"
@@ -83,7 +83,7 @@ export function Footer() {
         </div>
 
         <div
-          className="mt-6 flex justify-between items-center font-sans text-[11px] tracking-[0.02em]"
+          className="mt-6 flex justify-between items-center max-sm:flex-col max-sm:gap-2 max-sm:items-center font-sans text-[11px] tracking-[0.02em]"
           style={{ color: 'var(--m-muted)' }}
         >
           <span>&copy; 2026 Fixpath</span>

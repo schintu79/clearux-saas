@@ -203,13 +203,13 @@ export function HomeModelLayer() {
 
         <h2
           className="font-serif font-normal text-ink leading-[0.94] tracking-[-0.025em] mb-6 text-center"
-          style={{ fontSize: 'clamp(48px, 7vw, 96px)' }}
+          style={{ fontSize: 'clamp(36px, 7vw, 96px)' }}
         >
           One system.{' '}
           <em className="italic text-signal">Multiple AI perspectives.</em>
         </h2>
 
-        <p className="text-[18px] leading-[1.6] text-ink-2 max-w-[600px] mx-auto mb-16 font-sans text-center">
+        <p className="text-[18px] max-sm:text-[15px] leading-[1.6] text-ink-2 max-w-[600px] mx-auto mb-16 max-sm:mb-10 font-sans text-center">
           Fixpath lets you choose which AI engines participate in each
           workflow — from competitor analysis and AI perception to brand
           intelligence and reports — so your audits are not shaped by a single
@@ -217,7 +217,7 @@ export function HomeModelLayer() {
         </p>
 
         {/* Two-column layout */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16 items-start max-w-[960px] mx-auto">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16 max-sm:gap-8 items-start max-w-[960px] mx-auto">
           {/* Left — bullets */}
           <div className="flex flex-col gap-6 max-lg:order-2">
             {BULLETS.map((b) => (

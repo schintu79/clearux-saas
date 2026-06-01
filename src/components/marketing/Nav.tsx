@@ -49,8 +49,8 @@ export function Nav() {
   return (
     <nav className="border-b border-rule sticky top-0 z-50 backdrop-blur-md" style={{ background: 'color-mix(in srgb, var(--paper) 92%, transparent)' }}>
       <div className="max-w-mkt mx-auto px-8 max-sm:px-5">
-        <div className="flex items-center justify-between gap-6 py-5">
-          <Logo height={64} />
+        <div className="flex items-center justify-between gap-6 py-5 max-sm:py-3">
+          <Logo height={64} className="max-sm:h-[48px] max-sm:w-auto" />
 
           {/* Desktop links */}
           <ul className="hidden lg:flex gap-[38px] list-none">

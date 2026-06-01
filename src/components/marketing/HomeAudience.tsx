@@ -41,12 +41,12 @@ export function HomeAudience() {
         <SectionMarker number="06" label="Who it is for" centered />
         <h2
           className="font-serif font-normal text-ink leading-[0.94] tracking-[-0.025em] mb-6 text-center"
-          style={{ fontSize: 'clamp(48px, 7vw, 96px)' }}
+          style={{ fontSize: 'clamp(36px, 7vw, 96px)' }}
         >
           Who Fixpath{' '}
           <em className="italic text-signal">is for.</em>
         </h2>
-        <p className="text-[18px] leading-[1.6] text-ink-2 max-w-[560px] mx-auto mb-16 font-sans text-center">
+        <p className="text-[18px] max-sm:text-[15px] leading-[1.6] text-ink-2 max-w-[560px] mx-auto mb-16 max-sm:mb-10 font-sans text-center">
           Built for the people responsible for making websites better — and
           proving the work worked.
         </p>
@@ -59,14 +59,14 @@ export function HomeAudience() {
           <div className="grid grid-cols-1 sm:grid-cols-3">
             {AUDIENCES.map((a, i) => {
               const col = i % 3
-              const isTopRow = i < 3
+              const isLastItem = i === AUDIENCES.length - 1
               return (
                 <div
                   key={a.title}
                   className="flex flex-col items-center text-center px-6 py-10 max-sm:px-5 max-sm:py-8"
                   style={{
                     borderRight: col < 2 ? '1px solid color-mix(in srgb, var(--ink) 6%, transparent)' : 'none',
-                    borderBottom: isTopRow ? '1px solid color-mix(in srgb, var(--ink) 6%, transparent)' : 'none',
+                    borderBottom: isLastItem ? 'none' : '1px solid color-mix(in srgb, var(--ink) 6%, transparent)',
                   }}
                 >
                   <a.Icon

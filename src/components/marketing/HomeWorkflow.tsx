@@ -181,24 +181,24 @@ export function HomeWorkflow() {
         <SectionMarker number="01" label="How it works" centered />
         <h2
           className="font-serif font-normal text-ink leading-[0.94] tracking-[-0.025em] mb-6 text-center"
-          style={{ fontSize: 'clamp(48px, 7vw, 96px)' }}
+          style={{ fontSize: 'clamp(36px, 7vw, 96px)' }}
         >
           Find. Fix.{' '}
           <em className="italic text-signal">Track.</em>
         </h2>
-        <p className="text-[18px] leading-[1.6] text-ink-2 max-w-[560px] mx-auto mb-20 font-sans text-center">
+        <p className="text-[18px] max-sm:text-[15px] leading-[1.6] text-ink-2 max-w-[560px] mx-auto mb-20 max-sm:mb-10 font-sans text-center">
           Enter your URL. Get severity-ranked findings in minutes. Fix issues with
           concrete guidance. Re-audit to confirm improvement.
         </p>
 
-        <div className="grid lg:grid-cols-3 gap-6">
+        <div className="grid lg:grid-cols-3 gap-6 max-sm:gap-4">
           {/* Find */}
           <div
-            className="rounded-xl p-5 flex flex-col"
+            className="rounded-xl p-5 max-sm:p-4 flex flex-col"
             style={{ background: 'var(--paper)', border: '1px solid var(--rule)' }}
           >
-            <div className="mb-5">
-              <h3 className="font-sans text-[20px] font-semibold text-ink mb-2">Find</h3>
+            <div className="mb-5 max-sm:mb-4">
+              <h3 className="font-sans text-[20px] max-sm:text-[17px] font-semibold text-ink mb-2">Find</h3>
               <p className="font-sans text-[14px] text-ink-2 leading-[1.6]">
                 See what is actually hurting trust, clarity, accessibility, and technical quality.
               </p>
@@ -208,11 +208,11 @@ export function HomeWorkflow() {
 
           {/* Fix */}
           <div
-            className="rounded-xl p-5 flex flex-col"
+            className="rounded-xl p-5 max-sm:p-4 flex flex-col"
             style={{ background: 'var(--paper)', border: '1px solid var(--rule)' }}
           >
-            <div className="mb-5">
-              <h3 className="font-sans text-[20px] font-semibold text-ink mb-2">Fix</h3>
+            <div className="mb-5 max-sm:mb-4">
+              <h3 className="font-sans text-[20px] max-sm:text-[17px] font-semibold text-ink mb-2">Fix</h3>
               <p className="font-sans text-[14px] text-ink-2 leading-[1.6]">
                 Get prioritized actions, practical guidance, and implementation-ready recommendations.
               </p>
@@ -222,11 +222,11 @@ export function HomeWorkflow() {
 
           {/* Track */}
           <div
-            className="rounded-xl p-5 flex flex-col"
+            className="rounded-xl p-5 max-sm:p-4 flex flex-col"
             style={{ background: 'var(--paper)', border: '1px solid var(--rule)' }}
           >
-            <div className="mb-5">
-              <h3 className="font-sans text-[20px] font-semibold text-ink mb-2">Track</h3>
+            <div className="mb-5 max-sm:mb-4">
+              <h3 className="font-sans text-[20px] max-sm:text-[17px] font-semibold text-ink mb-2">Track</h3>
               <p className="font-sans text-[14px] text-ink-2 leading-[1.6]">
                 Re-audit, compare progress, and confirm whether the fixes improved the result.
               </p>

@@ -1072,6 +1072,12 @@ body::before {
   opacity: var(--grain-opacity);
 }
 
+/* Module content fade-slide transition */
+@keyframes fadeSlideIn {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
 /* Marketing V2 ticker animation */
 @keyframes m-scroll-left {
   from { transform: translateX(0); }

@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useRef, useEffect, useCallback } from 'react'
 import { SectionMarker } from './SectionMarker'
 import {
   /* Module pill icons */
@@ -582,36 +582,66 @@ const MODULES: ModuleData[] = [
 
 export function HomeModules() {
   const [activeIndex, setActiveIndex] = useState(0)
+  const [animKey, setAnimKey] = useState(0)
   const active = MODULES[activeIndex]
+  const scrollRef = useRef<HTMLDivElement>(null)
+  const btnRefs = useRef<(HTMLButtonElement | null)[]>([])
+  const sectionRef = useRef<HTMLElement>(null)
+
+  // Scroll active tab into view on mobile
+  const scrollActiveIntoView = useCallback((idx: number) => {
+    const btn = btnRefs.current[idx]
+    const container = scrollRef.current
+    if (!btn || !container) return
+    const cRect = container.getBoundingClientRect()
+    const bRect = btn.getBoundingClientRect()
+    const offset = bRect.left - cRect.left - (cRect.width / 2) + (bRect.width / 2)
+    container.scrollBy({ left: offset, behavior: 'smooth' })
+  }, [])
+
+  const handleSelect = useCallback((idx: number) => {
+    setActiveIndex(idx)
+    setAnimKey((k) => k + 1)
+    // Small delay so the DOM updates before scrolling
+    requestAnimationFrame(() => scrollActiveIntoView(idx))
+  }, [scrollActiveIntoView])
+
+  // On mount, scroll active into view
+  useEffect(() => { scrollActiveIntoView(activeIndex) }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
-    <section className="py-[100px] border-b border-rule max-sm:py-16">
+    <section ref={sectionRef} className="py-[100px] border-b border-rule max-sm:py-12">
       <div className="max-w-mkt mx-auto px-8 max-sm:px-5">
         <SectionMarker number="04" label="What we cover" centered />
         <h2
-          className="font-serif font-normal text-ink leading-[0.94] tracking-[-0.025em] mb-6 text-center"
-          style={{ fontSize: 'clamp(48px, 7vw, 96px)' }}
+          className="font-serif font-normal text-ink leading-[0.94] tracking-[-0.025em] mb-4 max-sm:mb-3 text-center"
+          style={{ fontSize: 'clamp(36px, 7vw, 96px)' }}
         >
           Seven modules.{' '}
           <em className="italic text-signal">112 checkpoints.</em>
         </h2>
-        <p className="text-[18px] leading-[1.6] text-ink-2 max-w-[560px] mx-auto mb-16 font-sans text-center">
+        <p className="text-[18px] max-sm:text-[15px] leading-[1.6] text-ink-2 max-w-[560px] mx-auto mb-14 max-sm:mb-8 font-sans text-center">
           Technical quality, user experience, and brand perception — one
           system, one run, full picture.
         </p>
+      </div>
 
-        {/* ── Two-column: pills left · panel right ────────────────── */}
-        <div className="grid grid-cols-1 lg:grid-cols-[260px_1fr] gap-5 max-w-[1080px] mx-auto">
+      {/* ── Two-column: pills left · panel right ────────────────── */}
+      <div className="max-w-[1080px] mx-auto px-8 max-sm:px-0">
+        <div className="grid grid-cols-1 lg:grid-cols-[260px_1fr] gap-5">
 
-          {/* Left — vertical pill list, sticky below nav */}
-          <nav className="flex flex-col gap-1 max-lg:flex-row max-lg:flex-wrap max-lg:justify-center max-lg:gap-2 lg:sticky lg:self-start" style={{ top: 'calc(90px + 1.5rem)' }}>
+          {/* ── Desktop: vertical pill list, sticky below nav ──── */}
+          <nav
+            className="hidden lg:flex flex-col gap-1 lg:sticky lg:self-start"
+            style={{ top: 'calc(90px + 1.5rem)' }}
+          >
             {MODULES.map((mod, i) => {
               const isActive = i === activeIndex
               return (
                 <button
                   key={mod.name}
-                  onClick={() => setActiveIndex(i)}
-                  className="flex items-center gap-3 font-sans text-[13.5px] font-medium tracking-[-0.01em] px-4 py-3 rounded-lg transition-all duration-150 cursor-pointer text-left max-lg:rounded-full max-lg:px-4 max-lg:py-2.5 max-lg:text-[13px]"
+                  onClick={() => handleSelect(i)}
+                  className="flex items-center gap-3 font-sans text-[13.5px] font-medium tracking-[-0.01em] px-4 py-3 rounded-lg transition-all duration-150 cursor-pointer text-left"
                   style={{
                     color: isActive ? 'var(--ink)' : 'var(--ink-2)',
                     background: isActive
@@ -640,9 +670,62 @@ export function HomeModules() {
             })}
           </nav>
 
-          {/* Right — explainer panel */}
+          {/* ── Mobile / tablet: sticky horizontal scroll tab bar ── */}
           <div
-            className="rounded-xl overflow-hidden"
+            className="lg:hidden sticky z-20"
+            style={{
+              top: '64px', /* below nav */
+              marginLeft: '-1px',
+              marginRight: '-1px',
+            }}
+          >
+            <div
+              className="backdrop-blur-md"
+              style={{
+                background: 'color-mix(in srgb, var(--paper) 88%, transparent)',
+                borderBottom: '1px solid color-mix(in srgb, var(--ink) 8%, transparent)',
+              }}
+            >
+              <div
+                ref={scrollRef}
+                className="flex gap-1 overflow-x-auto px-5 py-2.5 scrollbar-hide"
+                style={{ WebkitOverflowScrolling: 'touch' }}
+              >
+                {MODULES.map((mod, i) => {
+                  const isActive = i === activeIndex
+                  return (
+                    <button
+                      key={mod.name}
+                      ref={(el) => { btnRefs.current[i] = el }}
+                      onClick={() => handleSelect(i)}
+                      className="flex items-center gap-1.5 font-sans text-[12px] font-medium whitespace-nowrap px-3 py-2 rounded-full transition-all duration-150 cursor-pointer shrink-0"
+                      style={{
+                        color: isActive ? 'var(--ink)' : 'var(--ink-2)',
+                        background: isActive
+                          ? `color-mix(in srgb, ${mod.tint} 8%, var(--paper))`
+                          : 'transparent',
+                        border: isActive
+                          ? `1px solid color-mix(in srgb, ${mod.tint} 20%, transparent)`
+                          : '1px solid color-mix(in srgb, var(--ink) 6%, transparent)',
+                      }}
+                    >
+                      <mod.Icon
+                        size={13}
+                        strokeWidth={1.5}
+                        className="shrink-0"
+                        style={{ color: isActive ? mod.tint : 'var(--m-muted)' }}
+                      />
+                      {mod.name}
+                    </button>
+                  )
+                })}
+              </div>
+            </div>
+          </div>
+
+          {/* ── Explainer panel ──────────────────────────────────── */}
+          <div
+            className="rounded-xl max-sm:rounded-none overflow-hidden max-sm:mx-0"
             style={{
               border: '1px solid color-mix(in srgb, var(--ink) 8%, transparent)',
               background: 'var(--paper)',
@@ -650,36 +733,40 @@ export function HomeModules() {
           >
             {/* Header */}
             <div
-              className="flex items-center gap-3 px-6 py-4 max-sm:px-5"
+              className="flex items-center gap-3 px-6 py-4 max-sm:px-4 max-sm:py-3"
               style={{
                 borderBottom: '1px solid color-mix(in srgb, var(--ink) 6%, transparent)',
               }}
             >
               <span
-                className="flex items-center justify-center w-7 h-7 rounded-md"
+                className="flex items-center justify-center w-7 h-7 max-sm:w-6 max-sm:h-6 rounded-md"
                 style={{ background: `color-mix(in srgb, ${active.tint} 10%, transparent)` }}
               >
-                <active.Icon size={15} strokeWidth={1.5} style={{ color: active.tint }} />
+                <active.Icon size={15} strokeWidth={1.5} style={{ color: active.tint }} className="max-sm:!w-[13px] max-sm:!h-[13px]" />
               </span>
               <h3
-                className="font-sans text-[16px] font-semibold tracking-[-0.02em]"
+                className="font-sans text-[16px] max-sm:text-[14px] font-semibold tracking-[-0.02em]"
                 style={{ color: 'var(--ink)' }}
               >
                 {active.name}
               </h3>
               <span
-                className="ml-auto font-mono text-[10px] uppercase tracking-[0.1em]"
+                className="ml-auto font-mono text-[10px] max-sm:text-[9px] uppercase tracking-[0.1em]"
                 style={{ color: 'var(--m-muted)' }}
               >
                 4 categories &middot; 16 checks
               </span>
             </div>
 
-            {/* Body */}
-            <div className="px-6 py-5 max-sm:px-5 space-y-6">
+            {/* Body — keyed for fade transition */}
+            <div
+              key={animKey}
+              className="px-6 py-5 max-sm:px-4 max-sm:py-4 space-y-5 max-sm:space-y-4"
+              style={{ animation: 'fadeSlideIn 200ms ease-out' }}
+            >
               {/* Description */}
               <p
-                className="font-sans text-[14px] leading-[1.7]"
+                className="font-sans text-[14px] max-sm:text-[13px] leading-[1.7]"
                 style={{ color: 'var(--ink)' }}
               >
                 {active.description}
@@ -688,22 +775,22 @@ export function HomeModules() {
               {/* ── What it checks ── 2×2 category grid ─────────── */}
               <div>
                 <h4
-                  className="font-sans text-[10px] font-semibold uppercase tracking-[0.12em] mb-3"
+                  className="font-sans text-[10px] font-semibold uppercase tracking-[0.12em] mb-3 max-sm:mb-2"
                   style={{ color: 'var(--m-muted)' }}
                 >
                   What it checks
                 </h4>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 max-sm:gap-2">
                   {active.categories.map((cat) => (
                     <div
                       key={cat.name}
-                      className="rounded-lg px-4 py-3.5"
+                      className="rounded-lg px-4 py-3.5 max-sm:px-3 max-sm:py-2.5"
                       style={{
                         background: 'color-mix(in srgb, var(--ink) 2.5%, transparent)',
                         borderLeft: `2px solid color-mix(in srgb, ${active.tint} 35%, transparent)`,
                       }}
                     >
-                      <div className="flex items-center gap-2 mb-2.5">
+                      <div className="flex items-center gap-2 mb-2 max-sm:mb-1.5">
                         <cat.Icon
                           size={13}
                           strokeWidth={1.5}
@@ -711,17 +798,17 @@ export function HomeModules() {
                           className="shrink-0"
                         />
                         <span
-                          className="font-sans text-[12px] font-semibold tracking-[-0.01em] leading-tight"
+                          className="font-sans text-[12px] max-sm:text-[11.5px] font-semibold tracking-[-0.01em] leading-tight"
                           style={{ color: 'var(--ink)' }}
                         >
                           {cat.name}
                         </span>
                       </div>
-                      <ul className="space-y-1">
+                      <ul className="space-y-0.5">
                         {cat.checkpoints.map((cp) => (
                           <li
                             key={cp}
-                            className="flex items-baseline gap-2 font-sans text-[11.5px] leading-[1.5]"
+                            className="flex items-baseline gap-2 font-sans text-[11.5px] max-sm:text-[11px] leading-[1.5]"
                             style={{ color: 'var(--ink-2)' }}
                           >
                             <span
@@ -740,7 +827,7 @@ export function HomeModules() {
               {/* ── Example issues ── lint / code-error style ────── */}
               <div>
                 <h4
-                  className="font-sans text-[10px] font-semibold uppercase tracking-[0.12em] mb-3"
+                  className="font-sans text-[10px] font-semibold uppercase tracking-[0.12em] mb-3 max-sm:mb-2"
                   style={{ color: 'var(--m-muted)' }}
                 >
                   Example issues found
@@ -757,7 +844,7 @@ export function HomeModules() {
                     return (
                       <div
                         key={i}
-                        className="flex items-start gap-3 px-4 py-3"
+                        className="flex items-start gap-2.5 max-sm:gap-2 px-4 py-3 max-sm:px-3 max-sm:py-2.5"
                         style={{
                           borderBottom:
                             i < active.issues.length - 1
@@ -773,7 +860,7 @@ export function HomeModules() {
                         </span>
                         <div className="min-w-0">
                           <p
-                            className="font-sans text-[12.5px] font-medium leading-[1.45]"
+                            className="font-sans text-[12.5px] max-sm:text-[12px] font-medium leading-[1.45]"
                             style={{ color: 'var(--ink)' }}
                           >
                             {issue.label}
@@ -793,7 +880,7 @@ export function HomeModules() {
 
               {/* ── Why it matters ── light green ─────────────────── */}
               <div
-                className="rounded-lg px-5 py-4"
+                className="rounded-lg px-5 py-4 max-sm:px-3.5 max-sm:py-3"
                 style={{
                   background: 'color-mix(in srgb, var(--ok) 8%, var(--paper))',
                   border: '1px solid color-mix(in srgb, var(--ok) 15%, transparent)',
@@ -806,7 +893,7 @@ export function HomeModules() {
                   Why it matters
                 </h4>
                 <p
-                  className="font-sans text-[13px] leading-[1.65]"
+                  className="font-sans text-[13px] max-sm:text-[12px] leading-[1.65]"
                   style={{ color: 'var(--ink)' }}
                 >
                   {active.whyItMatters}
@@ -822,8 +909,8 @@ export function HomeModules() {
                     background: 'color-mix(in srgb, var(--signal) 4%, transparent)',
                   }}
                 >
-                  <div className="px-5 py-4">
-                    <div className="flex items-center gap-2 mb-3">
+                  <div className="px-5 py-4 max-sm:px-3.5 max-sm:py-3">
+                    <div className="flex items-center gap-2 mb-3 max-sm:mb-2">
                       <Zap size={13} strokeWidth={2} style={{ color: 'var(--signal)' }} />
                       <h4
                         className="font-sans text-[12px] font-semibold tracking-[-0.01em]"
@@ -832,7 +919,7 @@ export function HomeModules() {
                         Brand DNA upgrade
                       </h4>
                     </div>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 max-sm:gap-3">
                       <div>
                         <p
                           className="font-sans text-[10px] font-semibold uppercase tracking-[0.06em] mb-1"
@@ -841,7 +928,7 @@ export function HomeModules() {
                           Without Brand DNA
                         </p>
                         <p
-                          className="font-sans text-[12.5px] leading-[1.6]"
+                          className="font-sans text-[12.5px] max-sm:text-[12px] leading-[1.6]"
                           style={{ color: 'var(--ink-2)' }}
                         >
                           {active.brandDna.without}
@@ -855,7 +942,7 @@ export function HomeModules() {
                           With Brand DNA connected
                         </p>
                         <p
-                          className="font-sans text-[12.5px] leading-[1.6]"
+                          className="font-sans text-[12.5px] max-sm:text-[12px] leading-[1.6]"
                           style={{ color: 'var(--ink)' }}
                         >
                           {active.brandDna.withConnected}
