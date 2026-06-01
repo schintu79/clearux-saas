@@ -35,7 +35,7 @@ export function HomeProof() {
   return (
     <section className="py-[100px] border-b border-rule max-sm:py-16">
       <div className="max-w-mkt mx-auto px-8 max-sm:px-5">
-        <SectionMarker number="06" label="What you get" centered />
+        <SectionMarker number="07" label="What you get" centered />
         <h2
           className="font-serif font-normal text-ink leading-[0.94] tracking-[-0.025em] mb-6 text-center"
           style={{ fontSize: 'clamp(48px, 7vw, 96px)' }}
