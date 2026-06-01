@@ -78,17 +78,18 @@ function getFileTypeLabel(name: string): string {
 const NewBrandPage: React.FC = () => {
   const router = useRouter();
   const { user, loading: userLoading } = useAuth();
-  const { workspaceSlug } = useWorkspace();
+  const { workspace, workspaceSlug } = useWorkspace();
   const dashPrefix = workspaceSlug ? `/dashboard/${workspaceSlug}` : '/dashboard';
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const [name, setName] = useState('');
-  const [description, setDescription] = useState('');
   const [stagedFiles, setStagedFiles] = useState<StagedFile[]>([]);
   const [creating, setCreating] = useState(false);
   const [uploadProgress, setUploadProgress] = useState<string | null>(null);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [dragOver, setDragOver] = useState(false);
+
+  // Brand name comes from the workspace — no manual input needed
+  const brandName = workspace?.brand_name || workspace?.name || '';
 
   const addFiles = (files: FileList | File[]) => {
     const fileArray = Array.from(files);
@@ -122,17 +123,17 @@ const NewBrandPage: React.FC = () => {
 
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!name.trim()) return;
+    if (!brandName.trim()) return;
 
     setCreating(true);
     setErrorMsg(null);
 
     try {
-      // 1. Create the brand identity
+      // 1. Create the brand identity using the workspace name
       const res = await fetch('/api/brand-identities', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name: name.trim(), description: description.trim() || null }),
+        body: JSON.stringify({ name: brandName.trim() }),
       });
 
       if (!res.ok) {
@@ -143,7 +144,16 @@ const NewBrandPage: React.FC = () => {
       const { identity } = await res.json();
       const brandId = identity.id;
 
-      // 2. Upload staged files
+      // 2. Link brand identity to workspace
+      if (workspace?.id) {
+        await fetch(`/api/workspaces/${workspace.id}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ active_brand_identity_id: brandId }),
+        });
+      }
+
+      // 3. Upload staged files
       if (stagedFiles.length > 0) {
         for (let i = 0; i < stagedFiles.length; i++) {
           const sf = stagedFiles[i];
@@ -167,17 +177,14 @@ const NewBrandPage: React.FC = () => {
         }
       }
 
-      // 3. Navigate to the brand detail page
-      router.push(`${dashPrefix}/brand-identity/${brandId}`);
+      // 4. Navigate to Brand DNA page
+      router.push(`${dashPrefix}/brand-dna`);
     } catch (err) {
       setErrorMsg(err instanceof Error ? err.message : 'Failed to create brand identity');
       setCreating(false);
       setUploadProgress(null);
     }
   };
-
-  const inputClass =
-    'w-full px-4 py-2.5 border border-border rounded-xl font-body text-sm transition-all focus:outline-none focus:border-brand focus:shadow-[0_0_0_3px_rgba(124,58,237,.08)] bg-input-bg text-text placeholder:text-placeholder';
 
   if (userLoading) {
     return (
@@ -192,11 +199,11 @@ const NewBrandPage: React.FC = () => {
     <div className="max-w-2xl mx-auto">
       {/* Back button */}
       <Link
-        href={`${dashPrefix}/brand-identity`}
+        href={`${dashPrefix}/brand-dna`}
         className="inline-flex items-center gap-1.5 text-sm text-muted hover:text-text transition-colors mb-6"
       >
         <ArrowLeft size={16} />
-        Brand Identities
+        Brand DNA
       </Link>
 
       {/* Header */}
@@ -205,9 +212,11 @@ const NewBrandPage: React.FC = () => {
           <Fingerprint size={20} className="text-brand" />
         </div>
         <div>
-          <h1 className="text-xl font-normal font-sans" style={{ color: 'var(--ink)' }}>New Brand Identity</h1>
+          <h1 className="text-xl font-normal font-sans" style={{ color: 'var(--ink)' }}>
+            Brand DNA{brandName ? ` — ${brandName}` : ''}
+          </h1>
           <p className="text-xs text-muted">
-            Set up your brand and upload documents for auditing.
+            Upload your brand documents to get started.
           </p>
         </div>
       </div>
@@ -222,42 +231,6 @@ const NewBrandPage: React.FC = () => {
       {/* Unified card */}
       <form onSubmit={handleCreate}>
         <div className="rounded-xl border border-border bg-card p-5 space-y-5">
-          {/* Name */}
-          <div>
-            <label htmlFor="bi-name" className="block text-sm font-medium text-text mb-1.5">
-              Brand Name
-            </label>
-            <input
-              id="bi-name"
-              type="text"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              placeholder="e.g. Acme Corp, My Personal Brand"
-              className={inputClass}
-              autoFocus
-              disabled={creating}
-            />
-          </div>
-
-          {/* Description */}
-          <div>
-            <label htmlFor="bi-desc" className="block text-sm font-medium text-text mb-1.5">
-              Description
-            </label>
-            <textarea
-              id="bi-desc"
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              placeholder="Brief description of this brand (optional)"
-              rows={2}
-              className={`${inputClass} resize-none`}
-              disabled={creating}
-            />
-          </div>
-
-          {/* Divider */}
-          <div className="border-t border-border" />
-
           {/* Files section */}
           <div>
             <div className="flex items-center justify-between mb-3">
@@ -368,18 +341,18 @@ const NewBrandPage: React.FC = () => {
               size="md"
               type="submit"
               loading={creating}
-              disabled={creating || !name.trim()}
+              disabled={creating || !brandName.trim()}
             >
               {creating
                 ? uploadProgress || 'Creating...'
                 : stagedFiles.length > 0
-                  ? `Create Brand & Upload ${stagedFiles.length} File${stagedFiles.length !== 1 ? 's' : ''}`
-                  : 'Create Brand'
+                  ? `Upload ${stagedFiles.length} file${stagedFiles.length !== 1 ? 's' : ''} & continue`
+                  : 'Continue without files'
               }
             </Button>
             {!creating && (
               <Link
-                href={`${dashPrefix}/brand-identity`}
+                href={`${dashPrefix}/brand-dna`}
                 className="text-sm text-muted hover:text-text transition-colors"
               >
                 Cancel
