@@ -51,6 +51,10 @@ import {
   Brain,
   Eye,
   ArrowUpDown,
+  Globe,
+  Code,
+  Search,
+  Minus,
 } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { useAuditBundle } from '@/context/AuditBundleContext';
@@ -105,6 +109,17 @@ type ModelProbe = {
   status?: 'measured' | 'skipped' | 'error' | null;
 };
 
+type PromptResult = {
+  prompt_text: string;
+  response_text: string;
+  model_id: string;
+  brand_mentioned: boolean;
+  placement: number | null;
+  sentiment_score: number | null;
+  share_of_voice: number | null;
+  competitors_mentioned?: Array<{ name: string; placement: number | null }>;
+};
+
 type AuditRecommendation = {
   category: string;
   title: string;
@@ -131,7 +146,7 @@ type AuditPageRow = {
 
 /* ── Helpers ────────────────────────────────────────── */
 
-function scoreColor(s: number | null): string {
+function scoreColor(s: number | null | undefined): string {
   if (s == null) return 'var(--m-muted)';
   if (s >= 70) return 'var(--ok)';
   if (s >= 40) return 'var(--warn)';
@@ -156,6 +171,51 @@ function normalizeAccuracy(raw: string | null | undefined): string | null {
   if (a.includes('accurate') && !a.includes('partial') && !a.includes('in')) return 'Accurate';
   if (a.includes('partial')) return 'Partial';
   return 'Inaccurate';
+}
+
+/* ── AI Perception helpers ─────────────────────────── */
+
+function accuracyColor(accuracy: string | null | undefined): { bg: string; color: string } {
+  const norm = normalizeAccuracy(accuracy);
+  if (!norm) return { bg: 'var(--paper-2)', color: 'var(--m-muted)' };
+  if (norm === 'Accurate') return { bg: 'rgba(34,197,94,0.1)', color: 'var(--ok)' };
+  if (norm === 'Partial') return { bg: 'rgba(234,179,8,0.1)', color: 'var(--warn)' };
+  return { bg: 'rgba(239,68,68,0.1)', color: 'var(--severe)' };
+}
+
+function accuracyBadge(score: number): { label: string; bg: string; color: string } {
+  if (score >= 80) return { label: 'Accurate', bg: 'rgba(34,197,94,0.1)', color: 'var(--ok)' };
+  if (score >= 50) return { label: 'Partial', bg: 'rgba(234,179,8,0.1)', color: 'var(--warn)' };
+  return { label: 'Inaccurate', bg: 'rgba(239,68,68,0.1)', color: 'var(--severe)' };
+}
+
+function perceptionSentimentLabel(s: number | null | undefined): string {
+  if (s == null) return 'Not measured';
+  if (s >= 75) return 'Very positive';
+  if (s >= 60) return 'Positive';
+  if (s >= 45) return 'Neutral';
+  if (s >= 30) return 'Negative';
+  return 'Very negative';
+}
+
+function placementLabel(p: number | null | undefined): string {
+  if (p == null) return 'Not measured';
+  if (p <= 1.5) return `#${p.toFixed(1)} — Top result`;
+  if (p <= 2.5) return `#${p.toFixed(1)} — Near the top`;
+  if (p <= 3.5) return `#${p.toFixed(1)} — Mid-range`;
+  if (p <= 4.5) return `#${p.toFixed(1)} — Lower half`;
+  return `#${p.toFixed(1)} — Barely visible`;
+}
+
+function placementScoreToPercent(p: number | null | undefined): number | null {
+  if (p == null) return null;
+  return Math.round(Math.max(0, Math.min(100, (5 - p) / 4 * 100)));
+}
+
+function readabilityStatusColor(status: string | undefined): string {
+  if (status === 'green') return 'var(--ok)';
+  if (status === 'amber') return 'var(--warn)';
+  return 'var(--severe)';
 }
 
 function makeDraftId(): string {
@@ -280,9 +340,23 @@ export default function IntelligencePage() {
   const [trendSnapshots, setTrendSnapshots] = useState<any[]>([]);
   const [contentGaps, setContentGaps] = useState<any[]>([]);
 
+  // AI Perception data
+  const [promptResults, setPromptResults] = useState<PromptResult[]>([]);
+  const [fallbackCompetitors, setFallbackCompetitors] = useState<Array<{
+    name: string; domain: string; score: number;
+  }>>([]);
+
+  // Re-scan state
+  const [rescanning, setRescanning] = useState(false);
+  const [rescanMessage, setRescanMessage] = useState<string | null>(null);
+  const [rescanAvailable, setRescanAvailable] = useState(true);
+  const [cooldownMessage, setCooldownMessage] = useState<string | null>(null);
+
   // UI state
-  const [activeTab, setActiveTab] = useState<'overview' | 'pages'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'perception' | 'pages'>('overview');
   const [expandedModel, setExpandedModel] = useState<string | null>(null);
+  const [expandedQuestion, setExpandedQuestion] = useState<number | null>(null);
+  const [expandedPage, setExpandedPage] = useState<string | null>(null);
   const [showCompetitorEditor, setShowCompetitorEditor] = useState(false);
   const [signalFilter, setSignalFilter] = useState<'all' | 'positive' | 'neutral' | 'negative'>('all');
   const [showMethodology, setShowMethodology] = useState(false);
@@ -296,7 +370,7 @@ export default function IntelligencePage() {
     const audit = bundle?.audit;
     if (!audit) {
       setDrafts([]); setServerSnapshot([]); setBenchmarkPosition(null); setIndustry(null);
-      setBiSummary(null); setModelProbes([]); setRecommendations([]);
+      setBiSummary(null); setModelProbes([]); setRecommendations([]); setPromptResults([]);
       setHumanPerception(null); setRedditMentions([]); setWebMentions([]);
       setReviewData([]); setTrendSnapshots([]); setContentGaps([]);
       return;
@@ -321,7 +395,27 @@ export default function IntelligencePage() {
         if (!d) return;
         setBenchmarkPosition(d?.benchmarkPosition || null);
         if (d?.industry) setIndustry(d.industry);
-        if (d?.modelProbes) setModelProbes(d.modelProbes);
+        if (d?.modelProbes) {
+          setModelProbes(d.modelProbes);
+          // Compute cooldown from latest probe created_at (168-hour / 7-day window)
+          const COOLDOWN_HOURS = 168;
+          const probes = d.modelProbes as any[];
+          if (probes.length > 0) {
+            const latestCreated = probes
+              .map((p: any) => new Date(p.created_at).getTime())
+              .reduce((a: number, b: number) => Math.max(a, b), 0);
+            const hoursSince = (Date.now() - latestCreated) / (1000 * 60 * 60);
+            if (hoursSince < COOLDOWN_HOURS) {
+              setRescanAvailable(false);
+              const nextAtMs = latestCreated + COOLDOWN_HOURS * 60 * 60 * 1000;
+              setCooldownMessage(formatCooldown(nextAtMs));
+            } else {
+              setRescanAvailable(true);
+              setCooldownMessage(null);
+            }
+          }
+        }
+        if (d?.promptResults) setPromptResults(d.promptResults);
         if (d?.recommendations) setRecommendations(d.recommendations);
         setHumanPerception(d?.humanPerception || null);
         setRedditMentions(d?.redditMentions || []);
@@ -340,6 +434,14 @@ export default function IntelligencePage() {
           const list: DraftCompetitor[] = (d?.competitors || []).map((c: Competitor) => fromServer(c));
           setDrafts(list); setServerSnapshot(list);
           if (d?.industry) setIndustry(d.industry);
+          // Also set fallback competitors for perception tab
+          setFallbackCompetitors(
+            (d?.competitors || []).map((c: any) => ({
+              name: c.name || c.domain,
+              domain: c.domain,
+              score: c.score ?? 0,
+            }))
+          );
         })
         .catch(() => {});
     }
@@ -405,6 +507,97 @@ export default function IntelligencePage() {
       }
     }
     return items;
+  }, [modelProbes]);
+
+  /* ── AI Perception computed values ─────────────────── */
+
+  const perceptionMeasured = useMemo(() => modelProbes.filter(p => p.status === 'measured' && p.accuracy_score != null), [modelProbes]);
+
+  const perceptionAccuracy = useMemo(() => {
+    if (perceptionMeasured.length === 0) return null;
+    return Math.round(perceptionMeasured.reduce((s, p) => s + p.accuracy_score, 0) / perceptionMeasured.length);
+  }, [perceptionMeasured]);
+
+  const perceptionSentiment = useMemo(() => {
+    const valid = modelProbes.filter(p => p.sentiment_score != null);
+    if (valid.length === 0) return null;
+    return Math.round(valid.reduce((s, p) => s + (p.sentiment_score || 0), 0) / valid.length);
+  }, [modelProbes]);
+
+  const perceptionPlacement = useMemo(() => {
+    const valid = modelProbes.filter(p => p.placement_score != null);
+    if (valid.length === 0) return null;
+    return +(valid.reduce((s, p) => s + (p.placement_score || 0), 0) / valid.length).toFixed(1);
+  }, [modelProbes]);
+
+  const allThemes = useMemo(() => {
+    const themes: Array<{ theme: string; polarity: string; count: number }> = [];
+    for (const probe of modelProbes) {
+      if (probe.sentiment_themes) themes.push(...probe.sentiment_themes);
+    }
+    const map = new Map<string, { polarity: string; count: number }>();
+    for (const t of themes) {
+      const key = t.theme.toLowerCase();
+      const existing = map.get(key);
+      if (existing) existing.count += t.count;
+      else map.set(key, { polarity: t.polarity, count: t.count });
+    }
+    return [...map.entries()]
+      .sort((a, b) => b[1].count - a[1].count)
+      .slice(0, 8)
+      .map(([theme, v]) => ({ theme, polarity: v.polarity, count: v.count }));
+  }, [modelProbes]);
+
+  const competitorData = useMemo(() => {
+    const compMap = new Map<string, { mentions: number; placements: number[]; byModel: Record<string, number[]> }>();
+    for (const pr of promptResults) {
+      if (!pr.competitors_mentioned) continue;
+      for (const comp of pr.competitors_mentioned) {
+        const name = comp.name?.trim();
+        if (!name) continue;
+        const entry = compMap.get(name) || { mentions: 0, placements: [], byModel: {} };
+        entry.mentions++;
+        if (comp.placement != null) entry.placements.push(comp.placement);
+        if (!entry.byModel[pr.model_id]) entry.byModel[pr.model_id] = [];
+        if (comp.placement != null) entry.byModel[pr.model_id].push(comp.placement);
+        compMap.set(name, entry);
+      }
+    }
+    return [...compMap.entries()]
+      .map(([name, data]) => ({
+        name,
+        mentions: data.mentions,
+        avgPlacement: data.placements.length > 0
+          ? Math.round((data.placements.reduce((a, b) => a + b, 0) / data.placements.length) * 10) / 10
+          : null,
+        byModel: Object.fromEntries(
+          Object.entries(data.byModel).map(([m, placements]) => [
+            m,
+            placements.length > 0 ? Math.round((placements.reduce((a, b) => a + b, 0) / placements.length) * 10) / 10 : null,
+          ])
+        ) as Record<string, number | null>,
+      }))
+      .sort((a, b) => b.mentions - a.mentions)
+      .slice(0, 10);
+  }, [promptResults]);
+
+  const questionGroups = useMemo(() => {
+    const groups = new Map<string, Array<{ model_id: string; model_label: string; answer: string; accuracy: string | null; accuracyNote?: string | null }>>();
+    for (const probe of modelProbes) {
+      if (!probe.results_json) continue;
+      for (const r of probe.results_json) {
+        const key = r.question;
+        if (!groups.has(key)) groups.set(key, []);
+        groups.get(key)!.push({
+          model_id: probe.model_id,
+          model_label: probe.model_label,
+          answer: r.answer,
+          accuracy: r.accuracy,
+          accuracyNote: r.accuracyNote,
+        });
+      }
+    }
+    return Array.from(groups.entries()).map(([question, answers]) => ({ question, answers }));
   }, [modelProbes]);
 
   // All human signals merged
@@ -546,6 +739,61 @@ export default function IntelligencePage() {
     finally { setDetecting(false); }
   };
 
+  /** Format a cooldown remaining duration into a human-readable string. */
+  const formatCooldown = (nextAtMs: number): string => {
+    const msLeft = Math.max(0, nextAtMs - Date.now());
+    const minutesLeft = Math.ceil(msLeft / (1000 * 60));
+    const hoursLeft = Math.ceil(msLeft / (1000 * 60 * 60));
+    const daysLeft = Math.ceil(msLeft / (1000 * 60 * 60 * 24));
+    let timeStr: string;
+    if (minutesLeft < 60) {
+      timeStr = minutesLeft === 1 ? '1 minute' : `${minutesLeft} minutes`;
+    } else if (hoursLeft < 48) {
+      timeStr = hoursLeft === 1 ? '1 hour' : `${hoursLeft} hours`;
+    } else {
+      timeStr = `${daysLeft} days`;
+    }
+    return `Cooldown resets in ${timeStr}. AI models need time to process new web content.`;
+  };
+
+  const handleRescan = async () => {
+    const auditId = bundle?.audit?.id;
+    if (!auditId || rescanning) return;
+    setRescanning(true);
+    setRescanMessage(null);
+    try {
+      const res = await fetch(`/api/audits/${auditId}/rescan-xray`, { method: 'POST' });
+      const data = await res.json();
+      if (!res.ok) {
+        setRescanMessage(data.error || 'Re-scan failed');
+        return;
+      }
+      if (data.cached) {
+        const nextAtMs = new Date(data.nextScanAvailableAt).getTime();
+        const msg = formatCooldown(nextAtMs);
+        setRescanMessage(msg);
+        setRescanAvailable(false);
+        setCooldownMessage(msg);
+        return;
+      }
+      setRescanMessage('Re-scan complete. Results updated.');
+      const freshCooldownMs = Date.now() + 168 * 60 * 60 * 1000;
+      setRescanAvailable(false);
+      setCooldownMessage(formatCooldown(freshCooldownMs));
+      const probesRes = await fetch(`/api/audits/intelligence?audit_id=${auditId}`);
+      if (probesRes.ok) {
+        const d = await probesRes.json();
+        if (d?.modelProbes) setModelProbes(d.modelProbes);
+        if (d?.promptResults) setPromptResults(d.promptResults);
+        if (d?.brandIntelligence) setBiSummary(d.brandIntelligence as BrandIntelligenceSummary);
+      }
+    } catch {
+      setRescanMessage('Re-scan failed. Please try again later.');
+    } finally {
+      setRescanning(false);
+    }
+  };
+
   // Pages tab computed values
   const sortedPages = useMemo(() => {
     const sorted = [...auditPages];
@@ -564,6 +812,12 @@ export default function IntelligencePage() {
   const pagesRed = pagesScored.filter(p => p.ai_readability?.status === 'red').length;
 
   const hasData = biSummary || modelProbes.length > 0 || overallScore > 0;
+  const hasProbes = modelProbes.length > 0;
+  const hasPerceptionSentiment = perceptionSentiment != null;
+  const hasPerceptionPlacement = perceptionPlacement != null;
+  const hasCompetitorProbeData = competitorData.length > 0;
+  const hasFallbackCompetitors = fallbackCompetitors.length > 0;
+  const brandIsUnknown = hasProbes && perceptionAccuracy != null && perceptionAccuracy === 0;
 
   /* ── Render ────────────────────────────────────────── */
 
@@ -608,22 +862,26 @@ export default function IntelligencePage() {
 
       {/* ── Tab switcher ── */}
       <div className="flex items-center gap-1 mb-5 rounded-lg p-1" style={{ background: 'color-mix(in srgb, var(--ink) 4%, transparent)' }}>
-        {(['overview', 'pages'] as const).map((tab) => (
+        {([
+          { key: 'overview' as const, label: 'Overview', icon: <Eye size={13} strokeWidth={1.75} /> },
+          { key: 'perception' as const, label: 'AI Perception', icon: <Bot size={13} strokeWidth={1.75} /> },
+          { key: 'pages' as const, label: 'Pages', icon: <Brain size={13} strokeWidth={1.75} />, count: auditPages.length || undefined },
+        ]).map((tab) => (
           <button
-            key={tab}
-            onClick={() => setActiveTab(tab)}
+            key={tab.key}
+            onClick={() => setActiveTab(tab.key)}
             className="flex items-center gap-1.5 px-4 py-2 rounded-md text-[13px] font-medium transition-all"
             style={{
-              background: activeTab === tab ? 'var(--card)' : 'transparent',
-              color: activeTab === tab ? 'var(--ink)' : 'var(--m-muted)',
-              boxShadow: activeTab === tab ? '0 1px 3px rgba(0,0,0,0.06)' : 'none',
+              background: activeTab === tab.key ? 'var(--card)' : 'transparent',
+              color: activeTab === tab.key ? 'var(--ink)' : 'var(--m-muted)',
+              boxShadow: activeTab === tab.key ? '0 1px 3px rgba(0,0,0,0.06)' : 'none',
             }}
           >
-            {tab === 'overview' ? <Eye size={13} strokeWidth={1.75} /> : <Brain size={13} strokeWidth={1.75} />}
-            {tab === 'overview' ? 'Overview' : 'Pages'}
-            {tab === 'pages' && auditPages.length > 0 && (
+            {tab.icon}
+            {tab.label}
+            {tab.count != null && tab.count > 0 && (
               <span className="text-[10px] font-semibold tabular-nums ml-0.5 px-1.5 py-0.5 rounded-full" style={{ background: 'color-mix(in srgb, var(--ink) 8%, transparent)' }}>
-                {auditPages.length}
+                {tab.count}
               </span>
             )}
           </button>
@@ -695,227 +953,126 @@ export default function IntelligencePage() {
         )}
       </DashCard>
 
+
       {/* ═══════════════════════════════════════════════════
-          SECTION 2: AI Model Understanding
+          SECTION 2: Key signals (compact alerts)
          ═══════════════════════════════════════════════════ */}
-      {modelProbes.length > 0 && (
+      {hasData && (modelProbes.length > 0 || pagesRed > 0) && (
         <DashCard className="mb-4">
-          <div className="flex items-center gap-2 mb-1">
-            <Bot size={14} strokeWidth={1.75} style={{ color: 'var(--signal)' }} />
-            <h2 className="text-[15px] font-semibold" style={{ color: 'var(--ink)' }}>AI model understanding</h2>
+          <div className="flex items-center gap-2 mb-3">
+            <AlertCircle size={14} strokeWidth={1.75} style={{ color: 'var(--signal)' }} />
+            <h2 className="text-[15px] font-semibold" style={{ color: 'var(--ink)' }}>Key signals</h2>
           </div>
-          <p className="text-[11px] mb-1" style={{ color: 'var(--m-muted)' }}>
-            What each AI model knows about {brandName} — accuracy, sentiment, and issues
-          </p>
-
-          {/* Compact methodology */}
-          <div className="mb-3 px-3 py-2 rounded-md flex items-center gap-2.5" style={{ background: 'color-mix(in srgb, var(--signal) 4%, transparent)' }}>
-            <Info size={11} style={{ color: 'var(--signal)', flexShrink: 0 }} />
-            <p className="text-[11px] leading-[1.45]" style={{ color: 'var(--ink)', opacity: 0.6 }}>
-              Each model was asked identical questions about {brandName} with no prior context. Accuracy measures how well answers match your actual site content.
-            </p>
-          </div>
-
-          {/* Quick summary stats */}
-          <div className="grid grid-cols-3 gap-3 mb-3">
-            <div className="rounded-md px-3 py-2.5 text-center" style={{ background: 'var(--card)', border: '1px solid var(--rule)' }}>
-              <p className="text-[18px] font-bold tabular-nums" style={{ color: recognizedCount === modelProbes.length ? 'var(--ok)' : recognizedCount > 0 ? 'var(--warn)' : 'var(--severe)' }}>{recognizedCount}/{modelProbes.length}</p>
-              <p className="text-[10px]" style={{ color: 'var(--m-muted)' }}>Models recognize you</p>
-            </div>
-            <div className="rounded-md px-3 py-2.5 text-center" style={{ background: 'var(--card)', border: '1px solid var(--rule)' }}>
-              <p className="text-[18px] font-bold tabular-nums" style={{ color: scoreColor(avgAccuracy) }}>{avgAccuracy}%</p>
-              <p className="text-[10px]" style={{ color: 'var(--m-muted)' }}>Average accuracy</p>
-            </div>
-            <div className="rounded-md px-3 py-2.5 text-center" style={{ background: 'var(--card)', border: '1px solid var(--rule)' }}>
-              <p className="text-[18px] font-bold tabular-nums" style={{ color: hallucinations.length === 0 ? 'var(--ok)' : 'var(--severe)' }}>{hallucinations.length}</p>
-              <p className="text-[10px]" style={{ color: 'var(--m-muted)' }}>Inaccurate answers</p>
-            </div>
-          </div>
-
           <div className="space-y-2">
-            {modelProbes.map((probe) => (
-              <ModelCard
-                key={probe.model_id}
-                probe={probe}
-                brandName={brandName}
-                expanded={expandedModel === probe.model_id}
-                onToggle={() => setExpandedModel(expandedModel === probe.model_id ? null : probe.model_id)}
-              />
-            ))}
-          </div>
-
-          {/* What this means for you */}
-          {(recognizedCount < modelProbes.length || avgAccuracy < 70 || hallucinations.length > 0) && (
-            <div className="mt-3 rounded-lg px-4 py-3" style={{ background: 'color-mix(in srgb, var(--signal) 4%, transparent)', border: '1px solid color-mix(in srgb, var(--signal) 10%, transparent)' }}>
-              <p className="text-[11px] font-semibold mb-1.5" style={{ color: 'var(--ink)' }}>What this means</p>
-              <div className="space-y-1">
-                {recognizedCount < modelProbes.length && (
-                  <p className="text-[11px] leading-[1.5]" style={{ color: 'var(--ink)', opacity: 0.8 }}>
-                    {modelProbes.length - recognizedCount} AI model{modelProbes.length - recognizedCount > 1 ? 's don\'t' : ' doesn\'t'} know {brandName}. People using {modelProbes.filter(p => p.accuracy_score < 20).map(p => p.model_label).join(', ')} won't find you when asking about your category.
-                  </p>
-                )}
-                {hallucinations.length > 0 && (
-                  <p className="text-[11px] leading-[1.5]" style={{ color: 'var(--ink)', opacity: 0.8 }}>
-                    {hallucinations.length} answer{hallucinations.length > 1 ? 's are' : ' is'} factually wrong — AI is inventing features, confusing your product with competitors, or misidentifying your category. This actively misleads potential customers.
-                  </p>
-                )}
-                {avgAccuracy < 70 && avgAccuracy >= 20 && hallucinations.length === 0 && (
-                  <p className="text-[11px] leading-[1.5]" style={{ color: 'var(--ink)', opacity: 0.8 }}>
-                    AI models have a partial understanding but miss key details about what {brandName} offers. Your site content isn't structured clearly enough for AI to parse.
-                  </p>
-                )}
+            {recognizedCount < modelProbes.length && modelProbes.length > 0 && (
+              <div className="flex items-center gap-3 px-3.5 py-2.5 rounded-lg" style={{ background: 'color-mix(in srgb, var(--severe) 4%, transparent)', border: '1px solid color-mix(in srgb, var(--severe) 10%, transparent)' }}>
+                <Bot size={13} className="flex-shrink-0" style={{ color: 'var(--severe)' }} />
+                <p className="text-[12px] flex-1" style={{ color: 'var(--ink)', opacity: 0.85 }}>
+                  {modelProbes.length - recognizedCount} of {modelProbes.length} AI models don{"'"}t recognize {brandName}
+                </p>
+                <button type="button" onClick={() => setActiveTab('perception')} className="text-[11px] font-semibold flex-shrink-0 hover:underline" style={{ color: 'var(--ink)' }}>
+                  Details <ArrowRight size={9} className="inline ml-0.5" />
+                </button>
               </div>
-            </div>
-          )}
+            )}
+            {avgAccuracy > 0 && avgAccuracy < 60 && (
+              <div className="flex items-center gap-3 px-3.5 py-2.5 rounded-lg" style={{ background: 'color-mix(in srgb, var(--warn) 4%, transparent)', border: '1px solid color-mix(in srgb, var(--warn) 10%, transparent)' }}>
+                <Target size={13} className="flex-shrink-0" style={{ color: 'var(--warn)' }} />
+                <p className="text-[12px] flex-1" style={{ color: 'var(--ink)', opacity: 0.85 }}>
+                  Average accuracy is {avgAccuracy}% — AI models have an incomplete picture
+                </p>
+                <button type="button" onClick={() => setActiveTab('perception')} className="text-[11px] font-semibold flex-shrink-0 hover:underline" style={{ color: 'var(--ink)' }}>
+                  Details <ArrowRight size={9} className="inline ml-0.5" />
+                </button>
+              </div>
+            )}
+            {hallucinations.length > 0 && (
+              <div className="flex items-center gap-3 px-3.5 py-2.5 rounded-lg" style={{ background: 'color-mix(in srgb, var(--severe) 4%, transparent)', border: '1px solid color-mix(in srgb, var(--severe) 10%, transparent)' }}>
+                <AlertTriangle size={13} className="flex-shrink-0" style={{ color: 'var(--severe)' }} />
+                <p className="text-[12px] flex-1" style={{ color: 'var(--ink)', opacity: 0.85 }}>
+                  {hallucinations.length} AI answer{hallucinations.length > 1 ? 's are' : ' is'} factually wrong
+                </p>
+                <button type="button" onClick={() => setActiveTab('perception')} className="text-[11px] font-semibold flex-shrink-0 hover:underline" style={{ color: 'var(--ink)' }}>
+                  Details <ArrowRight size={9} className="inline ml-0.5" />
+                </button>
+              </div>
+            )}
+            {sentimentScore != null && sentimentScore < 50 && (
+              <div className="flex items-center gap-3 px-3.5 py-2.5 rounded-lg" style={{ background: 'color-mix(in srgb, var(--warn) 4%, transparent)', border: '1px solid color-mix(in srgb, var(--warn) 10%, transparent)' }}>
+                <ThumbsDown size={13} className="flex-shrink-0" style={{ color: 'var(--warn)' }} />
+                <p className="text-[12px] flex-1" style={{ color: 'var(--ink)', opacity: 0.85 }}>
+                  AI sentiment is negative ({sentimentScore}/100)
+                </p>
+                <button type="button" onClick={() => setActiveTab('perception')} className="text-[11px] font-semibold flex-shrink-0 hover:underline" style={{ color: 'var(--ink)' }}>
+                  Details <ArrowRight size={9} className="inline ml-0.5" />
+                </button>
+              </div>
+            )}
+            {pagesRed > 0 && (
+              <div className="flex items-center gap-3 px-3.5 py-2.5 rounded-lg" style={{ background: 'color-mix(in srgb, var(--severe) 4%, transparent)', border: '1px solid color-mix(in srgb, var(--severe) 10%, transparent)' }}>
+                <Globe size={13} className="flex-shrink-0" style={{ color: 'var(--severe)' }} />
+                <p className="text-[12px] flex-1" style={{ color: 'var(--ink)', opacity: 0.85 }}>
+                  {pagesRed} page{pagesRed > 1 ? 's have' : ' has'} poor AI readability
+                </p>
+                <button type="button" onClick={() => setActiveTab('pages')} className="text-[11px] font-semibold flex-shrink-0 hover:underline" style={{ color: 'var(--ink)' }}>
+                  View pages <ArrowRight size={9} className="inline ml-0.5" />
+                </button>
+              </div>
+            )}
+            {recognizedCount === modelProbes.length && modelProbes.length > 0 && avgAccuracy >= 60 && hallucinations.length === 0 && (sentimentScore == null || sentimentScore >= 50) && pagesRed === 0 && (
+              <div className="flex items-center gap-3 px-3.5 py-2.5 rounded-lg" style={{ background: 'color-mix(in srgb, var(--ok) 4%, transparent)', border: '1px solid color-mix(in srgb, var(--ok) 10%, transparent)' }}>
+                <CheckCircle2 size={13} className="flex-shrink-0" style={{ color: 'var(--ok)' }} />
+                <p className="text-[12px]" style={{ color: 'var(--ink)', opacity: 0.85 }}>
+                  No critical issues — your brand has strong AI visibility across all models
+                </p>
+              </div>
+            )}
+          </div>
         </DashCard>
       )}
 
       {/* ═══════════════════════════════════════════════════
-          SECTION 3: Brand Narrative & Perception
+          SECTION 3: Perception snapshot (compact themes)
          ═══════════════════════════════════════════════════ */}
-      {(biSummary || hasRealHumanData) && (
+      {((biSummary?.positiveThemes?.length ?? 0) > 0 || (biSummary?.negativeThemes?.length ?? 0) > 0) && (
         <DashCard className="mb-4">
-          <div className="flex items-center gap-2 mb-1">
-            <MessageSquare size={14} strokeWidth={1.75} style={{ color: 'var(--signal)' }} />
-            <h2 className="text-[15px] font-semibold" style={{ color: 'var(--ink)' }}>Brand narrative and perception</h2>
+          <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center gap-2">
+              <MessageSquare size={14} strokeWidth={1.75} style={{ color: 'var(--signal)' }} />
+              <h2 className="text-[15px] font-semibold" style={{ color: 'var(--ink)' }}>How AI describes {brandName}</h2>
+            </div>
+            <button type="button" onClick={() => setActiveTab('perception')} className="text-[11px] font-semibold hover:underline flex items-center gap-1" style={{ color: 'var(--m-muted)' }}>
+              Full analysis <ArrowRight size={10} />
+            </button>
           </div>
-          <p className="text-[11px] mb-4" style={{ color: 'var(--m-muted)' }}>
-            How AI and the web describe, praise, and criticize {brandName}
-          </p>
-
-          {/* Sentiment overview row */}
-          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 mb-4">
-            <MiniStat label="AI sentiment" value={biSummary?.overallSentiment ?? null} suffix="/100" />
-            {hasRealHumanData && humanSentimentScore != null && (
-              <MiniStat label="Human sentiment" value={humanSentimentScore} suffix="/100" />
-            )}
-            {allSignals.length > 0 && (
-              <MiniStat label="Public signals" value={allSignals.length} suffix="" isCount />
-            )}
-          </div>
-
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-            {/* Positive signals */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <p className="text-[10px] font-semibold uppercase tracking-[0.06em] mb-2 flex items-center gap-1.5" style={{ color: 'var(--ok)' }}>
-                <ThumbsUp size={10} /> Positive signals
+                <ThumbsUp size={10} /> Strongest themes
               </p>
-              {(biSummary?.positiveThemes?.length ?? 0) > 0 || (hp?.topPositiveThemes?.length ?? 0) > 0 ? (
-                <ul className="space-y-1.5">
-                  {biSummary?.positiveThemes?.slice(0, 4).map((t) => (
-                    <li key={t} className="flex items-center gap-2 text-[12px] px-3 py-2 rounded-md capitalize" style={{ background: 'color-mix(in srgb, var(--ok) 5%, transparent)', color: 'var(--ink)' }}>
-                      <CheckCircle2 size={11} style={{ color: 'var(--ok)' }} /> {t}
-                    </li>
-                  ))}
-                  {hasRealHumanData && hp?.topPositiveThemes?.slice(0, 2).map((t: any, i: number) => (
-                    <li key={`h-${i}`} className="flex items-center gap-2 text-[12px] px-3 py-2 rounded-md" style={{ background: 'color-mix(in srgb, var(--ok) 5%, transparent)', color: 'var(--ink)' }}>
-                      <Users size={11} style={{ color: 'var(--ok)' }} /> {t.theme}
-                      <span className="text-[9px] ml-auto flex-shrink-0" style={{ color: 'var(--m-muted)' }}>human</span>
-                    </li>
-                  ))}
-                </ul>
-              ) : (
-                <p className="text-[11px] px-3 py-2" style={{ color: 'var(--m-muted)' }}>No positive signals detected yet</p>
-              )}
-            </div>
-
-            {/* Negative / weak signals */}
-            <div>
-              <p className="text-[10px] font-semibold uppercase tracking-[0.06em] mb-2 flex items-center gap-1.5" style={{ color: 'var(--severe)' }}>
-                <ThumbsDown size={10} /> Negative or weak signals
-              </p>
-              {(biSummary?.negativeThemes?.length ?? 0) > 0 || (hp?.topNegativeThemes?.length ?? 0) > 0 ? (
-                <ul className="space-y-1.5">
-                  {biSummary?.negativeThemes?.slice(0, 4).map((t) => (
-                    <li key={t} className="flex items-center gap-2 text-[12px] px-3 py-2 rounded-md capitalize" style={{ background: 'color-mix(in srgb, var(--severe) 5%, transparent)', color: 'var(--ink)' }}>
-                      <AlertCircle size={11} style={{ color: 'var(--severe)' }} /> {t}
-                    </li>
-                  ))}
-                  {hasRealHumanData && hp?.topNegativeThemes?.slice(0, 2).map((t: any, i: number) => (
-                    <li key={`h-${i}`} className="flex items-center gap-2 text-[12px] px-3 py-2 rounded-md" style={{ background: 'color-mix(in srgb, var(--severe) 5%, transparent)', color: 'var(--ink)' }}>
-                      <Users size={11} style={{ color: 'var(--severe)' }} /> {t.theme}
-                      <span className="text-[9px] ml-auto flex-shrink-0" style={{ color: 'var(--m-muted)' }}>human</span>
-                    </li>
-                  ))}
-                </ul>
-              ) : (
-                <p className="text-[11px] px-3 py-2" style={{ color: 'var(--m-muted)' }}>No negative signals detected yet</p>
-              )}
-            </div>
-          </div>
-
-          {/* Hallucinations & confusion */}
-          {hallucinations.length > 0 && (
-            <div className="mt-4 pt-4" style={{ borderTop: '1px solid var(--rule)' }}>
-              <p className="text-[10px] font-semibold uppercase tracking-[0.06em] mb-2 flex items-center gap-1.5" style={{ color: 'var(--warn)' }}>
-                <AlertTriangle size={10} /> Hallucinations and confusion ({hallucinations.length})
-              </p>
-              <p className="text-[11px] mb-3" style={{ color: 'var(--m-muted)' }}>
-                Where AI models are inventing, guessing, or confusing {brandName} with other entities. This directly shows where your brand is not machine-legible enough.
-              </p>
-              <div className="space-y-2">
-                {hallucinations.slice(0, 4).map((h, i) => (
-                  <div key={i} className="rounded-md px-3 py-2.5" style={{ background: 'color-mix(in srgb, var(--warn) 5%, transparent)', border: '1px solid color-mix(in srgb, var(--warn) 10%, transparent)' }}>
-                    <div className="flex items-center gap-2 mb-1">
-                      <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-full" style={{ background: 'color-mix(in srgb, var(--warn) 12%, transparent)', color: 'var(--warn)' }}>{h.model}</span>
-                    </div>
-                    <p className="text-[11px] leading-relaxed" style={{ color: 'var(--ink)', opacity: 0.85 }}>{h.answer.slice(0, 200)}{h.answer.length > 200 ? '...' : ''}</p>
-                    {h.note && <p className="text-[10px] mt-1" style={{ color: 'var(--severe)' }}>{h.note}</p>}
-                  </div>
+              <div className="flex flex-wrap gap-1.5">
+                {biSummary?.positiveThemes?.slice(0, 4).map(t => (
+                  <span key={t} className="text-[11px] px-2.5 py-1 rounded-md capitalize" style={{ background: 'color-mix(in srgb, var(--ok) 6%, transparent)', color: 'var(--ok)' }}>{t}</span>
                 ))}
-                {hallucinations.length > 4 && (
-                  <p className="text-[10px] text-center" style={{ color: 'var(--m-muted)' }}>+{hallucinations.length - 4} more inaccurate responses</p>
+                {(!biSummary?.positiveThemes || biSummary.positiveThemes.length === 0) && (
+                  <span className="text-[11px]" style={{ color: 'var(--m-muted)' }}>None detected yet</span>
                 )}
               </div>
             </div>
-          )}
-
-          {/* Human signals feed */}
-          {allSignals.length > 0 && (
-            <div className="mt-4 pt-4" style={{ borderTop: '1px solid var(--rule)' }}>
-              <div className="flex items-center gap-1.5 mb-2">
-                <p className="text-[10px] font-semibold uppercase tracking-[0.06em]" style={{ color: 'var(--m-muted)' }}>
-                  Public mentions ({allSignals.length})
-                </p>
-                <div className="flex-1" />
-                {(['all', 'positive', 'negative'] as const).map(f => (
-                  <button
-                    key={f}
-                    onClick={() => setSignalFilter(f === 'all' ? 'all' : f)}
-                    className="px-2 py-0.5 rounded text-[9px] font-medium capitalize"
-                    style={{
-                      background: signalFilter === f ? 'var(--ink)' : 'transparent',
-                      color: signalFilter === f ? 'var(--paper)' : 'var(--m-muted)',
-                    }}
-                  >
-                    {f}
-                  </button>
+            <div>
+              <p className="text-[10px] font-semibold uppercase tracking-[0.06em] mb-2 flex items-center gap-1.5" style={{ color: 'var(--severe)' }}>
+                <ThumbsDown size={10} /> Weakest themes
+              </p>
+              <div className="flex flex-wrap gap-1.5">
+                {biSummary?.negativeThemes?.slice(0, 4).map(t => (
+                  <span key={t} className="text-[11px] px-2.5 py-1 rounded-md capitalize" style={{ background: 'color-mix(in srgb, var(--severe) 6%, transparent)', color: 'var(--severe)' }}>{t}</span>
                 ))}
+                {(!biSummary?.negativeThemes || biSummary.negativeThemes.length === 0) && (
+                  <span className="text-[11px]" style={{ color: 'var(--m-muted)' }}>None detected yet</span>
+                )}
               </div>
-              <div className="space-y-1.5 max-h-[180px] overflow-y-auto">
-                {filteredSignals.slice(0, 10).map((signal, i) => (
-                  <div key={i} className="flex items-center gap-2 px-2.5 py-1.5 rounded-md text-[11px]" style={{ background: 'color-mix(in srgb, var(--ink) 2%, transparent)' }}>
-                    <span
-                      className="w-1.5 h-1.5 rounded-full flex-shrink-0"
-                      style={{ background: signal.sentiment === 'positive' ? 'var(--ok)' : signal.sentiment === 'negative' ? 'var(--severe)' : 'var(--warn)' }}
-                    />
-                    <span className="flex-1 min-w-0 truncate font-medium" style={{ color: 'var(--ink)' }}>{signal.title}</span>
-                    <span className="text-[9px] flex-shrink-0" style={{ color: 'var(--m-muted)' }}>{signal.source}</span>
-                    {signal.sourceUrl && (
-                      <a href={signal.sourceUrl} target="_blank" rel="noopener noreferrer" className="flex-shrink-0 hover:opacity-70">
-                        <ExternalLink size={9} style={{ color: 'var(--m-muted)' }} />
-                      </a>
-                    )}
-                  </div>
-                ))}
-              </div>
-              {filteredSignals.length > 10 && (
-                <p className="text-[10px] mt-1.5 text-center" style={{ color: 'var(--m-muted)' }}>
-                  +{filteredSignals.length - 10} more
-                </p>
-              )}
             </div>
-          )}
+          </div>
         </DashCard>
       )}
 
@@ -1205,10 +1362,475 @@ export default function IntelligencePage() {
       </>)}
 
       {/* ══════════════════════════════════════════════════════
+          AI PERCEPTION TAB
+         ══════════════════════════════════════════════════════ */}
+      {activeTab === 'perception' && (
+        <div className="space-y-4">
+
+          {/* ── Re-scan button ── */}
+          {hasProbes && (
+            <div className="flex items-center justify-between gap-4">
+              <div>
+                <p className="text-[11px]" style={{ color: 'var(--m-muted)' }}>
+                  Model-level view of how AI sees, describes, and ranks {brandName}
+                </p>
+              </div>
+              <div className="flex flex-col items-end gap-1.5 flex-shrink-0">
+                <button
+                  onClick={handleRescan}
+                  disabled={rescanning || !rescanAvailable}
+                  className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-[12px] font-medium transition-all disabled:opacity-60"
+                  style={rescanAvailable ? {
+                    background: 'var(--ink)',
+                    color: 'var(--paper)',
+                    border: '1px solid var(--ink)',
+                  } : {
+                    background: 'var(--rule)',
+                    color: 'var(--m-muted)',
+                    border: '1px solid var(--rule)',
+                    cursor: 'default',
+                  }}
+                >
+                  <RefreshCw size={13} strokeWidth={1.75} className={rescanning ? 'animate-spin' : ''} />
+                  {rescanning ? 'Scanning...' : 'Re-scan AI models'}
+                </button>
+                {!rescanAvailable && cooldownMessage && !rescanMessage && (
+                  <p className="text-[11px] max-w-[280px] text-right leading-snug" style={{ color: 'var(--m-muted)' }}>
+                    {cooldownMessage}
+                  </p>
+                )}
+                {rescanMessage && (
+                  <p className="text-[11px] max-w-[280px] text-right" style={{ color: 'var(--m-muted)' }}>
+                    {rescanMessage}
+                  </p>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* ── Explainer banner ── */}
+          <div
+            className="flex items-start gap-3 rounded-lg border px-4 py-3"
+            style={{ background: 'color-mix(in srgb, var(--ink) 3%, transparent)', borderColor: 'var(--rule)' }}
+          >
+            <Search size={15} strokeWidth={1.75} className="mt-0.5 flex-shrink-0" style={{ color: 'var(--m-muted)' }} />
+            <p className="text-[13px] leading-relaxed" style={{ color: 'var(--m-muted)' }}>
+              We ask leading AI models — ChatGPT, Claude, Gemini, and Perplexity — questions about your brand,
+              then compare their answers to what your website actually says. This shows you how accurately AI
+              represents your brand to the millions of people using it every day.
+            </p>
+          </div>
+
+          {/* ── Brand unknown notice ── */}
+          {brandIsUnknown && (
+            <div
+              className="flex items-start gap-3 rounded-lg border px-4 py-4"
+              style={{ background: 'rgba(234,179,8,0.06)', borderColor: 'rgba(234,179,8,0.2)' }}
+            >
+              <AlertTriangle size={16} strokeWidth={1.75} className="mt-0.5 flex-shrink-0" style={{ color: 'var(--warn)' }} />
+              <div>
+                <p className="text-[13px] font-semibold mb-1" style={{ color: 'var(--ink)' }}>
+                  No AI data available for this brand yet
+                </p>
+                <p className="text-[12px] leading-relaxed" style={{ color: 'var(--m-muted)' }}>
+                  AI models (ChatGPT, Claude, Gemini, Perplexity) don{"'"}t have enough training data to
+                  answer questions about your brand. This is normal for newer or niche brands — AI knowledge
+                  lags behind the live web by months. Focus on building authoritative backlinks, earning press
+                  mentions, and publishing clear content. AI confidence follows web authority.
+                </p>
+                {hasFallbackCompetitors && (
+                  <p className="text-[12px] leading-relaxed mt-2" style={{ color: 'var(--m-muted)' }}>
+                    Your competitors are already visible to AI — see how they rank below.
+                  </p>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* ── Low accuracy notice ── */}
+          {hasProbes && perceptionAccuracy != null && perceptionAccuracy > 0 && perceptionAccuracy < 50 && (
+            <div
+              className="flex items-start gap-3 rounded-lg border px-4 py-3"
+              style={{ background: 'rgba(34,197,94,0.04)', borderColor: 'rgba(34,197,94,0.15)' }}
+            >
+              <Info size={15} strokeWidth={1.75} className="mt-0.5 flex-shrink-0" style={{ color: 'var(--ok)' }} />
+              <p className="text-[12px] leading-relaxed" style={{ color: 'var(--ink)' }}>
+                <span className="font-semibold">Low accuracy is normal for newer brands.</span>{' '}
+                AI models can read your website, but they won{"'"}t confidently endorse your claims until
+                independent sources corroborate them. Focus on building authoritative backlinks, earning
+                press mentions, and keeping your content clear — AI confidence follows web authority.
+              </p>
+            </div>
+          )}
+
+          {/* ── Summary metrics ── */}
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <PerceptionMetricCard
+              icon={<Target size={18} strokeWidth={1.75} style={{ color: scoreColor(perceptionAccuracy) }} />}
+              label="Accuracy"
+              value={perceptionAccuracy != null ? `${perceptionAccuracy}%` : 'Not measured'}
+              subtext={perceptionAccuracy != null ? `${perceptionMeasured.length} model${perceptionMeasured.length !== 1 ? 's' : ''} tested` : 'Run an audit to measure'}
+              description="How well AI answers match what your website actually claims. We ask each model about your brand and grade their responses against your real content."
+              scoreCircle={<ScoreCircle score={perceptionAccuracy} size="small" />}
+            />
+
+            <PerceptionMetricCard
+              icon={
+                hasPerceptionSentiment ? (
+                  perceptionSentiment! >= 60 ? <ThumbsUp size={18} strokeWidth={1.75} style={{ color: 'var(--ok)' }} /> :
+                  perceptionSentiment! >= 40 ? <Minus size={18} strokeWidth={1.75} style={{ color: 'var(--warn)' }} /> :
+                  <ThumbsDown size={18} strokeWidth={1.75} style={{ color: 'var(--severe)' }} />
+                ) : <ThumbsUp size={18} strokeWidth={1.75} style={{ color: 'var(--m-muted)' }} />
+              }
+              label="Sentiment"
+              value={perceptionSentimentLabel(perceptionSentiment)}
+              subtext={hasPerceptionSentiment ? `${perceptionSentiment}/100 average tone` : 'Needs brand intelligence analysis'}
+              description="The overall tone AI models use when talking about your brand. Positive sentiment means AI recommends you confidently; negative means it hedges or warns users."
+              scoreCircle={<ScoreCircle score={perceptionSentiment} size="small" />}
+            />
+
+            <PerceptionMetricCard
+              icon={
+                <span className="text-[15px] font-bold tabular-nums" style={{ color: scoreColor(placementScoreToPercent(perceptionPlacement)) }}>
+                  {perceptionPlacement != null ? `#${perceptionPlacement}` : '--'}
+                </span>
+              }
+              label="Avg placement"
+              value={placementLabel(perceptionPlacement)}
+              subtext={hasPerceptionPlacement ? 'position when AI lists options' : 'Needs brand intelligence analysis'}
+              description="Where your brand appears in AI responses when someone asks for recommendations in your category. #1 means you are the first brand mentioned; #5 means you are buried at the bottom."
+              scoreCircle={<ScoreCircle score={placementScoreToPercent(perceptionPlacement)} size="small" />}
+            />
+          </div>
+
+          {/* ── Per-model breakdown ── */}
+          {hasProbes && (
+            <DashCard>
+              <div className="flex items-center gap-2 mb-1">
+                <BarChart3 size={15} strokeWidth={1.75} style={{ color: 'var(--ink)' }} />
+                <h2 className="text-[15px] font-semibold" style={{ color: 'var(--ink)' }}>Model-by-model breakdown</h2>
+              </div>
+              <p className="text-[13px] mb-4" style={{ color: 'var(--m-muted)' }}>
+                How each AI model performs when asked about your brand. Accuracy, sentiment, and placement vary by model.
+              </p>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+                {modelProbes.map(probe => {
+                  const badge = accuracyBadge(probe.accuracy_score);
+                  const hasSent = probe.sentiment_score != null;
+                  const hasPlace = probe.placement_score != null;
+                  return (
+                    <div key={probe.model_id} className="rounded-lg px-4 py-4" style={{ background: 'var(--paper-2)', border: '1px solid var(--rule)' }}>
+                      <div className="flex items-center gap-2.5 mb-3">
+                        <AIProviderIcon provider={providerKeyToIcon(probe.model_id) ?? 'chatgpt'} size={20} />
+                        <span className="text-[13px] font-semibold" style={{ color: 'var(--ink)' }}>{probe.model_label}</span>
+                      </div>
+                      <div className="space-y-2">
+                        <div className="flex items-center justify-between">
+                          <span className="text-[11px]" style={{ color: 'var(--m-muted)' }}>Accuracy</span>
+                          <div className="flex items-center gap-1.5">
+                            <span className="text-[12px] font-semibold tabular-nums" style={{ color: 'var(--ink)' }}>{probe.accuracy_score}%</span>
+                            <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded" style={{ background: badge.bg, color: badge.color }}>{badge.label}</span>
+                          </div>
+                        </div>
+                        <div className="flex items-center justify-between">
+                          <span className="text-[11px]" style={{ color: 'var(--m-muted)' }}>Sentiment</span>
+                          <span className="text-[12px] font-semibold tabular-nums" style={{ color: hasSent ? scoreColor(probe.sentiment_score) : 'var(--m-muted)' }}>
+                            {hasSent ? `${probe.sentiment_score}/100` : '--'}
+                          </span>
+                        </div>
+                        <div className="flex items-center justify-between">
+                          <span className="text-[11px]" style={{ color: 'var(--m-muted)' }}>Placement</span>
+                          <span className="text-[12px] font-semibold tabular-nums" style={{ color: hasPlace ? 'var(--ink)' : 'var(--m-muted)' }}>
+                            {hasPlace ? `#${probe.placement_score}` : '--'}
+                          </span>
+                        </div>
+                      </div>
+                      {probe.sentiment_themes && probe.sentiment_themes.length > 0 && (
+                        <div className="flex flex-wrap gap-1 mt-3 pt-2" style={{ borderTop: '1px solid var(--rule)' }}>
+                          {probe.sentiment_themes.slice(0, 3).map(t => (
+                            <span key={t.theme} className="text-[10px] px-1.5 py-0.5 rounded" style={{
+                              background: t.polarity === 'positive' ? 'rgba(34,197,94,0.08)' : t.polarity === 'negative' ? 'rgba(239,68,68,0.08)' : 'var(--paper-2)',
+                              color: t.polarity === 'positive' ? 'var(--ok)' : t.polarity === 'negative' ? 'var(--severe)' : 'var(--m-muted)',
+                              border: '1px solid var(--rule)',
+                            }}>{t.theme}</span>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            </DashCard>
+          )}
+
+          {/* ── Perception themes ── */}
+          {allThemes.length > 0 && (
+            <DashCard>
+              <div className="flex items-center gap-2 mb-1">
+                <TrendingUp size={15} strokeWidth={1.75} style={{ color: 'var(--ink)' }} />
+                <h2 className="text-[15px] font-semibold" style={{ color: 'var(--ink)' }}>Brand perception themes</h2>
+              </div>
+              <p className="text-[13px] mb-4" style={{ color: 'var(--m-muted)' }}>
+                Recurring topics AI models mention about your brand, classified by tone.
+              </p>
+              <div className="flex flex-wrap gap-2">
+                {allThemes.map(t => (
+                  <span key={t.theme} className="flex items-center gap-1.5 text-[12px] px-3 py-1.5 rounded-lg font-medium" style={{
+                    background: t.polarity === 'positive' ? 'rgba(34,197,94,0.08)' : t.polarity === 'negative' ? 'rgba(239,68,68,0.06)' : 'var(--paper-2)',
+                    color: t.polarity === 'positive' ? 'var(--ok)' : t.polarity === 'negative' ? 'var(--severe)' : 'var(--m-muted)',
+                    border: '1px solid var(--rule)',
+                  }}>
+                    {t.polarity === 'positive' ? <ThumbsUp size={11} /> : t.polarity === 'negative' ? <ThumbsDown size={11} /> : <Minus size={11} />}
+                    {t.theme}
+                  </span>
+                ))}
+              </div>
+            </DashCard>
+          )}
+
+          {/* ── Competitor AI placement ── */}
+          {hasCompetitorProbeData && (
+            <DashCard>
+              <div className="flex items-center gap-2 mb-1">
+                <Users size={15} strokeWidth={1.75} style={{ color: 'var(--ink)' }} />
+                <h2 className="text-[15px] font-semibold" style={{ color: 'var(--ink)' }}>Competitor AI placement</h2>
+              </div>
+              <p className="text-[13px] mb-4" style={{ color: 'var(--m-muted)' }}>
+                When people ask AI about your category, these competitors get mentioned too.
+                Lower position numbers mean the competitor appears earlier in AI responses.
+              </p>
+              <CompetitorPlacementTable competitors={competitorData} />
+            </DashCard>
+          )}
+
+          {/* ── Fallback competitor list ── */}
+          {!hasCompetitorProbeData && hasFallbackCompetitors && (
+            <DashCard>
+              <div className="flex items-center gap-2 mb-1">
+                <Users size={15} strokeWidth={1.75} style={{ color: 'var(--ink)' }} />
+                <h2 className="text-[15px] font-semibold" style={{ color: 'var(--ink)' }}>Competitors in your space</h2>
+              </div>
+              <p className="text-[13px] mb-4" style={{ color: 'var(--m-muted)' }}>
+                {brandIsUnknown
+                  ? 'While your brand isn\'t yet visible to AI models, these competitors in your category already have an AI presence. Their UX scores are shown below.'
+                  : 'Competitors detected in your category. Run a deeper scan to see how AI models rank them against your brand.'}
+              </p>
+              <div className="overflow-x-auto">
+                <table className="w-full text-[12px]" style={{ borderCollapse: 'separate', borderSpacing: 0 }}>
+                  <thead>
+                    <tr>
+                      <th className="text-left py-2 px-3 font-semibold" style={{ color: 'var(--m-muted)', borderBottom: '1px solid var(--rule)' }}>Competitor</th>
+                      <th className="text-left py-2 px-3 font-semibold" style={{ color: 'var(--m-muted)', borderBottom: '1px solid var(--rule)' }}>Domain</th>
+                      <th className="text-center py-2 px-3 font-semibold" style={{ color: 'var(--m-muted)', borderBottom: '1px solid var(--rule)' }}>UX score</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {fallbackCompetitors.map((comp, i) => (
+                      <tr key={comp.domain} style={{ background: i % 2 === 0 ? 'transparent' : 'var(--paper-2)' }}>
+                        <td className="py-2 px-3 font-medium" style={{ color: 'var(--ink)' }}>{comp.name}</td>
+                        <td className="py-2 px-3" style={{ color: 'var(--m-muted)' }}>{comp.domain}</td>
+                        <td className="text-center py-2 px-3 tabular-nums font-semibold" style={{ color: comp.score > 0 ? scoreColor(comp.score) : 'var(--m-muted)' }}>
+                          {comp.score > 0 ? `${comp.score}/100` : '--'}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </DashCard>
+          )}
+
+          {/* ── Question-grouped responses ── */}
+          {questionGroups.length > 0 && (
+            <DashCard>
+              <div className="flex items-center gap-2 mb-1">
+                <MessageSquare size={15} strokeWidth={1.75} style={{ color: 'var(--ink)' }} />
+                <h2 className="text-[15px] font-semibold" style={{ color: 'var(--ink)' }}>What AI models say about you</h2>
+              </div>
+              <p className="text-[13px] mb-4" style={{ color: 'var(--m-muted)' }}>
+                We asked each AI model the same questions about your brand. Expand a question to see how each model answered and whether its response matches your website.
+              </p>
+              <div className="space-y-2">
+                {questionGroups.map((group, i) => {
+                  const expanded = expandedQuestion === i;
+                  const accurate = group.answers.filter(a => normalizeAccuracy(a.accuracy) === 'Accurate').length;
+                  const partial = group.answers.filter(a => normalizeAccuracy(a.accuracy) === 'Partial').length;
+                  const wrong = group.answers.length - accurate - partial;
+                  return (
+                    <div key={i} className="rounded-lg overflow-hidden" style={{ border: '1px solid var(--rule)' }}>
+                      <button
+                        onClick={() => setExpandedQuestion(expanded ? null : i)}
+                        className="w-full flex items-center gap-3 px-4 py-3.5 text-left transition-colors hover:bg-black/[0.02]"
+                      >
+                        <div className="flex-1 min-w-0">
+                          <p className="text-[15px] font-medium" style={{ color: 'var(--ink)' }}>{group.question}</p>
+                        </div>
+                        <div className="flex items-center gap-2 flex-shrink-0">
+                          {accurate > 0 && (
+                            <span className="text-[11px] font-medium px-1.5 py-0.5 rounded" style={{ background: 'rgba(34,197,94,0.1)', color: 'var(--ok)' }}>{accurate} accurate</span>
+                          )}
+                          {partial > 0 && (
+                            <span className="text-[11px] font-medium px-1.5 py-0.5 rounded" style={{ background: 'rgba(234,179,8,0.1)', color: 'var(--warn)' }}>{partial} partial</span>
+                          )}
+                          {wrong > 0 && (
+                            <span className="text-[11px] font-medium px-1.5 py-0.5 rounded" style={{ background: 'rgba(239,68,68,0.1)', color: 'var(--severe)' }}>{wrong} wrong</span>
+                          )}
+                          <ChevronDown size={14} style={{ color: 'var(--m-muted)', transform: expanded ? 'rotate(180deg)' : 'none', transition: 'transform 150ms' }} />
+                        </div>
+                      </button>
+                      {expanded && (
+                        <div className="px-4 pb-4">
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                            {group.answers.map((a) => {
+                              const ac = accuracyColor(a.accuracy);
+                              return (
+                                <div key={a.model_id} className="rounded-lg p-4" style={{ background: 'var(--paper-2)', border: '1px solid var(--rule)' }}>
+                                  <div className="flex items-center justify-between mb-2">
+                                    <div className="flex items-center gap-2">
+                                      <AIProviderIcon provider={providerKeyToIcon(a.model_id) ?? 'chatgpt'} size={16} />
+                                      <span className="text-[12px] font-semibold" style={{ color: 'var(--ink)' }}>{a.model_label}</span>
+                                    </div>
+                                    {a.accuracy && (
+                                      <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full" style={{ background: ac.bg, color: ac.color }}>
+                                        {normalizeAccuracy(a.accuracy)}
+                                      </span>
+                                    )}
+                                  </div>
+                                  <p className="text-[13px] leading-relaxed" style={{ color: 'var(--m-muted)' }}>{a.answer}</p>
+                                  {a.accuracyNote && (
+                                    <p className="text-[11px] mt-2 pt-2 italic" style={{ color: 'var(--m-muted)', borderTop: '1px solid var(--rule)', opacity: 0.8 }}>{a.accuracyNote}</p>
+                                  )}
+                                </div>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            </DashCard>
+          )}
+
+          {/* ── Page-level AI readability (cross-link to Pages tab) ── */}
+          {auditPages.length > 0 && (
+            <DashCard>
+              <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center gap-2">
+                  <Globe size={15} strokeWidth={1.75} style={{ color: 'var(--ink)' }} />
+                  <h2 className="text-[15px] font-semibold" style={{ color: 'var(--ink)' }}>Page-level signals</h2>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setActiveTab('pages')}
+                  className="text-[11px] font-semibold hover:underline flex items-center gap-1"
+                  style={{ color: 'var(--m-muted)' }}
+                >
+                  View all pages <ArrowRight size={10} />
+                </button>
+              </div>
+              <p className="text-[12px] mb-3" style={{ color: 'var(--m-muted)' }}>
+                The signals above are shaped by what AI can extract from your individual pages.
+                {avgPageScore != null && <span style={{ color: scoreColor(avgPageScore) }}> Average page readability: {avgPageScore}/100</span>}
+              </p>
+              <div className="grid grid-cols-3 gap-3">
+                <div className="rounded-lg px-3 py-2.5 text-center" style={{ background: 'color-mix(in srgb, var(--ok) 5%, transparent)' }}>
+                  <p className="text-[18px] font-bold tabular-nums" style={{ color: 'var(--ok)' }}>{pagesGreen}</p>
+                  <p className="text-[10px]" style={{ color: 'var(--m-muted)' }}>Good</p>
+                </div>
+                <div className="rounded-lg px-3 py-2.5 text-center" style={{ background: 'color-mix(in srgb, var(--warn) 5%, transparent)' }}>
+                  <p className="text-[18px] font-bold tabular-nums" style={{ color: 'var(--warn)' }}>{pagesAmber}</p>
+                  <p className="text-[10px]" style={{ color: 'var(--m-muted)' }}>Needs work</p>
+                </div>
+                <div className="rounded-lg px-3 py-2.5 text-center cursor-pointer hover:opacity-80" style={{ background: 'color-mix(in srgb, var(--severe) 5%, transparent)' }} onClick={() => { setPageSort('score-asc'); setActiveTab('pages'); }}>
+                  <p className="text-[18px] font-bold tabular-nums" style={{ color: 'var(--severe)' }}>{pagesRed}</p>
+                  <p className="text-[10px]" style={{ color: 'var(--m-muted)' }}>Poor — see pages</p>
+                </div>
+              </div>
+            </DashCard>
+          )}
+
+          {/* ── How to improve ── */}
+          {hasProbes && (
+            <DashCard className="space-y-3">
+              <div className="flex items-center gap-2">
+                <TrendingUp size={15} strokeWidth={1.75} style={{ color: 'var(--ok)' }} />
+                <h2 className="text-[15px] font-semibold" style={{ color: 'var(--ink)' }}>How to improve your AI presence</h2>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div className="rounded-lg p-4" style={{ background: 'rgba(34,197,94,0.04)', border: '1px solid var(--rule)' }}>
+                  <p className="text-[15px] font-semibold mb-1" style={{ color: 'var(--ink)' }}>Improve accuracy</p>
+                  <p className="text-[13px] leading-relaxed" style={{ color: 'var(--m-muted)' }}>
+                    Make your website content clear, specific, and structured. Use schema markup, clear headings, and explicit claims that AI can easily parse and verify.
+                  </p>
+                </div>
+                <div className="rounded-lg p-4" style={{ background: 'rgba(34,197,94,0.04)', border: '1px solid var(--rule)' }}>
+                  <p className="text-[15px] font-semibold mb-1" style={{ color: 'var(--ink)' }}>Boost sentiment</p>
+                  <p className="text-[13px] leading-relaxed" style={{ color: 'var(--m-muted)' }}>
+                    Earn positive mentions from authoritative sources — press coverage, expert reviews, satisfied customers on trusted platforms. AI sentiment follows public perception.
+                  </p>
+                </div>
+                <div className="rounded-lg p-4" style={{ background: 'rgba(34,197,94,0.04)', border: '1px solid var(--rule)' }}>
+                  <p className="text-[15px] font-semibold mb-1" style={{ color: 'var(--ink)' }}>Climb placement rankings</p>
+                  <p className="text-[13px] leading-relaxed" style={{ color: 'var(--m-muted)' }}>
+                    Be the most cited and linked-to brand in your category. AI models rank brands higher when many independent sources reference them consistently.
+                  </p>
+                </div>
+                <div className="rounded-lg p-4" style={{ background: 'rgba(34,197,94,0.04)', border: '1px solid var(--rule)' }}>
+                  <p className="text-[15px] font-semibold mb-1" style={{ color: 'var(--ink)' }}>Beat competitors</p>
+                  <p className="text-[13px] leading-relaxed" style={{ color: 'var(--m-muted)' }}>
+                    Create content that directly addresses common category questions. AI recommends brands that have clear, comprehensive answers to what users are asking.
+                  </p>
+                </div>
+              </div>
+            </DashCard>
+          )}
+        </div>
+      )}
+
+      {/* ══════════════════════════════════════════════════════
           PAGES TAB — Per-page AI readability
          ══════════════════════════════════════════════════════ */}
       {activeTab === 'pages' && (
         <div>
+          {/* Context link back to AI Perception */}
+          <div className="flex items-center gap-2 mb-4 px-3.5 py-2.5 rounded-lg" style={{ background: 'color-mix(in srgb, var(--signal) 4%, transparent)', border: '1px solid color-mix(in srgb, var(--signal) 10%, transparent)' }}>
+            <Brain size={13} style={{ color: 'var(--signal)' }} />
+            <p className="text-[12px] flex-1" style={{ color: 'var(--ink)', opacity: 0.85 }}>
+              These page-level signals feed the model-level analysis.
+            </p>
+            <button type="button" onClick={() => setActiveTab('perception')} className="text-[11px] font-semibold flex-shrink-0 hover:underline" style={{ color: 'var(--ink)' }}>
+              See AI Perception <ArrowRight size={9} className="inline ml-0.5" />
+            </button>
+          </div>
+
+          {/* Strongest + weakest page highlight */}
+          {pagesScored.length >= 2 && (() => {
+            const best = [...pagesScored].sort((a, b) => (b.ai_readability?.overallScore ?? 0) - (a.ai_readability?.overallScore ?? 0))[0];
+            const worst = [...pagesScored].sort((a, b) => (a.ai_readability?.overallScore ?? 999) - (b.ai_readability?.overallScore ?? 999))[0];
+            if (best === worst) return null;
+            return (
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4">
+                <div className="rounded-lg px-4 py-3" style={{ background: 'color-mix(in srgb, var(--ok) 4%, transparent)', border: '1px solid color-mix(in srgb, var(--ok) 10%, transparent)' }}>
+                  <p className="text-[10px] font-semibold uppercase tracking-[0.05em] mb-1 flex items-center gap-1" style={{ color: 'var(--ok)' }}>
+                    <CheckCircle2 size={10} /> Strongest page
+                  </p>
+                  <p className="text-[12px] font-medium truncate" style={{ color: 'var(--ink)' }}>{best.title || best.url}</p>
+                  <p className="text-[14px] font-bold tabular-nums mt-0.5" style={{ color: 'var(--ok)' }}>{best.ai_readability?.overallScore}/100</p>
+                </div>
+                <div className="rounded-lg px-4 py-3" style={{ background: 'color-mix(in srgb, var(--severe) 4%, transparent)', border: '1px solid color-mix(in srgb, var(--severe) 10%, transparent)' }}>
+                  <p className="text-[10px] font-semibold uppercase tracking-[0.05em] mb-1 flex items-center gap-1" style={{ color: 'var(--severe)' }}>
+                    <AlertTriangle size={10} /> Weakest page
+                  </p>
+                  <p className="text-[12px] font-medium truncate" style={{ color: 'var(--ink)' }}>{worst.title || worst.url}</p>
+                  <p className="text-[14px] font-bold tabular-nums mt-0.5" style={{ color: 'var(--severe)' }}>{worst.ai_readability?.overallScore}/100</p>
+                </div>
+              </div>
+            );
+          })()}
+
           {/* Summary stats */}
           {pagesScored.length > 0 && (
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-4">
@@ -1358,6 +1980,127 @@ export default function IntelligencePage() {
 /* ══════════════════════════════════════════════════════════
    Shared components
    ══════════════════════════════════════════════════════════ */
+
+function PerceptionMetricCard({
+  icon,
+  label,
+  value,
+  subtext,
+  description,
+  scoreCircle,
+  children,
+}: {
+  icon: React.ReactNode;
+  label: string;
+  value: string;
+  subtext: string;
+  description: string;
+  scoreCircle?: React.ReactNode;
+  children?: React.ReactNode;
+}) {
+  return (
+    <DashCard>
+      <div className="flex items-start gap-4">
+        {scoreCircle || (
+          <div
+            className="w-[56px] h-[56px] rounded-full flex items-center justify-center flex-shrink-0"
+            style={{ background: 'var(--paper-2)', border: '3px solid var(--rule)' }}
+          >
+            {icon}
+          </div>
+        )}
+        <div className="flex-1 min-w-0">
+          <p className="text-[11px] font-semibold uppercase tracking-wider" style={{ color: 'var(--m-muted)' }}>
+            {label}
+          </p>
+          <p className="text-[15px] font-semibold mt-0.5" style={{ color: 'var(--ink)' }}>
+            {value}
+          </p>
+          <p className="text-[13px] mt-0.5" style={{ color: 'var(--m-muted)' }}>
+            {subtext}
+          </p>
+        </div>
+      </div>
+      <p className="text-[13px] leading-relaxed mt-3 pt-3" style={{ color: 'var(--m-muted)', borderTop: '1px solid var(--rule)' }}>
+        {description}
+      </p>
+      {children}
+    </DashCard>
+  );
+}
+
+function CompetitorPlacementTable({
+  competitors,
+}: {
+  competitors: Array<{ name: string; mentions: number; avgPlacement: number | null; byModel: Record<string, number | null> }>;
+}) {
+  if (competitors.length === 0) return null;
+
+  const models = Array.from(
+    new Set(competitors.flatMap(c => Object.keys(c.byModel)))
+  );
+
+  return (
+    <div className="overflow-x-auto">
+      <table className="w-full text-[12px]" style={{ borderCollapse: 'separate', borderSpacing: 0 }}>
+        <thead>
+          <tr>
+            <th className="text-left py-2 px-3 font-semibold" style={{ color: 'var(--m-muted)', borderBottom: '1px solid var(--rule)' }}>
+              Competitor
+            </th>
+            <th className="text-center py-2 px-3 font-semibold" style={{ color: 'var(--m-muted)', borderBottom: '1px solid var(--rule)' }}>
+              Mentions
+            </th>
+            {models.map(m => (
+              <th key={m} className="text-center py-2 px-3 font-semibold" style={{ color: 'var(--m-muted)', borderBottom: '1px solid var(--rule)' }}>
+                <div className="flex items-center justify-center gap-1.5">
+                  <AIProviderIcon provider={providerKeyToIcon(m) ?? 'chatgpt'} size={14} />
+                  <span className="hidden sm:inline">{m === 'claude' ? 'Claude' : m === 'gpt4o' ? 'GPT-4o' : m === 'gemini' ? 'Gemini' : m === 'perplexity' ? 'Perplexity' : m}</span>
+                </div>
+              </th>
+            ))}
+            <th className="text-center py-2 px-3 font-semibold" style={{ color: 'var(--m-muted)', borderBottom: '1px solid var(--rule)' }}>
+              Avg position
+            </th>
+          </tr>
+        </thead>
+        <tbody>
+          {competitors.map((comp, i) => (
+            <tr key={comp.name} style={{ background: i % 2 === 0 ? 'transparent' : 'var(--paper-2)' }}>
+              <td className="py-2 px-3 font-medium" style={{ color: 'var(--ink)' }}>
+                {comp.name}
+              </td>
+              <td className="text-center py-2 px-3 tabular-nums" style={{ color: 'var(--m-muted)' }}>
+                {comp.mentions}
+              </td>
+              {models.map(m => {
+                const pos = comp.byModel[m];
+                return (
+                  <td key={m} className="text-center py-2 px-3 tabular-nums" style={{ color: pos != null ? 'var(--ink)' : 'var(--m-muted)' }}>
+                    {pos != null ? (
+                      <span
+                        className="inline-block px-2 py-0.5 rounded text-[11px] font-semibold"
+                        style={{
+                          background: pos <= 2 ? 'rgba(34,197,94,0.1)' : pos <= 3 ? 'rgba(234,179,8,0.1)' : 'rgba(239,68,68,0.08)',
+                          color: pos <= 2 ? 'var(--ok)' : pos <= 3 ? 'var(--warn)' : 'var(--severe)',
+                        }}
+                      >
+                        #{pos}
+                      </span>
+                    ) : '--'}
+                  </td>
+                );
+              })}
+              <td className="text-center py-2 px-3 tabular-nums font-semibold" style={{ color: comp.avgPlacement != null ? 'var(--ink)' : 'var(--m-muted)' }}>
+                {comp.avgPlacement != null ? `#${comp.avgPlacement.toFixed(1)}` : '--'}
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+}
 
 function DashCard({ children, className = '' }: { children: React.ReactNode; className?: string }) {
   return (

@@ -217,8 +217,7 @@ const DashboardShell: React.FC<DashboardShellProps> = ({ children }) => {
       label: 'Analysis',
       items: [
         { label: 'Competitors', href: `${navBase}/competitors`, icon: Target },
-        { label: 'Brand intelligence', href: `${navBase}/intelligence`, icon: BarChart3 },
-        { label: 'AI Perception', href: `${navBase}/ai-perception`, icon: Bot, matchPaths: [`${navBase}/ai-readability`] },
+        { label: 'Brand intelligence', href: `${navBase}/intelligence`, icon: BarChart3, matchPaths: [`${navBase}/ai-perception`, `${navBase}/ai-readability`] },
         { label: 'Website speed', href: `${navBase}/speed`, icon: Gauge },
         { label: 'Brand DNA', href: `${navBase}/brand-dna`, icon: Fingerprint, matchPaths: [`${navBase}/brand-identity`] },
       ],
