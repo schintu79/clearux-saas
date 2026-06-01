@@ -114,6 +114,21 @@ type AuditRecommendation = {
   fixType?: string;
 };
 
+type AIPageReadability = {
+  extractable?: string[];
+  missing?: string[];
+  structuredDataTypes?: string[];
+  overallScore?: number;
+  status?: 'green' | 'amber' | 'red';
+};
+
+type AuditPageRow = {
+  id?: string;
+  url: string;
+  title: string | null;
+  ai_readability: AIPageReadability | null;
+};
+
 /* ── Helpers ────────────────────────────────────────── */
 
 function scoreColor(s: number | null): string {
@@ -266,11 +281,16 @@ export default function IntelligencePage() {
   const [contentGaps, setContentGaps] = useState<any[]>([]);
 
   // UI state
+  const [activeTab, setActiveTab] = useState<'overview' | 'pages'>('overview');
   const [expandedModel, setExpandedModel] = useState<string | null>(null);
   const [showCompetitorEditor, setShowCompetitorEditor] = useState(false);
   const [signalFilter, setSignalFilter] = useState<'all' | 'positive' | 'neutral' | 'negative'>('all');
   const [showMethodology, setShowMethodology] = useState(false);
   const [showAllRecs, setShowAllRecs] = useState(false);
+
+  // Pages tab data
+  const [auditPages, setAuditPages] = useState<AuditPageRow[]>([]);
+  const [pageSort, setPageSort] = useState<'score-asc' | 'score-desc' | 'name'>('score-desc');
 
   useEffect(() => {
     const audit = bundle?.audit;
@@ -286,6 +306,14 @@ export default function IntelligencePage() {
     if (report && (report as any).brand_intelligence) {
       setBiSummary((report as any).brand_intelligence as BrandIntelligenceSummary);
     }
+
+    // Fetch per-page AI readability data
+    const supabase = createBrowserSupabase();
+    supabase
+      .from('audit_pages')
+      .select('id, url, title, ai_readability')
+      .eq('audit_id', audit.id)
+      .then(({ data }) => setAuditPages((data || []) as AuditPageRow[]));
 
     fetch(`/api/audits/intelligence?audit_id=${audit.id}`)
       .then(r => r.ok ? r.json() : null)
@@ -352,8 +380,17 @@ export default function IntelligencePage() {
     return Math.round((recognizedCount / modelProbes.length) * 100);
   }, [modelProbes, recognizedCount]);
 
-  const sentimentScore = biSummary?.overallSentiment ?? null;
-  const visibilityScore = biSummary?.shareOfVoice ?? null;
+  const sentimentScore = useMemo(() => {
+    if (biSummary?.overallSentiment != null) return biSummary.overallSentiment;
+    const sentiments = modelProbes.map(p => p.sentiment_score).filter((s): s is number => s != null);
+    return sentiments.length > 0 ? Math.round(sentiments.reduce((a, b) => a + b, 0) / sentiments.length) : null;
+  }, [biSummary, modelProbes]);
+
+  const visibilityScore = useMemo(() => {
+    if (biSummary?.shareOfVoice != null) return biSummary.shareOfVoice;
+    const sovs = modelProbes.map(p => p.share_of_voice).filter((s): s is number => s != null);
+    return sovs.length > 0 ? Math.round(sovs.reduce((a, b) => a + b, 0) / sovs.length) : null;
+  }, [biSummary, modelProbes]);
 
   // Hallucinations — extract from probe results where accuracy is inaccurate/fabricated
   const hallucinations = useMemo(() => {
@@ -509,6 +546,23 @@ export default function IntelligencePage() {
     finally { setDetecting(false); }
   };
 
+  // Pages tab computed values
+  const sortedPages = useMemo(() => {
+    const sorted = [...auditPages];
+    if (pageSort === 'score-asc') sorted.sort((a, b) => (a.ai_readability?.overallScore ?? 999) - (b.ai_readability?.overallScore ?? 999));
+    else if (pageSort === 'score-desc') sorted.sort((a, b) => (b.ai_readability?.overallScore ?? -1) - (a.ai_readability?.overallScore ?? -1));
+    else sorted.sort((a, b) => (a.title || a.url).localeCompare(b.title || b.url));
+    return sorted;
+  }, [auditPages, pageSort]);
+
+  const pagesScored = auditPages.filter(p => p.ai_readability?.overallScore != null);
+  const avgPageScore = pagesScored.length > 0
+    ? Math.round(pagesScored.reduce((s, p) => s + (p.ai_readability!.overallScore || 0), 0) / pagesScored.length)
+    : null;
+  const pagesGreen = pagesScored.filter(p => p.ai_readability?.status === 'green').length;
+  const pagesAmber = pagesScored.filter(p => p.ai_readability?.status === 'amber').length;
+  const pagesRed = pagesScored.filter(p => p.ai_readability?.status === 'red').length;
+
   const hasData = biSummary || modelProbes.length > 0 || overallScore > 0;
 
   /* ── Render ────────────────────────────────────────── */
@@ -551,6 +605,35 @@ export default function IntelligencePage() {
         title="Brand Intelligence"
         subtitle="How AI sees, describes, and recommends your brand — and what to improve"
       />
+
+      {/* ── Tab switcher ── */}
+      <div className="flex items-center gap-1 mb-5 rounded-lg p-1" style={{ background: 'color-mix(in srgb, var(--ink) 4%, transparent)' }}>
+        {(['overview', 'pages'] as const).map((tab) => (
+          <button
+            key={tab}
+            onClick={() => setActiveTab(tab)}
+            className="flex items-center gap-1.5 px-4 py-2 rounded-md text-[13px] font-medium transition-all"
+            style={{
+              background: activeTab === tab ? 'var(--card)' : 'transparent',
+              color: activeTab === tab ? 'var(--ink)' : 'var(--m-muted)',
+              boxShadow: activeTab === tab ? '0 1px 3px rgba(0,0,0,0.06)' : 'none',
+            }}
+          >
+            {tab === 'overview' ? <Eye size={13} strokeWidth={1.75} /> : <Brain size={13} strokeWidth={1.75} />}
+            {tab === 'overview' ? 'Overview' : 'Pages'}
+            {tab === 'pages' && auditPages.length > 0 && (
+              <span className="text-[10px] font-semibold tabular-nums ml-0.5 px-1.5 py-0.5 rounded-full" style={{ background: 'color-mix(in srgb, var(--ink) 8%, transparent)' }}>
+                {auditPages.length}
+              </span>
+            )}
+          </button>
+        ))}
+      </div>
+
+      {/* ══════════════════════════════════════════════════════
+          OVERVIEW TAB
+         ══════════════════════════════════════════════════════ */}
+      {activeTab === 'overview' && (<>
 
       {/* ═══════════════════════════════════════════════════
           SECTION 1: Executive Overview
@@ -1099,6 +1182,174 @@ export default function IntelligencePage() {
           </div>
         )}
       </div>
+
+      {/* Link to pages tab */}
+      {auditPages.length > 0 && (
+        <div className="mb-4">
+          <button
+            type="button"
+            onClick={() => setActiveTab('pages')}
+            className="w-full flex items-center gap-2.5 px-4 py-3 rounded-xl text-left transition-colors hover:opacity-90"
+            style={{ background: 'color-mix(in srgb, var(--signal) 5%, transparent)', border: '1px solid color-mix(in srgb, var(--signal) 12%, transparent)' }}
+          >
+            <Brain size={14} style={{ color: 'var(--signal)' }} />
+            <span className="text-[12px] font-medium flex-1" style={{ color: 'var(--ink)' }}>
+              View page-level AI visibility — {auditPages.length} page{auditPages.length !== 1 ? 's' : ''} crawled
+              {avgPageScore != null && <span style={{ color: scoreColor(avgPageScore) }}> · avg {avgPageScore}/100</span>}
+            </span>
+            <ArrowRight size={12} style={{ color: 'var(--signal)' }} />
+          </button>
+        </div>
+      )}
+
+      </>)}
+
+      {/* ══════════════════════════════════════════════════════
+          PAGES TAB — Per-page AI readability
+         ══════════════════════════════════════════════════════ */}
+      {activeTab === 'pages' && (
+        <div>
+          {/* Summary stats */}
+          {pagesScored.length > 0 && (
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-4">
+              <div className="rounded-lg px-3 py-2.5" style={{ background: 'color-mix(in srgb, var(--ink) 3%, transparent)' }}>
+                <p className="text-[10px] font-medium uppercase tracking-[0.05em] mb-1" style={{ color: 'var(--m-muted)' }}>Avg. score</p>
+                <span className="text-[20px] font-bold tabular-nums leading-none" style={{ color: scoreColor(avgPageScore) }}>{avgPageScore ?? '--'}</span>
+              </div>
+              <div className="rounded-lg px-3 py-2.5" style={{ background: 'color-mix(in srgb, var(--ok) 5%, transparent)' }}>
+                <p className="text-[10px] font-medium uppercase tracking-[0.05em] mb-1" style={{ color: 'var(--ok)' }}>Good</p>
+                <span className="text-[20px] font-bold tabular-nums leading-none" style={{ color: 'var(--ok)' }}>{pagesGreen}</span>
+              </div>
+              <div className="rounded-lg px-3 py-2.5" style={{ background: 'color-mix(in srgb, var(--warn) 5%, transparent)' }}>
+                <p className="text-[10px] font-medium uppercase tracking-[0.05em] mb-1" style={{ color: 'var(--warn)' }}>Needs work</p>
+                <span className="text-[20px] font-bold tabular-nums leading-none" style={{ color: 'var(--warn)' }}>{pagesAmber}</span>
+              </div>
+              <div className="rounded-lg px-3 py-2.5" style={{ background: 'color-mix(in srgb, var(--severe) 5%, transparent)' }}>
+                <p className="text-[10px] font-medium uppercase tracking-[0.05em] mb-1" style={{ color: 'var(--severe)' }}>Poor</p>
+                <span className="text-[20px] font-bold tabular-nums leading-none" style={{ color: 'var(--severe)' }}>{pagesRed}</span>
+              </div>
+            </div>
+          )}
+
+          {/* Sort controls */}
+          {auditPages.length > 1 && (
+            <div className="flex items-center gap-2 mb-3">
+              <ArrowUpDown size={11} style={{ color: 'var(--m-muted)' }} />
+              <span className="text-[10px] font-medium" style={{ color: 'var(--m-muted)' }}>Sort:</span>
+              {([
+                { key: 'score-desc' as const, label: 'Score (high → low)' },
+                { key: 'score-asc' as const, label: 'Score (low → high)' },
+                { key: 'name' as const, label: 'Name' },
+              ]).map(opt => (
+                <button
+                  key={opt.key}
+                  onClick={() => setPageSort(opt.key)}
+                  className="px-2 py-0.5 rounded text-[10px] font-medium"
+                  style={{
+                    background: pageSort === opt.key ? 'var(--ink)' : 'transparent',
+                    color: pageSort === opt.key ? 'var(--paper)' : 'var(--m-muted)',
+                  }}
+                >
+                  {opt.label}
+                </button>
+              ))}
+            </div>
+          )}
+
+          {/* Page list */}
+          {auditPages.length === 0 ? (
+            <DashCard>
+              <EmptyCardBody message="No crawled pages on this audit yet. Run a website audit to populate per-page AI readability data." />
+            </DashCard>
+          ) : (
+            <div className="rounded-xl overflow-hidden" style={{ background: 'var(--card)', border: '1px solid var(--rule)' }}>
+              <div className="px-5 py-3.5 flex items-center gap-2" style={{ borderBottom: '1px solid var(--rule)' }}>
+                <Brain size={14} style={{ color: 'var(--signal)' }} />
+                <h2 className="text-[13px] font-semibold" style={{ color: 'var(--ink)' }}>
+                  What AI bots extract from your pages
+                </h2>
+                {avgPageScore != null && (
+                  <span className="ml-auto text-[11px] font-semibold tabular-nums" style={{ color: scoreColor(avgPageScore) }}>
+                    avg {avgPageScore}/100 · {pagesScored.length} page{pagesScored.length === 1 ? '' : 's'}
+                  </span>
+                )}
+              </div>
+              <ul className="divide-y" style={{ borderColor: 'var(--rule)' }}>
+                {sortedPages.map((page) => {
+                  const r = page.ai_readability || {};
+                  const score = r.overallScore ?? null;
+                  const status = r.status;
+                  const extractable = r.extractable || [];
+                  const missing = r.missing || [];
+                  return (
+                    <li key={page.id || page.url}>
+                      <details className="group">
+                        <summary className="px-5 py-3.5 flex items-center gap-3 cursor-pointer list-none [&::-webkit-details-marker]:hidden hover:bg-[color-mix(in_srgb,var(--ink)_3%,transparent)]">
+                          <span
+                            className="w-2.5 h-2.5 rounded-full flex-shrink-0"
+                            style={{
+                              background: status === 'green' ? 'var(--ok)' : status === 'amber' ? 'var(--warn)' : status === 'red' ? 'var(--severe)' : 'var(--m-muted)',
+                            }}
+                          />
+                          <div className="flex-1 min-w-0">
+                            <p className="text-[13px] font-medium truncate" style={{ color: 'var(--ink)' }}>
+                              {page.title || page.url}
+                            </p>
+                            <p className="text-[11px] truncate" style={{ color: 'var(--m-muted)' }}>{page.url}</p>
+                          </div>
+                          {score != null && (
+                            <span className="text-[14px] font-bold tabular-nums flex-shrink-0" style={{ color: scoreColor(score) }}>
+                              {score}
+                            </span>
+                          )}
+                          <ChevronDown size={14} style={{ color: 'var(--m-muted)' }} className="flex-shrink-0 transition-transform group-open:rotate-180" />
+                        </summary>
+                        <div className="px-5 pb-4">
+                          {(extractable.length > 0 || missing.length > 0) ? (
+                            <div className="flex flex-wrap gap-1.5">
+                              {extractable.map((item) => (
+                                <span
+                                  key={`e-${item}`}
+                                  className="inline-flex items-center gap-1 text-[10px] font-medium px-2 py-0.5 rounded-full"
+                                  style={{ color: 'var(--ok)', background: 'color-mix(in srgb, var(--ok) 10%, transparent)' }}
+                                >
+                                  <CheckCircle2 size={9} /> {item}
+                                </span>
+                              ))}
+                              {missing.map((item) => (
+                                <span
+                                  key={`m-${item}`}
+                                  className="inline-flex items-center gap-1 text-[10px] font-medium px-2 py-0.5 rounded-full"
+                                  style={{ color: 'var(--severe)', background: 'color-mix(in srgb, var(--severe) 10%, transparent)' }}
+                                >
+                                  <AlertTriangle size={9} /> {item}
+                                </span>
+                              ))}
+                            </div>
+                          ) : (
+                            <p className="text-[11px]" style={{ color: 'var(--m-muted)' }}>
+                              No AI readability breakdown recorded for this page.
+                            </p>
+                          )}
+                          {missing.length > 0 && (
+                            <Link
+                              href={`${dashPrefix}/fix?module=Foundation`}
+                              className="inline-flex items-center gap-1 mt-3 text-[11px] font-semibold hover:underline"
+                              style={{ color: 'var(--ink)' }}
+                            >
+                              Fix {missing.length} missing signal{missing.length === 1 ? '' : 's'} <ArrowRight size={11} />
+                            </Link>
+                          )}
+                        </div>
+                      </details>
+                    </li>
+                  );
+                })}
+              </ul>
+            </div>
+          )}
+        </div>
+      )}
 
     </div>
   );
