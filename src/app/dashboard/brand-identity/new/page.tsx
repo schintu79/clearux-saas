@@ -125,6 +125,12 @@ const NewBrandPage: React.FC = () => {
     e.preventDefault();
     if (!brandName.trim()) return;
 
+    // Guard: workspace must be loaded — workspace_id is required by the API
+    if (!workspace?.id) {
+      setErrorMsg('Workspace not loaded yet. Please wait and try again.');
+      return;
+    }
+
     setCreating(true);
     setErrorMsg(null);
 
@@ -133,7 +139,7 @@ const NewBrandPage: React.FC = () => {
       const res = await fetch('/api/brand-identities', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name: brandName.trim(), workspace_id: workspace?.id ?? null }),
+        body: JSON.stringify({ name: brandName.trim(), workspace_id: workspace.id }),
       });
 
       if (!res.ok) {
@@ -144,16 +150,14 @@ const NewBrandPage: React.FC = () => {
       const { identity } = await res.json();
       const brandId = identity.id;
 
-      // 2. Link brand identity to workspace and refresh context cache
-      if (workspace?.id) {
-        await fetch(`/api/workspaces/${workspace.id}`, {
-          method: 'PATCH',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ active_brand_identity_id: brandId }),
-        });
-        // Refresh workspace context so Brand DNA page sees updated active_brand_identity_id
-        refreshWorkspace();
-      }
+      // 2. Link brand identity to workspace and await context refresh
+      //    so the Brand DNA page sees the updated active_brand_identity_id
+      await fetch(`/api/workspaces/${workspace.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ active_brand_identity_id: brandId }),
+      });
+      await refreshWorkspace();
 
       // 3. Upload staged files
       if (stagedFiles.length > 0) {
@@ -179,7 +183,7 @@ const NewBrandPage: React.FC = () => {
         }
       }
 
-      // 4. Navigate to Brand DNA page
+      // 4. Navigate to Brand DNA page (workspace context is already fresh)
       router.push(`${dashPrefix}/brand-dna`);
     } catch (err) {
       setErrorMsg(err instanceof Error ? err.message : 'Failed to create brand identity');

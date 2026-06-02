@@ -50,10 +50,13 @@ export async function POST(request: NextRequest) {
     const { name, description, website_url, brand_voice, tone_keywords, primary_colors, logo_url, workspace_id } = body || {}
     if (!name?.trim())
       return NextResponse.json({ error: 'Name is required' }, { status: 400 })
+    if (!workspace_id)
+      return NextResponse.json({ error: 'workspace_id is required' }, { status: 400 })
 
     const db = createServiceSupabase()
     const insertPayload: Record<string, unknown> = {
       user_id: user.id,
+      workspace_id,
       name: name.trim(),
       description: typeof description === 'string' ? description.trim() || null : null,
       website_url: normalizeUrl(website_url),
@@ -62,8 +65,6 @@ export async function POST(request: NextRequest) {
       primary_colors: normalizeColorArray(primary_colors),
       logo_url: normalizeUrl(logo_url),
     }
-    // Attach workspace_id when provided so the record is properly scoped
-    if (workspace_id) insertPayload.workspace_id = workspace_id
 
     const { data, error } = await db
       .from('brand_identities')

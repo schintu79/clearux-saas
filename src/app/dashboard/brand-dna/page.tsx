@@ -190,11 +190,6 @@ function toEditState(b: BrandIdentity): BrandEditState {
   };
 }
 
-function hostnameOf(url: string | null | undefined): string | null {
-  if (!url) return null;
-  try { return new URL(url).hostname.replace(/^www\./, ''); } catch { return null; }
-}
-
 function formatBytes(bytes: number): string {
   if (bytes < 1024) return `${bytes} B`;
   if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
@@ -365,57 +360,26 @@ export default function BrandDnaPage() {
   const loadIdentity = useCallback(async () => {
     if (!user || !workspace) return null;
     try {
-      // Path 1: workspace already has an active_brand_identity_id
-      if (workspace.active_brand_identity_id) {
-        const res = await fetch(`/api/brand-identities/${workspace.active_brand_identity_id}`);
-        if (res.status === 404) { /* fall through */ }
-        else if (!res.ok) throw new Error('Failed to load brand DNA');
-        else {
-          const data = await res.json();
-          if (data.identity) return data.identity;
+      // Primary path: query brand_identities by workspace_id (single source of truth)
+      const res = await fetch(`/api/brand-identities?workspace_id=${workspace.id}`);
+      if (!res.ok) throw new Error('Failed to load brand DNA');
+      const data = await res.json();
+      const identities = data.identities || [];
+
+      if (identities.length > 0) {
+        const latest = identities[0]; // already sorted by created_at desc
+
+        // Self-heal: backfill workspace.active_brand_identity_id if stale or missing
+        if (workspace.active_brand_identity_id !== latest.id) {
+          fetch(`/api/workspaces/${workspace.id}`, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ active_brand_identity_id: latest.id }),
+          }).catch(() => {}); // fire-and-forget
         }
+        return latest;
       }
 
-      // Path 2: query brand_identities directly by workspace_id
-      // (catches stale workspace cache where active_brand_identity_id hasn't propagated)
-      {
-        const res = await fetch(`/api/brand-identities?workspace_id=${workspace.id}`);
-        if (res.ok) {
-          const data = await res.json();
-          const identities = data.identities || [];
-          if (identities.length > 0) {
-            const latest = identities[0]; // already sorted by created_at desc
-            // Backfill workspace.active_brand_identity_id if it was missing
-            if (!workspace.active_brand_identity_id) {
-              fetch(`/api/workspaces/${workspace.id}`, {
-                method: 'PATCH',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ active_brand_identity_id: latest.id }),
-              }).catch(() => {}); // fire-and-forget
-            }
-            return latest;
-          }
-        }
-      }
-
-      // Path 3: look for brand_identity_id on completed audits for this domain
-      if (workspace.primary_domain) {
-        const supabase = createBrowserSupabase();
-        const { data: audits } = await supabase
-          .from('audits')
-          .select('product_url, brand_identity_id, completed_at')
-          .eq('user_id', user.id)
-          .is('deleted_at', null)
-          .order('completed_at', { ascending: false, nullsFirst: false } as any)
-          .limit(100);
-        const match = (audits || []).find((a: any) => hostnameOf(a.product_url) === workspace.primary_domain && !!a.brand_identity_id);
-        if (!match) return null;
-        const res = await fetch(`/api/brand-identities/${(match as any).brand_identity_id}`);
-        if (res.status === 404) return null;
-        if (!res.ok) throw new Error('Failed to load brand DNA');
-        const data = await res.json();
-        return data.identity || null;
-      }
       return null;
     } catch { return null; }
   }, [user, workspace]);
@@ -519,6 +483,8 @@ export default function BrandDnaPage() {
         primary_colors: editState.primary_colors.split(',').map(s => s.trim()).filter(Boolean),
         logo_url: editState.logo_url.trim() || null,
         brand_promise: editState.brand_promise.trim() || null,
+        // Always send workspace_id — heals orphan records that had NULL workspace_id
+        workspace_id: workspace?.id || undefined,
       };
       const res = await fetch(`/api/brand-identities/${identity.id}`, {
         method: 'PUT',
