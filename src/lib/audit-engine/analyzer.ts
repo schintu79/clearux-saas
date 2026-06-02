@@ -862,6 +862,35 @@ Design preferences are NOT UX failures. Do not flag:
 - Aesthetic preferences disguised as UX recommendations (e.g., "hero section would benefit from more visual interest")
 A finding must describe a FUNCTIONAL problem — something that causes users to fail, abandon, misunderstand, or feel unsafe. "I would design it differently" is not a finding.
 
+FIXPATH SIGNAL MODEL — SIGNALS, NOT TASTE:
+Every candidate finding must be strong on at least TWO of these signal dimensions before it can be surfaced. High-severity findings should be strong on THREE or more.
+A. Structural Signal — affects hierarchy, information architecture, navigation, or task flow
+B. Clarity Signal — reduces comprehension, orientation, expectation-setting, or message clarity
+C. Trust Signal — weakens legitimacy, reassurance, transparency, credibility, or professional confidence
+D. Friction Signal — adds avoidable effort, hesitation, confusion, or task delay
+E. Market-Fit Signal — material specifically because of the industry, audience type, country, or cultural context
+F. Consistency Signal — breaks consistency across pages, states, labels, actions, flows, or brand expression
+G. Technical Signal — affects crawlability, accessibility, indexing, rendering, loading, or machine extraction
+H. Actionability Signal — can be explained clearly and improved in a practical way
+If a candidate issue is only strong on ONE signal, suppress it. Prefer fewer, stronger, multi-signal findings over many weak single-signal observations.
+
+NAVIGATION RULEBOOK — STRUCTURAL, NOT TASTE:
+For mainstream commercial, institutional, and public-facing sites, hiding the full primary navigation behind a hamburger menu on desktop is a STRUCTURAL issue, not a taste issue. This applies especially to: hospitality/venue sites, fintech/banking, SaaS/B2B, education, healthcare, real estate, booking/service sites, and any site where users need to understand options and move to action quickly. It lowers discoverability, hides key pathways, delays orientation, and weakens first-impression clarity.
+EXCEPTION: Do NOT automatically flag hidden desktop navigation for personal artist sites, experimental portfolios, niche creative experiences, or intentionally small exploratory sites where the audience expectation is clearly different.
+
+CULTURAL AND MARKET SENSITIVITY:
+Adapt interpretation of findings to market context. The same wording can perform differently depending on region and category. Financial copy in GCC/KSA markets may require stronger reassurance and trust language. Hospitality messaging in Italy may need clearer practical information. Direct, hype-heavy language may reduce trust in regulated sectors. Only surface a cultural or market finding when there is a REAL impact on trust, clarity, interpretation, or conversion confidence — never generic cultural stereotyping.
+
+ANTI-TIMIDITY RULE — SURFACE REAL PROBLEMS:
+Do NOT become so afraid of generating noise that obvious structural problems are ignored. Do NOT assume elegant visuals mean good UX (premium bias). Do NOT use "brand style" or "creative direction" as an excuse for broken navigation, weak discoverability, confusing hierarchy, or poor task flow (brand excuse bias). Do NOT prioritize easy-to-detect technical issues over more important structural or trust problems (technical tunnel vision). Do NOT suppress real issues to keep scores high — Fixpath's value is surgical truth, not flattery.
+
+FINDING WORDING STANDARD:
+Every surfaced finding must clearly communicate:
+1. WHAT is happening — state the issue plainly and concretely
+2. WHY it matters here — tie it to the site's category, audience, task, market, or trust expectations
+3. PRACTICAL IMPACT — state the consequence for users, business outcomes, discoverability, trust, or conversion
+If a candidate issue cannot answer these three questions clearly, it should not become a surfaced finding.
+
 DO NOT flag these common false positives:
 - Generic "missing meta description" or "missing alt text" unless it's truly egregious
 - Minor HTML structure issues that don't affect the user experience
@@ -1535,6 +1564,20 @@ The executive summary should acknowledge the industry context and evaluate the s
 
   const narrativePrompt = `You are a senior UX strategist at a premium consultancy writing the executive summary for a human-centered digital audit.
 ${reportLanguageInstruction}
+
+FIXPATH FINAL PROCESSING RULES (govern how you frame findings in the narrative):
+1. Do not grade taste. Measure signals — structural, clarity, trust, friction, market-fit, consistency, technical, actionability.
+2. Infer site type, industry, audience, primary task, market, and cultural context from existing evidence.
+3. Surface only issues that materially affect clarity, navigation, trust, consistency, discoverability, task completion, or technical accessibility.
+4. Suppress findings that are mostly aesthetic preference, too minor, duplicative, weakly evidenced, or commercially irrelevant.
+5. Merge findings that share the same structural root cause into one stronger narrative point.
+6. Severity must reflect real-world impact, not defect count.
+7. For mainstream desktop websites, hidden primary navigation behind a hamburger is a structural issue unless the site is clearly niche, artistic, or experimental.
+8. Brand DNA can inform consistency checks, but must never excuse structural UX problems.
+9. Highlight only the strongest, clearest, evidence-backed findings in the executive summary.
+10. Every referenced finding must clearly state what is happening, why it matters here, and practical impact.
+Your goal is not to be generous or harsh. Your goal is to be surgically true.
+
 WEBSITE: ${auditData.product_url}
 ${focusBlock}${profileContext}
 WEBSITE CONTENT PREVIEW:
@@ -1596,7 +1639,7 @@ ${language !== 'en' ? `\nFINAL REMINDER — LANGUAGE: The executiveSummary, topR
           model: 'claude-haiku-4-5-20251001',
           max_tokens: 4096,
           temperature: 0,
-          system: [{ type: 'text', text: 'You are a senior UX strategist writing an executive summary for a human-centered digital audit. Scores have been pre-calculated — your job is narrative only.', cache_control: { type: 'ephemeral' } }],
+          system: [{ type: 'text', text: 'You are a senior UX strategist writing an executive summary for a human-centered digital audit. Scores have been pre-calculated — your job is narrative only. Apply the Fixpath signal model: measure signals (structural, clarity, trust, friction, market-fit, consistency, technical, actionability), not taste. Frame findings by real-world impact. Be surgically true — not generous, not harsh.', cache_control: { type: 'ephemeral' } }],
           messages: [{ role: 'user', content: narrativePrompt }],
         }),
         60_000,
