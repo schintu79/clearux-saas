@@ -235,6 +235,7 @@ function ActiveFindingDetail({
   const sevColor = severityColor(finding.severity);
   const meta = STATUS_META[finding.status] || STATUS_META.open;
   const moduleNames = group.affectedModuleIndices.filter((i) => i >= 0).map((i) => PHASE1_MODULES[i]);
+  if (moduleNames.length === 0 && group.affectedModuleIndices.includes(-1)) moduleNames.push('General');
   const host = hostnameOf(finding.page_url);
   const hasImpact = Boolean(finding.estimated_impact && finding.estimated_impact.trim());
 
@@ -520,7 +521,7 @@ function FixPageInner() {
       setSevFilter(sev as typeof SEVERITIES[number]);
     }
     const mod = searchParams.get('module');
-    if (mod && (PHASE1_MODULES as readonly string[]).includes(mod)) {
+    if (mod && ((PHASE1_MODULES as readonly string[]).includes(mod) || mod === 'General')) {
       setModuleFilter(mod);
     }
     const status = searchParams.get('status');
@@ -622,8 +623,13 @@ function FixPageInner() {
   const moduleCounts = useMemo(() => {
     const out: Record<string, number> = {};
     for (const g of groups) {
+      // Count named modules
       const names = g.affectedModuleIndices.filter((i) => i >= 0).map((i) => PHASE1_MODULES[i]);
       for (const n of names) out[n] = (out[n] || 0) + 1;
+      // Count uncategorized findings (module index -1) under "General"
+      if (g.affectedModuleIndices.includes(-1) || g.affectedModuleIndices.every((i) => i < 0)) {
+        out['General'] = (out['General'] || 0) + 1;
+      }
     }
     return out;
   }, [groups]);
@@ -642,8 +648,13 @@ function FixPageInner() {
       }
       if (sevFilter !== 'all' && f.severity !== sevFilter) return false;
       if (moduleFilter !== 'all') {
-        const names = g.affectedModuleIndices.filter((i) => i >= 0).map((i) => PHASE1_MODULES[i]);
-        if (!names.includes(moduleFilter as (typeof PHASE1_MODULES)[number])) return false;
+        if (moduleFilter === 'General') {
+          // "General" matches findings with any -1 module index (uncategorized)
+          if (!g.affectedModuleIndices.includes(-1) && !g.affectedModuleIndices.every((i) => i < 0)) return false;
+        } else {
+          const names = g.affectedModuleIndices.filter((i) => i >= 0).map((i) => PHASE1_MODULES[i]);
+          if (!names.includes(moduleFilter as (typeof PHASE1_MODULES)[number])) return false;
+        }
       }
       if (query.trim()) {
         const q = query.toLowerCase();
@@ -958,6 +969,7 @@ function FixPageInner() {
                         value: m,
                         label: `${m} (${moduleCounts[m] || 0})`,
                       })),
+                      ...(moduleCounts['General'] ? [{ value: 'General', label: `General (${moduleCounts['General']})` }] : []),
                     ]}
                   />
                   {hasActiveFilters && (
