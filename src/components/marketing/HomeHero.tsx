@@ -385,7 +385,7 @@ function AuditAnimation() {
   ]
 
   return (
-    <div ref={containerRef} className="mt-16 -mx-8 max-sm:-mx-5">
+    <div ref={containerRef} className="mt-16 max-sm:mt-8 -mx-8 max-sm:-mx-5">
       <div
         className="rounded-2xl overflow-hidden"
         style={{
@@ -412,7 +412,10 @@ function AuditAnimation() {
           </div>
         </div>
 
-        <div className="p-5 sm:p-6 lg:p-8 relative" style={{ minHeight: 'min(480px, 70vh)' }}>
+        <div className="p-5 sm:p-6 lg:p-8 relative"
+          /* Start compact during scan → expand once dashboard cards fade in */
+          style={{ minHeight: dashOpacity < 0.1 ? '300px' : 'min(480px, 70vh)', transition: 'min-height 0.6s ease-out' }}
+        >
 
           {/* ── Scanning overlay ───────────────────────── */}
           {scanOpacity > 0.01 && (
@@ -656,18 +659,18 @@ function AuditAnimation() {
 /* ── Hero section ──────────────────────────────────────── */
 export function HomeHero() {
   return (
-    <section className="min-h-screen flex flex-col pt-[100px] pb-0 max-sm:pt-16">
+    <section className="min-h-screen max-sm:min-h-0 flex flex-col pt-[100px] pb-0 max-sm:pt-10">
       <div className="max-w-mkt mx-auto px-8 max-sm:px-5 w-full flex-1 flex flex-col">
         <div className="text-center max-w-[960px] mx-auto">
           <SectionMarker number="00" label="AI decision engine for websites and brands" centered />
           <h1
-            className="font-serif font-normal text-ink leading-[0.94] tracking-[-0.025em] mb-8"
+            className="font-serif font-normal text-ink leading-[0.94] tracking-[-0.025em] mb-8 max-sm:mb-5"
             style={{ fontSize: 'clamp(48px, 7vw, 96px)' }}
           >
             Find what hurts trust.{' '}
             <em className="italic text-signal">Fix what matters.</em>
           </h1>
-          <p className="text-[19px] max-sm:text-[15px] leading-[1.55] text-ink-2 max-w-[640px] mx-auto font-sans mb-10 max-sm:mb-7">
+          <p className="text-[19px] max-sm:text-[15px] leading-[1.55] text-ink-2 max-w-[640px] mx-auto font-sans mb-10 max-sm:mb-5">
             Fixpath finds the issues affecting trust, clarity, and conversion
             — then helps your team fix them and track progress over time.
           </p>

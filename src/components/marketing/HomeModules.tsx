@@ -683,12 +683,13 @@ export function HomeModules() {
               className="backdrop-blur-md"
               style={{
                 background: 'color-mix(in srgb, var(--paper) 88%, transparent)',
+                borderTop: '1px solid color-mix(in srgb, var(--ink) 8%, transparent)',
                 borderBottom: '1px solid color-mix(in srgb, var(--ink) 8%, transparent)',
               }}
             >
               <div
                 ref={scrollRef}
-                className="flex gap-1 overflow-x-auto px-5 py-2.5 scrollbar-hide"
+                className="flex gap-1 overflow-x-auto px-5 py-3.5 scrollbar-hide"
                 style={{ WebkitOverflowScrolling: 'touch' }}
               >
                 {MODULES.map((mod, i) => {

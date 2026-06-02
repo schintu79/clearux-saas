@@ -234,7 +234,7 @@ function ActiveFindingDetail({
   const finding = group.primary;
   const sevColor = severityColor(finding.severity);
   const meta = STATUS_META[finding.status] || STATUS_META.open;
-  const moduleNames = group.affectedModuleIndices.filter((i) => i >= 0).map((i) => PHASE1_MODULES[i]);
+  const moduleNames: string[] = group.affectedModuleIndices.filter((i) => i >= 0).map((i) => PHASE1_MODULES[i]);
   if (moduleNames.length === 0 && group.affectedModuleIndices.includes(-1)) moduleNames.push('General');
   const host = hostnameOf(finding.page_url);
   const hasImpact = Boolean(finding.estimated_impact && finding.estimated_impact.trim());
