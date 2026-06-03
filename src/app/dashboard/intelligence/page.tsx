@@ -375,6 +375,8 @@ export default function IntelligencePage() {
   const [iqRunning, setIqRunning] = useState(false);
   const [iqActiveQuestion, setIqActiveQuestion] = useState<string | null>(null);
   const [iqResults, setIqResults] = useState<Array<{ modelSlug: string; modelShortId: string; modelDisplayName: string; status: string; responseText: string | null; themes: string[]; accuracy: string | null; accuracyNote: string | null; latencyMs: number | null; error: string | null }>>([]);
+  // Past interrogation results — keyed by question_text for dedup + instant replay
+  const [iqPastResults, setIqPastResults] = useState<Map<string, Array<{ modelSlug: string; modelShortId: string; modelDisplayName: string; status: string; responseText: string | null; themes: string[]; accuracy: string | null; accuracyNote: string | null; latencyMs: number | null; error: string | null }>>>(new Map());
 
   // Pages tab data
   const [auditPages, setAuditPages] = useState<AuditPageRow[]>([]);
@@ -414,11 +416,49 @@ export default function IntelligencePage() {
     } catch { /* silent */ }
   }, [workspaceId]);
 
+  const fetchIqPastResults = useCallback(async () => {
+    if (!workspaceId) return;
+    try {
+      const res = await fetch(`/api/ai-interrogation/run?workspace_id=${workspaceId}`);
+      if (!res.ok) return;
+      const data = await res.json();
+      const items = data.interrogations ?? [];
+      const map = new Map<string, Array<{ modelSlug: string; modelShortId: string; modelDisplayName: string; status: string; responseText: string | null; themes: string[]; accuracy: string | null; accuracyNote: string | null; latencyMs: number | null; error: string | null }>>();
+      for (const item of items) {
+        const qText = item.interrogation?.question_text;
+        if (!qText) continue;
+        const results = (item.results ?? []).map((r: any) => {
+          const slug = r.model_slug ?? '';
+          const shortId = IQ_MODEL_DISPLAY.find((m) => m.slug === slug)?.shortId ?? slug;
+          const prov = providerKeyToIcon(shortId);
+          return {
+            modelSlug: slug,
+            modelShortId: shortId,
+            modelDisplayName: r.model_label ?? (prov ? PROVIDER_LABEL[prov] : shortId),
+            status: r.status ?? 'completed',
+            responseText: r.response_text ?? null,
+            themes: r.themes ?? [],
+            accuracy: r.accuracy ?? null,
+            accuracyNote: r.accuracy_note ?? null,
+            latencyMs: r.latency_ms ?? null,
+            error: r.error_message ?? null,
+          };
+        });
+        // Keep the most recent result per question (first in the list since ordered desc)
+        if (!map.has(qText) && results.length > 0) {
+          map.set(qText, results);
+        }
+      }
+      setIqPastResults(map);
+    } catch { /* silent */ }
+  }, [workspaceId, IQ_MODEL_DISPLAY]);
+
   useEffect(() => {
     if (!workspaceId) return;
     fetchIqQuestions();
     fetchIqUsage();
-  }, [workspaceId, fetchIqQuestions, fetchIqUsage]);
+    fetchIqPastResults();
+  }, [workspaceId, fetchIqQuestions, fetchIqUsage, fetchIqPastResults]);
 
   const toggleIqModel = (slug: string) => {
     setIqSelectedModels((prev) => {
@@ -429,10 +469,23 @@ export default function IntelligencePage() {
   };
 
   const handleIqAsk = async (questionText: string, family?: string) => {
-    if (!workspaceId || !questionText.trim() || iqSelectedModels.length === 0 || iqRunning) return;
-    const matchingQuestion = iqQuestions.find((q) => q.questionText === questionText.trim());
+    if (!workspaceId || !questionText.trim() || iqRunning) return;
+    const trimmed = questionText.trim();
 
-    setIqActiveQuestion(questionText);
+    // If we already have saved results for this question, show them instantly (no credit charge)
+    const savedResults = iqPastResults.get(trimmed);
+    if (savedResults && savedResults.length > 0) {
+      setIqActiveQuestion(trimmed);
+      setIqResults(savedResults);
+      return;
+    }
+
+    // Need models selected for a new query
+    if (iqSelectedModels.length === 0) return;
+
+    const matchingQuestion = iqQuestions.find((q) => q.questionText === trimmed);
+
+    setIqActiveQuestion(trimmed);
     setIqRunning(true);
 
     // Set pending results
@@ -461,7 +514,7 @@ export default function IntelligencePage() {
         body: JSON.stringify({
           workspace_id: workspaceId,
           question_id: matchingQuestion?.questionId ?? null,
-          question_text: questionText.trim(),
+          question_text: trimmed,
           question_family: family ?? matchingQuestion?.family ?? 'general_discovery',
           selected_models: iqSelectedModels,
         }),
@@ -489,6 +542,14 @@ export default function IntelligencePage() {
         };
       });
       setIqResults(mapped);
+      // Cache in pastResults so re-clicking won't charge again
+      if (mapped.length > 0) {
+        setIqPastResults(prev => {
+          const next = new Map(prev);
+          next.set(trimmed, mapped);
+          return next;
+        });
+      }
       // Update counter from the POST response (faster than a separate fetch)
       if (data.usage) {
         setIqUsage({
@@ -1796,17 +1857,17 @@ export default function IntelligencePage() {
                 </span>
               )}
             </div>
-            <p className="text-[13px] mb-4" style={{ color: 'var(--m-muted)' }}>
-              Pick a question and choose which AI models to ask. See how each one describes your brand in real time.
+            <p className="text-[12px] mb-3" style={{ color: 'var(--m-muted)' }}>
+              Pick a question and choose which AI models to ask. Previously asked questions load instantly at no cost.
             </p>
 
             {/* Split layout: left panel (models + questions) | right panel (answers) */}
-            <div className="flex flex-col lg:flex-row gap-4">
+            <div className="flex flex-col lg:flex-row gap-3">
               {/* ── Left panel: Models + Questions ── */}
-              <div className="lg:w-[340px] flex-shrink-0 space-y-4">
+              <div className="lg:w-[320px] flex-shrink-0 space-y-3">
                 {/* Model selector */}
                 <div>
-                  <p className="text-[10px] font-semibold uppercase tracking-[0.06em] mb-2" style={{ color: 'var(--m-muted)' }}>
+                  <p className="text-[10px] font-semibold uppercase tracking-[0.06em] mb-1.5" style={{ color: 'var(--m-muted)' }}>
                     Models {iqSelectedModels.length > 0 && <span className="normal-case font-normal">({iqSelectedModels.length}/{IQ_MAX_MODELS})</span>}
                   </p>
                   <div className="flex flex-wrap gap-1.5">
@@ -1818,7 +1879,7 @@ export default function IntelligencePage() {
                           key={m.slug}
                           onClick={() => toggleIqModel(m.slug)}
                           disabled={iqRunning}
-                          className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[11px] font-medium transition-all"
+                          className="flex items-center gap-1.5 px-2 py-1 rounded-md text-[11px] font-medium transition-all"
                           style={{
                             background: selected ? 'var(--ink)' : 'var(--paper-2)',
                             color: selected ? 'var(--paper)' : 'var(--m-muted)',
@@ -1834,107 +1895,110 @@ export default function IntelligencePage() {
                   </div>
                 </div>
 
-                {/* Questions list */}
+                {/* Questions list — numbered rows in scrollable container */}
                 <div>
-                  <p className="text-[10px] font-semibold uppercase tracking-[0.06em] mb-2" style={{ color: 'var(--m-muted)' }}>
+                  <p className="text-[10px] font-semibold uppercase tracking-[0.06em] mb-1.5" style={{ color: 'var(--m-muted)' }}>
                     Questions
                   </p>
                   {iqQuestionsLoading ? (
-                    <div className="flex items-center gap-2 py-4">
+                    <div className="flex items-center gap-2 py-3">
                       <Loader2 size={14} className="animate-spin" style={{ color: 'var(--m-muted)' }} />
                       <span className="text-[12px]" style={{ color: 'var(--m-muted)' }}>Loading questions...</span>
                     </div>
-                  ) : iqQuestions.length > 0 ? (
-                    <div className="space-y-1">
-                      {iqQuestions.map((q) => {
-                        const isActive = iqActiveQuestion === q.questionText;
-                        // Check if this question has audit probe results
-                        const probeGroup = questionGroups.find(g => g.question === q.questionText);
-                        const hasProbeResults = !!probeGroup;
-                        const probeAccurate = probeGroup ? probeGroup.answers.filter(a => normalizeAccuracy(a.accuracy) === 'Accurate').length : 0;
-                        const probePartial = probeGroup ? probeGroup.answers.filter(a => normalizeAccuracy(a.accuracy) === 'Partial').length : 0;
-                        const probeWrong = probeGroup ? probeGroup.answers.length - probeAccurate - probePartial : 0;
-                        return (
-                          <button
-                            key={q.questionId}
-                            onClick={() => handleIqAsk(q.questionText, q.family)}
-                            disabled={iqRunning || (iqUsage != null && !iqUsage.canInterrogate)}
-                            className="w-full text-left px-3 py-2.5 rounded-lg text-[12px] leading-snug transition-all hover:shadow-sm"
-                            style={{
-                              background: isActive ? 'var(--ink)' : 'var(--paper-2)',
-                              color: isActive ? 'var(--paper)' : 'var(--ink)',
-                              border: `1px solid ${isActive ? 'var(--ink)' : 'var(--rule)'}`,
-                              opacity: (iqRunning && !isActive) ? 0.5 : 1,
-                            }}
-                          >
-                            <span>{q.questionText}</span>
-                            {hasProbeResults && !isActive && (
-                              <div className="flex items-center gap-1.5 mt-1">
-                                {probeAccurate > 0 && (
-                                  <span className="text-[9px] font-medium px-1 py-0.5 rounded" style={{ background: 'rgba(34,197,94,0.1)', color: 'var(--ok)' }}>{probeAccurate} accurate</span>
-                                )}
-                                {probePartial > 0 && (
-                                  <span className="text-[9px] font-medium px-1 py-0.5 rounded" style={{ background: 'rgba(234,179,8,0.1)', color: 'var(--warn)' }}>{probePartial} partial</span>
-                                )}
-                                {probeWrong > 0 && (
-                                  <span className="text-[9px] font-medium px-1 py-0.5 rounded" style={{ background: 'rgba(239,68,68,0.1)', color: 'var(--severe)' }}>{probeWrong} wrong</span>
+                  ) : (() => {
+                    // Merge iq questions + extra probe questions into a single numbered list
+                    const allQs: Array<{ key: string; text: string; family?: string; onClick: () => void }> = [];
+                    for (const q of iqQuestions) {
+                      allQs.push({ key: q.questionId, text: q.questionText, family: q.family, onClick: () => handleIqAsk(q.questionText, q.family) });
+                    }
+                    for (const group of questionGroups) {
+                      if (!iqQuestions.some(q => q.questionText === group.question)) {
+                        allQs.push({ key: `probe-${group.question}`, text: group.question, onClick: () => handleIqAsk(group.question) });
+                      }
+                    }
+                    if (allQs.length === 0) {
+                      return (
+                        <p className="text-[12px] py-2" style={{ color: 'var(--m-muted)' }}>
+                          No questions available yet. Run an audit to generate industry-specific questions.
+                        </p>
+                      );
+                    }
+                    return (
+                      <div className="max-h-[360px] overflow-y-auto rounded-lg" style={{ border: '1px solid var(--rule)' }}>
+                        {allQs.map((q, idx) => {
+                          const isActive = iqActiveQuestion === q.text;
+                          const hasSaved = iqPastResults.has(q.text);
+                          // Derive accuracy summary from past results OR probe data
+                          const pastR = iqPastResults.get(q.text);
+                          const probeGroup = questionGroups.find(g => g.question === q.text);
+                          let accCount = 0, partCount = 0, wrongCount = 0;
+                          if (pastR && pastR.length > 0) {
+                            for (const r of pastR) {
+                              const n = normalizeAccuracy(r.accuracy);
+                              if (n === 'Accurate') accCount++;
+                              else if (n === 'Partial') partCount++;
+                              else if (n === 'Wrong') wrongCount++;
+                            }
+                          } else if (probeGroup) {
+                            for (const a of probeGroup.answers) {
+                              const n = normalizeAccuracy(a.accuracy);
+                              if (n === 'Accurate') accCount++;
+                              else if (n === 'Partial') partCount++;
+                              else wrongCount++;
+                            }
+                          }
+                          const hasAccuracy = accCount > 0 || partCount > 0 || wrongCount > 0;
+                          const canAsk = hasSaved || (iqUsage == null || iqUsage.canInterrogate);
+                          return (
+                            <button
+                              key={q.key}
+                              onClick={q.onClick}
+                              disabled={iqRunning || !canAsk}
+                              className="w-full text-left flex items-start gap-2 px-2.5 py-2 transition-colors"
+                              style={{
+                                background: isActive ? 'var(--ink)' : idx % 2 === 0 ? 'transparent' : 'color-mix(in srgb, var(--ink) 2%, transparent)',
+                                color: isActive ? 'var(--paper)' : 'var(--ink)',
+                                borderBottom: idx < allQs.length - 1 ? '1px solid var(--rule)' : 'none',
+                                opacity: (iqRunning && !isActive) ? 0.5 : 1,
+                              }}
+                            >
+                              <span className="text-[10px] font-mono font-medium mt-0.5 flex-shrink-0 w-4 text-right" style={{ color: isActive ? 'var(--paper)' : 'var(--m-muted)', opacity: 0.6 }}>
+                                {idx + 1}
+                              </span>
+                              <div className="flex-1 min-w-0">
+                                <span className="text-[12px] leading-snug">{q.text}</span>
+                                {!isActive && (hasAccuracy || hasSaved) && (
+                                  <div className="flex items-center gap-1 mt-0.5">
+                                    {accCount > 0 && (
+                                      <span className="text-[9px] font-medium px-1 py-px rounded" style={{ background: 'rgba(34,197,94,0.1)', color: 'var(--ok)' }}>{accCount} accurate</span>
+                                    )}
+                                    {partCount > 0 && (
+                                      <span className="text-[9px] font-medium px-1 py-px rounded" style={{ background: 'rgba(234,179,8,0.1)', color: 'var(--warn)' }}>{partCount} partial</span>
+                                    )}
+                                    {wrongCount > 0 && (
+                                      <span className="text-[9px] font-medium px-1 py-px rounded" style={{ background: 'rgba(239,68,68,0.1)', color: 'var(--severe)' }}>{wrongCount} wrong</span>
+                                    )}
+                                    {hasSaved && !hasAccuracy && (
+                                      <span className="text-[9px] font-medium px-1 py-px rounded" style={{ background: 'var(--paper-2)', color: 'var(--m-muted)' }}>saved</span>
+                                    )}
+                                  </div>
                                 )}
                               </div>
-                            )}
-                          </button>
-                        );
-                      })}
-                      {/* Also show any probe questions NOT in the iq list */}
-                      {questionGroups.filter(g => !iqQuestions.some(q => q.questionText === g.question)).map((group, i) => {
-                        const isActive = iqActiveQuestion === group.question;
-                        const accurate = group.answers.filter(a => normalizeAccuracy(a.accuracy) === 'Accurate').length;
-                        const partial = group.answers.filter(a => normalizeAccuracy(a.accuracy) === 'Partial').length;
-                        const wrong = group.answers.length - accurate - partial;
-                        return (
-                          <button
-                            key={`probe-${i}`}
-                            onClick={() => handleIqAsk(group.question)}
-                            disabled={iqRunning || (iqUsage != null && !iqUsage.canInterrogate)}
-                            className="w-full text-left px-3 py-2.5 rounded-lg text-[12px] leading-snug transition-all hover:shadow-sm"
-                            style={{
-                              background: isActive ? 'var(--ink)' : 'var(--paper-2)',
-                              color: isActive ? 'var(--paper)' : 'var(--ink)',
-                              border: `1px solid ${isActive ? 'var(--ink)' : 'var(--rule)'}`,
-                              opacity: (iqRunning && !isActive) ? 0.5 : 1,
-                            }}
-                          >
-                            <span>{group.question}</span>
-                            {!isActive && (
-                              <div className="flex items-center gap-1.5 mt-1">
-                                {accurate > 0 && (
-                                  <span className="text-[9px] font-medium px-1 py-0.5 rounded" style={{ background: 'rgba(34,197,94,0.1)', color: 'var(--ok)' }}>{accurate} accurate</span>
-                                )}
-                                {partial > 0 && (
-                                  <span className="text-[9px] font-medium px-1 py-0.5 rounded" style={{ background: 'rgba(234,179,8,0.1)', color: 'var(--warn)' }}>{partial} partial</span>
-                                )}
-                                {wrong > 0 && (
-                                  <span className="text-[9px] font-medium px-1 py-0.5 rounded" style={{ background: 'rgba(239,68,68,0.1)', color: 'var(--severe)' }}>{wrong} wrong</span>
-                                )}
-                              </div>
-                            )}
-                          </button>
-                        );
-                      })}
-                    </div>
-                  ) : (
-                    <p className="text-[12px] py-2" style={{ color: 'var(--m-muted)' }}>
-                      No questions available yet. Run an audit to generate industry-specific questions.
-                    </p>
-                  )}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    );
+                  })()}
 
                   {/* Upgrade nudge */}
                   {iqUsage && !iqUsage.canInterrogate && iqUsage.checksLimit > 0 && (
-                    <p className="text-[11px] mt-2 px-2" style={{ color: 'var(--m-muted)' }}>
-                      You have used all your AI checks for this period.
+                    <p className="text-[11px] mt-1.5 px-1" style={{ color: 'var(--m-muted)' }}>
+                      All checks used. Previously asked questions still load free.
                     </p>
                   )}
                   {iqUsage && iqUsage.checksLimit === 0 && (
-                    <p className="text-[11px] mt-2 px-2" style={{ color: 'var(--m-muted)' }}>
+                    <p className="text-[11px] mt-1.5 px-1" style={{ color: 'var(--m-muted)' }}>
                       Upgrade your plan to unlock AI interrogation checks.
                     </p>
                   )}
@@ -1946,20 +2010,20 @@ export default function IntelligencePage() {
                 {iqResults.length > 0 ? (
                   <div>
                     {iqActiveQuestion && (
-                      <p className="text-[14px] font-medium mb-3" style={{ color: 'var(--ink)' }}>
+                      <p className="text-[17px] font-semibold mb-3 leading-snug" style={{ color: 'var(--ink)' }}>
                         {iqActiveQuestion}
                       </p>
                     )}
-                    <div className="space-y-3">
+                    <div className="space-y-2.5">
                       {iqResults.map((r) => {
                         const provider = providerKeyToIcon(r.modelShortId);
                         const ac = accuracyColor(r.accuracy);
                         const normAcc = normalizeAccuracy(r.accuracy);
                         return (
-                          <div key={r.modelSlug} className="rounded-lg p-4" style={{ background: 'var(--paper-2)', border: '1px solid var(--rule)' }}>
-                            <div className="flex items-center justify-between mb-2">
+                          <div key={r.modelSlug} className="rounded-lg p-3" style={{ background: 'var(--paper-2)', border: '1px solid var(--rule)' }}>
+                            <div className="flex items-center justify-between mb-1.5">
                               <div className="flex items-center gap-2">
-                                {provider && <AIProviderIcon provider={provider} size={16} />}
+                                {provider && <AIProviderIcon provider={provider} size={14} />}
                                 <span className="text-[12px] font-semibold" style={{ color: 'var(--ink)' }}>{r.modelDisplayName}</span>
                               </div>
                               {r.status === 'running' && (
@@ -1977,7 +2041,7 @@ export default function IntelligencePage() {
                               )}
                             </div>
                             {r.status === 'running' ? (
-                              <div className="space-y-2">
+                              <div className="space-y-1.5">
                                 <div className="animate-pulse rounded h-3 w-full" style={{ background: 'var(--rule)' }} />
                                 <div className="animate-pulse rounded h-3 w-3/4" style={{ background: 'var(--rule)' }} />
                                 <div className="animate-pulse rounded h-3 w-1/2" style={{ background: 'var(--rule)' }} />
@@ -1985,15 +2049,15 @@ export default function IntelligencePage() {
                             ) : r.status === 'failed' ? (
                               <p className="text-[12px]" style={{ color: 'var(--severe)' }}>{r.error || 'Request failed'}</p>
                             ) : (
-                              <p className="text-[13px] leading-relaxed" style={{ color: 'var(--m-muted)' }}>{r.responseText}</p>
+                              <p className="text-[12px] leading-relaxed" style={{ color: 'var(--m-muted)' }}>{r.responseText}</p>
                             )}
                             {r.accuracyNote && r.status !== 'running' && r.status !== 'failed' && (
-                              <p className="text-[11px] mt-2 pt-2 italic" style={{ color: 'var(--m-muted)', borderTop: '1px solid var(--rule)', opacity: 0.8 }}>{r.accuracyNote}</p>
+                              <p className="text-[10px] mt-1.5 pt-1.5 italic" style={{ color: 'var(--m-muted)', borderTop: '1px solid var(--rule)', opacity: 0.8 }}>{r.accuracyNote}</p>
                             )}
                             {r.themes && r.themes.length > 0 && r.status !== 'running' && r.status !== 'failed' && (
-                              <div className="flex flex-wrap gap-1 mt-2 pt-2" style={{ borderTop: r.accuracyNote ? 'none' : '1px solid var(--rule)' }}>
+                              <div className="flex flex-wrap gap-1 mt-1.5 pt-1.5" style={{ borderTop: r.accuracyNote ? 'none' : '1px solid var(--rule)' }}>
                                 {r.themes.map((t, ti) => (
-                                  <span key={ti} className="text-[10px] px-1.5 py-0.5 rounded" style={{ background: 'var(--paper)', color: 'var(--m-muted)' }}>{t}</span>
+                                  <span key={ti} className="text-[9px] px-1.5 py-0.5 rounded" style={{ background: 'var(--paper)', color: 'var(--m-muted)' }}>{t}</span>
                                 ))}
                               </div>
                             )}
@@ -2005,17 +2069,17 @@ export default function IntelligencePage() {
                 ) : iqActiveQuestion == null && questionGroups.length > 0 ? (
                   /* Show latest probe results when no active interrogation */
                   <div>
-                    <p className="text-[14px] font-medium mb-3" style={{ color: 'var(--ink)' }}>
+                    <p className="text-[17px] font-semibold mb-3 leading-snug" style={{ color: 'var(--ink)' }}>
                       {questionGroups[0].question}
                     </p>
-                    <div className="space-y-3">
+                    <div className="space-y-2.5">
                       {questionGroups[0].answers.map((a) => {
                         const ac = accuracyColor(a.accuracy);
                         return (
-                          <div key={a.model_id} className="rounded-lg p-4" style={{ background: 'var(--paper-2)', border: '1px solid var(--rule)' }}>
-                            <div className="flex items-center justify-between mb-2">
+                          <div key={a.model_id} className="rounded-lg p-3" style={{ background: 'var(--paper-2)', border: '1px solid var(--rule)' }}>
+                            <div className="flex items-center justify-between mb-1.5">
                               <div className="flex items-center gap-2">
-                                <AIProviderIcon provider={providerKeyToIcon(a.model_id) ?? 'chatgpt'} size={16} />
+                                <AIProviderIcon provider={providerKeyToIcon(a.model_id) ?? 'chatgpt'} size={14} />
                                 <span className="text-[12px] font-semibold" style={{ color: 'var(--ink)' }}>{a.model_label}</span>
                               </div>
                               {a.accuracy && (
@@ -2024,9 +2088,9 @@ export default function IntelligencePage() {
                                 </span>
                               )}
                             </div>
-                            <p className="text-[13px] leading-relaxed" style={{ color: 'var(--m-muted)' }}>{a.answer}</p>
+                            <p className="text-[12px] leading-relaxed" style={{ color: 'var(--m-muted)' }}>{a.answer}</p>
                             {a.accuracyNote && (
-                              <p className="text-[11px] mt-2 pt-2 italic" style={{ color: 'var(--m-muted)', borderTop: '1px solid var(--rule)', opacity: 0.8 }}>{a.accuracyNote}</p>
+                              <p className="text-[10px] mt-1.5 pt-1.5 italic" style={{ color: 'var(--m-muted)', borderTop: '1px solid var(--rule)', opacity: 0.8 }}>{a.accuracyNote}</p>
                             )}
                           </div>
                         );
@@ -2035,11 +2099,11 @@ export default function IntelligencePage() {
                   </div>
                 ) : (
                   /* Empty state */
-                  <div className="flex items-center justify-center h-full min-h-[200px] rounded-lg" style={{ background: 'color-mix(in srgb, var(--ink) 2%, transparent)', border: '1px dashed var(--rule)' }}>
+                  <div className="flex items-center justify-center h-full min-h-[180px] rounded-lg" style={{ background: 'color-mix(in srgb, var(--ink) 2%, transparent)', border: '1px dashed var(--rule)' }}>
                     <div className="text-center px-6">
-                      <Bot size={24} className="mx-auto mb-2" style={{ color: 'var(--m-muted)', opacity: 0.4 }} />
-                      <p className="text-[13px] font-medium" style={{ color: 'var(--m-muted)' }}>Select a question to see what AI models say</p>
-                      <p className="text-[11px] mt-1" style={{ color: 'var(--m-muted)', opacity: 0.6 }}>Pick from the list on the left, then results appear here</p>
+                      <Bot size={22} className="mx-auto mb-2" style={{ color: 'var(--m-muted)', opacity: 0.4 }} />
+                      <p className="text-[12px] font-medium" style={{ color: 'var(--m-muted)' }}>Select a question to see what AI models say</p>
+                      <p className="text-[11px] mt-1" style={{ color: 'var(--m-muted)', opacity: 0.6 }}>Results appear here — saved answers load instantly</p>
                     </div>
                   </div>
                 )}
