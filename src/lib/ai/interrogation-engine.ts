@@ -266,12 +266,20 @@ export async function runInterrogation(
   const selectedSlugs = req.selectedModelSlugs.slice(0, 3)
 
   // 1. Create the interrogation row
+  // question_id is a UUID FK — only pass it if it looks like a valid UUID.
+  // The static question library uses short IDs (e.g. "df-001") which are
+  // NOT UUIDs and would fail the DB insert. Pass null in that case; the
+  // question text is already captured in question_text_snapshot.
+  const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+  const safeQuestionId =
+    req.questionId && UUID_RE.test(req.questionId) ? req.questionId : null
+
   const { data: interrogation, error: createError } = await db
     .from('workspace_ai_interrogations')
     .insert({
       workspace_id: req.workspaceId,
       user_id: req.userId,
-      question_id: req.questionId,
+      question_id: safeQuestionId,
       question_text_snapshot: req.questionText,
       question_family: req.questionFamily,
       selected_models: selectedSlugs,
