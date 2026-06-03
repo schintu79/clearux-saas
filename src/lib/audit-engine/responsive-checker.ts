@@ -57,6 +57,7 @@ type ResponsiveIssueType =
   | 'fixed_width_element'
   | 'image_overflow'
   | 'nav_not_adapted'
+  | 'desktop_nav_hidden'
   | 'content_hidden'
   | 'overlapping_elements'
   | 'line_length_too_long'
@@ -426,6 +427,84 @@ async function runChecks({ page, viewport, url }: PageCheckInput): Promise<Viewp
     }
   }
 
+  // ── 7b. Check desktop navigation hidden behind hamburger ──
+  // Fixpath Audit Bible: hiding primary nav behind a hamburger on desktop is a
+  // STRUCTURAL issue for mainstream commercial/institutional sites. This check
+  // detects that pattern at the Desktop viewport so the AI analyzer has a
+  // browser-verified signal to evaluate against the site profile.
+  if (viewport.name === 'Desktop' || viewport.name === 'Small Desktop') {
+    const desktopNavData = await page.evaluate(() => {
+      const navs = document.querySelectorAll('nav, [role="navigation"], header')
+      const hamburger = document.querySelector(
+        '[aria-label*="menu" i], [aria-label*="nav" i], .hamburger, .menu-toggle, ' +
+        '.mobile-menu, .nav-toggle, button[class*="menu"], button[class*="nav"], ' +
+        '[class*="hamburger"], [class*="burger"], [data-toggle="collapse"], ' +
+        'button[aria-expanded], [class*="mobile-nav"], [class*="menu-btn"], ' +
+        '[class*="menu-icon"], [class*="nav-icon"]'
+      )
+
+      let visibleNavLinks = 0
+      let totalNavLinks = 0
+      const visibleLinkTexts: string[] = []
+
+      for (const nav of navs) {
+        const links = nav.querySelectorAll('a[href]')
+        totalNavLinks += links.length
+        for (const link of links) {
+          const rect = link.getBoundingClientRect()
+          const style = window.getComputedStyle(link)
+          if (rect.width > 0 && rect.height > 0
+            && style.display !== 'none' && style.visibility !== 'hidden'
+            && rect.top >= 0 && rect.top < 200) {
+            // Only count links in the header region (top 200px)
+            visibleNavLinks++
+            const text = (link as HTMLAnchorElement).textContent?.trim()
+            if (text && visibleLinkTexts.length < 10) visibleLinkTexts.push(text)
+          }
+        }
+      }
+
+      // Check if the hamburger button itself is visible on this viewport
+      let hamburgerVisible = false
+      if (hamburger) {
+        const rect = (hamburger as HTMLElement).getBoundingClientRect()
+        const style = window.getComputedStyle(hamburger as HTMLElement)
+        hamburgerVisible = rect.width > 0 && rect.height > 0
+          && style.display !== 'none' && style.visibility !== 'hidden'
+      }
+
+      return {
+        hasNav: navs.length > 0,
+        hasHamburger: !!hamburger,
+        hamburgerVisible,
+        visibleNavLinks,
+        totalNavLinks,
+        visibleLinkTexts,
+      }
+    })
+
+    // Flag when desktop viewport shows a visible hamburger with very few visible nav links.
+    // This is the Bible's core navigation rule: mainstream sites should show primary
+    // navigation directly, not hide it behind a toggle on screens ≥1024px.
+    if (desktopNavData.hasHamburger && desktopNavData.hamburgerVisible && desktopNavData.visibleNavLinks <= 2) {
+      issues.push({
+        viewport: viewport.name,
+        width: viewport.width,
+        type: 'desktop_nav_hidden',
+        severity: 'high',
+        title: `Primary navigation hidden behind hamburger menu on ${viewport.name.toLowerCase()} (${viewport.width}px)`,
+        description:
+          `At the ${viewport.width}px ${viewport.name.toLowerCase()} viewport, the site uses a hamburger/toggle menu with only ${desktopNavData.visibleNavLinks} visible navigation link(s) in the header. The remaining ${desktopNavData.totalNavLinks} link(s) are hidden behind the toggle. ` +
+          `For mainstream commercial, institutional, and public-facing sites, this hides key pathways, delays orientation, and weakens first-impression clarity. ` +
+          `Visible links: ${desktopNavData.visibleLinkTexts.join(', ') || 'none detected'}.`,
+        recommendation:
+          'Display primary navigation links directly in the desktop header bar. Reserve hamburger menus for mobile viewports (< 768px). ' +
+          'Show key sections (e.g., spaces, services, pricing, contact, booking) as visible top-level links so users can scan the full offer immediately.',
+        evidence: `Hamburger toggle detected; ${desktopNavData.visibleNavLinks} of ${desktopNavData.totalNavLinks} nav links visible at ${viewport.width}px`,
+      })
+    }
+  }
+
   // ── 8. Check line length (readability) ──
   if (viewport.isMobile) {
     const lineLengthData = await page.evaluate((vw: number) => {
@@ -649,6 +728,8 @@ function issuesToFindings(results: ResponsiveCheckResult[]): AnalysisFinding[] {
           ? 'High — horizontal scrolling is the #1 mobile usability complaint.'
           : issue.type === 'touch_target_small'
           ? 'High — users will struggle to tap interactive elements accurately.'
+          : issue.type === 'desktop_nav_hidden'
+          ? 'High — hiding primary navigation on desktop reduces discoverability, delays orientation, and weakens first-impression clarity for mainstream sites.'
           : 'Medium — affects mobile user experience quality.',
         targetElement: issue.element || null,
         pageUrl: result.url,
