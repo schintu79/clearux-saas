@@ -1687,7 +1687,7 @@ export default function IntelligencePage() {
               }
               label="Sentiment"
               value={perceptionSentimentLabel(perceptionSentiment)}
-              subtext={hasPerceptionSentiment ? `${perceptionSentiment}/100 average tone` : 'Needs brand intelligence analysis'}
+              subtext={hasPerceptionSentiment ? `${perceptionSentiment}/100 average tone` : 'Not enough probe data yet'}
               description="The overall tone AI models use when talking about your brand. Positive sentiment means AI recommends you confidently; negative means it hedges or warns users."
               scoreCircle={<ScoreCircle score={perceptionSentiment} size="small" />}
             />
@@ -1700,7 +1700,7 @@ export default function IntelligencePage() {
               }
               label="Avg placement"
               value={placementLabel(perceptionPlacement)}
-              subtext={hasPerceptionPlacement ? 'position when AI lists options' : 'Needs brand intelligence analysis'}
+              subtext={hasPerceptionPlacement ? 'position when AI lists options' : 'Not enough probe data yet'}
               description="Where your brand appears in AI responses when someone asks for recommendations in your category. #1 means you are the first brand mentioned; #5 means you are buried at the bottom."
               scoreCircle={<ScoreCircle score={placementScoreToPercent(perceptionPlacement)} size="small" />}
             />
@@ -1845,7 +1845,7 @@ export default function IntelligencePage() {
           )}
 
           {/* ── What AI models say about you (unified) ────────── */}
-          <DashCard>
+          <DashCard style={{ display: 'flex', flexDirection: 'column', maxHeight: '680px' }}>
             <div className="flex items-center justify-between mb-1">
               <div className="flex items-center gap-2">
                 <MessageSquare size={15} strokeWidth={1.75} style={{ color: 'var(--ink)' }} />
@@ -1862,9 +1862,9 @@ export default function IntelligencePage() {
             </p>
 
             {/* Split layout: left panel (models + questions) | right panel (answers) */}
-            <div className="flex flex-col lg:flex-row gap-3">
+            <div className="flex flex-col lg:flex-row gap-3 flex-1 min-h-0 overflow-hidden">
               {/* ── Left panel: Models + Questions ── */}
-              <div className="lg:w-[320px] flex-shrink-0 space-y-3">
+              <div className="lg:w-[320px] flex-shrink-0 space-y-3 overflow-y-auto">
                 {/* Model selector */}
                 <div>
                   <p className="text-[10px] font-semibold uppercase tracking-[0.06em] mb-1.5" style={{ color: 'var(--m-muted)' }}>
@@ -1879,7 +1879,7 @@ export default function IntelligencePage() {
                           key={m.slug}
                           onClick={() => toggleIqModel(m.slug)}
                           disabled={iqRunning}
-                          className="flex items-center gap-1.5 px-2 py-1 rounded-md text-[11px] font-medium transition-all"
+                          className="flex items-center gap-1.5 px-1.5 py-0.5 rounded-md text-[10px] font-medium transition-all"
                           style={{
                             background: selected ? 'var(--ink)' : 'var(--paper-2)',
                             color: selected ? 'var(--paper)' : 'var(--m-muted)',
@@ -1924,7 +1924,7 @@ export default function IntelligencePage() {
                       );
                     }
                     return (
-                      <div className="max-h-[360px] overflow-y-auto rounded-lg" style={{ border: '1px solid var(--rule)' }}>
+                      <div className="rounded-lg" style={{ border: '1px solid var(--rule)' }}>
                         {allQs.map((q, idx) => {
                           const isActive = iqActiveQuestion === q.text;
                           const hasSaved = iqPastResults.has(q.text);
@@ -2006,7 +2006,7 @@ export default function IntelligencePage() {
               </div>
 
               {/* ── Right panel: Answers ── */}
-              <div className="flex-1 min-w-0">
+              <div className="flex-1 min-w-0 overflow-y-auto">
                 {iqResults.length > 0 ? (
                   <div>
                     {iqActiveQuestion && (
@@ -2110,44 +2110,6 @@ export default function IntelligencePage() {
               </div>
             </div>
           </DashCard>
-
-          {/* ── Page-level AI readability (cross-link to Pages tab) ── */}
-          {auditPages.length > 0 && (
-            <DashCard>
-              <div className="flex items-center justify-between mb-3">
-                <div className="flex items-center gap-2">
-                  <Globe size={15} strokeWidth={1.75} style={{ color: 'var(--ink)' }} />
-                  <h2 className="text-[15px] font-semibold" style={{ color: 'var(--ink)' }}>Page-level signals</h2>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => setActiveTab('pages')}
-                  className="text-[11px] font-semibold hover:underline flex items-center gap-1"
-                  style={{ color: 'var(--m-muted)' }}
-                >
-                  View all pages <ArrowRight size={10} />
-                </button>
-              </div>
-              <p className="text-[12px] mb-3" style={{ color: 'var(--m-muted)' }}>
-                The signals above are shaped by what AI can extract from your individual pages.
-                {avgPageScore != null && <span style={{ color: scoreColor(avgPageScore) }}> Average page readability: {avgPageScore}/100</span>}
-              </p>
-              <div className="grid grid-cols-3 gap-3">
-                <div className="rounded-lg px-3 py-2.5 text-center" style={{ background: 'color-mix(in srgb, var(--ok) 5%, transparent)' }}>
-                  <p className="text-[18px] font-bold tabular-nums" style={{ color: 'var(--ok)' }}>{pagesGreen}</p>
-                  <p className="text-[10px]" style={{ color: 'var(--m-muted)' }}>Good</p>
-                </div>
-                <div className="rounded-lg px-3 py-2.5 text-center" style={{ background: 'color-mix(in srgb, var(--warn) 5%, transparent)' }}>
-                  <p className="text-[18px] font-bold tabular-nums" style={{ color: 'var(--warn)' }}>{pagesAmber}</p>
-                  <p className="text-[10px]" style={{ color: 'var(--m-muted)' }}>Needs work</p>
-                </div>
-                <div className="rounded-lg px-3 py-2.5 text-center cursor-pointer hover:opacity-80" style={{ background: 'color-mix(in srgb, var(--severe) 5%, transparent)' }} onClick={() => { setPageSort('score-asc'); setActiveTab('pages'); }}>
-                  <p className="text-[18px] font-bold tabular-nums" style={{ color: 'var(--severe)' }}>{pagesRed}</p>
-                  <p className="text-[10px]" style={{ color: 'var(--m-muted)' }}>Poor — see pages</p>
-                </div>
-              </div>
-            </DashCard>
-          )}
 
           {/* ── How to improve ── */}
           {hasProbes && (
@@ -2499,11 +2461,11 @@ function CompetitorPlacementTable({
   );
 }
 
-function DashCard({ children, className = '' }: { children: React.ReactNode; className?: string }) {
+function DashCard({ children, className = '', style }: { children: React.ReactNode; className?: string; style?: React.CSSProperties }) {
   return (
     <div
       className={`rounded-xl p-5 ${className}`}
-      style={{ background: 'var(--card)', border: '1px solid var(--rule)' }}
+      style={{ background: 'var(--card)', border: '1px solid var(--rule)', ...style }}
     >
       {children}
     </div>

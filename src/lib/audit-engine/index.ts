@@ -137,7 +137,7 @@ async function _processAuditInner(auditId: string): Promise<void> {
 
     // Crawl more pages — deeper crawl for better coverage
     // Plans: 'starter' = quick scan, 'deep_dive' = full audit
-    const maxPages = plan === 'free_preview' ? 5 : plan === 'starter' ? 8 : 25
+    const maxPages = plan === 'free_preview' ? 5 : plan === 'starter' ? 15 : 25
     const crawlOutput = await crawlPages(productUrl, maxPages)
     const crawledPages = crawlOutput.pages
 
