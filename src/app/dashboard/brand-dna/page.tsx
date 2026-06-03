@@ -11,7 +11,7 @@
  *  4. "Use in Website Audit" — popover CTA in page header
  */
 
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import React, { Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import {
@@ -293,7 +293,15 @@ const READINESS_ITEMS: ReadinessItem[] = [
    Main Page
    ══════════════════════════════════════════════════════════ */
 
-export default function BrandDnaPage() {
+export default function BrandDnaPageWrapper() {
+  return (
+    <Suspense fallback={<div className="max-w-5xl mx-auto space-y-6"><div className="h-8 w-48 rounded animate-pulse" style={{ background: 'var(--m-surface)' }} /><div className="h-64 rounded-xl animate-pulse" style={{ background: 'var(--m-surface)' }} /></div>}>
+      <BrandDnaPage />
+    </Suspense>
+  );
+}
+
+function BrandDnaPage() {
   const { user, loading: authLoading } = useAuth();
   const { workspace, workspaceSlug, loading: wsLoading } = useWorkspace();
   const searchParams = useSearchParams();
