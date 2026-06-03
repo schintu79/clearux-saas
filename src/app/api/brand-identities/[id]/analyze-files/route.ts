@@ -12,6 +12,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createServerSupabase, createServiceSupabase } from '@/lib/supabase-server'
 import { classifyAndSuggestProfile } from '@/lib/audit-engine/brand-file-extractor'
 import { normalizeColorArray, normalizeStringArray } from '@/lib/brand-dna'
+import { safeGetBrandIdentity } from '@/lib/supabase-safe-filters'
 
 export async function POST(
   request: NextRequest,
@@ -28,16 +29,10 @@ export async function POST(
 
     const db = createServiceSupabase()
 
-    // Fetch brand identity with files (exclude soft-deleted)
-    const { data: identity, error: fetchErr } = await db
-      .from('brand_identities')
-      .select('*, brand_identity_files(*)')
-      .eq('id', brandIdentityId)
-      .eq('user_id', user.id)
-      .is('deleted_at', null)
-      .single()
+    // Fetch brand identity with files (safe against missing deleted_at column)
+    const identity = await safeGetBrandIdentity(db, brandIdentityId, user.id)
 
-    if (fetchErr || !identity)
+    if (!identity)
       return NextResponse.json({ error: 'Brand identity not found' }, { status: 404 })
 
     const files = ((identity as any).brand_identity_files || []) as Array<{

@@ -12,6 +12,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createServerSupabase, createServiceSupabase } from '@/lib/supabase-server'
 import { normalizeColorArray, normalizeStringArray, normalizeUrl } from '@/lib/brand-dna'
+import { safeGetBrandIdentity } from '@/lib/supabase-safe-filters'
 
 export async function POST(
   request: NextRequest,
@@ -33,16 +34,10 @@ export async function POST(
 
     const db = createServiceSupabase()
 
-    // Fetch current brand identity with files to check ownership and resolve file IDs
-    const { data: identity, error: fetchErr } = await db
-      .from('brand_identities')
-      .select('*, brand_identity_files(*)')
-      .eq('id', brandIdentityId)
-      .eq('user_id', user.id)
-      .is('deleted_at', null)
-      .single()
+    // Fetch current brand identity with files (safe against missing deleted_at column)
+    const identity = await safeGetBrandIdentity(db, brandIdentityId, user.id)
 
-    if (fetchErr || !identity)
+    if (!identity)
       return NextResponse.json({ error: 'Brand identity not found' }, { status: 404 })
 
     const id = identity as any

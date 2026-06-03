@@ -7,6 +7,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createServerSupabase, createServiceSupabase } from '@/lib/supabase-server'
 import { normalizeColorArray, normalizeStringArray, normalizeUrl } from '@/lib/brand-dna'
+import { safeListBrandIdentities } from '@/lib/supabase-safe-filters'
 
 /* ── GET — list brand identities ─────────────────────────── */
 export async function GET(request: NextRequest) {
@@ -18,20 +19,11 @@ export async function GET(request: NextRequest) {
 
     const db = createServiceSupabase()
     const workspace_id = request.nextUrl.searchParams.get('workspace_id')
-    let query = db
-      .from('brand_identities')
-      .select('*, brand_identity_files(id, file_name, file_type, file_size_bytes, created_at, tag)')
-      .eq('user_id', user.id)
-      .is('deleted_at', null)
-      .order('created_at', { ascending: false })
-    // Scope to workspace when provided
-    if (workspace_id) query = query.eq('workspace_id', workspace_id)
 
-    const { data: identities, error } = await query
+    // Safe query — handles missing deleted_at / tag columns gracefully
+    const identities = await safeListBrandIdentities(db, user.id, workspace_id)
 
-    if (error) throw error
-
-    return NextResponse.json({ identities: identities || [] })
+    return NextResponse.json({ identities })
   } catch (err) {
     console.error('GET /api/brand-identities error:', err)
     return NextResponse.json({ error: 'Failed to fetch brand identities' }, { status: 500 })

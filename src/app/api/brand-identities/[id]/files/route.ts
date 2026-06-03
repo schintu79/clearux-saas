@@ -6,6 +6,7 @@
 
 import { NextRequest, NextResponse } from 'next/server'
 import { createServerSupabase, createServiceSupabase } from '@/lib/supabase-server'
+import { safeFetchBrandOwner } from '@/lib/supabase-safe-filters'
 
 /* ── POST — register a file ──────────────────────────────── */
 export async function POST(
@@ -21,15 +22,10 @@ export async function POST(
 
     const db = createServiceSupabase()
 
-    // Verify ownership of brand identity (exclude soft-deleted)
-    const { data: identity } = await db
-      .from('brand_identities')
-      .select('user_id')
-      .eq('id', brandIdentityId)
-      .is('deleted_at', null)
-      .single()
+    // Verify ownership (safe against missing deleted_at column)
+    const identity = await safeFetchBrandOwner(db, brandIdentityId)
 
-    if (!identity || (identity as any).user_id !== user.id)
+    if (!identity || identity.user_id !== user.id)
       return NextResponse.json({ error: 'Brand identity not found' }, { status: 404 })
 
     const { file_name, file_url, file_type, file_size_bytes } = await request.json()
@@ -76,15 +72,10 @@ export async function DELETE(
 
     const db = createServiceSupabase()
 
-    // Verify ownership (exclude soft-deleted)
-    const { data: identity } = await db
-      .from('brand_identities')
-      .select('user_id')
-      .eq('id', brandIdentityId)
-      .is('deleted_at', null)
-      .single()
+    // Verify ownership (safe against missing deleted_at column)
+    const identity = await safeFetchBrandOwner(db, brandIdentityId)
 
-    if (!identity || (identity as any).user_id !== user.id)
+    if (!identity || identity.user_id !== user.id)
       return NextResponse.json({ error: 'Not found' }, { status: 404 })
 
     // Get file URL for storage cleanup

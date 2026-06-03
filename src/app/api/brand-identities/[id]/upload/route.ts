@@ -6,6 +6,7 @@
 
 import { NextRequest, NextResponse } from 'next/server'
 import { createServerSupabase, createServiceSupabase } from '@/lib/supabase-server'
+import { safeFetchBrandOwner } from '@/lib/supabase-safe-filters'
 
 const MAX_FILE_SIZE = 10 * 1024 * 1024 // 10MB
 const ALLOWED_TYPES = [
@@ -34,15 +35,10 @@ export async function POST(
 
     const db = createServiceSupabase()
 
-    // Verify ownership of brand identity (exclude soft-deleted)
-    const { data: identity } = await db
-      .from('brand_identities')
-      .select('user_id')
-      .eq('id', brandIdentityId)
-      .is('deleted_at', null)
-      .single()
+    // Verify ownership (safe against missing deleted_at column)
+    const identity = await safeFetchBrandOwner(db, brandIdentityId)
 
-    if (!identity || (identity as any).user_id !== user.id)
+    if (!identity || identity.user_id !== user.id)
       return NextResponse.json({ error: 'Brand identity not found' }, { status: 404 })
 
     // Parse multipart form data

@@ -8,6 +8,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createServerSupabase, createServiceSupabase } from '@/lib/supabase-server'
 import { normalizeColorArray, normalizeStringArray, normalizeUrl } from '@/lib/brand-dna'
+import { safeGetBrandIdentity, safeFetchBrandOwner } from '@/lib/supabase-safe-filters'
 
 /* ── GET — single brand identity ─────────────────────────── */
 export async function GET(
@@ -22,15 +23,9 @@ export async function GET(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
     const db = createServiceSupabase()
-    const { data, error } = await db
-      .from('brand_identities')
-      .select('*, brand_identity_files(*)')
-      .eq('id', id)
-      .eq('user_id', user.id)
-      .is('deleted_at', null)
-      .single()
+    const data = await safeGetBrandIdentity(db, id, user.id)
 
-    if (error || !data)
+    if (!data)
       return NextResponse.json({ error: 'Brand identity not found' }, { status: 404 })
 
     return NextResponse.json({ identity: data })
@@ -59,15 +54,10 @@ export async function PUT(
 
     const db = createServiceSupabase()
 
-    // Verify ownership (exclude soft-deleted)
-    const { data: existing } = await db
-      .from('brand_identities')
-      .select('user_id')
-      .eq('id', id)
-      .is('deleted_at', null)
-      .single()
+    // Verify ownership (safe against missing deleted_at column)
+    const existing = await safeFetchBrandOwner(db, id)
 
-    if (!existing || (existing as any).user_id !== user.id)
+    if (!existing || existing.user_id !== user.id)
       return NextResponse.json({ error: 'Not found' }, { status: 404 })
 
     // Only set Brand DNA fields when the caller actually sent them — keeps
@@ -132,15 +122,10 @@ export async function DELETE(
 
     const db = createServiceSupabase()
 
-    // Verify ownership (exclude already-deleted)
-    const { data: existing } = await db
-      .from('brand_identities')
-      .select('user_id')
-      .eq('id', id)
-      .is('deleted_at', null)
-      .single()
+    // Verify ownership (safe against missing deleted_at column)
+    const existing2 = await safeFetchBrandOwner(db, id)
 
-    if (!existing || (existing as any).user_id !== user.id)
+    if (!existing2 || existing2.user_id !== user.id)
       return NextResponse.json({ error: 'Not found' }, { status: 404 })
 
     const now = new Date().toISOString()
