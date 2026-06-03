@@ -1,26 +1,28 @@
 'use client';
 
 /**
- * AI Interrogation — chat-style interface for testing how AI models
- * perceive a brand.
+ * AI Interrogation — Claude-style chat interface for testing how AI
+ * models perceive a brand.
  *
- * Users type (or tap) a question, pick models via a compact toggle strip,
- * and see each model's response as a chat bubble. Follow-ups appear as
- * suggestion chips so the conversation flows naturally.
+ * Layout:  history sidebar (left) + chat thread (center) + console bar (bottom)
+ * Flow:    see suggested question pills → tap one → see collapsible model
+ *          response cards (closed by default) → expand to read → follow-up
+ *          pills appear → repeat.
+ * Console: model selector circles + "Suggest what to ask" button (no free input).
  */
 
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
   Bot,
   Check,
   ChevronDown,
-  ChevronUp,
+  ChevronRight,
   Clock,
-  History,
   Loader2,
   MessageSquare,
+  PanelLeftClose,
+  PanelLeftOpen,
   RefreshCw,
-  Send,
   Sparkles,
   XCircle,
 } from 'lucide-react';
@@ -28,7 +30,6 @@ import { useWorkspace } from '@/context/WorkspaceContext';
 import {
   AIProviderIcon,
   PROVIDER_LABEL,
-  PROVIDER_SUBTITLE,
   providerKeyToIcon,
   type AIProvider,
 } from '@/components/ui/AIProviderIcon';
@@ -111,38 +112,21 @@ const MODEL_DISPLAY: { shortId: string; slug: string }[] = [
   { shortId: 'deepseek', slug: 'deepseek/deepseek-chat-v3-0324' },
 ];
 
-const FAMILY_COLORS: Record<string, string> = {
-  general_discovery: '#6366F1',
-  trust_credibility: '#10B981',
-  differentiation: '#F59E0B',
-  quality_perception: '#3B82F6',
-  pricing_value: '#EF4444',
-  booking_buying_readiness: '#8B5CF6',
-  local_relevance: '#14B8A6',
-  service_clarity: '#F97316',
-  reputation_social_proof: '#EC4899',
-  premium_budget_perception: '#A855F7',
-  audience_fit: '#06B6D4',
-  brand_tone_personality: '#84CC16',
-};
-
-function familyLabel(family: string): string {
-  return family
-    .replace(/_/g, ' ')
-    .replace(/\b\w/g, (c) => c.toUpperCase());
-}
-
 const MAX_MODELS = 3;
 
-/* ── Skeleton helper ──────────────────────────────────────── */
+/* ── Helpers ──────────────────────────────────────────────── */
 
-function Skeleton({ className = '' }: { className?: string }) {
-  return (
-    <div
-      className={`animate-pulse rounded-lg ${className}`}
-      style={{ background: 'var(--paper-2)' }}
-    />
-  );
+function timeAgo(date: Date): string {
+  const now = new Date();
+  const diffMs = now.getTime() - date.getTime();
+  const mins = Math.floor(diffMs / 60_000);
+  if (mins < 1) return 'Just now';
+  if (mins < 60) return `${mins}m ago`;
+  const hrs = Math.floor(mins / 60);
+  if (hrs < 24) return `${hrs}h ago`;
+  const days = Math.floor(hrs / 24);
+  if (days < 7) return `${days}d ago`;
+  return date.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
 }
 
 /* ── Main component ─────────────────────────────────────────── */
@@ -162,22 +146,35 @@ export default function AIInterrogationPage() {
   ]);
 
   const [usage, setUsage] = useState<Usage | null>(null);
-
   const [isRunning, setIsRunning] = useState(false);
   const [runError, setRunError] = useState<string | null>(null);
 
   const [messages, setMessages] = useState<ChatMessage[]>([]);
-  const [customInput, setCustomInput] = useState('');
+
+  // Which model cards are expanded (keyed by `${msgId}::${modelSlug}`)
+  const [expandedCards, setExpandedCards] = useState<Set<string>>(new Set());
 
   const [pastInterrogations, setPastInterrogations] = useState<PastInterrogation[]>([]);
   const [pastLoading, setPastLoading] = useState(true);
-  const [showHistory, setShowHistory] = useState(false);
-  const [expandedPastId, setExpandedPastId] = useState<string | null>(null);
+  const [showSidebar, setShowSidebar] = useState(true);
+
+  // Whether to show question pills in the chat area
+  const [showSuggestions, setShowSuggestions] = useState(true);
 
   const chatEndRef = useRef<HTMLDivElement>(null);
-  const inputRef = useRef<HTMLInputElement>(null);
 
-  /* ── Auto-scroll to bottom of chat ───────────────────────── */
+  /* ── Expand / collapse a model card ──────────────────────── */
+  const toggleCard = (msgId: string, modelSlug: string) => {
+    const key = `${msgId}::${modelSlug}`;
+    setExpandedCards((prev) => {
+      const next = new Set(prev);
+      if (next.has(key)) next.delete(key);
+      else next.add(key);
+      return next;
+    });
+  };
+
+  /* ── Auto-scroll to bottom ───────────────────────────────── */
   const scrollToBottom = useCallback(() => {
     chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, []);
@@ -199,7 +196,28 @@ export default function AIInterrogationPage() {
       const data = await res.json();
       setQuestions(data.questions ?? []);
     } catch {
-      setQuestionsError('Could not load questions. Please try again.');
+      setQuestionsError('Could not load questions.');
+    } finally {
+      setQuestionsLoading(false);
+    }
+  }, [workspaceId]);
+
+  const refreshQuestions = useCallback(async () => {
+    if (!workspaceId) return;
+    setQuestionsLoading(true);
+    setQuestionsError(null);
+    try {
+      const res = await fetch('/api/ai-interrogation/questions', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ workspace_id: workspaceId }),
+      });
+      if (!res.ok) throw new Error('Failed to refresh questions');
+      const data = await res.json();
+      setQuestions(data.questions ?? []);
+      setShowSuggestions(true);
+    } catch {
+      setQuestionsError('Could not refresh questions.');
     } finally {
       setQuestionsLoading(false);
     }
@@ -246,25 +264,23 @@ export default function AIInterrogationPage() {
   const handleSend = async (questionText: string, family?: string) => {
     if (!workspaceId || !questionText.trim() || selectedModels.length === 0 || isRunning) return;
 
+    const matchingQuestion = questions.find(
+      (q) => q.questionText === questionText.trim(),
+    );
+
     const userMsg: ChatMessage = {
       id: `user-${Date.now()}`,
       type: 'user',
       text: questionText.trim(),
       timestamp: new Date(),
-      family: family ?? 'general_discovery',
+      family: family ?? matchingQuestion?.family ?? 'general_discovery',
     };
 
-    // Find matching question from library
-    const matchingQuestion = questions.find(
-      (q) => q.questionText === questionText.trim(),
-    );
-
     setMessages((prev) => [...prev, userMsg]);
-    setCustomInput('');
+    setShowSuggestions(false);
     setIsRunning(true);
     setRunError(null);
 
-    // Create a placeholder system message with running results
     const pendingResults: ModelResult[] = selectedModels.map((slug) => {
       const shortId = MODEL_DISPLAY.find((m) => m.slug === slug)?.shortId ?? slug;
       const provider = providerKeyToIcon(shortId);
@@ -354,84 +370,38 @@ export default function AIInterrogationPage() {
     }
   };
 
-  /* ── Follow-up click ──────────────────────────────────────── */
-  const handleFollowup = (f: Followup) => {
-    handleSend(f.questionText, f.family);
-  };
-
-  /* ── Suggested question click ─────────────────────────────── */
-  const handleSuggestionClick = (q: RankedQuestion) => {
-    handleSend(q.questionText, q.family);
-  };
-
-  /* ── Send custom input ────────────────────────────────────── */
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (customInput.trim()) {
-      handleSend(customInput.trim());
-    }
-  };
-
   /* ── Toggle model ─────────────────────────────────────────── */
   const toggleModel = (slug: string) => {
     setSelectedModels((prev) => {
-      if (prev.includes(slug)) {
-        return prev.filter((s) => s !== slug);
-      }
+      if (prev.includes(slug)) return prev.filter((s) => s !== slug);
       if (prev.length >= MAX_MODELS) return prev;
       return [...prev, slug];
     });
   };
 
-  /* ── Loading / workspace resolution ───────────────────────── */
+  /* ── Loading / workspace guard ────────────────────────────── */
   if (wsLoading) {
     return (
       <div className="flex items-center justify-center py-32">
-        <Loader2
-          size={20}
-          className="animate-spin"
-          style={{ color: 'var(--m-muted)' }}
-        />
+        <Loader2 size={20} className="animate-spin" style={{ color: 'var(--m-muted)' }} />
       </div>
     );
   }
-
   if (!workspace) {
     return (
       <div className="flex items-center justify-center py-32">
-        <p className="text-[14px]" style={{ color: 'var(--m-muted)' }}>
-          Workspace not found.
-        </p>
+        <p className="text-[14px]" style={{ color: 'var(--m-muted)' }}>Workspace not found.</p>
       </div>
     );
   }
-
-  /* ── No subscription guard ────────────────────────────────── */
   if (usage && !usage.canInterrogate && usage.checksLimit === 0) {
     return (
       <div className="max-w-2xl mx-auto py-16 px-4">
-        <div
-          className="rounded-2xl p-8 text-center"
-          style={{ background: 'var(--paper)', border: '1px solid var(--m-border)' }}
-        >
-          <Sparkles
-            size={28}
-            strokeWidth={1.5}
-            className="mx-auto mb-3"
-            style={{ color: 'var(--m-muted)' }}
-          />
-          <h2
-            className="text-[16px] font-semibold mb-1"
-            style={{ color: 'var(--ink)' }}
-          >
-            Upgrade to unlock AI interrogation
-          </h2>
-          <p
-            className="text-[14px] max-w-md mx-auto"
-            style={{ color: 'var(--ink-2)' }}
-          >
-            AI interrogation lets you test how leading AI models perceive and
-            describe your business. Upgrade your plan to get started.
+        <div className="rounded-2xl p-8 text-center" style={{ background: 'var(--paper)', border: '1px solid var(--m-border)' }}>
+          <Sparkles size={28} strokeWidth={1.5} className="mx-auto mb-3" style={{ color: 'var(--m-muted)' }} />
+          <h2 className="text-[16px] font-semibold mb-1" style={{ color: 'var(--ink)' }}>Upgrade to unlock AI interrogation</h2>
+          <p className="text-[14px] max-w-md mx-auto" style={{ color: 'var(--ink-2)' }}>
+            AI interrogation lets you test how leading AI models perceive and describe your business. Upgrade your plan to get started.
           </p>
         </div>
       </div>
@@ -440,715 +410,460 @@ export default function AIInterrogationPage() {
 
   const hasMessages = messages.length > 0;
 
-  /* ── Main render ──────────────────────────────────────────── */
+  /* ── Render ───────────────────────────────────────────────── */
   return (
-    <div
-      className="flex flex-col"
-      style={{ height: 'calc(100vh - 64px)', maxHeight: 'calc(100vh - 64px)' }}
-    >
-      {/* ── Top bar ──────────────────────────────────────────── */}
-      <div
-        className="flex items-center justify-between px-6 py-3 flex-shrink-0"
-        style={{ borderBottom: '1px solid var(--m-border)' }}
-      >
-        <div className="flex items-center gap-3">
-          <Bot size={18} strokeWidth={1.5} style={{ color: 'var(--ink)' }} />
-          <h1
-            className="text-[16px] font-semibold"
-            style={{ color: 'var(--ink)' }}
-          >
-            AI interrogation
-          </h1>
-        </div>
+    <div className="flex" style={{ height: 'calc(100vh - 64px)' }}>
+      {/* ═══════ SIDEBAR — history (Claude-style) ═══════════ */}
+      {showSidebar && (
+        <div
+          className="w-[280px] flex-shrink-0 flex flex-col overflow-hidden"
+          style={{ borderRight: '1px solid var(--m-border)', background: 'var(--paper-2)' }}
+        >
+          {/* Sidebar header */}
+          <div className="flex items-center justify-between px-4 py-3 flex-shrink-0">
+            <span className="text-[13px] font-semibold" style={{ color: 'var(--ink)' }}>
+              History
+            </span>
+            <button
+              onClick={() => setShowSidebar(false)}
+              className="p-1 rounded-md transition-colors"
+              style={{ color: 'var(--m-muted)' }}
+            >
+              <PanelLeftClose size={16} />
+            </button>
+          </div>
 
-        <div className="flex items-center gap-3">
+          {/* Conversation list */}
+          <div className="flex-1 overflow-y-auto px-2 pb-4">
+            {pastLoading ? (
+              <div className="space-y-1 px-2">
+                {Array.from({ length: 4 }).map((_, i) => (
+                  <div key={i} className="animate-pulse rounded-lg h-[54px]" style={{ background: 'var(--paper)' }} />
+                ))}
+              </div>
+            ) : pastInterrogations.length === 0 ? (
+              <div className="px-3 py-8 text-center">
+                <Bot size={20} strokeWidth={1.5} className="mx-auto mb-2" style={{ color: 'var(--m-muted)' }} />
+                <p className="text-[12px]" style={{ color: 'var(--m-muted)' }}>
+                  No past checks yet
+                </p>
+              </div>
+            ) : (
+              <div className="space-y-0.5">
+                {pastInterrogations.map((item) => {
+                  const interr = item.interrogation;
+                  const models = item.results.map((r) => r.model_short_id);
+                  const ts = new Date(interr.created_at);
+
+                  return (
+                    <button
+                      key={interr.id}
+                      onClick={() => {
+                        handleSend(interr.question_text, interr.question_family);
+                      }}
+                      disabled={isRunning}
+                      className="w-full text-left rounded-lg px-3 py-2.5 transition-colors group"
+                      style={{ color: 'var(--ink)' }}
+                      onMouseEnter={(e) => {
+                        (e.currentTarget as HTMLElement).style.background = 'var(--paper)';
+                      }}
+                      onMouseLeave={(e) => {
+                        (e.currentTarget as HTMLElement).style.background = 'transparent';
+                      }}
+                    >
+                      <p
+                        className="text-[13px] leading-snug mb-1 line-clamp-2"
+                        style={{ color: 'var(--ink)' }}
+                      >
+                        {interr.question_text}
+                      </p>
+                      <div className="flex items-center gap-2">
+                        <div className="flex -space-x-1">
+                          {models.slice(0, 3).map((m) => {
+                            const prov = providerKeyToIcon(m);
+                            return prov ? (
+                              <AIProviderIcon
+                                key={m}
+                                provider={prov}
+                                size={12}
+                                className="ring-1 ring-[var(--paper-2)] rounded-full"
+                              />
+                            ) : null;
+                          })}
+                        </div>
+                        <span className="text-[10px]" style={{ color: 'var(--m-muted)' }}>
+                          {timeAgo(ts)}
+                        </span>
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* ═══════ MAIN AREA ══════════════════════════════════ */}
+      <div className="flex-1 flex flex-col min-w-0">
+        {/* ── Top bar ──────────────────────────────────────── */}
+        <div
+          className="flex items-center justify-between px-5 py-2.5 flex-shrink-0"
+          style={{ borderBottom: '1px solid var(--m-border)' }}
+        >
+          <div className="flex items-center gap-2.5">
+            {!showSidebar && (
+              <button
+                onClick={() => setShowSidebar(true)}
+                className="p-1.5 rounded-lg transition-colors mr-1"
+                style={{ color: 'var(--ink-2)' }}
+              >
+                <PanelLeftOpen size={16} />
+              </button>
+            )}
+            <Bot size={16} strokeWidth={1.5} style={{ color: 'var(--ink)' }} />
+            <h1 className="text-[15px] font-semibold" style={{ color: 'var(--ink)' }}>
+              AI interrogation
+            </h1>
+          </div>
+
           {usage && (
             <div
               className="rounded-full px-3 py-1 flex items-center gap-1.5 text-[11px] font-medium"
-              style={{
-                background: 'var(--paper)',
-                border: '1px solid var(--m-border)',
-                color: 'var(--ink-2)',
-              }}
+              style={{ background: 'var(--paper-2)', color: 'var(--ink-2)' }}
             >
-              <span className="tabular-nums">
-                {usage.checksRemaining}
-              </span>
+              <span className="tabular-nums">{usage.checksRemaining}</span>
               <span style={{ color: 'var(--m-muted)' }}>checks left</span>
             </div>
           )}
-
-          <button
-            onClick={() => setShowHistory((v) => !v)}
-            className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[12px] font-medium transition-colors"
-            style={{
-              background: showHistory ? 'var(--paper-2)' : 'transparent',
-              color: 'var(--ink-2)',
-            }}
-          >
-            <History size={13} />
-            History
-          </button>
         </div>
-      </div>
 
-      {/* ── Chat area ────────────────────────────────────────── */}
-      <div className="flex-1 overflow-y-auto">
-        <div className="max-w-3xl mx-auto px-4 py-6">
+        {/* ── Chat thread ──────────────────────────────────── */}
+        <div className="flex-1 overflow-y-auto">
+          <div className="max-w-2xl mx-auto px-5 py-6">
 
-          {/* Welcome state — no messages yet */}
-          {!hasMessages && (
-            <div className="py-8">
-              <div className="text-center mb-8">
-                <div
-                  className="w-12 h-12 rounded-2xl flex items-center justify-center mx-auto mb-4"
-                  style={{ background: 'var(--paper-2)' }}
-                >
-                  <MessageSquare size={22} strokeWidth={1.5} style={{ color: 'var(--ink)' }} />
-                </div>
-                <h2
-                  className="text-[20px] font-semibold mb-2"
-                  style={{ color: 'var(--ink)' }}
-                >
-                  Ask AI about your brand
-                </h2>
-                <p
-                  className="text-[14px] max-w-md mx-auto"
-                  style={{ color: 'var(--ink-2)' }}
-                >
-                  Test how ChatGPT, Gemini, Perplexity, and other AI models
-                  perceive your business. Pick a question below or type your own.
-                </p>
-              </div>
-
-              {/* Suggested questions */}
-              {questionsLoading ? (
-                <div className="space-y-2 max-w-lg mx-auto">
-                  {Array.from({ length: 4 }).map((_, i) => (
-                    <Skeleton key={i} className="h-[52px] w-full" />
-                  ))}
-                </div>
-              ) : questionsError ? (
-                <div
-                  className="rounded-xl px-5 py-4 flex items-center gap-3 max-w-lg mx-auto"
-                  style={{
-                    background: 'var(--paper)',
-                    border: '1px solid var(--m-border)',
-                  }}
-                >
-                  <XCircle size={16} style={{ color: 'var(--severe)' }} />
-                  <p className="text-[14px]" style={{ color: 'var(--ink)' }}>
-                    {questionsError}
-                  </p>
-                  <button
-                    onClick={fetchQuestions}
-                    className="ml-auto text-[13px] font-medium underline"
-                    style={{ color: 'var(--ink-2)' }}
+            {/* Welcome state */}
+            {!hasMessages && (
+              <div className="pt-12 pb-4">
+                <div className="text-center mb-10">
+                  <div
+                    className="w-11 h-11 rounded-2xl flex items-center justify-center mx-auto mb-4"
+                    style={{ background: 'var(--paper-2)' }}
                   >
-                    Retry
-                  </button>
+                    <Bot size={20} strokeWidth={1.5} style={{ color: 'var(--ink)' }} />
+                  </div>
+                  <h2 className="text-[22px] font-semibold mb-2" style={{ color: 'var(--ink)' }}>
+                    What do AI models say about you?
+                  </h2>
+                  <p className="text-[14px] max-w-sm mx-auto leading-relaxed" style={{ color: 'var(--ink-2)' }}>
+                    See how ChatGPT, Gemini, Perplexity and others describe your
+                    business when people ask about you.
+                  </p>
                 </div>
-              ) : (
-                <div className="space-y-2 max-w-lg mx-auto">
-                  {questions.slice(0, 6).map((q) => {
-                    const familyColor = FAMILY_COLORS[q.family] ?? 'var(--m-muted)';
-                    return (
+              </div>
+            )}
+
+            {/* Question pills — shown in welcome state or when toggled */}
+            {showSuggestions && !isRunning && (
+              <div className="mb-8">
+                {questionsLoading ? (
+                  <div className="flex flex-wrap gap-2 justify-center">
+                    {Array.from({ length: 5 }).map((_, i) => (
+                      <div key={i} className="animate-pulse rounded-full h-[36px] w-[180px]" style={{ background: 'var(--paper-2)' }} />
+                    ))}
+                  </div>
+                ) : questionsError ? (
+                  <div className="text-center">
+                    <p className="text-[13px] mb-2" style={{ color: 'var(--severe)' }}>{questionsError}</p>
+                    <button onClick={fetchQuestions} className="text-[12px] font-medium underline" style={{ color: 'var(--ink-2)' }}>Retry</button>
+                  </div>
+                ) : (
+                  <div className="flex flex-wrap gap-2 justify-center">
+                    {questions.slice(0, 8).map((q) => (
                       <button
                         key={q.questionId}
-                        onClick={() => handleSuggestionClick(q)}
-                        disabled={isRunning || selectedModels.length === 0}
-                        className="w-full text-left rounded-xl px-4 py-3.5 transition-all group"
+                        onClick={() => handleSend(q.questionText, q.family)}
+                        disabled={selectedModels.length === 0}
+                        className="rounded-full px-4 py-2 text-[13px] transition-all"
                         style={{
                           background: 'var(--paper)',
                           border: '1px solid var(--m-border)',
-                          opacity: isRunning ? 0.5 : 1,
-                          cursor: isRunning ? 'not-allowed' : 'pointer',
+                          color: 'var(--ink)',
+                          cursor: selectedModels.length === 0 ? 'not-allowed' : 'pointer',
+                          opacity: selectedModels.length === 0 ? 0.4 : 1,
                         }}
                       >
-                        <div className="flex items-start gap-3">
-                          <MessageSquare
-                            size={14}
-                            strokeWidth={1.75}
-                            className="mt-0.5 flex-shrink-0 transition-colors"
-                            style={{ color: 'var(--m-muted)' }}
-                          />
-                          <div className="flex-1 min-w-0">
-                            <p
-                              className="text-[14px] leading-snug"
-                              style={{ color: 'var(--ink)' }}
-                            >
-                              {q.questionText}
-                            </p>
-                            <span
-                              className="inline-block text-[10px] font-medium px-2 py-0.5 rounded-full mt-1.5"
-                              style={{
-                                background: `${familyColor}12`,
-                                color: familyColor,
-                              }}
-                            >
-                              {familyLabel(q.family)}
-                            </span>
-                          </div>
-                        </div>
+                        {q.questionText}
                       </button>
-                    );
-                  })}
-                </div>
-              )}
-            </div>
-          )}
-
-          {/* Chat messages */}
-          {messages.map((msg) => (
-            <div key={msg.id} className="mb-6">
-              {msg.type === 'user' ? (
-                /* ── User bubble ────────────────────────────── */
-                <div className="flex justify-end">
-                  <div
-                    className="rounded-2xl rounded-br-md px-4 py-3 max-w-[85%]"
-                    style={{
-                      background: 'var(--ink)',
-                      color: 'var(--paper)',
-                    }}
-                  >
-                    <p className="text-[14px] leading-relaxed">{msg.text}</p>
+                    ))}
                   </div>
-                </div>
-              ) : (
-                /* ── Model response bubbles ─────────────────── */
-                <div className="space-y-3">
-                  {(msg.results ?? []).map((r) => {
-                    const provider = providerKeyToIcon(r.modelShortId);
-                    return (
-                      <div key={r.modelSlug} className="flex items-start gap-2.5">
-                        {/* Avatar */}
-                        <div
-                          className="w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5"
-                          style={{ background: 'var(--paper-2)' }}
-                        >
-                          {provider ? (
-                            <AIProviderIcon provider={provider} size={16} />
-                          ) : (
-                            <span
-                              className="text-[10px] font-bold"
-                              style={{ color: 'var(--m-muted)' }}
-                            >
-                              {r.modelShortId[0]?.toUpperCase()}
-                            </span>
-                          )}
-                        </div>
+                )}
+              </div>
+            )}
 
-                        {/* Bubble */}
+            {/* Chat messages */}
+            {messages.map((msg) => (
+              <div key={msg.id} className="mb-5">
+                {msg.type === 'user' ? (
+                  /* ── User bubble ─────────────────────────── */
+                  <div className="flex justify-end mb-1">
+                    <div
+                      className="rounded-2xl rounded-br-sm px-4 py-2.5 max-w-[80%]"
+                      style={{ background: 'var(--ink)', color: 'var(--paper)' }}
+                    >
+                      <p className="text-[14px] leading-relaxed">{msg.text}</p>
+                    </div>
+                  </div>
+                ) : (
+                  /* ── Model response cards ────────────────── */
+                  <div className="space-y-1.5">
+                    {(msg.results ?? []).map((r) => {
+                      const provider = providerKeyToIcon(r.modelShortId);
+                      const cardKey = `${msg.id}::${r.modelSlug}`;
+                      const isExpanded = expandedCards.has(cardKey);
+                      const isCompleted = r.status === 'completed';
+                      const isFailed = r.status === 'failed';
+                      const isLoading = r.status === 'running';
+
+                      return (
                         <div
-                          className="rounded-2xl rounded-tl-md px-4 py-3 max-w-[85%] flex-1"
+                          key={r.modelSlug}
+                          className="rounded-xl overflow-hidden transition-all"
                           style={{
                             background: 'var(--paper)',
                             border: '1px solid var(--m-border)',
                           }}
                         >
-                          {/* Model name + status */}
-                          <div className="flex items-center gap-2 mb-1.5">
-                            <span
-                              className="text-[12px] font-semibold"
-                              style={{ color: 'var(--ink)' }}
+                          {/* Collapsed header — always visible */}
+                          <button
+                            onClick={() => {
+                              if (!isLoading) toggleCard(msg.id, r.modelSlug);
+                            }}
+                            className="w-full flex items-center gap-3 px-4 py-3 text-left transition-colors"
+                            style={{ cursor: isLoading ? 'default' : 'pointer' }}
+                          >
+                            {/* Model icon */}
+                            <div
+                              className="w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0"
+                              style={{ background: 'var(--paper-2)' }}
                             >
+                              {provider ? (
+                                <AIProviderIcon provider={provider} size={16} />
+                              ) : (
+                                <span className="text-[10px] font-bold" style={{ color: 'var(--m-muted)' }}>
+                                  {r.modelShortId[0]?.toUpperCase()}
+                                </span>
+                              )}
+                            </div>
+
+                            {/* Name */}
+                            <span className="text-[13px] font-semibold flex-1" style={{ color: 'var(--ink)' }}>
                               {r.modelDisplayName}
                             </span>
-                            {r.status === 'running' && (
-                              <Loader2
-                                size={11}
-                                className="animate-spin"
-                                style={{ color: 'var(--m-muted)' }}
-                              />
+
+                            {/* Status indicators */}
+                            {isLoading && (
+                              <Loader2 size={14} className="animate-spin flex-shrink-0" style={{ color: 'var(--m-muted)' }} />
                             )}
-                            {r.status === 'completed' && r.latencyMs != null && (
-                              <span
-                                className="text-[10px] flex items-center gap-0.5"
-                                style={{ color: 'var(--m-muted)' }}
-                              >
-                                <Clock size={9} />
+                            {isCompleted && r.latencyMs != null && (
+                              <span className="text-[11px] flex items-center gap-1 flex-shrink-0" style={{ color: 'var(--m-muted)' }}>
+                                <Clock size={10} />
                                 {(r.latencyMs / 1000).toFixed(1)}s
                               </span>
                             )}
-                          </div>
+                            {isFailed && (
+                              <XCircle size={14} className="flex-shrink-0" style={{ color: 'var(--severe)' }} />
+                            )}
 
-                          {/* Response body */}
-                          {r.status === 'running' && (
-                            <div className="py-3">
-                              <div className="flex gap-1.5">
-                                <div
-                                  className="w-1.5 h-1.5 rounded-full animate-bounce"
-                                  style={{
-                                    background: 'var(--m-muted)',
-                                    animationDelay: '0ms',
-                                  }}
-                                />
-                                <div
-                                  className="w-1.5 h-1.5 rounded-full animate-bounce"
-                                  style={{
-                                    background: 'var(--m-muted)',
-                                    animationDelay: '150ms',
-                                  }}
-                                />
-                                <div
-                                  className="w-1.5 h-1.5 rounded-full animate-bounce"
-                                  style={{
-                                    background: 'var(--m-muted)',
-                                    animationDelay: '300ms',
-                                  }}
-                                />
-                              </div>
-                            </div>
-                          )}
-
-                          {r.status === 'completed' && r.responseText && (
-                            <>
-                              <p
-                                className="text-[13px] leading-[1.65] whitespace-pre-wrap"
-                                style={{ color: 'var(--ink)' }}
-                              >
-                                {r.responseText}
-                              </p>
-                              {r.themes.length > 0 && (
-                                <div
-                                  className="flex flex-wrap gap-1 mt-2.5 pt-2.5"
-                                  style={{ borderTop: '1px solid var(--m-border)' }}
-                                >
-                                  {r.themes.map((t) => (
-                                    <span
-                                      key={t}
-                                      className="text-[10px] font-medium px-2 py-0.5 rounded-full"
-                                      style={{
-                                        background: 'var(--paper-2)',
-                                        color: 'var(--ink-2)',
-                                      }}
-                                    >
-                                      {t}
-                                    </span>
-                                  ))}
-                                </div>
-                              )}
-                            </>
-                          )}
-
-                          {r.status === 'failed' && (
-                            <p
-                              className="text-[13px]"
-                              style={{ color: 'var(--severe)' }}
-                            >
-                              {r.error ?? 'This model failed to respond.'}
-                            </p>
-                          )}
-                        </div>
-                      </div>
-                    );
-                  })}
-
-                  {/* Follow-up suggestions */}
-                  {msg.followups && msg.followups.length > 0 && (
-                    <div className="pl-10 pt-1">
-                      <p
-                        className="text-[11px] font-medium mb-2"
-                        style={{ color: 'var(--m-muted)' }}
-                      >
-                        Follow up
-                      </p>
-                      <div className="flex flex-wrap gap-2">
-                        {msg.followups.slice(0, 3).map((f, i) => (
-                          <button
-                            key={i}
-                            onClick={() => handleFollowup(f)}
-                            disabled={isRunning}
-                            className="text-left rounded-xl px-3.5 py-2.5 text-[13px] transition-all"
-                            style={{
-                              background: 'var(--paper)',
-                              border: '1px solid var(--m-border)',
-                              color: 'var(--ink)',
-                              opacity: isRunning ? 0.5 : 1,
-                              cursor: isRunning ? 'not-allowed' : 'pointer',
-                            }}
-                          >
-                            {f.questionText}
+                            {/* Expand chevron */}
+                            {!isLoading && (
+                              <ChevronRight
+                                size={14}
+                                className="flex-shrink-0 transition-transform"
+                                style={{
+                                  color: 'var(--m-muted)',
+                                  transform: isExpanded ? 'rotate(90deg)' : 'none',
+                                }}
+                              />
+                            )}
                           </button>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-                </div>
-              )}
-            </div>
-          ))}
 
-          {/* Error message */}
-          {runError && messages.length > 0 && (
-            <div
-              className="rounded-xl px-4 py-3 mb-4 flex items-center gap-2 max-w-lg"
-              style={{
-                background: 'rgba(239,68,68,0.06)',
-                border: '1px solid rgba(239,68,68,0.15)',
-              }}
-            >
-              <XCircle size={14} style={{ color: 'var(--severe)' }} />
-              <p className="text-[13px]" style={{ color: 'var(--severe)' }}>
-                {runError}
-              </p>
-            </div>
-          )}
-
-          <div ref={chatEndRef} />
-        </div>
-      </div>
-
-      {/* ── Input area ───────────────────────────────────────── */}
-      <div
-        className="flex-shrink-0 px-4 pb-4 pt-2"
-        style={{ borderTop: '1px solid var(--m-border)' }}
-      >
-        <div className="max-w-3xl mx-auto">
-          {/* Model toggle strip */}
-          <div className="flex items-center gap-1.5 mb-2.5 px-1 overflow-x-auto">
-            <span
-              className="text-[11px] font-medium flex-shrink-0 mr-1"
-              style={{ color: 'var(--m-muted)' }}
-            >
-              Models:
-            </span>
-            {MODEL_DISPLAY.map(({ shortId, slug }) => {
-              const provider = providerKeyToIcon(shortId) as AIProvider | null;
-              const isSelected = selectedModels.includes(slug);
-              const isDisabled = !isSelected && selectedModels.length >= MAX_MODELS;
-              const label = provider ? PROVIDER_LABEL[provider] : shortId;
-
-              return (
-                <button
-                  key={slug}
-                  onClick={() => toggleModel(slug)}
-                  disabled={isDisabled}
-                  className="flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-medium transition-all flex-shrink-0"
-                  style={{
-                    background: isSelected ? 'var(--ink)' : 'var(--paper)',
-                    color: isSelected ? 'var(--paper)' : 'var(--ink-2)',
-                    border: isSelected
-                      ? '1px solid var(--ink)'
-                      : '1px solid var(--m-border)',
-                    opacity: isDisabled ? 0.35 : 1,
-                    cursor: isDisabled ? 'not-allowed' : 'pointer',
-                  }}
-                >
-                  {provider && (
-                    <AIProviderIcon
-                      provider={provider}
-                      size={12}
-                      className={isSelected ? 'brightness-0 invert' : ''}
-                    />
-                  )}
-                  {label}
-                  {isSelected && (
-                    <Check size={10} strokeWidth={2.5} />
-                  )}
-                </button>
-              );
-            })}
-          </div>
-
-          {/* Text input */}
-          <form onSubmit={handleSubmit} className="flex items-center gap-2">
-            <div
-              className="flex-1 flex items-center rounded-xl px-4 py-2.5"
-              style={{
-                background: 'var(--paper)',
-                border: '1px solid var(--m-border)',
-              }}
-            >
-              <input
-                ref={inputRef}
-                type="text"
-                value={customInput}
-                onChange={(e) => setCustomInput(e.target.value)}
-                placeholder={
-                  selectedModels.length === 0
-                    ? 'Select at least one model above'
-                    : 'Ask something about your brand...'
-                }
-                disabled={isRunning || selectedModels.length === 0}
-                className="flex-1 text-[14px] bg-transparent outline-none placeholder:text-[var(--m-muted)]"
-                style={{ color: 'var(--ink)' }}
-              />
-            </div>
-            <button
-              type="submit"
-              disabled={isRunning || !customInput.trim() || selectedModels.length === 0}
-              className="w-10 h-10 rounded-xl flex items-center justify-center transition-all flex-shrink-0"
-              style={{
-                background:
-                  !isRunning && customInput.trim() && selectedModels.length > 0
-                    ? 'var(--ink)'
-                    : 'var(--m-border)',
-                color:
-                  !isRunning && customInput.trim() && selectedModels.length > 0
-                    ? 'var(--paper)'
-                    : 'var(--m-muted)',
-                cursor:
-                  isRunning || !customInput.trim() || selectedModels.length === 0
-                    ? 'not-allowed'
-                    : 'pointer',
-              }}
-            >
-              {isRunning ? (
-                <Loader2 size={16} className="animate-spin" />
-              ) : (
-                <Send size={16} />
-              )}
-            </button>
-          </form>
-
-          {/* Usage hint */}
-          {usage && (
-            <p
-              className="text-[11px] text-center mt-2"
-              style={{ color: 'var(--m-muted)' }}
-            >
-              {selectedModels.length} model{selectedModels.length !== 1 ? 's' : ''} selected
-              {' · '}
-              {usage.checksRemaining} check{usage.checksRemaining !== 1 ? 's' : ''} remaining this month
-            </p>
-          )}
-        </div>
-      </div>
-
-      {/* ── History sidebar overlay ───────────────────────────── */}
-      {showHistory && (
-        <div
-          className="fixed inset-0 z-50 flex justify-end"
-          onClick={(e) => {
-            if (e.target === e.currentTarget) setShowHistory(false);
-          }}
-        >
-          {/* Backdrop */}
-          <div
-            className="absolute inset-0"
-            style={{ background: 'rgba(0,0,0,0.2)' }}
-          />
-
-          {/* Panel */}
-          <div
-            className="relative w-full max-w-md h-full overflow-y-auto"
-            style={{
-              background: 'var(--paper)',
-              borderLeft: '1px solid var(--m-border)',
-            }}
-          >
-            <div className="sticky top-0 z-10 flex items-center justify-between px-5 py-4"
-              style={{ background: 'var(--paper)', borderBottom: '1px solid var(--m-border)' }}
-            >
-              <h2
-                className="text-[15px] font-semibold"
-                style={{ color: 'var(--ink)' }}
-              >
-                Past checks
-              </h2>
-              <button
-                onClick={() => setShowHistory(false)}
-                className="text-[13px] font-medium px-2 py-1 rounded-lg"
-                style={{ color: 'var(--ink-2)' }}
-              >
-                Close
-              </button>
-            </div>
-
-            <div className="px-5 py-4">
-              {pastLoading ? (
-                <div className="space-y-2">
-                  <Skeleton className="h-[52px] w-full" />
-                  <Skeleton className="h-[52px] w-full" />
-                </div>
-              ) : pastInterrogations.length === 0 ? (
-                <div className="py-12 text-center">
-                  <Bot
-                    size={24}
-                    strokeWidth={1.5}
-                    className="mx-auto mb-2"
-                    style={{ color: 'var(--m-muted)' }}
-                  />
-                  <p className="text-[14px]" style={{ color: 'var(--ink-2)' }}>
-                    No past checks yet.
-                  </p>
-                </div>
-              ) : (
-                <div className="space-y-1.5">
-                  {pastInterrogations.map((item) => {
-                    const interr = item.interrogation;
-                    const expanded = expandedPastId === interr.id;
-                    const models = item.results.map((r) => r.model_short_id);
-                    const ts = new Date(interr.created_at);
-                    const timeStr =
-                      ts.toLocaleDateString(undefined, {
-                        month: 'short',
-                        day: 'numeric',
-                      }) +
-                      ', ' +
-                      ts.toLocaleTimeString(undefined, {
-                        hour: '2-digit',
-                        minute: '2-digit',
-                      });
-
-                    return (
-                      <div
-                        key={interr.id}
-                        className="rounded-xl overflow-hidden"
-                        style={{
-                          background: 'var(--paper)',
-                          border: '1px solid var(--m-border)',
-                        }}
-                      >
-                        <button
-                          onClick={() =>
-                            setExpandedPastId(expanded ? null : interr.id)
-                          }
-                          className="w-full text-left px-4 py-3 transition-colors"
-                        >
-                          <p
-                            className="text-[13px] leading-snug mb-1.5"
-                            style={{ color: 'var(--ink)' }}
-                          >
-                            {interr.question_text}
-                          </p>
-                          <div className="flex items-center gap-2">
-                            <div className="flex -space-x-1.5">
-                              {models.map((m) => {
-                                const prov = providerKeyToIcon(m);
-                                return prov ? (
-                                  <AIProviderIcon
-                                    key={m}
-                                    provider={prov}
-                                    size={14}
-                                    className="ring-2 ring-[var(--paper)] rounded-full"
-                                  />
-                                ) : null;
-                              })}
-                            </div>
-                            <span
-                              className="text-[11px] tabular-nums"
-                              style={{ color: 'var(--m-muted)' }}
+                          {/* Expanded content */}
+                          {isExpanded && !isLoading && (
+                            <div
+                              className="px-4 pb-4 pt-0"
+                              style={{ borderTop: '1px solid var(--m-border)' }}
                             >
-                              {timeStr}
-                            </span>
-                            <ChevronDown
-                              size={12}
-                              className="ml-auto"
-                              style={{
-                                color: 'var(--m-muted)',
-                                transform: expanded
-                                  ? 'rotate(180deg)'
-                                  : 'none',
-                                transition: 'transform 150ms',
-                              }}
-                            />
-                          </div>
-                        </button>
-
-                        {expanded && (
-                          <div className="px-4 pb-4 space-y-2.5">
-                            {item.results.map((r) => {
-                              const prov = providerKeyToIcon(r.model_short_id);
-                              return (
-                                <div
-                                  key={r.id}
-                                  className="rounded-lg p-3"
-                                  style={{
-                                    background: 'var(--paper-2)',
-                                    border: '1px solid var(--m-border)',
-                                  }}
-                                >
-                                  <div className="flex items-center gap-2 mb-1.5">
-                                    {prov && (
-                                      <AIProviderIcon
-                                        provider={prov}
-                                        size={14}
-                                      />
-                                    )}
-                                    <span
-                                      className="text-[12px] font-semibold"
-                                      style={{ color: 'var(--ink)' }}
-                                    >
-                                      {r.model_display_name}
-                                    </span>
-                                    {r.latency_ms != null && (
-                                      <span
-                                        className="text-[10px] ml-auto flex items-center gap-0.5"
-                                        style={{ color: 'var(--m-muted)' }}
-                                      >
-                                        <Clock size={9} />
-                                        {(r.latency_ms / 1000).toFixed(1)}s
-                                      </span>
-                                    )}
-                                  </div>
-                                  {r.response_text ? (
-                                    <p
-                                      className="text-[12px] leading-relaxed"
-                                      style={{ color: 'var(--ink-2)' }}
-                                    >
-                                      {r.response_text}
-                                    </p>
-                                  ) : (
-                                    <p
-                                      className="text-[12px] italic"
-                                      style={{ color: 'var(--m-muted)' }}
-                                    >
-                                      {r.error_message ?? 'No response'}
-                                    </p>
-                                  )}
-                                  {r.themes && r.themes.length > 0 && (
-                                    <div className="flex flex-wrap gap-1 mt-2 pt-2" style={{ borderTop: '1px solid var(--m-border)' }}>
+                              {isCompleted && r.responseText && (
+                                <>
+                                  <p
+                                    className="text-[13px] leading-[1.7] whitespace-pre-wrap pt-3"
+                                    style={{ color: 'var(--ink)' }}
+                                  >
+                                    {r.responseText}
+                                  </p>
+                                  {r.themes.length > 0 && (
+                                    <div className="flex flex-wrap gap-1.5 mt-3 pt-3" style={{ borderTop: '1px solid var(--m-border)' }}>
                                       {r.themes.map((t) => (
                                         <span
                                           key={t}
-                                          className="text-[9px] px-1.5 py-0.5 rounded-full"
-                                          style={{
-                                            background: 'var(--paper)',
-                                            color: 'var(--m-muted)',
-                                          }}
+                                          className="text-[10px] font-medium px-2 py-0.5 rounded-full"
+                                          style={{ background: 'var(--paper-2)', color: 'var(--ink-2)' }}
                                         >
                                           {t}
                                         </span>
                                       ))}
                                     </div>
                                   )}
-                                </div>
-                              );
-                            })}
+                                </>
+                              )}
+                              {isFailed && (
+                                <p className="text-[13px] pt-3" style={{ color: 'var(--severe)' }}>
+                                  {r.error ?? 'This model failed to respond.'}
+                                </p>
+                              )}
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
 
-                            {/* Re-ask button */}
+                    {/* Follow-up pills */}
+                    {msg.followups && msg.followups.length > 0 && !isRunning && (
+                      <div className="pt-3">
+                        <p className="text-[11px] font-medium mb-2" style={{ color: 'var(--m-muted)' }}>
+                          Follow up
+                        </p>
+                        <div className="flex flex-wrap gap-2">
+                          {msg.followups.slice(0, 3).map((f, i) => (
                             <button
-                              onClick={() => {
-                                setShowHistory(false);
-                                handleSend(
-                                  interr.question_text,
-                                  interr.question_family,
-                                );
-                              }}
+                              key={i}
+                              onClick={() => handleSend(f.questionText, f.family)}
                               disabled={isRunning}
-                              className="flex items-center gap-1.5 text-[12px] font-medium px-3 py-1.5 rounded-lg transition-colors"
+                              className="rounded-full px-3.5 py-2 text-[12px] transition-all"
                               style={{
-                                background: 'var(--paper-2)',
-                                color: 'var(--ink)',
+                                background: 'var(--paper)',
                                 border: '1px solid var(--m-border)',
+                                color: 'var(--ink)',
                               }}
                             >
-                              <RefreshCw size={11} />
-                              Ask again
+                              {f.questionText}
                             </button>
-                          </div>
-                        )}
+                          ))}
+                        </div>
                       </div>
-                    );
-                  })}
-                </div>
-              )}
-            </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            ))}
+
+            {/* Error */}
+            {runError && (
+              <div
+                className="rounded-xl px-4 py-3 mb-4 flex items-center gap-2"
+                style={{ background: 'rgba(239,68,68,0.06)', border: '1px solid rgba(239,68,68,0.12)' }}
+              >
+                <XCircle size={14} style={{ color: 'var(--severe)' }} />
+                <p className="text-[13px]" style={{ color: 'var(--severe)' }}>{runError}</p>
+              </div>
+            )}
+
+            <div ref={chatEndRef} />
           </div>
         </div>
-      )}
+
+        {/* ── Console bar ──────────────────────────────────── */}
+        <div
+          className="flex-shrink-0 px-5 py-3"
+          style={{ borderTop: '1px solid var(--m-border)', background: 'var(--paper)' }}
+        >
+          <div className="max-w-2xl mx-auto">
+            <div className="flex items-center justify-between gap-4">
+              {/* Model selector — avatar circles */}
+              <div className="flex items-center gap-1.5">
+                {MODEL_DISPLAY.map(({ shortId, slug }) => {
+                  const provider = providerKeyToIcon(shortId) as AIProvider | null;
+                  const isSelected = selectedModels.includes(slug);
+                  const isDisabled = !isSelected && selectedModels.length >= MAX_MODELS;
+
+                  return (
+                    <button
+                      key={slug}
+                      onClick={() => toggleModel(slug)}
+                      disabled={isDisabled}
+                      title={provider ? PROVIDER_LABEL[provider] : shortId}
+                      className="relative w-9 h-9 rounded-full flex items-center justify-center transition-all"
+                      style={{
+                        background: isSelected ? 'var(--ink)' : 'var(--paper-2)',
+                        border: isSelected ? '2px solid var(--ink)' : '2px solid transparent',
+                        opacity: isDisabled ? 0.3 : 1,
+                        cursor: isDisabled ? 'not-allowed' : 'pointer',
+                      }}
+                    >
+                      {provider ? (
+                        <AIProviderIcon
+                          provider={provider}
+                          size={16}
+                          className={isSelected ? 'brightness-0 invert' : ''}
+                        />
+                      ) : (
+                        <span className="text-[10px] font-bold" style={{ color: isSelected ? 'var(--paper)' : 'var(--m-muted)' }}>
+                          {shortId[0].toUpperCase()}
+                        </span>
+                      )}
+                      {isSelected && (
+                        <div
+                          className="absolute -top-0.5 -right-0.5 w-3.5 h-3.5 rounded-full flex items-center justify-center"
+                          style={{ background: 'var(--ok)' }}
+                        >
+                          <Check size={8} strokeWidth={3} color="#fff" />
+                        </div>
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
+
+              {/* Suggest button */}
+              <button
+                onClick={() => {
+                  if (showSuggestions && questions.length > 0) {
+                    refreshQuestions();
+                  } else {
+                    setShowSuggestions(true);
+                    if (questions.length === 0) fetchQuestions();
+                  }
+                  scrollToBottom();
+                }}
+                disabled={isRunning || questionsLoading || selectedModels.length === 0}
+                className="flex items-center gap-2 rounded-xl px-4 py-2.5 text-[13px] font-semibold transition-all"
+                style={{
+                  background: isRunning || selectedModels.length === 0 ? 'var(--m-border)' : 'var(--ink)',
+                  color: isRunning || selectedModels.length === 0 ? 'var(--m-muted)' : 'var(--paper)',
+                  cursor: isRunning || selectedModels.length === 0 ? 'not-allowed' : 'pointer',
+                }}
+              >
+                {questionsLoading ? (
+                  <Loader2 size={14} className="animate-spin" />
+                ) : (
+                  <Sparkles size={14} />
+                )}
+                Suggest what to ask
+              </button>
+            </div>
+
+            {/* Usage line */}
+            {usage && (
+              <p className="text-[10px] text-center mt-2" style={{ color: 'var(--m-muted)' }}>
+                {selectedModels.length}/{MAX_MODELS} models
+                {' · '}
+                {usage.checksRemaining} check{usage.checksRemaining !== 1 ? 's' : ''} remaining
+              </p>
+            )}
+          </div>
+        </div>
+      </div>
     </div>
   );
 }
