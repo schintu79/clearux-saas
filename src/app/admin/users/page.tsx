@@ -34,6 +34,7 @@ interface PlanModal {
   user: User
   plan: string
   credits: string
+  aiChecksPerMonth: string
   freeMembership: boolean
   expiryDate: string
 }
@@ -115,6 +116,7 @@ export default function AdminUsersPage() {
       const body: Record<string, any> = { user_id: planModal.user.id }
       if (planModal.plan) body.subscription_plan = planModal.plan === 'none' ? null : planModal.plan
       if (planModal.credits) body.credits = parseInt(planModal.credits, 10)
+      if (planModal.aiChecksPerMonth) body.ai_checks_per_month = parseInt(planModal.aiChecksPerMonth, 10)
       body.free_membership = planModal.freeMembership
       if (planModal.expiryDate) body.expiry_date = planModal.expiryDate
       else body.expiry_date = null
@@ -256,6 +258,7 @@ export default function AdminUsersPage() {
                             user: u,
                             plan: u.subscription_plan || 'none',
                             credits: String(u.credits),
+                            aiChecksPerMonth: '',
                             freeMembership: u.free_membership || false,
                             expiryDate: u.free_membership_expiry || '',
                           })}
@@ -417,6 +420,21 @@ export default function AdminUsersPage() {
                   className="w-full px-3 py-2 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--signal)]/30"
                   style={{ background: 'var(--paper)', border: '1px solid var(--rule)', color: 'var(--ink)' }}
                 />
+              </div>
+
+              {/* AI checks per month */}
+              <div>
+                <label className="text-[12px] font-medium block mb-1.5" style={{ color: 'var(--ink)' }}>AI checks / month</label>
+                <input
+                  type="number"
+                  min="0"
+                  value={planModal.aiChecksPerMonth}
+                  onChange={(e) => setPlanModal({ ...planModal, aiChecksPerMonth: e.target.value })}
+                  placeholder="Leave empty to use plan default"
+                  className="w-full px-3 py-2 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--signal)]/30"
+                  style={{ background: 'var(--paper)', border: '1px solid var(--rule)', color: 'var(--ink)' }}
+                />
+                <p className="text-[11px] mt-1" style={{ color: 'var(--m-muted)' }}>Starter: 10 · Pro: 30 · Team: 100</p>
               </div>
 
               {/* Free membership toggle */}

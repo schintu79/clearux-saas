@@ -104,9 +104,12 @@ export async function getAuditUsage(
   db: SupabaseClient,
 ): Promise<AuditUsage> {
   // 1. Fetch profile for plan info, billing period, credits
+  //    Use select('*') so the query never fails if newer columns
+  //    (deep_audits_per_month, billing_period_start/end) haven't
+  //    been migrated yet — all field access already has ?? fallbacks.
   const { data: profile } = await db
     .from('profiles')
-    .select('credits, subscription_plan, subscription_status, subscription_interval, audits_per_month, deep_audits_per_month, billing_period_start, billing_period_end')
+    .select('*')
     .eq('id', userId)
     .single()
 

@@ -27,12 +27,14 @@ export async function PATCH(request: NextRequest) {
       user_id,
       subscription_plan,
       credits,
+      ai_checks_per_month,
       free_membership,
       expiry_date,
     } = body as {
       user_id: string
       subscription_plan?: 'starter' | 'pro' | 'team' | null
       credits?: number
+      ai_checks_per_month?: number
       free_membership?: boolean
       expiry_date?: string | null
     }
@@ -68,6 +70,7 @@ export async function PATCH(request: NextRequest) {
       updates.audits_per_month = planConfig?.reAuditsPerMonth ?? 0
       updates.audits_remaining = updates.audits_per_month
       updates.deep_audits_per_month = planConfig?.deepAuditsPerMonth ?? 0
+      updates.ai_checks_per_month = planConfig?.aiChecksPerMonth ?? 0
 
       // Set billing period if activating a plan
       if (subscription_plan) {
@@ -82,6 +85,10 @@ export async function PATCH(request: NextRequest) {
 
     if (credits !== undefined && typeof credits === 'number') {
       updates.credits = Math.max(0, credits)
+    }
+
+    if (ai_checks_per_month !== undefined && typeof ai_checks_per_month === 'number') {
+      updates.ai_checks_per_month = Math.max(0, ai_checks_per_month)
     }
 
     if (free_membership !== undefined) {

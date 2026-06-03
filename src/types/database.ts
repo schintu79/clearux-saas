@@ -20,6 +20,14 @@ export interface Workspace {
   active_audit_id:          string | null
   active_brand_identity_id: string | null
   settings_json:            Record<string, unknown>
+  // Workspace enrichment (AI interrogation context)
+  category:                 string | null
+  subcategory:              string | null
+  region:                   string | null
+  country:                  string | null
+  city:                     string | null
+  language:                 string
+  audience_type:            string | null
   created_at:               string
   updated_at:               string
   archived_at:              string | null
@@ -87,6 +95,8 @@ export interface Profile {
   // Billing period boundaries (set by Stripe webhook)
   billing_period_start:  string | null  // ISO timestamp — start of current billing period
   billing_period_end:    string | null  // ISO timestamp — end of current billing period
+  // AI interrogation entitlement
+  ai_checks_per_month: number
   // Admin role
   role:          'user' | 'admin' | 'super_admin'
   // Email preferences
@@ -873,6 +883,82 @@ export interface FtpDeployLog {
   created_at:     string
 }
 
+// ── AI Interrogation Tables ──────────────────────────────────
+
+export interface AIQuestionLibraryRow {
+  id:                   string
+  question_text:        string
+  question_family:      string
+  category:             string | null
+  subcategory:          string | null
+  region:               string | null
+  language:             string
+  audience_type:        string | null
+  intent_tags:          string[]
+  priority_score:       number
+  is_active:            boolean
+  followup_question_ids: string[]
+  created_at:           string
+  updated_at:           string
+}
+
+export interface WorkspaceAIQuestionSet {
+  id:                   string
+  workspace_id:         string
+  generated_at:         string
+  valid_until:          string
+  category_snapshot:    string | null
+  region_snapshot:      string | null
+  language_snapshot:    string
+  source_context:       Record<string, unknown>
+  question_ids:         string[]
+  ranking_metadata:     Record<string, unknown>
+  version:              number
+  created_at:           string
+}
+
+export type InterrogationStatus = 'pending' | 'running' | 'completed' | 'failed' | 'partial'
+export type InterrogationResultStatus = 'pending' | 'running' | 'completed' | 'failed' | 'timeout'
+
+export interface WorkspaceAIInterrogation {
+  id:                       string
+  workspace_id:             string
+  user_id:                  string
+  question_id:              string | null
+  question_text_snapshot:   string
+  question_family:          string
+  selected_models:          string[]
+  status:                   InterrogationStatus
+  started_at:               string
+  completed_at:             string | null
+  usage_units_consumed:     number
+  token_input_total:        number
+  token_output_total:       number
+  estimated_cost_cents:     number
+  source_question_set_id:   string | null
+  is_followup:              boolean
+  parent_interrogation_id:  string | null
+  created_at:               string
+}
+
+export interface WorkspaceAIInterrogationResult {
+  id:                   string
+  interrogation_id:     string
+  model_slug:           string
+  model_label:          string
+  provider:             string
+  response_text:        string | null
+  response_summary:     string | null
+  themes:               string[]
+  latency_ms:           number | null
+  token_input:          number
+  token_output:         number
+  estimated_cost_cents: number
+  status:               InterrogationResultStatus
+  error_message:        string | null
+  created_at:           string
+}
+
 // ── SUPABASE DATABASE TYPE MAP ────────────────────────────────
 // For use with createClient<Database>()
 
@@ -994,6 +1080,27 @@ export interface Database {
         Row: import('@/types/canonical-issues').ScoreSnapshot
         Insert: Partial<import('@/types/canonical-issues').ScoreSnapshot> & Pick<import('@/types/canonical-issues').ScoreSnapshot, 'audit_id' | 'workspace_id'>
         Update: Partial<import('@/types/canonical-issues').ScoreSnapshot>
+      }
+      // AI Interrogation tables
+      ai_question_library: {
+        Row: AIQuestionLibraryRow
+        Insert: Partial<AIQuestionLibraryRow> & Pick<AIQuestionLibraryRow, 'question_text' | 'question_family'>
+        Update: Partial<AIQuestionLibraryRow>
+      }
+      workspace_ai_question_sets: {
+        Row: WorkspaceAIQuestionSet
+        Insert: Partial<WorkspaceAIQuestionSet> & Pick<WorkspaceAIQuestionSet, 'workspace_id' | 'question_ids' | 'valid_until'>
+        Update: Partial<WorkspaceAIQuestionSet>
+      }
+      workspace_ai_interrogations: {
+        Row: WorkspaceAIInterrogation
+        Insert: Partial<WorkspaceAIInterrogation> & Pick<WorkspaceAIInterrogation, 'workspace_id' | 'user_id' | 'question_text_snapshot' | 'question_family' | 'selected_models'>
+        Update: Partial<WorkspaceAIInterrogation>
+      }
+      workspace_ai_interrogation_results: {
+        Row: WorkspaceAIInterrogationResult
+        Insert: Partial<WorkspaceAIInterrogationResult> & Pick<WorkspaceAIInterrogationResult, 'interrogation_id' | 'model_slug' | 'model_label' | 'provider'>
+        Update: Partial<WorkspaceAIInterrogationResult>
       }
     }
     Views: {
