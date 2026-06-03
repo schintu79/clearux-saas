@@ -38,6 +38,7 @@ import {
   identifyStaleFindings,
 } from '@/lib/audit-engine/pipeline'
 import { identifyStarvedCategories, generateFindingsForStarvedCategories } from '@/lib/audit-engine/pipeline/minimum-findings'
+import { enrichWithCommunication, buildCommunicationForGenericFinding } from '@/lib/audit-engine/pipeline/communication-layer'
 import { AUDIT_MODULES, COMPLETE_AUDIT_SLUGS } from '@/lib/audit-modules'
 import { extractAllBrandFiles } from '@/lib/audit-engine/brand-file-extractor'
 import { checkResponsiveDesign } from '@/lib/audit-engine/responsive-checker'
@@ -513,6 +514,7 @@ Return 2-6 findings. Be specific and evidence-based. Reference specific files/co
               sort_order: sortOrder++,
               confidence_level: 'heuristic',
               detection_source: 'brand_analyzer',
+              communication: enrichWithCommunication([finding], null)[0]?.communication || null,
               ...computeActionModelFields({ title: finding.title, description: finding.description, recommendation: finding.recommendation, fix_type: validated.fixType, finding_type: validated.findingType }),
             })
           }
@@ -1065,6 +1067,7 @@ Return 2-6 findings. Be specific and evidence-based. Reference specific files/co
                 sort_order: sortOrder++,
                 confidence_level: 'deterministic',
                 detection_source: 'responsive_checker',
+                communication: buildCommunicationForGenericFinding({ title: finding.title, description: finding.description, recommendation: finding.recommendation, estimatedImpact: finding.estimatedImpact || null, severity: finding.severity }, siteProfile),
                 ...computeActionModelFields({ title: finding.title, description: finding.description, recommendation: finding.recommendation, fix_type: cls.fixType, finding_type: cls.findingType }),
               }
             })
@@ -1148,6 +1151,7 @@ Return 2-6 findings. Be specific and evidence-based. Reference specific files/co
               performance_metric_type: f.metricType || null,
               status: 'open' as const,
               position: 900 + i,
+              communication: buildCommunicationForGenericFinding({ title: f.title, description: f.description, recommendation: f.recommendation, estimatedImpact: null, severity: f.severity }, siteProfile),
             }))
             await db.from('audit_findings').insert(findingRows)
           }
@@ -1227,6 +1231,7 @@ Return 2-6 findings. Be specific and evidence-based. Reference specific files/co
                   sort_order: sortOrder++,
                   confidence_level: 'deterministic',
                   detection_source: 'wcag_checker',
+                  communication: buildCommunicationForGenericFinding({ title: finding.title, description: wcagDesc, recommendation: finding.recommendation, estimatedImpact: null, severity: finding.severity }, siteProfile),
                   ...computeActionModelFields({ title: finding.title, description: wcagDesc, recommendation: finding.recommendation, fix_type: cls.fixType, finding_type: cls.findingType }),
                 })
               }
@@ -1384,6 +1389,7 @@ Return 2-6 findings. Be specific and evidence-based. Reference specific files/co
                 sort_order: sortOrder++, status: 'open', dismissed: false,
                 finding_type: validated.findingType, fix_type: validated.fixType,
                 confidence_level: 'deterministic', detection_source: 'structured_data',
+                communication: buildCommunicationForGenericFinding({ title: finding.title, description: finding.description, recommendation: finding.recommendation, estimatedImpact: finding.estimatedImpact || null, severity: finding.severity }, siteProfile),
                 ...computeActionModelFields({ title: finding.title, description: finding.description, recommendation: finding.recommendation, fix_type: validated.fixType, finding_type: validated.findingType }),
               }
             })
@@ -2063,6 +2069,7 @@ RULES FOR RE-AUDIT:
             fix_type: pfFixType,
             confidence_level: (pf as any).confidence_level || 'heuristic',
             detection_source: 'gap_fill',
+            communication: buildCommunicationForGenericFinding({ title: pf.title, description: pf.description, recommendation: pf.recommendation, estimatedImpact: pf.estimated_impact || null, severity: pf.severity }, siteProfile),
             ...computeActionModelFields({ title: pf.title, description: pf.description, recommendation: pf.recommendation, fix_type: pfFixType, finding_type: pfFindingType }),
           })
         }
@@ -2345,6 +2352,7 @@ RULES FOR RE-AUDIT:
                 fix_type: validated.fixType,
                 confidence_level: 'heuristic',
                 detection_source: 'deep_analyzer',
+                communication: buildCommunicationForGenericFinding({ title: finding.title, description: finding.description, recommendation: finding.recommendation, estimatedImpact: finding.estimatedImpact || null, severity: finding.severity }, siteProfile),
                 ...computeActionModelFields({ title: finding.title, description: finding.description, recommendation: finding.recommendation, fix_type: validated.fixType, finding_type: validated.findingType }),
               } as any)
               findingsInGap++
@@ -2636,6 +2644,10 @@ RULES FOR RE-AUDIT:
                 findingType: rawClassification.findingType,
                 fixType: rawClassification.fixType,
               })
+              // Build dual-layer communication JSONB
+              const commFields = enrichWithCommunication([finding], siteProfile)
+              const comm = commFields[0]?.communication || null
+
               batchInserts.push({
                 audit_id: auditId,
                 checklist_item_id: null,
@@ -2656,6 +2668,7 @@ RULES FOR RE-AUDIT:
                 human_interpretation: finding.humanInterpretation || null,
                 confidence_level: 'heuristic',
                 detection_source: 'analyzer',
+                communication: comm,
                 ...computeActionModelFields({ title: finding.title, description: finding.description, recommendation: finding.recommendation, fix_type: classification.fixType, finding_type: classification.findingType }),
               })
             }
@@ -3632,6 +3645,7 @@ RULES FOR RE-AUDIT:
                 target_element: finding.targetElement || null, screenshot_url: null,
                 sort_order: sortOrder++, finding_type: validated.findingType, fix_type: validated.fixType,
                 confidence_level: 'interpretive', detection_source: 'analyzer',
+                communication: buildCommunicationForGenericFinding({ title: finding.title, description: finding.description, recommendation: finding.recommendation, estimatedImpact: finding.estimatedImpact || null, severity: finding.severity }, siteProfile),
               })
               totalInserted++
             }

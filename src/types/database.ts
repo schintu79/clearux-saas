@@ -499,6 +499,26 @@ export type FindingType = 'fixable' | 'strategic'
  */
 export type FixType = 'html' | 'meta' | 'schema' | 'copy' | 'file' | 'config' | null
 
+/**
+ * Dual-layer communication model for findings.
+ * Every finding has a plain-language layer (for site owners, marketers)
+ * and a technical layer (for developers). Plain-language comes FIRST.
+ */
+export interface FindingCommunication {
+  /** Plain-language issue title — no jargon, names specific elements (e.g. "Your navigation menu is hidden on desktop") */
+  title_plain: string
+  /** What we found — plain-language description of what's happening, with evidence */
+  what_found: string
+  /** Why it matters — business/user impact in plain terms */
+  why_matters: string
+  /** Technical note — developer-facing detail (CSS selectors, HTML structure, WCAG refs, etc.) */
+  technical_note: string | null
+  /** Plain-language fix recommendation — what to do, not how to code it */
+  fix_plain: string
+  /** Technical fix recommendation — exact implementation (HTML, CSS, config changes) */
+  fix_technical: string | null
+}
+
 export interface AuditFinding {
   id:                string
   audit_id:          string
@@ -566,6 +586,8 @@ export interface AuditFinding {
   handoff_ready:       boolean
   /** Role-based: structured handoff payload for team export */
   handoff_payload:     HandoffPayload | null
+  /** Dual-layer communication: plain-language + technical (JSONB, nullable for legacy) */
+  communication:       FindingCommunication | null
   created_at:        string
   // Canonical issue reconciliation (migration 050)
   issue_family_id:     string | null

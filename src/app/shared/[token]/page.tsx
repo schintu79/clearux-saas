@@ -16,6 +16,7 @@ import ScoreRing from '@/components/ui/ScoreRing';
 import type { Report, AuditFinding, FindingSeverity } from '@/types/database';
 import { CHECKPOINT_LABELS } from '@/lib/audit-checkpoints';
 import clsx from 'clsx';
+import { getDisplayTitle, getWhatFound, getFixPlain } from '@/lib/finding-communication-helpers';
 
 /* ── Score helpers ─────────────────────────────────────── */
 
@@ -145,7 +146,7 @@ function CheckpointHealth({ categoryScores, findings }: {
                           {checkpoint}
                         </p>
                         {finding && (
-                          <p className="text-[11px] mt-0.5 line-clamp-2" style={{ color: 'var(--m-muted)' }}>{finding.title}</p>
+                          <p className="text-[11px] mt-0.5 line-clamp-2" style={{ color: 'var(--m-muted)' }}>{getDisplayTitle(finding)}</p>
                         )}
                       </div>
                       <span className="text-[11px] font-semibold flex-shrink-0" style={{ color: hasFinding ? 'var(--severe)' : 'var(--ok)' }}>
@@ -185,14 +186,14 @@ function FindingCard({ finding, categoryScores }: { finding: AuditFinding; categ
               </span>
             )}
           </div>
-          <p className="text-[13px] font-medium leading-snug" style={{ color: 'var(--ink)' }}>{finding.title}</p>
-          {finding.description && (
-            <p className="text-[12px] leading-relaxed mt-1" style={{ color: 'var(--m-muted)' }}>{finding.description}</p>
+          <p className="text-[13px] font-medium leading-snug" style={{ color: 'var(--ink)' }}>{getDisplayTitle(finding)}</p>
+          {getWhatFound(finding) && (
+            <p className="text-[12px] leading-relaxed mt-1" style={{ color: 'var(--m-muted)' }}>{getWhatFound(finding)}</p>
           )}
-          {finding.recommendation && (
+          {getFixPlain(finding) && (
             <div className="mt-2 px-3 py-2 rounded-lg text-[11px] leading-relaxed" style={{ background: 'color-mix(in srgb, var(--signal) 5%, transparent)', color: 'var(--ink)' }}>
               <span className="font-semibold" style={{ color: 'var(--signal)' }}>Recommendation: </span>
-              {finding.recommendation}
+              {getFixPlain(finding)}
             </div>
           )}
         </div>

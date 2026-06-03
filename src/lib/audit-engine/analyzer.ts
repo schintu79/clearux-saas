@@ -74,6 +74,18 @@ export interface AnalysisFinding {
   aiInterpretation?: string | null
   /** AI X-Ray: how a human interprets this element */
   humanInterpretation?: string | null
+  /** Dual-layer communication — plain-language issue title */
+  titlePlain?: string | null
+  /** Dual-layer communication — what we found in plain language */
+  whatFound?: string | null
+  /** Dual-layer communication — why it matters in business/user terms */
+  whyMatters?: string | null
+  /** Dual-layer communication — developer-facing technical note */
+  technicalNote?: string | null
+  /** Dual-layer communication — plain-language fix recommendation */
+  fixPlain?: string | null
+  /** Dual-layer communication — technical fix implementation */
+  fixTechnical?: string | null
 }
 
 export interface CategoryScore {
@@ -892,6 +904,16 @@ Every surfaced finding must clearly communicate:
 3. PRACTICAL IMPACT — state the consequence for users, business outcomes, discoverability, trust, or conversion
 If a candidate issue cannot answer these three questions clearly, it should not become a surfaced finding.
 
+DUAL-LAYER COMMUNICATION (MANDATORY):
+Every finding MUST include plain-language fields (titlePlain, whatFound, whyMatters, fixPlain) alongside the technical fields.
+RULES FOR PLAIN LANGUAGE:
+- Write for a restaurant owner, a yoga studio manager, or a marketing coordinator — NOT a developer.
+- ALWAYS name the specific element: say "navigation menu", "contact form", "hero section", "pricing table", "booking button" — NEVER use generic terms like "interactive elements", "focus indicators", "semantic structure", or "ARIA landmarks".
+- For navigation/menu findings: ALWAYS include the word "menu" or "navigation menu" in titlePlain. Never hide navigation issues behind terms like "interactive elements" or "discoverability patterns".
+- For hospitality, venue, event, and service businesses: if the desktop navigation is hidden behind a hamburger icon, titlePlain MUST say something like "Your navigation menu is hidden on desktop" — not "Desktop navigation pattern uses mobile paradigm".
+- whyMatters should explain the business consequence: lost bookings, confused visitors, missed sales — not cite WCAG guidelines or accessibility standards.
+- fixPlain should say what to do, not how to code it.
+
 DO NOT flag these common false positives:
 - Generic "missing meta description" or "missing alt text" unless it's truly egregious
 - Minor HTML structure issues that don't affect the user experience
@@ -974,7 +996,13 @@ Return a JSON array. Each issue:
   "targetElement": "A valid CSS selector to locate the element on the page. Use simple, reliable selectors: tag names ('nav', 'header', 'footer', 'main'), class selectors ('.hero', '.cta-button', '.pricing'), ID selectors ('#checkout', '#signup'), or combined ('section.features', 'form.contact', 'nav > ul'). Must be a real CSS selector, NOT a description. Set to null if the issue is page-wide.",
   "pageUrl": "REQUIRED — Copy-paste the exact full URL from the AVAILABLE PAGE URLs list where this issue was found. Must be one of the URLs listed. NEVER use just the domain.",
   "aiInterpretation": "FOR CRITICAL/HIGH SEVERITY ONLY — One sentence: how an AI system (LLM, search engine, voice assistant) would interpret or misinterpret this element. Example: 'AI reads the hero image alt text as empty, so it describes your homepage as having no visual identity.' Set to null for medium/low severity.",
-  "humanInterpretation": "FOR CRITICAL/HIGH SEVERITY ONLY — One sentence: how a human visitor perceives the same element differently. Example: 'A human sees a compelling hero image with your brand message, but AI only sees an empty alt attribute.' Set to null for medium/low severity."
+  "humanInterpretation": "FOR CRITICAL/HIGH SEVERITY ONLY — One sentence: how a human visitor perceives the same element differently. Example: 'A human sees a compelling hero image with your brand message, but AI only sees an empty alt attribute.' Set to null for medium/low severity.",
+  "titlePlain": "Plain-language title for non-technical readers. Name the specific element — say 'navigation menu', 'booking form', 'hero headline', not 'interactive elements' or 'focus indicators'. Examples: 'Your navigation menu is hidden on desktop', 'The booking form doesn't confirm your submission', 'Your homepage headline doesn't explain what you offer'. Must be understandable by a restaurant owner or marketing manager.",
+  "whatFound": "Plain-language explanation of what's happening, with specific evidence. Write for someone who doesn't know HTML or CSS. Example: 'When visitors arrive on your site using a laptop or desktop computer, they can't see your main navigation links — they're hidden behind a small hamburger icon (☰) that's normally used on mobile phones.'",
+  "whyMatters": "Why this matters to the business or users, in plain language. No jargon. Example: 'Most of your visitors won't click that icon because they don't expect to look for it on a desktop screen. This means they may never discover your menu, pricing page, or booking options — and leave without taking action.'",
+  "technicalNote": "Developer-facing detail: CSS selectors, HTML structure, WCAG references, rendering behavior, or implementation specifics. Set to null if the finding is purely strategic.",
+  "fixPlain": "What to do about it — in plain language the site owner can understand. Example: 'Show your full navigation menu as a horizontal bar across the top of the page when visitors are on desktop or laptop screens.'",
+  "fixTechnical": "Technical implementation details for a developer. For fixable findings: exact HTML/CSS/meta changes. For strategic findings: technical approach and architecture considerations. Set to null if no technical detail is needed."
 }
 
 CRITICAL — NO DUPLICATE FINDINGS (STRICTLY ENFORCED):
@@ -1108,7 +1136,18 @@ Analyze this category and return the JSON array now.`
     return findings
       .filter((f) => f.severity && f.title && f.description && f.recommendation)
       .filter((f) => !isSpeculativeFinding(f))
-      .map((f) => ({ ...f, targetElement: f.targetElement || null, pageUrl: f.pageUrl || null }))
+      .map((f) => ({
+        ...f,
+        targetElement: f.targetElement || null,
+        pageUrl: f.pageUrl || null,
+        // Normalize communication fields
+        titlePlain: f.titlePlain || null,
+        whatFound: f.whatFound || null,
+        whyMatters: f.whyMatters || null,
+        technicalNote: f.technicalNote || null,
+        fixPlain: f.fixPlain || null,
+        fixTechnical: f.fixTechnical || null,
+      }))
   } catch (err) {
     console.error(`[analyzeCategory] Error for "${category}":`, err instanceof Error ? err.message : err)
     // Return empty — don't throw. One category failing shouldn't kill the audit.

@@ -42,6 +42,7 @@ import {
   classifyFinding,
   validateFixableRecommendation,
 } from '@/lib/audit-engine/pipeline'
+import { buildCommunicationForGenericFinding } from '@/lib/audit-engine/pipeline/communication-layer'
 
 /* ── DB helpers ── */
 
@@ -326,6 +327,7 @@ export const processBrandAuditFn = inngest.createFunction(
               fix_type: validated.fixType,
               confidence_level: 'interpretive',
               detection_source: 'brand_analyzer',
+              communication: buildCommunicationForGenericFinding({ title: finding.title, description: finding.description, recommendation: finding.recommendation, estimatedImpact: finding.estimatedImpact || null, severity: finding.severity }, null),
             } as any)
           }
         }

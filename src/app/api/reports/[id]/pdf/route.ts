@@ -11,6 +11,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import PDFDocument from 'pdfkit'
 import { createServerSupabase, createServiceSupabase } from '@/lib/supabase-server'
 import { getReportLabels, getLocale, getUILabels, getPillarNames, getScoreLabel, getSeverityLabel } from '@/lib/languages'
+import { getDisplayTitle, getWhatFound, getWhyMatters, getFixPlain } from '@/lib/finding-communication-helpers'
 import fs from 'fs'
 import path from 'path'
 
@@ -500,6 +501,10 @@ export async function GET(
           ensureSpace(60)
 
           const sev = (finding.severity || 'medium').toLowerCase()
+          const displayTitle = getDisplayTitle(finding)
+          const whatFound = getWhatFound(finding)
+          const fixPlain = getFixPlain(finding)
+          const whyMatters = getWhyMatters(finding)
 
           // Severity badge + URL (DOCX: size 16 = 8pt)
           doc.fontSize(8).font('Helvetica-Bold').fillColor(sevColor(sev))
@@ -518,20 +523,20 @@ export async function GET(
 
           // Title (DOCX: size 21 = 10.5pt bold)
           doc.fontSize(10.5).font('Helvetica-Bold').fillColor(C.text)
-            .text(finding.title, leftM, undefined, { width: contentW })
+            .text(displayTitle, leftM, undefined, { width: contentW })
 
           // Description (DOCX: size 19 = 9.5pt)
-          if (finding.description) {
+          if (whatFound) {
             doc.fontSize(9.5).font('Helvetica').fillColor(C.textBody)
-              .text(finding.description, leftM, undefined, { width: contentW, lineGap: 1.5 })
+              .text(whatFound, leftM, undefined, { width: contentW, lineGap: 1.5 })
           }
 
           // Recommendation box (DOCX: bg F9FAFB, label size 17 = 8.5pt, text size 19 = 9.5pt)
-          if (finding.recommendation) {
+          if (fixPlain) {
             doc.moveDown(0.3)
             const recY = doc.y
             const labelH = 12
-            const recTextH = doc.heightOfString(finding.recommendation, { width: contentW - 24 })
+            const recTextH = doc.heightOfString(fixPlain, { width: contentW - 24 })
             const boxH = labelH + recTextH + 16
             ensureSpace(boxH + 5)
             const actualY = doc.y
@@ -539,15 +544,15 @@ export async function GET(
             doc.fontSize(8.5).font('Helvetica-Bold').fillColor(C.text)
               .text(L.recommendation, leftM + 12, actualY + 6)
             doc.fontSize(9.5).font('Helvetica').fillColor(C.textBody)
-              .text(finding.recommendation, leftM + 12, actualY + 6 + labelH + 2, { width: contentW - 24 })
+              .text(fixPlain, leftM + 12, actualY + 6 + labelH + 2, { width: contentW - 24 })
             doc.y = actualY + boxH + 4
           }
 
           // Impact box (DOCX: bg ECFDF5, text color 047857)
-          if (finding.estimated_impact) {
+          if (whyMatters) {
             const impY = doc.y
             const labelH = 12
-            const impTextH = doc.heightOfString(finding.estimated_impact, { width: contentW - 24 })
+            const impTextH = doc.heightOfString(whyMatters, { width: contentW - 24 })
             const boxH = labelH + impTextH + 16
             ensureSpace(boxH + 5)
             const actualY = doc.y
@@ -555,7 +560,7 @@ export async function GET(
             doc.fontSize(8.5).font('Helvetica-Bold').fillColor(C.text)
               .text('Expected Impact', leftM + 12, actualY + 6)
             doc.fontSize(9.5).font('Helvetica').fillColor(C.impactText)
-              .text(finding.estimated_impact, leftM + 12, actualY + 6 + labelH + 2, { width: contentW - 24 })
+              .text(whyMatters, leftM + 12, actualY + 6 + labelH + 2, { width: contentW - 24 })
             doc.y = actualY + boxH + 4
           }
 

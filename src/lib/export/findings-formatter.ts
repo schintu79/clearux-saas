@@ -18,7 +18,7 @@
  */
 
 import type { GroupedFinding } from '@/lib/audit-findings-presentation';
-import type { AuditFinding } from '@/types/database';
+import type { AuditFinding, FindingCommunication } from '@/types/database';
 import {
   inferFixType,
   classifyFinding,
@@ -29,6 +29,15 @@ import {
   PHASE1_MODULES,
   moduleIndexForFinding,
 } from '@/lib/dashboard/latest-audit';
+import {
+  getDisplayTitle,
+  getWhatFound,
+  getWhyMatters,
+  getFixPlain,
+  hasCommunication,
+  getTechnicalNote,
+  getFixTechnical,
+} from '@/lib/finding-communication-helpers';
 import { deduplicateFindings, type DeduplicatedFinding } from './dedup-findings';
 import { enrichAffectedPages } from './enrich-pages';
 import { classifyFindingEvidence, type ClassifiedFinding, type EvidenceStrength } from './classify-evidence';
@@ -51,6 +60,8 @@ export interface ExportFinding {
   evidence: string | null;
   dismissed: boolean;
   dismissalReason: string | null;
+  /** Dual-layer communication data (nullable for legacy findings) */
+  communication: FindingCommunication | null;
 }
 
 export interface ExportMeta {
@@ -160,6 +171,7 @@ export function prepareFindingsForExport(
       evidence: f.evidence || null,
       dismissed: f.dismissed,
       dismissalReason: f.dismissal_reason || null,
+      communication: f.communication || null,
     };
   });
 }
@@ -338,16 +350,19 @@ function renderMarkdownClustered(
         lines.push('');
         for (let m = 1; m < cluster.members.length; m++) {
           const member = cluster.members[m];
-          lines.push(`**${m + 1}. ${member.title}** (${member.severity.toUpperCase()}, ${EVIDENCE_LABELS[member.evidenceStrength]})`);
+          lines.push(`**${m + 1}. ${getDisplayTitle(member)}** (${member.severity.toUpperCase()}, ${EVIDENCE_LABELS[member.evidenceStrength]})`);
           lines.push('');
           // Compact: description only, no full structure
-          const shortDesc = member.description.length > 300
-            ? member.description.slice(0, 300) + '...'
-            : member.description;
+          const whatFound = getWhatFound(member);
+          const shortDesc = whatFound.length > 300
+            ? whatFound.slice(0, 300) + '...'
+            : whatFound;
           lines.push(shortDesc);
           lines.push('');
-          if (member.recommendation !== primary.recommendation) {
-            lines.push(`*Recommendation:* ${member.recommendation}`);
+          const memberFix = getFixPlain(member);
+          const primaryFix = getFixPlain(primary);
+          if (memberFix !== primaryFix) {
+            lines.push(`*Recommendation:* ${memberFix}`);
             lines.push('');
           }
         }
@@ -358,7 +373,7 @@ function renderMarkdownClustered(
     } else {
       // ── Single finding: full rendering ──
       const f = cluster.primary;
-      lines.push(`### ${idx}. [${f.severity.toUpperCase()}] ${f.title}`);
+      lines.push(`### ${idx}. [${f.severity.toUpperCase()}] ${getDisplayTitle(f)}`);
       lines.push('');
       renderSingleFinding(lines, f, null);
       lines.push('---');
@@ -404,14 +419,15 @@ function renderSingleFinding(
   // Description
   lines.push('**What we found**');
   lines.push('');
-  lines.push(f.description);
+  lines.push(getWhatFound(f));
   lines.push('');
 
   // Why it matters
-  if (f.whyItMatters) {
+  const whyMatters = getWhyMatters(f);
+  if (whyMatters) {
     lines.push('**Why it matters**');
     lines.push('');
-    lines.push(f.whyItMatters);
+    lines.push(whyMatters);
     lines.push('');
   }
 
@@ -426,8 +442,26 @@ function renderSingleFinding(
   // Recommendation
   lines.push('**Recommended fix**');
   lines.push('');
-  lines.push(f.recommendation);
+  lines.push(getFixPlain(f));
   lines.push('');
+
+  // Technical Details (dual-layer communication only)
+  if (hasCommunication(f)) {
+    const techNote = getTechnicalNote(f);
+    const techFix = getFixTechnical(f);
+    if (techNote || techFix) {
+      lines.push('**Technical Details**');
+      lines.push('');
+      if (techNote) {
+        lines.push(techNote);
+        lines.push('');
+      }
+      if (techFix) {
+        lines.push(`*Technical fix:* ${techFix}`);
+        lines.push('');
+      }
+    }
+  }
 }
 
 /**
@@ -491,7 +525,7 @@ function renderMarkdownFlat(
   });
 
   sorted.forEach((f, i) => {
-    lines.push(`### ${i + 1}. [${f.severity.toUpperCase()}] ${f.title}`);
+    lines.push(`### ${i + 1}. [${f.severity.toUpperCase()}] ${getDisplayTitle(f)}`);
     lines.push('');
     lines.push(`- **Status:** ${STATUS_LABELS[f.status] || capitalize(f.status)}`);
     if (f.modules.length > 0) {
@@ -507,12 +541,13 @@ function renderMarkdownFlat(
     lines.push('');
     lines.push('**What we found**');
     lines.push('');
-    lines.push(f.description);
+    lines.push(getWhatFound(f));
     lines.push('');
-    if (f.whyItMatters) {
+    const whyMattersFlat = getWhyMatters(f);
+    if (whyMattersFlat) {
       lines.push('**Why it matters**');
       lines.push('');
-      lines.push(f.whyItMatters);
+      lines.push(whyMattersFlat);
       lines.push('');
     }
     if (f.evidence) {
@@ -523,8 +558,27 @@ function renderMarkdownFlat(
     }
     lines.push('**Recommended fix**');
     lines.push('');
-    lines.push(f.recommendation);
+    lines.push(getFixPlain(f));
     lines.push('');
+
+    // Technical Details (dual-layer communication only)
+    if (hasCommunication(f)) {
+      const techNote = getTechnicalNote(f);
+      const techFix = getFixTechnical(f);
+      if (techNote || techFix) {
+        lines.push('**Technical Details**');
+        lines.push('');
+        if (techNote) {
+          lines.push(techNote);
+          lines.push('');
+        }
+        if (techFix) {
+          lines.push(`*Technical fix:* ${techFix}`);
+          lines.push('');
+        }
+      }
+    }
+
     lines.push('---');
     lines.push('');
   });

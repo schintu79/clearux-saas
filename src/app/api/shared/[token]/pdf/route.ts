@@ -14,6 +14,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import PDFDocument from 'pdfkit'
 import { createServiceSupabase } from '@/lib/supabase-server'
 import { CHECKPOINT_LABELS } from '@/lib/audit-checkpoints'
+import { getDisplayTitle, getWhatFound, getWhyMatters, getFixPlain } from '@/lib/finding-communication-helpers'
 import type { AuditFinding } from '@/types/database'
 
 // ─── Design tokens ──────────────────────────────────────────
@@ -573,15 +574,19 @@ export async function GET(
         // Individual findings
         for (const finding of pFindings) {
           const sev = SEV_CFG[finding.severity] || SEV_CFG.medium
+          const displayTitle = getDisplayTitle(finding)
+          const whatFound = getWhatFound(finding)
+          const fixPlain = getFixPlain(finding)
+          const whyMatters = getWhyMatters(finding)
 
           // Measure to predict height
           const titleH = doc.fontSize(10).font('Helvetica-Bold')
-            .heightOfString(finding.title || '', { width: CW - 20 })
-          const descH = finding.description
-            ? doc.fontSize(9).font('Helvetica').heightOfString(finding.description, { width: CW - 20 })
+            .heightOfString(displayTitle || '', { width: CW - 20 })
+          const descH = whatFound
+            ? doc.fontSize(9).font('Helvetica').heightOfString(whatFound, { width: CW - 20 })
             : 0
-          const recH = finding.recommendation
-            ? doc.fontSize(9).font('Helvetica').heightOfString(finding.recommendation, { width: CW - 40 })
+          const recH = fixPlain
+            ? doc.fontSize(9).font('Helvetica').heightOfString(fixPlain, { width: CW - 40 })
             : 0
           const totalH = 16 + titleH + (descH > 0 ? descH + 6 : 0) + (recH > 0 ? recH + 24 : 0) + 12
           ensure(Math.min(totalH, 120))
@@ -609,27 +614,27 @@ export async function GET(
 
           // Title
           doc.fontSize(10).font('Helvetica-Bold').fillColor(T.ink)
-            .text(finding.title || 'Untitled', M, undefined, { width: CW })
+            .text(displayTitle || 'Untitled', M, undefined, { width: CW })
 
           // Description
-          if (finding.description) {
+          if (whatFound) {
             doc.moveDown(0.15)
             doc.fontSize(9).font('Helvetica').fillColor(T.muted)
-              .text(finding.description, M, undefined, { width: CW, lineGap: 1.5 })
+              .text(whatFound, M, undefined, { width: CW, lineGap: 1.5 })
           }
 
           // Recommendation box
-          if (finding.recommendation) {
+          if (fixPlain) {
             doc.moveDown(0.3)
             const boxY = doc.y
             const measuredH = doc.fontSize(9).font('Helvetica')
-              .heightOfString(finding.recommendation, { width: CW - 34 })
+              .heightOfString(fixPlain, { width: CW - 34 })
             const boxH = measuredH + 18
             doc.rect(M + 4, boxY, CW - 8, boxH).fill(T.signalBg)
             doc.fontSize(7.5).font('Helvetica-Bold').fillColor(T.signal)
               .text('RECOMMENDATION', M + 12, boxY + 5, { characterSpacing: 0.3 })
             doc.fontSize(9).font('Helvetica').fillColor(T.body)
-              .text(finding.recommendation, M + 12, boxY + 16, { width: CW - 34, lineGap: 1.5 })
+              .text(fixPlain, M + 12, boxY + 16, { width: CW - 34, lineGap: 1.5 })
             doc.y = boxY + boxH + 2
           }
 

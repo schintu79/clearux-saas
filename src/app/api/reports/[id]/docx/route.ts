@@ -10,6 +10,7 @@ export const dynamic = 'force-dynamic'
 
 import { NextRequest, NextResponse } from 'next/server'
 import { getReportLabels, getLocale, getUILabels, getPillarNames, getScoreLabel, getSeverityLabel } from '@/lib/languages'
+import { getDisplayTitle, getWhatFound, getWhyMatters, getFixPlain } from '@/lib/finding-communication-helpers'
 import {
   Document,
   Packer,
@@ -761,6 +762,10 @@ export async function buildDocx(auditId: string): Promise<{ buffer: Buffer; safe
         // Each finding
         for (const finding of findings) {
           const sev = (finding.severity || 'medium').toLowerCase()
+          const displayTitle = getDisplayTitle(finding)
+          const whatFound = getWhatFound(finding)
+          const fixPlain = getFixPlain(finding)
+          const whyMatters = getWhyMatters(finding)
 
           // Severity badge + URL line
           const badgeChildren: TextRun[] = [
@@ -787,19 +792,19 @@ export async function buildDocx(auditId: string): Promise<{ buffer: Buffer; safe
           // Finding title
           children.push(new Paragraph({
             spacing: { after: 60 },
-            children: [new TextRun({ text: finding.title, font: 'Arial', size: 21, bold: true, color: C.text })],
+            children: [new TextRun({ text: displayTitle, font: 'Arial', size: 21, bold: true, color: C.text })],
           }))
 
           // Description
-          if (finding.description) {
+          if (whatFound) {
             children.push(new Paragraph({
               spacing: { after: 80 },
-              children: [new TextRun({ text: finding.description, font: 'Arial', size: 19, color: C.textBody })],
+              children: [new TextRun({ text: whatFound, font: 'Arial', size: 19, color: C.textBody })],
             }))
           }
 
           // Recommendation box (light purple background, no borders)
-          if (finding.recommendation) {
+          if (fixPlain) {
             children.push(new Table({
               width: { size: CONTENT_W, type: WidthType.DXA },
               columnWidths: [CONTENT_W],
@@ -815,7 +820,7 @@ export async function buildDocx(auditId: string): Promise<{ buffer: Buffer; safe
                       children: [new TextRun({ text: L.recommendation, font: 'Arial', size: 17, bold: true, color: C.text })],
                     }),
                     new Paragraph({
-                      children: [new TextRun({ text: finding.recommendation, font: 'Arial', size: 19, color: C.textBody })],
+                      children: [new TextRun({ text: fixPlain, font: 'Arial', size: 19, color: C.textBody })],
                     }),
                   ],
                 })],
@@ -824,7 +829,7 @@ export async function buildDocx(auditId: string): Promise<{ buffer: Buffer; safe
           }
 
           // Expected Impact box (light green background, no borders)
-          if (finding.estimated_impact) {
+          if (whyMatters) {
             children.push(new Paragraph({ spacing: { after: 40 }, children: [] }))
             children.push(new Table({
               width: { size: CONTENT_W, type: WidthType.DXA },
@@ -841,7 +846,7 @@ export async function buildDocx(auditId: string): Promise<{ buffer: Buffer; safe
                       children: [new TextRun({ text: 'Expected Impact', font: 'Arial', size: 17, bold: true, color: C.text })],
                     }),
                     new Paragraph({
-                      children: [new TextRun({ text: finding.estimated_impact, font: 'Arial', size: 19, color: C.impactText })],
+                      children: [new TextRun({ text: whyMatters, font: 'Arial', size: 19, color: C.impactText })],
                     }),
                   ],
                 })],

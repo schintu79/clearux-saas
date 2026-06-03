@@ -42,6 +42,7 @@ import PageHeader from '@/components/dashboard/v2/PageHeader';
 import FixConsole, { inferFixType } from '@/components/dashboard/v2/FixConsole';
 import { prepareFindingsForExport, buildExportMeta, renderMarkdown, processExportPipeline } from '@/lib/export/findings-formatter';
 import FindingText from '@/components/dashboard/v2/FindingText';
+import { getDisplayTitle, getWhatFound, getWhyMatters, getFixPlain } from '@/lib/finding-communication-helpers';
 import CustomSelect from '@/components/ui/CustomSelect';
 import { groupFindingsForDisplay, reconciliationAwareSort, type GroupedFinding } from '@/lib/audit-findings-presentation';
 import type { AuditFinding, FindingStatus } from '@/types/database';
@@ -143,7 +144,7 @@ function SidebarItem({
         style={{ borderBottom: '1px solid var(--rule)' }}
       >
         <span className="text-[11px] line-through truncate block" style={{ color: 'var(--m-muted)' }}>
-          {finding.title}
+          {getDisplayTitle(finding)}
         </span>
       </button>
     );
@@ -168,7 +169,7 @@ function SidebarItem({
             className="text-[12px] font-medium leading-snug truncate"
             style={{ color: 'var(--ink)' }}
           >
-            {finding.title}
+            {getDisplayTitle(finding)}
           </p>
           <div className="flex items-center gap-1.5 mt-1 flex-wrap text-[10px]">
             <span className="font-semibold uppercase tracking-[0.04em]" style={{ color: sevColor }}>
@@ -237,7 +238,8 @@ function ActiveFindingDetail({
   const moduleNames: string[] = group.affectedModuleIndices.filter((i) => i >= 0).map((i) => PHASE1_MODULES[i]);
   if (moduleNames.length === 0 && group.affectedModuleIndices.includes(-1)) moduleNames.push('General');
   const host = hostnameOf(finding.page_url);
-  const hasImpact = Boolean(finding.estimated_impact && finding.estimated_impact.trim());
+  const whyMattersText = getWhyMatters(finding);
+  const hasImpact = Boolean(whyMattersText && whyMattersText.trim());
 
   const [showDismiss, setShowDismiss] = useState(false);
   const [dismissReason, setDismissReason] = useState('');
@@ -257,7 +259,7 @@ function ActiveFindingDetail({
         style={{ background: 'var(--card)', border: '1px solid var(--rule)' }}
       >
         <p className="text-[14px] font-medium line-through" style={{ color: 'var(--m-muted)' }}>
-          {finding.title}
+          {getDisplayTitle(finding)}
         </p>
         <p className="text-[12px] mt-2" style={{ color: 'var(--m-muted)' }}>
           This finding was dismissed.
@@ -281,7 +283,7 @@ function ActiveFindingDetail({
         <div className="flex items-start justify-between gap-3">
           <div className="flex-1 min-w-0">
             <h2 className="text-[16px] font-semibold leading-snug" style={{ color: 'var(--ink)' }}>
-              {finding.title}
+              {getDisplayTitle(finding)}
             </h2>
             <div className="flex items-center gap-2 mt-2 flex-wrap text-[11px]">
               <span className="font-semibold uppercase tracking-[0.04em]" style={{ color: sevColor }}>
@@ -424,7 +426,7 @@ function ActiveFindingDetail({
               <p className="text-[10px] font-bold uppercase tracking-[0.08em] mb-2.5" style={{ color: sevColor }}>
                 What we found
               </p>
-              <div className="max-w-prose"><FindingText text={finding.description} /></div>
+              <div className="max-w-prose"><FindingText text={getWhatFound(finding)} /></div>
             </div>
             <div className="rounded-lg p-4" style={{ background: '#ffffff', border: '1px solid var(--rule)' }}>
               <p className="text-[10px] font-bold uppercase tracking-[0.08em] mb-2.5" style={{ color: 'var(--warn)' }}>
@@ -432,7 +434,7 @@ function ActiveFindingDetail({
               </p>
               <div className="max-w-prose">
                 {hasImpact ? (
-                  <FindingText text={finding.estimated_impact} />
+                  <FindingText text={whyMattersText!} />
                 ) : (
                   <p className="text-[12px] leading-[1.65] italic" style={{ color: 'var(--m-muted)' }}>
                     Business impact not captured for this finding.

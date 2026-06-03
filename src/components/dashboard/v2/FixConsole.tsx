@@ -73,6 +73,15 @@ import {
   type FixStatus,
   type NormalizedFixPayload,
 } from '@/lib/fix-action-model';
+import {
+  getDisplayTitle,
+  getWhatFound,
+  getWhyMatters,
+  getTechnicalNote,
+  getFixPlain,
+  getFixTechnical,
+  hasCommunication,
+} from '@/lib/finding-communication-helpers';
 
 export interface FtpConnectionForDeploy {
   id: string;
@@ -668,10 +677,13 @@ function DesignFixGuidance({ finding }: { finding: AuditFinding }) {
   const [copied, setCopied] = useState(false);
 
   const brief = [
-    `Finding: ${finding.title}`,
-    finding.description ? `\nDescription: ${finding.description}` : '',
-    finding.recommendation ? `\nRecommendation: ${finding.recommendation}` : '',
+    `Finding: ${getDisplayTitle(finding)}`,
+    getWhatFound(finding) ? `\nDescription: ${getWhatFound(finding)}` : '',
+    getFixPlain(finding) ? `\nRecommendation: ${getFixPlain(finding)}` : '',
     finding.page_url ? `\nPage: ${finding.page_url}` : '',
+    ...(hasCommunication(finding) && getTechnicalNote(finding)
+      ? [`\nTechnical note: ${getTechnicalNote(finding)}`]
+      : []),
   ].filter(Boolean).join('');
 
   const handleCopy = () => {
@@ -917,6 +929,59 @@ function ReversibilityNotice() {
   );
 }
 
+/* ── Technical Details Expandable Section ────────────────── */
+
+function TechnicalDetailsSection({ finding }: { finding: AuditFinding }) {
+  const [open, setOpen] = useState(false);
+  const note = getTechnicalNote(finding);
+  const techFix = getFixTechnical(finding);
+  if (!note && !techFix) return null;
+
+  return (
+    <div
+      className="rounded-md overflow-hidden"
+      style={{ border: '1px solid var(--rule)' }}
+    >
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        className="w-full flex items-center gap-2 px-3 py-2 text-[11px] font-medium text-left"
+        style={{ background: 'var(--paper-2)', color: 'var(--m-muted)' }}
+        aria-expanded={open}
+      >
+        <Code size={10} className="flex-shrink-0" />
+        <span>Technical details</span>
+        <span className="ml-auto text-[10px]">{open ? '▲' : '▼'}</span>
+      </button>
+      {open && (
+        <div className="px-3 py-2.5 space-y-2 text-[11.5px] leading-[1.6]" style={{ background: '#ffffff' }}>
+          {note && (
+            <div>
+              <span className="text-[10px] font-semibold uppercase tracking-[0.06em] block mb-0.5" style={{ color: 'var(--m-muted)' }}>
+                Note
+              </span>
+              <p style={{ color: 'var(--ink-2)' }}>{note}</p>
+            </div>
+          )}
+          {techFix && (
+            <div>
+              <span className="text-[10px] font-semibold uppercase tracking-[0.06em] block mb-0.5" style={{ color: 'var(--m-muted)' }}>
+                Technical fix
+              </span>
+              <div
+                className="px-2.5 py-1.5 rounded text-[11px] font-mono leading-relaxed whitespace-pre-wrap"
+                style={{ background: 'var(--paper-2)', color: 'var(--ink-2)' }}
+              >
+                {techFix}
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
 /* ── Handoff Panel (read-only + Copy/Download) ────────────── */
 
 function HandoffPanel({
@@ -946,17 +1011,23 @@ function HandoffPanel({
       return;
     }
     const md = [
-      `# ${finding.title}`,
+      `# ${getDisplayTitle(finding)}`,
       '',
       `## Finding`,
-      finding.description || '(no description)',
+      getWhatFound(finding) || '(no description)',
       '',
       `## Recommended fix`,
       patch,
       '',
       `## Business impact`,
-      finding.estimated_impact || '(not captured)',
+      getWhyMatters(finding) || '(not captured)',
       '',
+      ...(hasCommunication(finding) && getTechnicalNote(finding)
+        ? [`## Technical details`, getTechnicalNote(finding)!, '']
+        : []),
+      ...(hasCommunication(finding) && getFixTechnical(finding)
+        ? [`## Technical fix`, getFixTechnical(finding)!, '']
+        : []),
     ].join('\n');
     downloadFile(`${base}.md`, md, 'text/markdown');
   };
@@ -986,6 +1057,11 @@ function HandoffPanel({
           </span>
         )}
       </div>
+
+      {/* Technical details expandable — shown when dual-layer communication is available */}
+      {hasCommunication(finding) && getTechnicalNote(finding) && (
+        <TechnicalDetailsSection finding={finding} />
+      )}
 
       {/* Copy / Download bar */}
       <div className="flex items-center gap-2">
@@ -1117,7 +1193,7 @@ function SelfServeConsole({
 }) {
   const { workspaceSlug: _ws } = useWorkspace();
   const _dp = _ws ? `/dashboard/${_ws}` : '/dashboard';
-  const initialPatch = (finding.recommendation || '').trim();
+  const initialPatch = (getFixPlain(finding) || '').trim();
   const [patch, setPatch] = useState<string>(initialPatch);
 
   // Report patch changes to parent for live preview
@@ -1656,6 +1732,11 @@ function SelfServeConsole({
         impact={impact}
         deployable={deployable}
       />
+
+      {/* Technical details expandable — shown when dual-layer communication is available */}
+      {hasCommunication(finding) && getTechnicalNote(finding) && (
+        <TechnicalDetailsSection finding={finding} />
+      )}
 
       {/* ── Section 1: Review the fix ─────────────────────── */}
       <div>
@@ -2297,7 +2378,7 @@ export default function FixConsole({
   const [deferPending, setDeferPending] = useState(false);
 
   const fixType = useMemo(() => inferFixType(finding), [finding]);
-  const basePatch = (finding.recommendation || '').trim();
+  const basePatch = (getFixPlain(finding) || '').trim();
 
   // ── Persist action mode selection to DB ──────────────────
   const handleModeSelect = async (mode: ActionMode) => {

@@ -22,6 +22,7 @@ import {
   ListChecks,
 } from 'lucide-react';
 import type { AuditFinding } from '@/types/database';
+import { getDisplayTitle, getFixPlain } from '@/lib/finding-communication-helpers';
 
 export interface RankedFinding {
   finding: AuditFinding;
@@ -150,7 +151,7 @@ const FixQueue: React.FC<FixQueueProps> = ({ items, total, onSelect, emptyMessag
                     </div>
 
                     <p className="text-[13px] font-medium text-ink leading-snug line-clamp-2">
-                      {finding.title}
+                      {getDisplayTitle(finding)}
                     </p>
 
                     {finding.page_url && (
@@ -168,10 +169,10 @@ const FixQueue: React.FC<FixQueueProps> = ({ items, total, onSelect, emptyMessag
                     >
                       {status.label}
                     </span>
-                    {finding.recommendation && (
+                    {getFixPlain(finding) && (
                       <button
                         type="button"
-                        onClick={() => handleCopy(finding.id, finding.recommendation)}
+                        onClick={() => handleCopy(finding.id, getFixPlain(finding))}
                         title="Copy recommendation"
                         className="p-1.5 rounded-md text-m-muted hover:text-ink hover:bg-paper-2 transition-colors"
                       >

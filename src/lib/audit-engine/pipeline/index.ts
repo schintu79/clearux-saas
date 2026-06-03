@@ -218,6 +218,15 @@ export {
   runFullReconciliation,
 } from './reconciliation-persist'
 
+// ── Step 14: Communication Layer ───────────────────────────
+export {
+  enrichWithCommunication,
+  buildCommunicationForGenericFinding,
+  buildCommunicationFromAnalysis,
+  synthesizeCommunication,
+} from './communication-layer'
+export type { FindingWithCommunication, GenericFinding } from './communication-layer'
+
 // ── Step 10-11 (Legacy): Original Reconciliation ───────────
 export {
   reconcileFindings,

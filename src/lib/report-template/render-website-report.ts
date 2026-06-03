@@ -6,6 +6,7 @@
 import { CHECKPOINT_LABELS } from '@/lib/audit-checkpoints'
 import { getScoreLabel, getSeverityLabel } from '@/lib/languages'
 import { CATEGORY_KEYWORDS } from '@/lib/audit-engine/pipeline/category-keywords'
+import { getDisplayTitle, getWhatFound, getWhyMatters, getFixPlain } from '@/lib/finding-communication-helpers'
 
 /* ── Pillar definitions (matches dashboard PILLAR_STYLE) ───── */
 const PILLAR_DEFS = [
@@ -336,6 +337,11 @@ export function renderWebsiteReport(data: WebsiteReportData): string {
           } catch { pageDisplay = f.page_url }
         }
 
+        const displayTitle = getDisplayTitle(f)
+        const whatFound = getWhatFound(f)
+        const fixPlain = getFixPlain(f)
+        const whyMatters = getWhyMatters(f)
+
         findingBlocks.push(`
     <div class="finding">
       <div class="finding-bar ${sev}"></div>
@@ -344,17 +350,17 @@ export function renderWebsiteReport(data: WebsiteReportData): string {
           <span class="sev-badge ${sev}">${esc(getSeverityLabel(sev, lang))}</span>
           ${pageDisplay ? `<span class="finding-page">${esc(pageDisplay)}</span>` : ''}
         </div>
-        <div class="finding-title">${esc(f.title)}</div>
-        <div class="finding-desc">${esc(f.description)}</div>
-        ${f.recommendation ? `
+        <div class="finding-title">${esc(displayTitle)}</div>
+        <div class="finding-desc">${esc(whatFound)}</div>
+        ${fixPlain ? `
         <div class="finding-box box-rec">
           <div class="finding-box-label">Recommendation</div>
-          <div>${esc(f.recommendation)}</div>
+          <div>${esc(fixPlain)}</div>
         </div>` : ''}
-        ${f.estimated_impact ? `
+        ${whyMatters ? `
         <div class="finding-box box-impact">
           <div class="finding-box-label">Expected impact</div>
-          <div>${esc(f.estimated_impact)}</div>
+          <div>${esc(whyMatters)}</div>
         </div>` : ''}
       </div>
     </div>`)
