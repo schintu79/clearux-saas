@@ -122,7 +122,19 @@ export async function POST(
 
     return NextResponse.json({ suggestion, applied })
   } catch (err) {
-    console.error('POST /api/brand-identities/[id]/analyze-files error:', err)
-    return NextResponse.json({ error: 'Analysis failed' }, { status: 500 })
+    const msg = err instanceof Error ? err.message : 'Unknown error'
+    console.error('POST /api/brand-identities/[id]/analyze-files error:', msg, err)
+
+    // Surface actionable messages instead of a generic "Analysis failed"
+    let userMessage = 'File analysis failed. Try again.'
+    if (msg.includes('ANTHROPIC_API_KEY')) {
+      userMessage = 'AI service not configured — contact support.'
+    } else if (msg.includes('Failed to fetch file')) {
+      userMessage = 'Could not read uploaded files from storage. Re-upload and try again.'
+    } else if (msg.includes('timeout') || msg.includes('ETIMEDOUT')) {
+      userMessage = 'Analysis timed out — try with fewer or smaller files.'
+    }
+
+    return NextResponse.json({ error: userMessage }, { status: 500 })
   }
 }

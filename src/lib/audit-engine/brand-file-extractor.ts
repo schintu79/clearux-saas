@@ -72,16 +72,22 @@ async function describeImage(
           },
           {
             type: 'text',
-            text: `You are analyzing brand identity materials. Describe this image in detail for a brand audit:
+            text: `You are analyzing brand identity materials. Describe this image in detail for a brand audit.
 
-1. **Visual elements**: Colors used (with approximate hex values if possible), typography styles, logo presence and design, imagery style, layout structure.
+IMPORTANT: Start your response with one of these classifications:
+- "This image is a LOGO" if it shows a company/brand logo, wordmark, or logotype
+- "This image is an ICON" if it shows an app icon, favicon, or symbol mark
+- "This image is a BRAND ASSET" for other brand materials
+
+Then describe:
+1. **Visual elements**: Colors used (with approximate hex values if possible), typography styles, imagery style, layout structure.
 2. **Text content**: Transcribe ALL visible text exactly as it appears.
-3. **Brand impression**: What professional impression does this material give? What industry/audience does it seem targeted at?
-4. **Quality assessment**: Note any quality issues (low resolution, inconsistent spacing, alignment problems, etc.).
+3. **Brand impression**: What professional impression does this material give?
+4. **Quality assessment**: Note any quality issues (low resolution, inconsistent spacing, etc.).
 
 File name: ${fileName}
 
-Be thorough — this description will be used by another AI to evaluate design consistency against brand standards.`,
+Be thorough — this description will be used by another AI to evaluate design consistency.`,
           },
         ],
       },
@@ -492,14 +498,17 @@ async function classifyFileContent(
     const nameLower = extracted.fileName.toLowerCase()
     const looksLikeLogo = /logo|logotype|wordmark|brand.?mark/i.test(nameLower) || /logo|logotype|wordmark/i.test(content)
     const looksLikeIcon = /icon|favicon|mark|symbol/i.test(nameLower) || /icon|favicon|app.?icon/i.test(content)
+    // Logo takes priority — if it looks like a logo, it IS a logo even if "icon" is also mentioned
+    const isLogo = looksLikeLogo
+    const isIcon = looksLikeIcon && !looksLikeLogo
     return {
       hasVoice: false, voice: null, toneKeywords: [],
       hasColours: false, colours: [],
       hasPromise: false, promise: null,
-      isLogo: looksLikeLogo && !looksLikeIcon,
-      isIcon: looksLikeIcon,
+      isLogo,
+      isIcon,
       isBrandGuide: false,
-      classificationLabel: looksLikeLogo ? 'Logo' : looksLikeIcon ? 'Icon / mark' : 'Image asset',
+      classificationLabel: isLogo ? 'Logo' : isIcon ? 'Icon / mark' : 'Image asset',
       confidence: 'medium',
     }
   }
@@ -509,15 +518,18 @@ async function classifyFileContent(
     const hasLogo = /logo|logotype|wordmark|brand.?mark/i.test(content)
     const hasIcon = /icon|favicon|app.?icon|symbol/i.test(content)
     const hexMatches = content.match(/#(?:[0-9a-fA-F]{3}){1,2}\b/g) || []
+    // Logo takes priority — Claude often says "brand logo and icon" for a single image
+    const isLogo = hasLogo
+    const isIcon = hasIcon && !hasLogo
     return {
       hasVoice: false, voice: null, toneKeywords: [],
       hasColours: hexMatches.length > 0,
       colours: [...new Set(hexMatches.map(c => c.toUpperCase()))].slice(0, 12),
       hasPromise: false, promise: null,
-      isLogo: hasLogo && !hasIcon,
-      isIcon: hasIcon,
+      isLogo,
+      isIcon,
       isBrandGuide: false,
-      classificationLabel: hasLogo ? 'Logo' : hasIcon ? 'Icon / mark' : 'Image asset',
+      classificationLabel: isLogo ? 'Logo' : isIcon ? 'Icon / mark' : 'Image asset',
       confidence: hexMatches.length > 0 ? 'medium' : 'low',
     }
   }

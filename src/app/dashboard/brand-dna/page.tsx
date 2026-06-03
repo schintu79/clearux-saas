@@ -390,6 +390,19 @@ function BrandDnaPage() {
             body: JSON.stringify({ active_brand_identity_id: latest.id }),
           }).catch(() => {}); // fire-and-forget
         }
+
+        // Self-heal: auto-populate website_url from workspace primary_domain
+        if (!latest.website_url && workspace.primary_domain) {
+          const domain = workspace.primary_domain;
+          const url = domain.startsWith('http') ? domain : `https://${domain}`;
+          latest.website_url = url; // update local copy immediately
+          fetch(`/api/brand-identities/${latest.id}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ website_url: url }),
+          }).catch(() => {}); // fire-and-forget persist
+        }
+
         return latest;
       }
 
@@ -590,7 +603,7 @@ function BrandDnaPage() {
     }
   };
 
-  /* ── Auto-analyze after upload (fire-and-forget) ── */
+  /* ── Auto-analyze after upload ── */
   const autoAnalyzeAfterUpload = async (brandId: string) => {
     setAnalyzing(true);
     setSuggestion(null);
@@ -600,15 +613,18 @@ function BrandDnaPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({}),
       });
-      if (!res.ok) throw new Error('Analysis failed');
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        throw new Error(body.error || 'Analysis failed');
+      }
       const data = await res.json();
       setSuggestion(data.suggestion || null);
       // Reload identity to pick up file tags from classification
       const refreshed = await loadIdentity();
       if (refreshed) setIdentity(refreshed);
-    } catch {
-      // Silently fail — user can still trigger manually
-      console.warn('Auto-analysis after upload failed');
+    } catch (err) {
+      console.warn('Auto-analysis after upload failed:', err);
+      setError(err instanceof Error ? err.message : 'File analysis failed. Try again.');
     } finally { setAnalyzing(false); }
   };
 
@@ -628,17 +644,24 @@ function BrandDnaPage() {
     if (!identity) return;
     setAnalyzing(true);
     setSuggestion(null);
+    setError(null);
     try {
       const res = await fetch(`/api/brand-identities/${identity.id}/analyze-files`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({}),
       });
-      if (!res.ok) throw new Error('Analysis failed');
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        throw new Error(body.error || 'Analysis failed');
+      }
       const data = await res.json();
       setSuggestion(data.suggestion || null);
-    } catch {
-      setError('File analysis failed. Try again.');
+      // Reload identity to pick up file tags
+      const refreshed = await loadIdentity();
+      if (refreshed) setIdentity(refreshed);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'File analysis failed. Try again.');
     } finally { setAnalyzing(false); }
   };
 
