@@ -75,17 +75,26 @@ export async function getInterrogationUsage(
   // 2. Count completed/partial interrogations for this workspace in period
   let checksUsed = 0
 
-  if (hasActiveSub && periodStart) {
+  if (hasActiveSub || checksLimit > 0) {
     let query = db
       .from('workspace_ai_interrogations')
       .select('id', { count: 'exact', head: true })
       .eq('workspace_id', workspaceId)
       .eq('user_id', userId)
       .in('status', ['completed', 'partial'])
-      .gte('created_at', periodStart)
 
-    if (periodEnd) {
-      query = query.lte('created_at', periodEnd)
+    // Scope to billing period if available; otherwise fall back to
+    // current calendar month so checks don't accumulate forever.
+    if (periodStart) {
+      query = query.gte('created_at', periodStart)
+      if (periodEnd) {
+        query = query.lte('created_at', periodEnd)
+      }
+    } else {
+      // No billing period set — use start of current calendar month
+      const now = new Date()
+      const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString()
+      query = query.gte('created_at', monthStart)
     }
 
     const { count } = await query
@@ -94,7 +103,7 @@ export async function getInterrogationUsage(
 
   // 3. Derive remaining and permission flag
   const checksRemaining = Math.max(0, checksLimit - checksUsed)
-  const canInterrogate = hasActiveSub && checksUsed < checksLimit
+  const canInterrogate = (hasActiveSub || checksLimit > 0) && checksUsed < checksLimit
 
   return {
     checksUsed,

@@ -399,7 +399,7 @@ export default function IntelligencePage() {
       const res = await fetch(`/api/ai-interrogation/questions?workspace_id=${workspaceId}`);
       if (!res.ok) return;
       const data = await res.json();
-      setIqQuestions((data.questions ?? []).slice(0, 5));
+      setIqQuestions((data.questions ?? []).slice(0, 10));
     } catch { /* silent */ } finally {
       setIqQuestionsLoading(false);
     }
@@ -1783,85 +1783,12 @@ export default function IntelligencePage() {
             </DashCard>
           )}
 
-          {/* ── Question-grouped responses ── */}
-          {questionGroups.length > 0 && (
-            <DashCard>
-              <div className="flex items-center gap-2 mb-1">
-                <MessageSquare size={15} strokeWidth={1.75} style={{ color: 'var(--ink)' }} />
-                <h2 className="text-[15px] font-semibold" style={{ color: 'var(--ink)' }}>What AI models say about you</h2>
-              </div>
-              <p className="text-[13px] mb-4" style={{ color: 'var(--m-muted)' }}>
-                We asked each AI model the same questions about your brand. Expand a question to see how each model answered and whether its response matches your website.
-              </p>
-              <div className="space-y-2">
-                {questionGroups.map((group, i) => {
-                  const expanded = expandedQuestion === i;
-                  const accurate = group.answers.filter(a => normalizeAccuracy(a.accuracy) === 'Accurate').length;
-                  const partial = group.answers.filter(a => normalizeAccuracy(a.accuracy) === 'Partial').length;
-                  const wrong = group.answers.length - accurate - partial;
-                  return (
-                    <div key={i} className="rounded-lg overflow-hidden" style={{ border: '1px solid var(--rule)' }}>
-                      <button
-                        onClick={() => setExpandedQuestion(expanded ? null : i)}
-                        className="w-full flex items-center gap-3 px-4 py-3.5 text-left transition-colors hover:bg-black/[0.02]"
-                      >
-                        <div className="flex-1 min-w-0">
-                          <p className="text-[15px] font-medium" style={{ color: 'var(--ink)' }}>{group.question}</p>
-                        </div>
-                        <div className="flex items-center gap-2 flex-shrink-0">
-                          {accurate > 0 && (
-                            <span className="text-[11px] font-medium px-1.5 py-0.5 rounded" style={{ background: 'rgba(34,197,94,0.1)', color: 'var(--ok)' }}>{accurate} accurate</span>
-                          )}
-                          {partial > 0 && (
-                            <span className="text-[11px] font-medium px-1.5 py-0.5 rounded" style={{ background: 'rgba(234,179,8,0.1)', color: 'var(--warn)' }}>{partial} partial</span>
-                          )}
-                          {wrong > 0 && (
-                            <span className="text-[11px] font-medium px-1.5 py-0.5 rounded" style={{ background: 'rgba(239,68,68,0.1)', color: 'var(--severe)' }}>{wrong} wrong</span>
-                          )}
-                          <ChevronDown size={14} style={{ color: 'var(--m-muted)', transform: expanded ? 'rotate(180deg)' : 'none', transition: 'transform 150ms' }} />
-                        </div>
-                      </button>
-                      {expanded && (
-                        <div className="px-4 pb-4">
-                          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                            {group.answers.map((a) => {
-                              const ac = accuracyColor(a.accuracy);
-                              return (
-                                <div key={a.model_id} className="rounded-lg p-4" style={{ background: 'var(--paper-2)', border: '1px solid var(--rule)' }}>
-                                  <div className="flex items-center justify-between mb-2">
-                                    <div className="flex items-center gap-2">
-                                      <AIProviderIcon provider={providerKeyToIcon(a.model_id) ?? 'chatgpt'} size={16} />
-                                      <span className="text-[12px] font-semibold" style={{ color: 'var(--ink)' }}>{a.model_label}</span>
-                                    </div>
-                                    {a.accuracy && (
-                                      <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full" style={{ background: ac.bg, color: ac.color }}>
-                                        {normalizeAccuracy(a.accuracy)}
-                                      </span>
-                                    )}
-                                  </div>
-                                  <p className="text-[13px] leading-relaxed" style={{ color: 'var(--m-muted)' }}>{a.answer}</p>
-                                  {a.accuracyNote && (
-                                    <p className="text-[11px] mt-2 pt-2 italic" style={{ color: 'var(--m-muted)', borderTop: '1px solid var(--rule)', opacity: 0.8 }}>{a.accuracyNote}</p>
-                                  )}
-                                </div>
-                              );
-                            })}
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  );
-                })}
-              </div>
-            </DashCard>
-          )}
-
-          {/* ── Ask AI models (interrogation) ────────────────── */}
+          {/* ── What AI models say about you (unified) ────────── */}
           <DashCard>
             <div className="flex items-center justify-between mb-1">
               <div className="flex items-center gap-2">
-                <Bot size={15} strokeWidth={1.75} style={{ color: 'var(--ink)' }} />
-                <h2 className="text-[15px] font-semibold" style={{ color: 'var(--ink)' }}>Ask AI models about your brand</h2>
+                <MessageSquare size={15} strokeWidth={1.75} style={{ color: 'var(--ink)' }} />
+                <h2 className="text-[15px] font-semibold" style={{ color: 'var(--ink)' }}>What AI models say about you</h2>
               </div>
               {iqUsage && (
                 <span className="text-[11px] font-medium px-2 py-0.5 rounded-full" style={{ background: 'var(--paper-2)', color: 'var(--m-muted)' }}>
@@ -1873,139 +1800,251 @@ export default function IntelligencePage() {
               Pick a question and choose which AI models to ask. See how each one describes your brand in real time.
             </p>
 
-            {/* Model selector */}
-            <div className="flex items-center gap-2 mb-4 flex-wrap">
-              <span className="text-[11px] font-semibold" style={{ color: 'var(--m-muted)' }}>Models:</span>
-              {IQ_MODEL_DISPLAY.map((m) => {
-                const selected = iqSelectedModels.includes(m.slug);
-                const provider = providerKeyToIcon(m.shortId);
-                return (
-                  <button
-                    key={m.slug}
-                    onClick={() => toggleIqModel(m.slug)}
-                    disabled={iqRunning}
-                    className="flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-medium transition-all"
-                    style={{
-                      background: selected ? 'var(--ink)' : 'var(--paper-2)',
-                      color: selected ? 'var(--paper)' : 'var(--m-muted)',
-                      border: `1px solid ${selected ? 'var(--ink)' : 'var(--rule)'}`,
-                      opacity: iqRunning ? 0.5 : 1,
-                    }}
-                  >
-                    {provider && <AIProviderIcon provider={provider} size={12} />}
-                    {provider ? PROVIDER_LABEL[provider] : m.shortId}
-                  </button>
-                );
-              })}
-              {iqSelectedModels.length >= IQ_MAX_MODELS && (
-                <span className="text-[10px]" style={{ color: 'var(--m-muted)' }}>max {IQ_MAX_MODELS}</span>
-              )}
-            </div>
-
-            {/* Question pills */}
-            {iqQuestionsLoading ? (
-              <div className="flex items-center gap-2 py-4">
-                <Loader2 size={14} className="animate-spin" style={{ color: 'var(--m-muted)' }} />
-                <span className="text-[12px]" style={{ color: 'var(--m-muted)' }}>Loading questions...</span>
-              </div>
-            ) : iqQuestions.length > 0 ? (
-              <div className="flex flex-wrap gap-2 mb-4">
-                {iqQuestions.map((q) => (
-                  <button
-                    key={q.questionId}
-                    onClick={() => handleIqAsk(q.questionText, q.family)}
-                    disabled={iqRunning || (iqUsage != null && !iqUsage.canInterrogate)}
-                    className="text-left px-3 py-2 rounded-lg text-[12px] leading-snug transition-all hover:shadow-sm"
-                    style={{
-                      background: iqActiveQuestion === q.questionText ? 'var(--ink)' : 'var(--paper-2)',
-                      color: iqActiveQuestion === q.questionText ? 'var(--paper)' : 'var(--ink)',
-                      border: `1px solid ${iqActiveQuestion === q.questionText ? 'var(--ink)' : 'var(--rule)'}`,
-                      opacity: (iqRunning && iqActiveQuestion !== q.questionText) ? 0.5 : 1,
-                    }}
-                  >
-                    {q.questionText}
-                  </button>
-                ))}
-              </div>
-            ) : (
-              <p className="text-[12px] py-2 mb-4" style={{ color: 'var(--m-muted)' }}>
-                No questions available yet. Run an audit to generate industry-specific questions.
-              </p>
-            )}
-
-            {/* Results */}
-            {iqResults.length > 0 && (
-              <div>
-                {iqActiveQuestion && (
-                  <p className="text-[14px] font-medium mb-3" style={{ color: 'var(--ink)' }}>
-                    {iqActiveQuestion}
+            {/* Split layout: left panel (models + questions) | right panel (answers) */}
+            <div className="flex flex-col lg:flex-row gap-4">
+              {/* ── Left panel: Models + Questions ── */}
+              <div className="lg:w-[340px] flex-shrink-0 space-y-4">
+                {/* Model selector */}
+                <div>
+                  <p className="text-[10px] font-semibold uppercase tracking-[0.06em] mb-2" style={{ color: 'var(--m-muted)' }}>
+                    Models {iqSelectedModels.length > 0 && <span className="normal-case font-normal">({iqSelectedModels.length}/{IQ_MAX_MODELS})</span>}
                   </p>
-                )}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                  {iqResults.map((r) => {
-                    const provider = providerKeyToIcon(r.modelShortId);
-                    const ac = accuracyColor(r.accuracy);
-                    const normAcc = normalizeAccuracy(r.accuracy);
-                    return (
-                      <div key={r.modelSlug} className="rounded-lg p-4" style={{ background: 'var(--paper-2)', border: '1px solid var(--rule)' }}>
-                        <div className="flex items-center justify-between mb-2">
-                          <div className="flex items-center gap-2">
-                            {provider && <AIProviderIcon provider={provider} size={16} />}
-                            <span className="text-[12px] font-semibold" style={{ color: 'var(--ink)' }}>{r.modelDisplayName}</span>
-                          </div>
-                          {r.status === 'running' && (
-                            <Loader2 size={12} className="animate-spin" style={{ color: 'var(--m-muted)' }} />
-                          )}
-                          {r.status === 'failed' && (
-                            <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full" style={{ background: 'rgba(239,68,68,0.1)', color: 'var(--severe)' }}>
-                              Error
-                            </span>
-                          )}
-                          {r.status !== 'running' && r.status !== 'failed' && normAcc && (
-                            <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full" style={{ background: ac.bg, color: ac.color }}>
-                              {normAcc}
-                            </span>
-                          )}
-                        </div>
-                        {r.status === 'running' ? (
-                          <div className="space-y-2">
-                            <div className="animate-pulse rounded h-3 w-full" style={{ background: 'var(--rule)' }} />
-                            <div className="animate-pulse rounded h-3 w-3/4" style={{ background: 'var(--rule)' }} />
-                            <div className="animate-pulse rounded h-3 w-1/2" style={{ background: 'var(--rule)' }} />
-                          </div>
-                        ) : r.status === 'failed' ? (
-                          <p className="text-[12px]" style={{ color: 'var(--severe)' }}>{r.error || 'Request failed'}</p>
-                        ) : (
-                          <p className="text-[13px] leading-relaxed" style={{ color: 'var(--m-muted)' }}>{r.responseText}</p>
-                        )}
-                        {r.accuracyNote && r.status !== 'running' && r.status !== 'failed' && (
-                          <p className="text-[11px] mt-2 pt-2 italic" style={{ color: 'var(--m-muted)', borderTop: '1px solid var(--rule)', opacity: 0.8 }}>{r.accuracyNote}</p>
-                        )}
-                        {r.themes && r.themes.length > 0 && r.status !== 'running' && r.status !== 'failed' && (
-                          <div className="flex flex-wrap gap-1 mt-2 pt-2" style={{ borderTop: r.accuracyNote ? 'none' : '1px solid var(--rule)' }}>
-                            {r.themes.map((t, i) => (
-                              <span key={i} className="text-[10px] px-1.5 py-0.5 rounded" style={{ background: 'var(--paper)', color: 'var(--m-muted)' }}>{t}</span>
-                            ))}
-                          </div>
-                        )}
-                      </div>
-                    );
-                  })}
+                  <div className="flex flex-wrap gap-1.5">
+                    {IQ_MODEL_DISPLAY.map((m) => {
+                      const selected = iqSelectedModels.includes(m.slug);
+                      const provider = providerKeyToIcon(m.shortId);
+                      return (
+                        <button
+                          key={m.slug}
+                          onClick={() => toggleIqModel(m.slug)}
+                          disabled={iqRunning}
+                          className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[11px] font-medium transition-all"
+                          style={{
+                            background: selected ? 'var(--ink)' : 'var(--paper-2)',
+                            color: selected ? 'var(--paper)' : 'var(--m-muted)',
+                            border: `1px solid ${selected ? 'var(--ink)' : 'var(--rule)'}`,
+                            opacity: iqRunning ? 0.5 : 1,
+                          }}
+                        >
+                          {provider && <AIProviderIcon provider={provider} size={12} />}
+                          {provider ? PROVIDER_LABEL[provider] : m.shortId}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* Questions list */}
+                <div>
+                  <p className="text-[10px] font-semibold uppercase tracking-[0.06em] mb-2" style={{ color: 'var(--m-muted)' }}>
+                    Questions
+                  </p>
+                  {iqQuestionsLoading ? (
+                    <div className="flex items-center gap-2 py-4">
+                      <Loader2 size={14} className="animate-spin" style={{ color: 'var(--m-muted)' }} />
+                      <span className="text-[12px]" style={{ color: 'var(--m-muted)' }}>Loading questions...</span>
+                    </div>
+                  ) : iqQuestions.length > 0 ? (
+                    <div className="space-y-1">
+                      {iqQuestions.map((q) => {
+                        const isActive = iqActiveQuestion === q.questionText;
+                        // Check if this question has audit probe results
+                        const probeGroup = questionGroups.find(g => g.question === q.questionText);
+                        const hasProbeResults = !!probeGroup;
+                        const probeAccurate = probeGroup ? probeGroup.answers.filter(a => normalizeAccuracy(a.accuracy) === 'Accurate').length : 0;
+                        const probePartial = probeGroup ? probeGroup.answers.filter(a => normalizeAccuracy(a.accuracy) === 'Partial').length : 0;
+                        const probeWrong = probeGroup ? probeGroup.answers.length - probeAccurate - probePartial : 0;
+                        return (
+                          <button
+                            key={q.questionId}
+                            onClick={() => handleIqAsk(q.questionText, q.family)}
+                            disabled={iqRunning || (iqUsage != null && !iqUsage.canInterrogate)}
+                            className="w-full text-left px-3 py-2.5 rounded-lg text-[12px] leading-snug transition-all hover:shadow-sm"
+                            style={{
+                              background: isActive ? 'var(--ink)' : 'var(--paper-2)',
+                              color: isActive ? 'var(--paper)' : 'var(--ink)',
+                              border: `1px solid ${isActive ? 'var(--ink)' : 'var(--rule)'}`,
+                              opacity: (iqRunning && !isActive) ? 0.5 : 1,
+                            }}
+                          >
+                            <span>{q.questionText}</span>
+                            {hasProbeResults && !isActive && (
+                              <div className="flex items-center gap-1.5 mt-1">
+                                {probeAccurate > 0 && (
+                                  <span className="text-[9px] font-medium px-1 py-0.5 rounded" style={{ background: 'rgba(34,197,94,0.1)', color: 'var(--ok)' }}>{probeAccurate} accurate</span>
+                                )}
+                                {probePartial > 0 && (
+                                  <span className="text-[9px] font-medium px-1 py-0.5 rounded" style={{ background: 'rgba(234,179,8,0.1)', color: 'var(--warn)' }}>{probePartial} partial</span>
+                                )}
+                                {probeWrong > 0 && (
+                                  <span className="text-[9px] font-medium px-1 py-0.5 rounded" style={{ background: 'rgba(239,68,68,0.1)', color: 'var(--severe)' }}>{probeWrong} wrong</span>
+                                )}
+                              </div>
+                            )}
+                          </button>
+                        );
+                      })}
+                      {/* Also show any probe questions NOT in the iq list */}
+                      {questionGroups.filter(g => !iqQuestions.some(q => q.questionText === g.question)).map((group, i) => {
+                        const isActive = iqActiveQuestion === group.question;
+                        const accurate = group.answers.filter(a => normalizeAccuracy(a.accuracy) === 'Accurate').length;
+                        const partial = group.answers.filter(a => normalizeAccuracy(a.accuracy) === 'Partial').length;
+                        const wrong = group.answers.length - accurate - partial;
+                        return (
+                          <button
+                            key={`probe-${i}`}
+                            onClick={() => handleIqAsk(group.question)}
+                            disabled={iqRunning || (iqUsage != null && !iqUsage.canInterrogate)}
+                            className="w-full text-left px-3 py-2.5 rounded-lg text-[12px] leading-snug transition-all hover:shadow-sm"
+                            style={{
+                              background: isActive ? 'var(--ink)' : 'var(--paper-2)',
+                              color: isActive ? 'var(--paper)' : 'var(--ink)',
+                              border: `1px solid ${isActive ? 'var(--ink)' : 'var(--rule)'}`,
+                              opacity: (iqRunning && !isActive) ? 0.5 : 1,
+                            }}
+                          >
+                            <span>{group.question}</span>
+                            {!isActive && (
+                              <div className="flex items-center gap-1.5 mt-1">
+                                {accurate > 0 && (
+                                  <span className="text-[9px] font-medium px-1 py-0.5 rounded" style={{ background: 'rgba(34,197,94,0.1)', color: 'var(--ok)' }}>{accurate} accurate</span>
+                                )}
+                                {partial > 0 && (
+                                  <span className="text-[9px] font-medium px-1 py-0.5 rounded" style={{ background: 'rgba(234,179,8,0.1)', color: 'var(--warn)' }}>{partial} partial</span>
+                                )}
+                                {wrong > 0 && (
+                                  <span className="text-[9px] font-medium px-1 py-0.5 rounded" style={{ background: 'rgba(239,68,68,0.1)', color: 'var(--severe)' }}>{wrong} wrong</span>
+                                )}
+                              </div>
+                            )}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  ) : (
+                    <p className="text-[12px] py-2" style={{ color: 'var(--m-muted)' }}>
+                      No questions available yet. Run an audit to generate industry-specific questions.
+                    </p>
+                  )}
+
+                  {/* Upgrade nudge */}
+                  {iqUsage && !iqUsage.canInterrogate && iqUsage.checksLimit > 0 && (
+                    <p className="text-[11px] mt-2 px-2" style={{ color: 'var(--m-muted)' }}>
+                      You have used all your AI checks for this period.
+                    </p>
+                  )}
+                  {iqUsage && iqUsage.checksLimit === 0 && (
+                    <p className="text-[11px] mt-2 px-2" style={{ color: 'var(--m-muted)' }}>
+                      Upgrade your plan to unlock AI interrogation checks.
+                    </p>
+                  )}
                 </div>
               </div>
-            )}
 
-            {/* Upgrade nudge if no checks available */}
-            {iqUsage && !iqUsage.canInterrogate && iqUsage.checksLimit > 0 && (
-              <p className="text-[12px] mt-2" style={{ color: 'var(--m-muted)' }}>
-                You have used all your AI checks for this period.
-              </p>
-            )}
-            {iqUsage && iqUsage.checksLimit === 0 && (
-              <p className="text-[12px] mt-2" style={{ color: 'var(--m-muted)' }}>
-                Upgrade your plan to unlock AI interrogation checks.
-              </p>
-            )}
+              {/* ── Right panel: Answers ── */}
+              <div className="flex-1 min-w-0">
+                {iqResults.length > 0 ? (
+                  <div>
+                    {iqActiveQuestion && (
+                      <p className="text-[14px] font-medium mb-3" style={{ color: 'var(--ink)' }}>
+                        {iqActiveQuestion}
+                      </p>
+                    )}
+                    <div className="space-y-3">
+                      {iqResults.map((r) => {
+                        const provider = providerKeyToIcon(r.modelShortId);
+                        const ac = accuracyColor(r.accuracy);
+                        const normAcc = normalizeAccuracy(r.accuracy);
+                        return (
+                          <div key={r.modelSlug} className="rounded-lg p-4" style={{ background: 'var(--paper-2)', border: '1px solid var(--rule)' }}>
+                            <div className="flex items-center justify-between mb-2">
+                              <div className="flex items-center gap-2">
+                                {provider && <AIProviderIcon provider={provider} size={16} />}
+                                <span className="text-[12px] font-semibold" style={{ color: 'var(--ink)' }}>{r.modelDisplayName}</span>
+                              </div>
+                              {r.status === 'running' && (
+                                <Loader2 size={12} className="animate-spin" style={{ color: 'var(--m-muted)' }} />
+                              )}
+                              {r.status === 'failed' && (
+                                <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full" style={{ background: 'rgba(239,68,68,0.1)', color: 'var(--severe)' }}>
+                                  Error
+                                </span>
+                              )}
+                              {r.status !== 'running' && r.status !== 'failed' && normAcc && (
+                                <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full" style={{ background: ac.bg, color: ac.color }}>
+                                  {normAcc}
+                                </span>
+                              )}
+                            </div>
+                            {r.status === 'running' ? (
+                              <div className="space-y-2">
+                                <div className="animate-pulse rounded h-3 w-full" style={{ background: 'var(--rule)' }} />
+                                <div className="animate-pulse rounded h-3 w-3/4" style={{ background: 'var(--rule)' }} />
+                                <div className="animate-pulse rounded h-3 w-1/2" style={{ background: 'var(--rule)' }} />
+                              </div>
+                            ) : r.status === 'failed' ? (
+                              <p className="text-[12px]" style={{ color: 'var(--severe)' }}>{r.error || 'Request failed'}</p>
+                            ) : (
+                              <p className="text-[13px] leading-relaxed" style={{ color: 'var(--m-muted)' }}>{r.responseText}</p>
+                            )}
+                            {r.accuracyNote && r.status !== 'running' && r.status !== 'failed' && (
+                              <p className="text-[11px] mt-2 pt-2 italic" style={{ color: 'var(--m-muted)', borderTop: '1px solid var(--rule)', opacity: 0.8 }}>{r.accuracyNote}</p>
+                            )}
+                            {r.themes && r.themes.length > 0 && r.status !== 'running' && r.status !== 'failed' && (
+                              <div className="flex flex-wrap gap-1 mt-2 pt-2" style={{ borderTop: r.accuracyNote ? 'none' : '1px solid var(--rule)' }}>
+                                {r.themes.map((t, ti) => (
+                                  <span key={ti} className="text-[10px] px-1.5 py-0.5 rounded" style={{ background: 'var(--paper)', color: 'var(--m-muted)' }}>{t}</span>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                ) : iqActiveQuestion == null && questionGroups.length > 0 ? (
+                  /* Show latest probe results when no active interrogation */
+                  <div>
+                    <p className="text-[14px] font-medium mb-3" style={{ color: 'var(--ink)' }}>
+                      {questionGroups[0].question}
+                    </p>
+                    <div className="space-y-3">
+                      {questionGroups[0].answers.map((a) => {
+                        const ac = accuracyColor(a.accuracy);
+                        return (
+                          <div key={a.model_id} className="rounded-lg p-4" style={{ background: 'var(--paper-2)', border: '1px solid var(--rule)' }}>
+                            <div className="flex items-center justify-between mb-2">
+                              <div className="flex items-center gap-2">
+                                <AIProviderIcon provider={providerKeyToIcon(a.model_id) ?? 'chatgpt'} size={16} />
+                                <span className="text-[12px] font-semibold" style={{ color: 'var(--ink)' }}>{a.model_label}</span>
+                              </div>
+                              {a.accuracy && (
+                                <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full" style={{ background: ac.bg, color: ac.color }}>
+                                  {normalizeAccuracy(a.accuracy)}
+                                </span>
+                              )}
+                            </div>
+                            <p className="text-[13px] leading-relaxed" style={{ color: 'var(--m-muted)' }}>{a.answer}</p>
+                            {a.accuracyNote && (
+                              <p className="text-[11px] mt-2 pt-2 italic" style={{ color: 'var(--m-muted)', borderTop: '1px solid var(--rule)', opacity: 0.8 }}>{a.accuracyNote}</p>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                ) : (
+                  /* Empty state */
+                  <div className="flex items-center justify-center h-full min-h-[200px] rounded-lg" style={{ background: 'color-mix(in srgb, var(--ink) 2%, transparent)', border: '1px dashed var(--rule)' }}>
+                    <div className="text-center px-6">
+                      <Bot size={24} className="mx-auto mb-2" style={{ color: 'var(--m-muted)', opacity: 0.4 }} />
+                      <p className="text-[13px] font-medium" style={{ color: 'var(--m-muted)' }}>Select a question to see what AI models say</p>
+                      <p className="text-[11px] mt-1" style={{ color: 'var(--m-muted)', opacity: 0.6 }}>Pick from the list on the left, then results appear here</p>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
           </DashCard>
 
           {/* ── Page-level AI readability (cross-link to Pages tab) ── */}
