@@ -13,6 +13,7 @@
 
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
+import { useSearchParams } from 'next/navigation';
 import {
   Fingerprint,
   FileText,
@@ -295,6 +296,7 @@ const READINESS_ITEMS: ReadinessItem[] = [
 export default function BrandDnaPage() {
   const { user, loading: authLoading } = useAuth();
   const { workspace, workspaceSlug, loading: wsLoading } = useWorkspace();
+  const searchParams = useSearchParams();
   const dashPrefix = workspaceSlug ? `/dashboard/${workspaceSlug}` : '/dashboard';
 
   /* ── Brand identity state ── */
@@ -362,7 +364,10 @@ export default function BrandDnaPage() {
     try {
       // Primary path: query brand_identities by workspace_id (single source of truth)
       const res = await fetch(`/api/brand-identities?workspace_id=${workspace.id}`);
-      if (!res.ok) throw new Error('Failed to load brand DNA');
+      if (!res.ok) {
+        console.error('[BrandDNA] loadIdentity failed:', res.status, res.statusText);
+        throw new Error('Failed to load brand DNA');
+      }
       const data = await res.json();
       const identities = data.identities || [];
 
@@ -381,7 +386,10 @@ export default function BrandDnaPage() {
       }
 
       return null;
-    } catch { return null; }
+    } catch (err) {
+      console.error('[BrandDNA] loadIdentity error:', err);
+      return null;
+    }
   }, [user, workspace]);
 
   /* ── Load latest brand audit for this identity ── */
@@ -451,6 +459,45 @@ export default function BrandDnaPage() {
     })();
     return () => { cancelled = true; };
   }, [authLoading, user, wsLoading, workspace, loadIdentity, loadBrandAudit]);
+
+  /* ── Fallback: retry load when redirected from brand creation ──
+   *  When the creation page does router.push() with ?newBrandId=...,
+   *  React state from refreshWorkspace() may not have committed yet,
+   *  causing the master useEffect to be skipped or to run with stale
+   *  context. This effect retries after a short delay to catch those
+   *  cases. It only fires once per newBrandId and cleans up the URL.
+   */
+  const retryAttemptedRef = useRef(false);
+  useEffect(() => {
+    const newBrandId = searchParams?.get('newBrandId');
+    if (!newBrandId || identity || loading || retryAttemptedRef.current) return;
+    // Only attempt once per mount
+    retryAttemptedRef.current = true;
+
+    const timer = setTimeout(async () => {
+      if (!user || !workspace) return;
+      try {
+        const res = await fetch(`/api/brand-identities?workspace_id=${workspace.id}`);
+        if (!res.ok) return;
+        const data = await res.json();
+        const identities = data.identities || [];
+        if (identities.length > 0) {
+          setIdentity(identities[0]);
+          setLoading(false);
+          // Clean up the URL param so it doesn't interfere on refresh
+          if (typeof window !== 'undefined') {
+            const url = new URL(window.location.href);
+            url.searchParams.delete('newBrandId');
+            window.history.replaceState({}, '', url.pathname);
+          }
+        }
+      } catch (err) {
+        console.error('[BrandDNA] newBrandId fallback error:', err);
+      }
+    }, 600);
+
+    return () => clearTimeout(timer);
+  }, [searchParams, identity, loading, user, workspace]);
 
   /* ── Poll in-progress audits ── */
   useEffect(() => {

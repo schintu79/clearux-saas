@@ -183,8 +183,10 @@ const NewBrandPage: React.FC = () => {
         }
       }
 
-      // 4. Navigate to Brand DNA page (workspace context is already fresh)
-      router.push(`${dashPrefix}/brand-dna`);
+      // 4. Navigate to Brand DNA page, passing the new identity ID so the
+      //    brand-dna page can load it directly (avoids React state timing issues
+      //    where refreshWorkspace() state updates haven't committed yet).
+      router.push(`${dashPrefix}/brand-dna?newBrandId=${brandId}`);
     } catch (err) {
       setErrorMsg(err instanceof Error ? err.message : 'Failed to create brand identity');
       setCreating(false);
