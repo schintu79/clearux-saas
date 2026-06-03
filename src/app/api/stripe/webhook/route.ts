@@ -14,6 +14,19 @@ import { inngest } from '@/lib/inngest/client'
 import { sendPaymentConfirmation, sendCreditsPurchased } from '@/lib/audit-engine/email'
 import { SUBSCRIPTION_PLANS } from '@/lib/pricing'
 
+/** Safely advance a date by one month without JS setMonth overflow.
+ *  Jan 31 → Feb 28, Mar 31 → Apr 30, etc. */
+function addOneMonth(date: Date): Date {
+  const result = new Date(date)
+  const day = result.getDate()
+  result.setMonth(result.getMonth() + 1)
+  // If the day rolled over (e.g. 31→3), clamp to last day of target month
+  if (result.getDate() !== day) {
+    result.setDate(0) // Go to last day of previous month (the target month)
+  }
+  return result
+}
+
 export async function POST(request: NextRequest) {
   try {
     const body = await request.text()
@@ -60,6 +73,11 @@ export async function POST(request: NextRequest) {
         // Use pricing.ts as source of truth for plan entitlements
         const planConfig = SUBSCRIPTION_PLANS.find((p) => p.id === planId)
         const reAuditsPerMonth = planConfig?.reAuditsPerMonth ?? 4
+        const deepAuditsPerMonth = planConfig?.deepAuditsPerMonth ?? 0
+
+        // Compute billing period from now
+        const now = new Date()
+        const periodEnd = addOneMonth(now)
 
         const { error } = await supabase
           .from('profiles')
@@ -71,8 +89,11 @@ export async function POST(request: NextRequest) {
             stripe_customer_id: session.customer,
             audits_remaining: reAuditsPerMonth,
             audits_per_month: reAuditsPerMonth,
+            deep_audits_per_month: deepAuditsPerMonth,
+            billing_period_start: now.toISOString(),
+            billing_period_end: periodEnd.toISOString(),
             package_tier: planId,
-            updated_at: new Date().toISOString(),
+            updated_at: now.toISOString(),
           } as any)
           .eq('id', userId)
 
@@ -81,7 +102,7 @@ export async function POST(request: NextRequest) {
           return NextResponse.json({ error: 'Failed to activate subscription' }, { status: 500 })
         }
 
-        console.log(`Subscription activated: user=${userId} plan=${planId} interval=${billingInterval} reAudits=${reAuditsPerMonth}`)
+        console.log(`Subscription activated: user=${userId} plan=${planId} interval=${billingInterval} reAudits=${reAuditsPerMonth} deepAudits=${deepAuditsPerMonth}`)
         return NextResponse.json({ received: true }, { status: 200 })
       }
 
@@ -257,22 +278,33 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ received: true }, { status: 200 })
       }
 
-      // Reset monthly audit allowance on renewal
+      // Reset billing period on renewal.
+      // Re-audit and deep audit usage are query-derived from audit records
+      // scoped to the billing period, so resetting the period window is
+      // all that's needed — no counter to touch.
       const { data: profiles } = await supabase
         .from('profiles')
-        .select('id, audits_per_month')
+        .select('id, subscription_plan, audits_per_month')
         .eq('stripe_subscription_id', subscriptionId)
 
       if (profiles && profiles.length > 0) {
         const p = profiles[0] as any
+        const planConfig = SUBSCRIPTION_PLANS.find((pl) => pl.id === p.subscription_plan)
+        const reAuditsPerMonth = planConfig?.reAuditsPerMonth ?? (p.audits_per_month ?? 0)
+
+        const now = new Date()
+        const periodEnd = addOneMonth(now)
+
         await supabase
           .from('profiles')
           .update({
-            audits_remaining: p.audits_per_month,
-            updated_at: new Date().toISOString(),
+            audits_remaining: reAuditsPerMonth, // Legacy counter — kept in sync for backward compat
+            billing_period_start: now.toISOString(),
+            billing_period_end: periodEnd.toISOString(),
+            updated_at: now.toISOString(),
           } as any)
           .eq('id', p.id)
-        console.log(`Subscription renewed: reset audits_remaining to ${p.audits_per_month} for user ${p.id}`)
+        console.log(`Subscription renewed: reset billing period for user ${p.id} (plan=${p.subscription_plan})`)
       }
       return NextResponse.json({ received: true }, { status: 200 })
     }
@@ -312,6 +344,9 @@ export async function POST(request: NextRequest) {
             stripe_subscription_id: null,
             audits_remaining: 0,
             audits_per_month: 0,
+            deep_audits_per_month: 0,
+            billing_period_start: null,
+            billing_period_end: null,
             updated_at: new Date().toISOString(),
           } as any)
           .eq('id', userId)

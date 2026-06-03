@@ -81,8 +81,12 @@ export interface Profile {
   subscription_interval: string | null  // 'monthly' | 'yearly' | null
   stripe_customer_id:    string | null
   stripe_subscription_id: string | null
-  audits_remaining:      number         // monthly allowance remaining
+  audits_remaining:      number         // monthly allowance remaining (legacy counter — prefer audit-usage.ts query)
   audits_per_month:      number         // monthly allowance total
+  deep_audits_per_month: number         // monthly deep-audit entitlement
+  // Billing period boundaries (set by Stripe webhook)
+  billing_period_start:  string | null  // ISO timestamp — start of current billing period
+  billing_period_end:    string | null  // ISO timestamp — end of current billing period
   // Admin role
   role:          'user' | 'admin' | 'super_admin'
   // Email preferences

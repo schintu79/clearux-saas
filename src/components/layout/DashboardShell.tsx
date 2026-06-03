@@ -105,6 +105,8 @@ const DashboardShell: React.FC<DashboardShellProps> = ({ children }) => {
     subscription_status: string | null;
     reaudits_remaining: number;
     reaudits_per_month: number;
+    deep_audits_remaining: number;
+    deep_audits_per_month: number;
     workspace_count: number;
     workspace_limit: number;
     first_audit_free: boolean;
@@ -148,6 +150,8 @@ const DashboardShell: React.FC<DashboardShellProps> = ({ children }) => {
         subscription_status: d.subscription_status ?? null,
         reaudits_remaining: d.reaudits_remaining ?? 0,
         reaudits_per_month: d.reaudits_per_month ?? 0,
+        deep_audits_remaining: d.deep_audits_remaining ?? 0,
+        deep_audits_per_month: d.deep_audits_per_month ?? 0,
         workspace_count: d.workspace_count ?? 0,
         workspace_limit: d.workspace_limit ?? 1,
         first_audit_free: d.first_audit_free ?? false,
@@ -674,6 +678,15 @@ const DashboardShell: React.FC<DashboardShellProps> = ({ children }) => {
                 >
                   {creditData.reaudits_remaining}/{creditData.reaudits_per_month} re-audits
                 </span>
+                {creditData.deep_audits_per_month > 0 && (
+                  <span
+                    className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-medium"
+                    style={{ background: 'color-mix(in srgb, var(--ink) 6%, transparent)', color: 'var(--ink-2)' }}
+                    title={`${creditData.deep_audits_remaining} of ${creditData.deep_audits_per_month} deep audits remaining this month`}
+                  >
+                    {creditData.deep_audits_remaining}/{creditData.deep_audits_per_month} deep
+                  </span>
+                )}
               </div>
             )}
             {creditData && !creditData.subscription_plan && creditData.credits > 0 && (

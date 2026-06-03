@@ -7,6 +7,15 @@ import { NextRequest, NextResponse } from 'next/server'
 import { requireAdmin } from '@/lib/admin'
 import { SUBSCRIPTION_PLANS } from '@/lib/pricing'
 
+/** Safely advance a date by one month without JS setMonth overflow. */
+function addOneMonth(date: Date): Date {
+  const result = new Date(date)
+  const day = result.getDate()
+  result.setMonth(result.getMonth() + 1)
+  if (result.getDate() !== day) result.setDate(0)
+  return result
+}
+
 export async function PATCH(request: NextRequest) {
   try {
     const auth = await requireAdmin()
@@ -54,10 +63,21 @@ export async function PATCH(request: NextRequest) {
       updates.subscription_plan = subscription_plan
       updates.subscription_status = subscription_plan ? 'active' : null
 
-      // Use pricing.ts as source of truth for re-audit allowance
+      // Use pricing.ts as source of truth for plan entitlements
       const planConfig = SUBSCRIPTION_PLANS.find((pl) => pl.id === subscription_plan)
       updates.audits_per_month = planConfig?.reAuditsPerMonth ?? 0
       updates.audits_remaining = updates.audits_per_month
+      updates.deep_audits_per_month = planConfig?.deepAuditsPerMonth ?? 0
+
+      // Set billing period if activating a plan
+      if (subscription_plan) {
+        const now = new Date()
+        updates.billing_period_start = now.toISOString()
+        updates.billing_period_end = addOneMonth(now).toISOString()
+      } else {
+        updates.billing_period_start = null
+        updates.billing_period_end = null
+      }
     }
 
     if (credits !== undefined && typeof credits === 'number') {
@@ -73,8 +93,16 @@ export async function PATCH(request: NextRequest) {
         }
         // Set generous audits for free members
         if (!updates.audits_per_month) {
-          updates.audits_per_month = 10
-          updates.audits_remaining = 10
+          const freePlan = SUBSCRIPTION_PLANS.find((pl) => pl.id === 'pro')
+          updates.audits_per_month = freePlan?.reAuditsPerMonth ?? 10
+          updates.audits_remaining = updates.audits_per_month
+          updates.deep_audits_per_month = freePlan?.deepAuditsPerMonth ?? 4
+        }
+        // Initialize billing period if not set
+        if (!p.billing_period_start) {
+          const now = new Date()
+          updates.billing_period_start = now.toISOString()
+          updates.billing_period_end = addOneMonth(now).toISOString()
         }
       }
     }

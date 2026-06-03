@@ -49,6 +49,12 @@ const NewAuditInner: React.FC = () => {
   const [generalError, setGeneralError] = useState('');
   const [credits, setCredits] = useState<number | null>(null);
   const [firstAuditFree, setFirstAuditFree] = useState(false);
+  const [canReaudit, setCanReaudit] = useState(false);
+  const [canDeepAudit, setCanDeepAudit] = useState(false);
+  const [reauditsRemaining, setReauditsRemaining] = useState(0);
+  const [reauditsPerMonth, setReauditsPerMonth] = useState(0);
+  const [deepAuditsRemaining, setDeepAuditsRemaining] = useState(0);
+  const [deepAuditsPerMonth, setDeepAuditsPerMonth] = useState(0);
 
   // Module selection (slug-based) — website audits only
   const [selectedModules, setSelectedModules] = useState<string[]>([...COMPLETE_AUDIT_SLUGS]);
@@ -81,7 +87,7 @@ const NewAuditInner: React.FC = () => {
     }
   }, [typeParam, searchParams, router]);
 
-  // Fetch credits + brand identities
+  // Fetch credits + subscription usage
   useEffect(() => {
     if (!user) return;
     fetch('/api/credits')
@@ -89,9 +95,14 @@ const NewAuditInner: React.FC = () => {
       .then((d) => {
         setCredits(d.credits ?? 0);
         if (d.first_audit_free) setFirstAuditFree(true);
+        setCanReaudit(d.can_reaudit ?? false);
+        setCanDeepAudit(d.can_deep_audit ?? false);
+        setReauditsRemaining(d.reaudits_remaining ?? 0);
+        setReauditsPerMonth(d.reaudits_per_month ?? 0);
+        setDeepAuditsRemaining(d.deep_audits_remaining ?? 0);
+        setDeepAuditsPerMonth(d.deep_audits_per_month ?? 0);
       })
       .catch(() => setCredits(0));
-
   }, [user]);
 
   // Check if current workspace has Brand DNA with files
@@ -193,7 +204,21 @@ const NewAuditInner: React.FC = () => {
     );
   }
 
-  const hasCredits = credits !== null && (credits > 0 || firstAuditFree);
+  // Determine if user can start this audit without Stripe checkout.
+  // Logic depends on audit type:
+  //   - Deep audit → needs deep audit allowance (subscription)
+  //   - Re-audit (standard) → needs re-audit allowance (subscription)
+  //   - Initial audit → needs credits or free first audit or re-audit allowance
+  const isDeepAudit = depthMode === 'deep';
+  const canStartAudit = credits !== null && (
+    isDeepAudit
+      ? canDeepAudit
+      : isReAudit
+        ? canReaudit
+        : (credits > 0 || firstAuditFree || canReaudit)
+  );
+  // Keep hasCredits as alias for backward compat in the template
+  const hasCredits = canStartAudit;
 
   const validateUrl = (value: string): boolean => {
     if (!value.trim()) {
@@ -403,12 +428,13 @@ const NewAuditInner: React.FC = () => {
       }
       if (!audit) throw new Error('Failed to create audit');
 
-      // Use credits
+      // Use credits / subscription allowance
+      // The backend derives billing class (initial/reaudit/deep) from the audit record.
       if (hasCredits) {
         const creditRes = await fetch('/api/credits', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ audit_id: audit.id, is_free_first: firstAuditFree }),
+          body: JSON.stringify({ audit_id: audit.id }),
         });
         const creditData = await creditRes.json();
         if (!creditRes.ok) {
@@ -766,22 +792,32 @@ const NewAuditInner: React.FC = () => {
         </div>
       )}
 
-      {/* Credits banner */}
+      {/* Usage banner — shows what resource this audit will consume */}
       {!firstAuditFree && credits !== null && hasCredits && (
         <div className="mb-6 p-4 rounded-xl" style={{ background: 'color-mix(in srgb, var(--ok) 6%, transparent)', border: '1px solid color-mix(in srgb, var(--ok) 20%, transparent)' }}>
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0" style={{ background: 'var(--ok)' }}>
-              <Coins size={18} className="text-white" />
+              {isDeepAudit ? <Zap size={18} className="text-white" /> : isReAudit ? <RefreshCw size={18} className="text-white" /> : <Coins size={18} className="text-white" />}
             </div>
             <div className="flex-1">
               <p className="text-sm font-medium text-text">
-                {credits} credit{credits !== 1 ? 's' : ''} available
+                {isDeepAudit
+                  ? `${deepAuditsRemaining} deep audit${deepAuditsRemaining !== 1 ? 's' : ''} remaining`
+                  : isReAudit
+                    ? `${reauditsRemaining} re-audit${reauditsRemaining !== 1 ? 's' : ''} remaining`
+                    : `${credits} credit${credits !== 1 ? 's' : ''} available`}
               </p>
               <p className="text-xs text-muted">
-                1 credit will be used. No payment needed.
+                {isDeepAudit
+                  ? `1 deep audit will be used. ${deepAuditsRemaining - 1} left this month.`
+                  : isReAudit
+                    ? `1 re-audit will be used. ${reauditsRemaining - 1} left this month.`
+                    : '1 credit will be used. No payment needed.'}
               </p>
             </div>
-            <span className="text-2xl font-sans font-normal" style={{ color: 'var(--ok)' }}>{credits}</span>
+            <span className="text-2xl font-sans font-normal" style={{ color: 'var(--ok)' }}>
+              {isDeepAudit ? deepAuditsRemaining : isReAudit ? reauditsRemaining : credits}
+            </span>
           </div>
         </div>
       )}
@@ -790,15 +826,29 @@ const NewAuditInner: React.FC = () => {
         <div className="mb-6 p-4 rounded-xl bg-off border border-border">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-text">No credits remaining</p>
-              <p className="text-xs text-muted">Subscribe or buy credits to run this audit.</p>
+              <p className="text-sm font-medium text-text">
+                {isDeepAudit
+                  ? 'Deep audit allowance exhausted'
+                  : isReAudit
+                    ? 'Re-audit allowance exhausted'
+                    : 'No credits remaining'}
+              </p>
+              <p className="text-xs text-muted">
+                {isDeepAudit
+                  ? `${deepAuditsPerMonth - deepAuditsRemaining}/${deepAuditsPerMonth} deep audits used this month. Resets next billing cycle.`
+                  : isReAudit
+                    ? `${reauditsPerMonth - reauditsRemaining}/${reauditsPerMonth} re-audits used this month. Resets next billing cycle.`
+                    : 'Subscribe or buy credits to run this audit.'}
+              </p>
             </div>
-            <Link
-              href={`${dashPrefix}/buy-credits`}
-              className="text-xs font-medium text-text hover:underline transition-colors whitespace-nowrap ml-3"
-            >
-              Buy credits &rarr;
-            </Link>
+            {!isDeepAudit && !isReAudit && (
+              <Link
+                href={`${dashPrefix}/buy-credits`}
+                className="text-xs font-medium text-text hover:underline transition-colors whitespace-nowrap ml-3"
+              >
+                Buy credits &rarr;
+              </Link>
+            )}
           </div>
         </div>
       )}
@@ -832,7 +882,11 @@ const NewAuditInner: React.FC = () => {
           </>
         ) : hasCredits ? (
           <>
-            Use 1 credit — start website audit
+            {isDeepAudit
+              ? 'Use 1 deep audit — start analysis'
+              : isReAudit
+                ? 'Use 1 re-audit — start website audit'
+                : 'Use 1 credit — start website audit'}
             <ArrowRight size={20} />
           </>
         ) : (
@@ -846,8 +900,12 @@ const NewAuditInner: React.FC = () => {
       <p className="text-center text-xs text-muted mt-4">
         {firstAuditFree
           ? 'Your first audit is on us. No credits will be deducted.'
-          : hasCredits
-          ? `1 credit will be deducted. ${(credits ?? 0) - 1} remaining after this audit.`
+          : isDeepAudit && canDeepAudit
+          ? `1 deep audit will be used. ${deepAuditsRemaining - 1} of ${deepAuditsPerMonth} remaining this month.`
+          : isReAudit && canReaudit
+          ? `1 re-audit will be used. ${reauditsRemaining - 1} of ${reauditsPerMonth} remaining this month.`
+          : hasCredits && credits !== null && credits > 0
+          ? `1 credit will be deducted. ${credits - 1} remaining after this audit.`
           : 'Secure payment via Stripe. Credits never expire.'}
       </p>
     </div>

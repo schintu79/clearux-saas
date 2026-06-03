@@ -1,17 +1,20 @@
 // ============================================================
 // Fixpath API — /api/credits
-// GET  → returns credit balance + subscription status + usage
-// POST → uses 1 credit or 1 re-audit allowance for an audit
+// GET  → returns full usage picture (canonical, query-derived)
+// POST → validates quota and starts an audit
+//
+// All usage counts come from audit-usage.ts — the single source
+// of truth. No decrement counters for re-audits or deep audits.
 // ============================================================
 
 import { NextRequest, NextResponse } from 'next/server'
 import { createServerSupabase, createServiceSupabase } from '@/lib/supabase-server'
 import { inngest } from '@/lib/inngest/client'
-import { SUBSCRIPTION_PLANS } from '@/lib/pricing'
+import { getAuditUsage, checkAuditQuota } from '@/lib/audit-usage'
 
 export const maxDuration = 300 // 5 minutes (Vercel Pro max)
 
-/* ── GET — credit balance + subscription + usage info ───── */
+/* ── GET — canonical usage from audit records ──────────────── */
 export async function GET(request: NextRequest) {
   try {
     const supabase = await createServerSupabase()
@@ -20,53 +23,34 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
     const db = createServiceSupabase()
-    const { data: profile } = await db
-      .from('profiles')
-      .select('credits, package_tier, subscription_plan, subscription_status, subscription_interval, audits_remaining, audits_per_month')
-      .eq('id', user.id)
-      .single()
-
-    // Check if user is eligible for a free first audit
-    const { count: completedAudits } = await db
-      .from('audits')
-      .select('id', { count: 'exact', head: true })
-      .eq('user_id', user.id)
-      .in('status', ['completed', 'failed', 'analysing', 'crawling', 'generating_report', 'payment_received'])
-
-    // Count active workspaces for limit enforcement
-    const { count: workspaceCount } = await db
-      .from('workspaces')
-      .select('id', { count: 'exact', head: true })
-      .eq('user_id', user.id)
-      .eq('status', 'active')
-
-    const firstAuditFree = (completedAudits ?? 0) === 0
-    const p = profile as any
-
-    // Derive workspace limit from plan using pricing.ts as source of truth
-    const plan = SUBSCRIPTION_PLANS.find((pl) => pl.id === p?.subscription_plan)
-    const workspaceLimit = plan?.workspaces ?? 1 // Free/no-plan users get 1 workspace
+    const usage = await getAuditUsage(user.id, db)
 
     return NextResponse.json({
-      credits: p?.credits ?? 0,
-      package_tier: p?.package_tier ?? 'starter',
-      first_audit_free: firstAuditFree,
-      // Subscription fields
-      subscription_plan: p?.subscription_plan ?? null,
-      subscription_status: p?.subscription_status ?? null,
-      subscription_interval: p?.subscription_interval ?? null,
-      // Re-audit allowance (monthly, resets on renewal)
-      reaudits_remaining: p?.audits_remaining ?? 0,
-      reaudits_per_month: p?.audits_per_month ?? 0,
+      // Credits (for initial audits — from credit packs)
+      credits: usage.credits,
+      first_audit_free: usage.first_audit_free,
+      // Subscription info
+      subscription_plan: usage.subscription_plan,
+      subscription_status: usage.subscription_status,
+      subscription_interval: usage.subscription_interval,
+      // Re-audit usage (query-derived, not counter)
+      reaudits_remaining: Math.max(0, usage.re_audits_limit - usage.re_audits_used),
+      reaudits_per_month: usage.re_audits_limit,
+      reaudits_used: usage.re_audits_used,
+      // Deep audit usage (query-derived)
+      deep_audits_remaining: Math.max(0, usage.deep_audits_limit - usage.deep_audits_used),
+      deep_audits_per_month: usage.deep_audits_limit,
+      deep_audits_used: usage.deep_audits_used,
       // Workspace usage
-      workspace_count: workspaceCount ?? 0,
-      workspace_limit: workspaceLimit,
-      // Can the user run an initial audit right now?
-      can_audit: firstAuditFree
-        || (p?.credits ?? 0) > 0
-        || (p?.subscription_status === 'active' && (p?.audits_remaining ?? 0) > 0),
-      // Can the user run a re-audit right now?
-      can_reaudit: p?.subscription_status === 'active' && (p?.audits_remaining ?? 0) > 0,
+      workspace_count: usage.workspaces_used,
+      workspace_limit: usage.workspaces_limit,
+      // Billing period
+      billing_period_start: usage.billing_period_start,
+      billing_period_end: usage.billing_period_end,
+      // Permission flags
+      can_audit: usage.can_initial_audit || usage.can_reaudit,
+      can_reaudit: usage.can_reaudit,
+      can_deep_audit: usage.can_deep_audit,
     })
   } catch (err) {
     console.error('GET /api/credits error:', err)
@@ -74,7 +58,7 @@ export async function GET(request: NextRequest) {
   }
 }
 
-/* ── POST — use 1 credit/subscription-audit for an audit ── */
+/* ── POST — validate quota and start an audit ──────────────── */
 export async function POST(request: NextRequest) {
   try {
     const supabase = await createServerSupabase()
@@ -82,121 +66,117 @@ export async function POST(request: NextRequest) {
     if (authError || !user)
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-    const { audit_id, is_free_first, is_reaudit } = await request.json()
+    const { audit_id } = await request.json()
     if (!audit_id)
       return NextResponse.json({ error: 'audit_id required' }, { status: 400 })
 
     const db = createServiceSupabase()
 
-    // Check if this is a free first audit
-    let usingFreeFirst = false
-    if (is_free_first) {
-      const { count: existingAudits } = await db
-        .from('audits')
-        .select('id', { count: 'exact', head: true })
-        .eq('user_id', user.id)
-        .in('status', ['completed', 'failed', 'analysing', 'crawling', 'generating_report', 'payment_received'])
-        .neq('id', audit_id)
+    // ── Canonical quota check ────────────────────────────────
+    // classifyAudit reads depth_mode + workspace history from the DB.
+    // checkAuditQuota then compares against period-scoped usage counts.
+    const quota = await checkAuditQuota(audit_id, user.id, db)
 
-      if ((existingAudits ?? 0) === 0) {
-        usingFreeFirst = true
-      }
+    if (!quota.allowed) {
+      return NextResponse.json({ error: quota.reason }, { status: 400 })
     }
 
-    if (!usingFreeFirst) {
-      const { data: profile } = await db
-        .from('profiles')
-        .select('credits, subscription_plan, subscription_status, audits_remaining')
-        .eq('id', user.id)
-        .single()
-
-      const p = profile as any
-      const hasSubscription = p?.subscription_status === 'active'
-      const subscriptionAuditsLeft = p?.audits_remaining ?? 0
-      const creditBalance = p?.credits ?? 0
-
-      // Re-audits consume monthly re-audit allowance (subscribers only)
-      if (is_reaudit) {
-        if (hasSubscription && subscriptionAuditsLeft > 0) {
-          // Decrement re-audit allowance
-          const { error: deductErr } = await db
-            .from('profiles')
-            .update({
-              audits_remaining: subscriptionAuditsLeft - 1,
-              updated_at: new Date().toISOString(),
-            } as any)
-            .eq('id', user.id)
-
-          if (deductErr) {
-            console.error('Re-audit allowance deduct error:', deductErr)
-            return NextResponse.json({ error: 'Failed to use re-audit allowance' }, { status: 500 })
-          }
-        } else if (hasSubscription && subscriptionAuditsLeft <= 0) {
-          return NextResponse.json({ error: 'Monthly re-audit allowance exhausted. Resets on your next billing cycle.' }, { status: 400 })
-        } else {
-          return NextResponse.json({ error: 'Re-audits require an active subscription.' }, { status: 400 })
-        }
-      } else if (creditBalance > 0) {
-        // Initial audits use credits (from credit packs)
+    // ── Deduct the correct resource ──────────────────────────
+    // Only credits need a counter decrement (they're a purchased balance).
+    // Re-audits and deep audits are limit-checked by query — the audit
+    // record itself IS the usage, no counter to touch.
+    if (quota.billing_class === 'initial_normal') {
+      // Check if free first audit
+      const usage = await getAuditUsage(user.id, db)
+      if (usage.first_audit_free) {
+        // No deduction needed
+      } else if (usage.credits > 0) {
+        // Deduct 1 credit
         const { error: deductErr } = await db
           .from('profiles')
           .update({
-            credits: creditBalance - 1,
+            credits: usage.credits - 1,
             updated_at: new Date().toISOString(),
           } as any)
           .eq('id', user.id)
-          .gte('credits', 1)
+          .gte('credits', 1) // Optimistic concurrency guard
 
         if (deductErr) {
           console.error('Credit deduct error:', deductErr)
           return NextResponse.json({ error: 'Failed to deduct credit' }, { status: 500 })
         }
+      } else if (usage.can_reaudit) {
+        // Subscriber using re-audit allowance for initial audit — no deduction,
+        // the audit record in the period is the usage itself
       } else {
-        return NextResponse.json({ error: 'No audits available. Buy credits to run an audit.' }, { status: 400 })
+        return NextResponse.json({ error: 'No credits available.' }, { status: 400 })
       }
     }
+    // For reaudit_normal and deep: no counter to decrement.
+    // The audit record already exists in the DB and will be counted
+    // by getAuditUsage() on the next call.
 
+    // ── Fetch updated balance for response ───────────────────
     const { data: updatedProfile } = await db
       .from('profiles')
-      .select('credits, audits_remaining')
+      .select('credits')
       .eq('id', user.id)
       .single()
     const balance = (updatedProfile as any)?.credits ?? 0
-    const auditsRemaining = (updatedProfile as any)?.audits_remaining ?? 0
 
-    // Create a payment record
+    // Re-derive usage after potential credit deduction
+    const finalUsage = await getAuditUsage(user.id, db)
+
+    // ── Create payment record ────────────────────────────────
+    const paymentRef = quota.billing_class === 'initial_normal'
+      ? (finalUsage.first_audit_free ? `free_first_${Date.now()}` : `credit_${Date.now()}`)
+      : quota.billing_class === 'reaudit_normal'
+        ? `reaudit_${Date.now()}`
+        : `deep_audit_${Date.now()}`
+
     await db.from('payments').insert({
       audit_id,
       user_id: user.id,
       amount_cents: 0,
       currency: 'usd',
       status: 'succeeded',
-      stripe_payment_intent_id: usingFreeFirst
-        ? `free_first_${Date.now()}`
-        : is_reaudit
-          ? `reaudit_${Date.now()}`
-          : `credit_${Date.now()}`,
+      stripe_payment_intent_id: paymentRef,
     } as any)
 
-    // Update audit status
+    // ── Update audit status to start pipeline ────────────────
     await db
       .from('audits')
-      .update({ status: 'payment_received', progress_percent: 1, audit_stage: 'preflight', updated_at: new Date().toISOString() } as any)
+      .update({
+        status: 'payment_received',
+        progress_percent: 1,
+        audit_stage: 'preflight',
+        updated_at: new Date().toISOString(),
+      } as any)
       .eq('id', audit_id)
 
-    // Log it
+    // ── Log it ───────────────────────────────────────────────
+    const logEvent = quota.billing_class === 'initial_normal'
+      ? (finalUsage.first_audit_free ? 'free_first_audit' : 'credit_used')
+      : quota.billing_class === 'reaudit_normal'
+        ? 'reaudit_used'
+        : 'deep_audit_used'
+
+    const logMessage = quota.billing_class === 'initial_normal'
+      ? (finalUsage.first_audit_free
+          ? 'Free first audit — no credit deducted'
+          : `1 credit deducted. Credits: ${balance}`)
+      : quota.billing_class === 'reaudit_normal'
+        ? `Re-audit used. ${finalUsage.re_audits_used}/${finalUsage.re_audits_limit} this period.`
+        : `Deep audit used. ${finalUsage.deep_audits_used}/${finalUsage.deep_audits_limit} this period.`
+
     await db.from('audit_logs').insert({
       audit_id,
-      event: usingFreeFirst ? 'free_first_audit' : is_reaudit ? 'reaudit_used' : 'credit_used',
+      event: logEvent,
       status: 'success',
-      message: usingFreeFirst
-        ? 'Free first audit — no credit deducted'
-        : is_reaudit
-          ? `Re-audit allowance used. Remaining: ${auditsRemaining}`
-          : `1 credit deducted. Credits: ${balance}`,
+      message: logMessage,
     } as any)
 
-    // Determine audit type and trigger processing
+    // ── Dispatch to Inngest ──────────────────────────────────
     const { data: auditRecord } = await db
       .from('audits')
       .select('audit_type, brand_identity_id, product_url')
@@ -206,18 +186,19 @@ export async function POST(request: NextRequest) {
     const auditType = ar?.audit_type || (ar?.brand_identity_id && !ar?.product_url ? 'brand_identity' : 'website')
     const eventName = auditType === 'brand_identity' ? 'brand-audit/process' : 'audit/process'
 
-    // Dispatch to Inngest only — no direct execution to prevent race conditions
-    console.log(`[credits] Dispatching ${auditType} audit ${audit_id} to Inngest`)
+    console.log(`[credits] Dispatching ${auditType} audit ${audit_id} to Inngest (class: ${quota.billing_class})`)
     inngest.send({ name: eventName, data: { auditId: audit_id } }).catch((err) => {
       console.error(`[credits] Failed to send Inngest event for audit ${audit_id}:`, err)
     })
 
     return NextResponse.json({
       success: true,
+      billing_class: quota.billing_class,
       credits_remaining: balance,
-      audits_remaining: auditsRemaining,
-      free_first: usingFreeFirst,
-      message: usingFreeFirst ? 'Free first audit started' : 'Audit processing started',
+      reaudits_remaining: Math.max(0, finalUsage.re_audits_limit - finalUsage.re_audits_used),
+      deep_audits_remaining: Math.max(0, finalUsage.deep_audits_limit - finalUsage.deep_audits_used),
+      free_first: quota.billing_class === 'initial_normal' && finalUsage.first_audit_free,
+      message: 'Audit processing started',
     })
   } catch (err) {
     console.error('POST /api/credits error:', err)

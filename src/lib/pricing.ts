@@ -11,6 +11,7 @@ export interface SubscriptionPlan {
   name: string
   workspaces: number
   reAuditsPerMonth: number
+  deepAuditsPerMonth: number
   monthlyPrice: number   // cents
   yearlyPrice: number    // cents per month (billed yearly)
   bestFor: string
@@ -24,12 +25,14 @@ export const SUBSCRIPTION_PLANS: SubscriptionPlan[] = [
     name: 'Starter',
     workspaces: 1,
     reAuditsPerMonth: 4,
+    deepAuditsPerMonth: 1,
     monthlyPrice: 2900,
     yearlyPrice: 2300,
     bestFor: 'One active site',
     features: [
       '1 workspace',
       '4 re-audits per month',
+      '1 deep audit per month',
       'Full product access',
       'PDF + DOCX reports',
     ],
@@ -39,6 +42,7 @@ export const SUBSCRIPTION_PLANS: SubscriptionPlan[] = [
     name: 'Pro',
     workspaces: 3,
     reAuditsPerMonth: 12,
+    deepAuditsPerMonth: 4,
     monthlyPrice: 5900,
     yearlyPrice: 4700,
     popular: true,
@@ -46,6 +50,7 @@ export const SUBSCRIPTION_PLANS: SubscriptionPlan[] = [
     features: [
       '3 workspaces',
       '12 re-audits per month',
+      '4 deep audits per month',
       'Full product access',
       'PDF + DOCX reports',
       'Priority processing',
@@ -56,12 +61,14 @@ export const SUBSCRIPTION_PLANS: SubscriptionPlan[] = [
     name: 'Team',
     workspaces: 10,
     reAuditsPerMonth: 40,
+    deepAuditsPerMonth: 15,
     monthlyPrice: 14900,
     yearlyPrice: 11900,
     bestFor: 'Agencies and teams',
     features: [
       '10 workspaces',
       '40 re-audits per month',
+      '15 deep audits per month',
       'Full product access',
       'PDF + DOCX reports',
       'Priority processing',
