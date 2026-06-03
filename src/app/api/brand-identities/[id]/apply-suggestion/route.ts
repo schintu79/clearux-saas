@@ -39,6 +39,7 @@ export async function POST(
       .select('*, brand_identity_files(*)')
       .eq('id', brandIdentityId)
       .eq('user_id', user.id)
+      .is('deleted_at', null)
       .single()
 
     if (fetchErr || !identity)

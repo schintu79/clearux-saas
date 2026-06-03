@@ -784,6 +784,7 @@ export interface BrandIdentityFile {
   file_size_bytes:   number | null
   version:           number
   replaces_file_id:  string | null
+  tag:               string | null
   created_at:        string
 }
 

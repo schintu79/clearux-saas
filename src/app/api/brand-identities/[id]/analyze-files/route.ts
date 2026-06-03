@@ -28,12 +28,13 @@ export async function POST(
 
     const db = createServiceSupabase()
 
-    // Fetch brand identity with files
+    // Fetch brand identity with files (exclude soft-deleted)
     const { data: identity, error: fetchErr } = await db
       .from('brand_identities')
       .select('*, brand_identity_files(*)')
       .eq('id', brandIdentityId)
       .eq('user_id', user.id)
+      .is('deleted_at', null)
       .single()
 
     if (fetchErr || !identity)

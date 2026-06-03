@@ -27,6 +27,7 @@ export async function GET(
       .select('*, brand_identity_files(*)')
       .eq('id', id)
       .eq('user_id', user.id)
+      .is('deleted_at', null)
       .single()
 
     if (error || !data)
@@ -58,11 +59,12 @@ export async function PUT(
 
     const db = createServiceSupabase()
 
-    // Verify ownership
+    // Verify ownership (exclude soft-deleted)
     const { data: existing } = await db
       .from('brand_identities')
       .select('user_id')
       .eq('id', id)
+      .is('deleted_at', null)
       .single()
 
     if (!existing || (existing as any).user_id !== user.id)
@@ -130,11 +132,12 @@ export async function DELETE(
 
     const db = createServiceSupabase()
 
-    // Verify ownership
+    // Verify ownership (exclude already-deleted)
     const { data: existing } = await db
       .from('brand_identities')
       .select('user_id')
       .eq('id', id)
+      .is('deleted_at', null)
       .single()
 
     if (!existing || (existing as any).user_id !== user.id)

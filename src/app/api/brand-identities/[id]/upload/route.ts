@@ -34,11 +34,12 @@ export async function POST(
 
     const db = createServiceSupabase()
 
-    // Verify ownership of brand identity
+    // Verify ownership of brand identity (exclude soft-deleted)
     const { data: identity } = await db
       .from('brand_identities')
       .select('user_id')
       .eq('id', brandIdentityId)
+      .is('deleted_at', null)
       .single()
 
     if (!identity || (identity as any).user_id !== user.id)
