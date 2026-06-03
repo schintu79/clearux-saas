@@ -41,6 +41,8 @@ export interface ModelResult {
   responseText: string
   responseSummary: string | null
   themes: string[]
+  accuracy: 'Accurate' | 'Partial' | 'Inaccurate' | null
+  accuracyNote: string | null
   latencyMs: number
   tokenInput: number
   tokenOutput: number
@@ -257,6 +259,114 @@ function summarizeResponse(responseText: string): string | null {
   return summary
 }
 
+// ── Accuracy assessment ───────────────────────────────────────
+
+/**
+ * Lightweight heuristic accuracy assessment for interrogation responses.
+ *
+ * Compares the AI response against known business context (domain, brand
+ * name, category, region) to detect refusals, hallucinations, or partial
+ * knowledge. This is less precise than the audit-time probe accuracy
+ * (which has full website crawl data as ground truth), but catches the
+ * most common failure modes.
+ */
+function assessAccuracy(
+  responseText: string,
+  modelLabel: string,
+  ctx: InterrogationRequest['businessContext'],
+): { accuracy: 'Accurate' | 'Partial' | 'Inaccurate'; accuracyNote: string } {
+  if (!responseText || responseText.length < 20) {
+    return { accuracy: 'Inaccurate', accuracyNote: `${modelLabel} provided no meaningful response.` }
+  }
+
+  const text = responseText.toLowerCase()
+  const domain = (ctx.domain || '').toLowerCase().replace(/^www\./, '')
+  const brandName = (ctx.brandName || '').toLowerCase()
+  const domainBase = domain.replace(/\.\w+$/, '') // e.g. 'casanaveallemura' from 'casanaveallemura.com'
+  const category = (ctx.category || '').toLowerCase()
+
+  // 1. Detect refusals — model says it doesn't know about the brand
+  const refusalPatterns = [
+    "i don't have", "i do not have", "i cannot find", "i'm not familiar",
+    "no information", "i couldn't find", "not aware of", "unable to find",
+    "i don't know", "not in my training", "no data available",
+    "don't have any information", "don't have specific information",
+    "not widely known", "lesser-known entity", "i'm unable",
+    "cannot provide specific", "no reliable information",
+    "not enough information", "haven't been trained",
+  ]
+  const isRefusal = refusalPatterns.some((p) => text.includes(p))
+
+  // 2. Detect hallucination — model describes a completely different business
+  //    (e.g. says it's a "Spanish modular home company" when it's an Italian cultural space)
+  const mentionsDomain = domain && (text.includes(domain) || text.includes(domainBase))
+  const mentionsBrand = brandName && brandName.length > 2 && text.includes(brandName)
+  const mentionsAnyIdentifier = mentionsDomain || mentionsBrand
+
+  // 3. Score signals
+  let score = 50 // baseline = Partial
+  const notes: string[] = []
+
+  if (isRefusal) {
+    score -= 40
+    notes.push(`refused to answer despite the website clearly existing`)
+  }
+
+  if (mentionsAnyIdentifier) {
+    score += 15
+  }
+
+  // Check if response is substantive (contains specific claims vs generic advice)
+  const isGenericAdvice =
+    (text.includes('check the website') || text.includes('visit the site') ||
+     text.includes('i recommend visiting') || text.includes('search for')) &&
+    !mentionsAnyIdentifier
+  if (isGenericAdvice) {
+    score -= 20
+    notes.push(`gave generic advice instead of specific information about the brand`)
+  }
+
+  // Category match (if we know the category)
+  if (category && category !== 'general') {
+    const catWords = category.split(/[\s,_-]+/).filter((w) => w.length >= 4)
+    const catMatch = catWords.some((w) => text.includes(w))
+    if (catMatch) {
+      score += 15
+      // No note needed — this is expected
+    }
+  }
+
+  // Substantive response bonus — long, specific answers are more likely accurate
+  if (responseText.length > 200 && !isRefusal && mentionsAnyIdentifier) {
+    score += 10
+  }
+
+  // Determine accuracy tier
+  let accuracy: 'Accurate' | 'Partial' | 'Inaccurate'
+  if (score >= 65) accuracy = 'Accurate'
+  else if (score >= 40) accuracy = 'Partial'
+  else accuracy = 'Inaccurate'
+
+  // Build human-readable note
+  let accuracyNote: string
+  if (accuracy === 'Inaccurate' && isRefusal) {
+    accuracyNote = `${modelLabel} refused to answer despite the website clearly describing ${ctx.brandName || domain}${ctx.category ? ` as a ${ctx.category} business` : ''}.`
+  } else if (accuracy === 'Inaccurate') {
+    accuracyNote = `${modelLabel} ${notes.length > 0 ? notes.join(' and ') : 'did not provide accurate information about this brand'}.`
+  } else if (accuracy === 'Partial') {
+    const partialNotes = []
+    if (!mentionsAnyIdentifier) partialNotes.push('does not mention the brand by name')
+    if (notes.length > 0) partialNotes.push(...notes)
+    accuracyNote = partialNotes.length > 0
+      ? `${modelLabel} ${partialNotes.join(', ')}.`
+      : `${modelLabel} provided a partially relevant response but may be missing key details.`
+  } else {
+    accuracyNote = `${modelLabel} correctly identifies and describes the brand.`
+  }
+
+  return { accuracy, accuracyNote }
+}
+
 // ── Main interrogation runner ──────────────────────────────────
 
 export async function runInterrogation(
@@ -351,6 +461,7 @@ export async function runInterrogation(
       const costCents = estimateCostCents(slug, tokenInput, tokenOutput)
       const themes = extractThemes(response.content)
       const responseSummary = summarizeResponse(response.content)
+      const { accuracy, accuracyNote } = assessAccuracy(response.content, modelLabel, req.businessContext)
 
       // Update result row in DB
       const resultRowId = resultRowMap.get(slug)
@@ -377,6 +488,8 @@ export async function runInterrogation(
         responseText: response.content,
         responseSummary,
         themes,
+        accuracy,
+        accuracyNote,
         latencyMs,
         tokenInput,
         tokenOutput,
@@ -412,6 +525,8 @@ export async function runInterrogation(
         responseText: '',
         responseSummary: null,
         themes: [],
+        accuracy: null,
+        accuracyNote: null,
         latencyMs,
         tokenInput: 0,
         tokenOutput: 0,
@@ -439,6 +554,8 @@ export async function runInterrogation(
       responseText: '',
       responseSummary: null,
       themes: [],
+      accuracy: null,
+      accuracyNote: null,
       latencyMs: 0,
       tokenInput: 0,
       tokenOutput: 0,

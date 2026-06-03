@@ -374,7 +374,7 @@ export default function IntelligencePage() {
   const [iqUsage, setIqUsage] = useState<{ checksUsed: number; checksLimit: number; checksRemaining: number; canInterrogate: boolean } | null>(null);
   const [iqRunning, setIqRunning] = useState(false);
   const [iqActiveQuestion, setIqActiveQuestion] = useState<string | null>(null);
-  const [iqResults, setIqResults] = useState<Array<{ modelSlug: string; modelShortId: string; modelDisplayName: string; status: string; responseText: string | null; themes: string[]; latencyMs: number | null; error: string | null }>>([]);
+  const [iqResults, setIqResults] = useState<Array<{ modelSlug: string; modelShortId: string; modelDisplayName: string; status: string; responseText: string | null; themes: string[]; accuracy: string | null; accuracyNote: string | null; latencyMs: number | null; error: string | null }>>([]);
 
   // Pages tab data
   const [auditPages, setAuditPages] = useState<AuditPageRow[]>([]);
@@ -446,6 +446,8 @@ export default function IntelligencePage() {
         status: 'running' as string,
         responseText: null,
         themes: [] as string[],
+        accuracy: null as string | null,
+        accuracyNote: null as string | null,
         latencyMs: null,
         error: null,
       };
@@ -469,18 +471,35 @@ export default function IntelligencePage() {
         throw new Error(err.error ?? 'Request failed');
       }
       const data = await res.json();
-      const mapped = (data.results ?? []).map((r: any) => ({
-        modelSlug: r.modelSlug ?? r.model_slug ?? '',
-        modelShortId: r.modelShortId ?? r.model_short_id ?? '',
-        modelDisplayName: r.modelDisplayName ?? r.model_display_name ?? '',
-        status: r.status ?? 'completed',
-        responseText: r.responseText ?? r.response_text ?? null,
-        themes: r.themes ?? [],
-        latencyMs: r.latencyMs ?? r.latency_ms ?? null,
-        error: r.error ?? r.error_message ?? null,
-      }));
+      const mapped = (data.results ?? []).map((r: any) => {
+        const slug = r.modelSlug ?? r.model_slug ?? '';
+        const shortId = IQ_MODEL_DISPLAY.find((m) => m.slug === slug)?.shortId ?? slug;
+        const prov = providerKeyToIcon(shortId);
+        return {
+          modelSlug: slug,
+          modelShortId: shortId,
+          modelDisplayName: r.modelLabel ?? r.model_label ?? (prov ? PROVIDER_LABEL[prov] : shortId),
+          status: r.status ?? 'completed',
+          responseText: r.responseText ?? r.response_text ?? null,
+          themes: r.themes ?? [],
+          accuracy: r.accuracy ?? null,
+          accuracyNote: r.accuracyNote ?? r.accuracy_note ?? null,
+          latencyMs: r.latencyMs ?? r.latency_ms ?? null,
+          error: r.error ?? r.errorMessage ?? r.error_message ?? null,
+        };
+      });
       setIqResults(mapped);
-      fetchIqUsage();
+      // Update counter from the POST response (faster than a separate fetch)
+      if (data.usage) {
+        setIqUsage({
+          checksUsed: data.usage.checksUsed ?? 0,
+          checksLimit: data.usage.checksLimit ?? 0,
+          checksRemaining: data.usage.checksRemaining ?? 0,
+          canInterrogate: (data.usage.checksRemaining ?? 0) > 0,
+        });
+      } else {
+        fetchIqUsage();
+      }
     } catch (err) {
       const msg = err instanceof Error ? err.message : 'Something went wrong';
       setIqResults(pending.map((r) => ({ ...r, status: 'failed', error: msg })));
@@ -1925,6 +1944,8 @@ export default function IntelligencePage() {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   {iqResults.map((r) => {
                     const provider = providerKeyToIcon(r.modelShortId);
+                    const ac = accuracyColor(r.accuracy);
+                    const normAcc = normalizeAccuracy(r.accuracy);
                     return (
                       <div key={r.modelSlug} className="rounded-lg p-4" style={{ background: 'var(--paper-2)', border: '1px solid var(--rule)' }}>
                         <div className="flex items-center justify-between mb-2">
@@ -1940,6 +1961,11 @@ export default function IntelligencePage() {
                               Error
                             </span>
                           )}
+                          {r.status !== 'running' && r.status !== 'failed' && normAcc && (
+                            <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full" style={{ background: ac.bg, color: ac.color }}>
+                              {normAcc}
+                            </span>
+                          )}
                         </div>
                         {r.status === 'running' ? (
                           <div className="space-y-2">
@@ -1952,8 +1978,11 @@ export default function IntelligencePage() {
                         ) : (
                           <p className="text-[13px] leading-relaxed" style={{ color: 'var(--m-muted)' }}>{r.responseText}</p>
                         )}
+                        {r.accuracyNote && r.status !== 'running' && r.status !== 'failed' && (
+                          <p className="text-[11px] mt-2 pt-2 italic" style={{ color: 'var(--m-muted)', borderTop: '1px solid var(--rule)', opacity: 0.8 }}>{r.accuracyNote}</p>
+                        )}
                         {r.themes && r.themes.length > 0 && r.status !== 'running' && r.status !== 'failed' && (
-                          <div className="flex flex-wrap gap-1 mt-2 pt-2" style={{ borderTop: '1px solid var(--rule)' }}>
+                          <div className="flex flex-wrap gap-1 mt-2 pt-2" style={{ borderTop: r.accuracyNote ? 'none' : '1px solid var(--rule)' }}>
                             {r.themes.map((t, i) => (
                               <span key={i} className="text-[10px] px-1.5 py-0.5 rounded" style={{ background: 'var(--paper)', color: 'var(--m-muted)' }}>{t}</span>
                             ))}
