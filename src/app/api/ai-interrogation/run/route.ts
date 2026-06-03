@@ -13,6 +13,7 @@ import { createServerSupabase, createServiceSupabase } from '@/lib/supabase-serv
 import { checkInterrogationQuota, getInterrogationUsage } from '@/lib/ai/interrogation-usage'
 import { runInterrogation, generateFollowups } from '@/lib/ai/interrogation-engine'
 import { findModelBySlug, DEFAULT_MODEL_CATALOG } from '@/lib/ai/model-catalog'
+import { isOpenRouterConfigured } from '@/lib/ai/openrouter-client'
 
 export const maxDuration = 60
 
@@ -55,6 +56,13 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({
         error: `Invalid model slug(s): ${invalidSlugs.join(', ')}`,
       }, { status: 400 })
+
+    // ── Verify OpenRouter API key is configured ────────────────
+    if (!isOpenRouterConfigured()) {
+      return NextResponse.json({
+        error: 'AI interrogation is not configured. The OPENROUTER_API_KEY environment variable is missing.',
+      }, { status: 503 })
+    }
 
     const db = createServiceSupabase()
 
@@ -137,7 +145,12 @@ export async function POST(request: NextRequest) {
     })
   } catch (err) {
     console.error('POST /api/ai-interrogation/run error:', err)
-    return NextResponse.json({ error: 'Failed to run interrogation' }, { status: 500 })
+    const message =
+      err instanceof Error ? err.message : 'An unexpected error occurred'
+    return NextResponse.json(
+      { error: message.slice(0, 500) },
+      { status: 500 },
+    )
   }
 }
 
