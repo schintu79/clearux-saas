@@ -132,5 +132,22 @@ export async function safeGetBrandIdentity(
 
   if (!fbErr) return fallback
 
-  return null
+  // Tier 3: Bare query — no embedded select (handles missing columns in brand_identity_files)
+  const { data: bare, error: bareErr } = await db
+    .from('brand_identities')
+    .select('*')
+    .eq('id', id)
+    .eq('user_id', userId)
+    .single()
+
+  if (bareErr || !bare) return null
+
+  // Manually load files with a safe column list
+  const { data: files } = await db
+    .from('brand_identity_files')
+    .select('id, file_name, file_url, file_type, file_size_bytes, created_at')
+    .eq('brand_identity_id', id)
+
+  bare.brand_identity_files = files ?? []
+  return bare
 }
