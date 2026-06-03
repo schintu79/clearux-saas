@@ -23,17 +23,24 @@ export const refreshQuestionShortlistsFn = inngest.createFunction(
     const now = new Date()
     const bufferCutoff = new Date(now.getTime() + EXPIRY_BUFFER_MS).toISOString()
 
-    // ── Step 1: Fetch active workspaces with at least one completed audit ──
+    // ── Step 1: Fetch workspace IDs that have at least one completed audit ──
+    const { data: auditRows } = await db
+      .from('audits')
+      .select('workspace_id')
+      .eq('status', 'completed')
+
+    const eligibleIds = [...new Set((auditRows || []).map((r: any) => r.workspace_id).filter(Boolean))]
+
+    if (eligibleIds.length === 0) {
+      console.log('[refresh-shortlists] No workspaces with completed audits')
+      return { refreshed: 0, skipped: 0, errors: 0 }
+    }
+
     const { data: workspaces, error: fetchError } = await db
       .from('workspaces')
       .select('id, name, shortlist_expires_at')
       .eq('status', 'active')
-      .in('id',
-        db
-          .from('audits')
-          .select('workspace_id')
-          .eq('status', 'completed')
-      )
+      .in('id', eligibleIds)
       .limit(MAX_WORKSPACES_PER_RUN)
 
     if (fetchError) {
@@ -67,7 +74,7 @@ export const refreshQuestionShortlistsFn = inngest.createFunction(
 
         // Regenerate shortlist
         const context = await getWorkspaceContext(workspaceId, db)
-        const shortlist = await generateShortlist(context)
+        const shortlist = await generateShortlist(context, db)
 
         // Store the new shortlist
         const newExpiresAt = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000).toISOString() // 7 days
