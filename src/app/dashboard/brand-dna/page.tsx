@@ -570,9 +570,12 @@ function BrandDnaPage() {
         const fd = new FormData();
         fd.append('file', file);
         const res = await fetch(`/api/brand-identities/${identity.id}/upload`, { method: 'POST', body: fd });
-        if (!res.ok) throw new Error();
+        if (!res.ok) {
+          const body = await res.json().catch(() => ({}));
+          throw new Error(body.error || `Upload failed (${res.status})`);
+        }
         ok++;
-      } catch { setUploadMsg(`Failed to upload ${file.name}`); }
+      } catch (err) { setUploadMsg(err instanceof Error ? err.message : `Failed to upload ${file.name}`); }
     }
     setUploading(false);
     if (fileInputRef.current) fileInputRef.current.value = '';
