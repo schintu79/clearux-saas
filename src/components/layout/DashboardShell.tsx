@@ -37,7 +37,6 @@ import {
   LineChart,
   Server,
   Target,
-  Bot,
   Gauge,
   LayoutDashboard,
   FolderOpen,
@@ -222,7 +221,6 @@ const DashboardShell: React.FC<DashboardShellProps> = ({ children }) => {
       items: [
         { label: 'Competitors', href: `${navBase}/competitors`, icon: Target },
         { label: 'Brand intelligence', href: `${navBase}/intelligence`, icon: BarChart3, matchPaths: [`${navBase}/ai-perception`, `${navBase}/ai-readability`] },
-        { label: 'AI interrogation', href: `${navBase}/interrogate`, icon: Bot },
         { label: 'Website speed', href: `${navBase}/speed`, icon: Gauge },
         { label: 'Brand DNA', href: `${navBase}/brand-dna`, icon: Fingerprint, matchPaths: [`${navBase}/brand-identity`] },
       ],

@@ -12,7 +12,7 @@
  *  6. Methodology Transparency — what was queried, when, how
  */
 
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import {
   Radio,
@@ -55,13 +55,14 @@ import {
   Code,
   Search,
   Minus,
+  Loader2,
 } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { useAuditBundle } from '@/context/AuditBundleContext';
 import { useWorkspace } from '@/context/WorkspaceContext';
 import { createBrowserSupabase } from '@/lib/supabase-ssr';
 import ScoreCircle from '@/components/ui/ScoreCircle';
-import { AIProviderIcon, providerKeyToIcon } from '@/components/ui/AIProviderIcon';
+import { AIProviderIcon, PROVIDER_LABEL, providerKeyToIcon } from '@/components/ui/AIProviderIcon';
 import EmptyAudit from '@/components/dashboard/v2/EmptyAudit';
 import PageHeader from '@/components/dashboard/v2/PageHeader';
 import OverviewBreadcrumb from '@/components/dashboard/OverviewBreadcrumb';
@@ -312,7 +313,7 @@ function generateExecutiveSummary(params: {
 
 export default function IntelligencePage() {
   const { user, loading: authLoading } = useAuth();
-  const { workspace, workspaceSlug, loading: wsLoading } = useWorkspace();
+  const { workspace, workspaceSlug, workspaceId, loading: wsLoading } = useWorkspace();
   const dashPrefix = workspaceSlug ? `/dashboard/${workspaceSlug}` : '/dashboard';
   const { bundle, loading: bundleLoading } = useAuditBundle();
   const loading = authLoading || wsLoading || bundleLoading || !bundle;
@@ -362,9 +363,131 @@ export default function IntelligencePage() {
   const [showMethodology, setShowMethodology] = useState(false);
   const [showAllRecs, setShowAllRecs] = useState(false);
 
+  // AI Interrogation state
+  const [iqQuestions, setIqQuestions] = useState<Array<{ questionId: string; questionText: string; family: string; relevanceScore: number; rankReason: string }>>([]);
+  const [iqQuestionsLoading, setIqQuestionsLoading] = useState(false);
+  const [iqSelectedModels, setIqSelectedModels] = useState<string[]>([
+    'openai/gpt-4o-mini',
+    'google/gemini-2.5-flash',
+    'perplexity/sonar',
+  ]);
+  const [iqUsage, setIqUsage] = useState<{ checksUsed: number; checksLimit: number; checksRemaining: number; canInterrogate: boolean } | null>(null);
+  const [iqRunning, setIqRunning] = useState(false);
+  const [iqActiveQuestion, setIqActiveQuestion] = useState<string | null>(null);
+  const [iqResults, setIqResults] = useState<Array<{ modelSlug: string; modelShortId: string; modelDisplayName: string; status: string; responseText: string | null; themes: string[]; latencyMs: number | null; error: string | null }>>([]);
+
   // Pages tab data
   const [auditPages, setAuditPages] = useState<AuditPageRow[]>([]);
   const [pageSort, setPageSort] = useState<'score-asc' | 'score-desc' | 'name'>('score-desc');
+
+  /* ── AI Interrogation constants ─────────────────────── */
+  const IQ_MODEL_DISPLAY: { shortId: string; slug: string }[] = useMemo(() => [
+    { shortId: 'chatgpt', slug: 'openai/gpt-4o-mini' },
+    { shortId: 'gemini', slug: 'google/gemini-2.5-flash' },
+    { shortId: 'perplexity', slug: 'perplexity/sonar' },
+    { shortId: 'grok', slug: 'x-ai/grok-4.3' },
+    { shortId: 'meta', slug: 'meta-llama/llama-4-scout-17b-16e-instruct' },
+    { shortId: 'deepseek', slug: 'deepseek/deepseek-chat-v3-0324' },
+  ], []);
+  const IQ_MAX_MODELS = 3;
+
+  /* ── AI Interrogation data fetching ────────────────── */
+  const fetchIqQuestions = useCallback(async () => {
+    if (!workspaceId) return;
+    setIqQuestionsLoading(true);
+    try {
+      const res = await fetch(`/api/ai-interrogation/questions?workspace_id=${workspaceId}`);
+      if (!res.ok) return;
+      const data = await res.json();
+      setIqQuestions((data.questions ?? []).slice(0, 5));
+    } catch { /* silent */ } finally {
+      setIqQuestionsLoading(false);
+    }
+  }, [workspaceId]);
+
+  const fetchIqUsage = useCallback(async () => {
+    if (!workspaceId) return;
+    try {
+      const res = await fetch(`/api/ai-interrogation/usage?workspace_id=${workspaceId}`);
+      if (!res.ok) return;
+      setIqUsage(await res.json());
+    } catch { /* silent */ }
+  }, [workspaceId]);
+
+  useEffect(() => {
+    if (!workspaceId) return;
+    fetchIqQuestions();
+    fetchIqUsage();
+  }, [workspaceId, fetchIqQuestions, fetchIqUsage]);
+
+  const toggleIqModel = (slug: string) => {
+    setIqSelectedModels((prev) => {
+      if (prev.includes(slug)) return prev.filter((s) => s !== slug);
+      if (prev.length >= IQ_MAX_MODELS) return prev;
+      return [...prev, slug];
+    });
+  };
+
+  const handleIqAsk = async (questionText: string, family?: string) => {
+    if (!workspaceId || !questionText.trim() || iqSelectedModels.length === 0 || iqRunning) return;
+    const matchingQuestion = iqQuestions.find((q) => q.questionText === questionText.trim());
+
+    setIqActiveQuestion(questionText);
+    setIqRunning(true);
+
+    // Set pending results
+    const pending = iqSelectedModels.map((slug) => {
+      const shortId = IQ_MODEL_DISPLAY.find((m) => m.slug === slug)?.shortId ?? slug;
+      const provider = providerKeyToIcon(shortId);
+      return {
+        modelSlug: slug,
+        modelShortId: shortId,
+        modelDisplayName: provider ? PROVIDER_LABEL[provider] : shortId,
+        status: 'running' as string,
+        responseText: null,
+        themes: [] as string[],
+        latencyMs: null,
+        error: null,
+      };
+    });
+    setIqResults(pending);
+
+    try {
+      const res = await fetch('/api/ai-interrogation/run', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          workspace_id: workspaceId,
+          question_id: matchingQuestion?.questionId ?? null,
+          question_text: questionText.trim(),
+          question_family: family ?? matchingQuestion?.family ?? 'general_discovery',
+          selected_models: iqSelectedModels,
+        }),
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({ error: 'Request failed' }));
+        throw new Error(err.error ?? 'Request failed');
+      }
+      const data = await res.json();
+      const mapped = (data.results ?? []).map((r: any) => ({
+        modelSlug: r.modelSlug ?? r.model_slug ?? '',
+        modelShortId: r.modelShortId ?? r.model_short_id ?? '',
+        modelDisplayName: r.modelDisplayName ?? r.model_display_name ?? '',
+        status: r.status ?? 'completed',
+        responseText: r.responseText ?? r.response_text ?? null,
+        themes: r.themes ?? [],
+        latencyMs: r.latencyMs ?? r.latency_ms ?? null,
+        error: r.error ?? r.error_message ?? null,
+      }));
+      setIqResults(mapped);
+      fetchIqUsage();
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : 'Something went wrong';
+      setIqResults(pending.map((r) => ({ ...r, status: 'failed', error: msg })));
+    } finally {
+      setIqRunning(false);
+    }
+  };
 
   useEffect(() => {
     const audit = bundle?.audit;
@@ -1713,6 +1836,148 @@ export default function IntelligencePage() {
               </div>
             </DashCard>
           )}
+
+          {/* ── Ask AI models (interrogation) ────────────────── */}
+          <DashCard>
+            <div className="flex items-center justify-between mb-1">
+              <div className="flex items-center gap-2">
+                <Bot size={15} strokeWidth={1.75} style={{ color: 'var(--ink)' }} />
+                <h2 className="text-[15px] font-semibold" style={{ color: 'var(--ink)' }}>Ask AI models about your brand</h2>
+              </div>
+              {iqUsage && (
+                <span className="text-[11px] font-medium px-2 py-0.5 rounded-full" style={{ background: 'var(--paper-2)', color: 'var(--m-muted)' }}>
+                  {iqUsage.checksRemaining} check{iqUsage.checksRemaining !== 1 ? 's' : ''} remaining
+                </span>
+              )}
+            </div>
+            <p className="text-[13px] mb-4" style={{ color: 'var(--m-muted)' }}>
+              Pick a question and choose which AI models to ask. See how each one describes your brand in real time.
+            </p>
+
+            {/* Model selector */}
+            <div className="flex items-center gap-2 mb-4 flex-wrap">
+              <span className="text-[11px] font-semibold" style={{ color: 'var(--m-muted)' }}>Models:</span>
+              {IQ_MODEL_DISPLAY.map((m) => {
+                const selected = iqSelectedModels.includes(m.slug);
+                const provider = providerKeyToIcon(m.shortId);
+                return (
+                  <button
+                    key={m.slug}
+                    onClick={() => toggleIqModel(m.slug)}
+                    disabled={iqRunning}
+                    className="flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-medium transition-all"
+                    style={{
+                      background: selected ? 'var(--ink)' : 'var(--paper-2)',
+                      color: selected ? 'var(--paper)' : 'var(--m-muted)',
+                      border: `1px solid ${selected ? 'var(--ink)' : 'var(--rule)'}`,
+                      opacity: iqRunning ? 0.5 : 1,
+                    }}
+                  >
+                    {provider && <AIProviderIcon provider={provider} size={12} />}
+                    {provider ? PROVIDER_LABEL[provider] : m.shortId}
+                  </button>
+                );
+              })}
+              {iqSelectedModels.length >= IQ_MAX_MODELS && (
+                <span className="text-[10px]" style={{ color: 'var(--m-muted)' }}>max {IQ_MAX_MODELS}</span>
+              )}
+            </div>
+
+            {/* Question pills */}
+            {iqQuestionsLoading ? (
+              <div className="flex items-center gap-2 py-4">
+                <Loader2 size={14} className="animate-spin" style={{ color: 'var(--m-muted)' }} />
+                <span className="text-[12px]" style={{ color: 'var(--m-muted)' }}>Loading questions...</span>
+              </div>
+            ) : iqQuestions.length > 0 ? (
+              <div className="flex flex-wrap gap-2 mb-4">
+                {iqQuestions.map((q) => (
+                  <button
+                    key={q.questionId}
+                    onClick={() => handleIqAsk(q.questionText, q.family)}
+                    disabled={iqRunning || (iqUsage != null && !iqUsage.canInterrogate)}
+                    className="text-left px-3 py-2 rounded-lg text-[12px] leading-snug transition-all hover:shadow-sm"
+                    style={{
+                      background: iqActiveQuestion === q.questionText ? 'var(--ink)' : 'var(--paper-2)',
+                      color: iqActiveQuestion === q.questionText ? 'var(--paper)' : 'var(--ink)',
+                      border: `1px solid ${iqActiveQuestion === q.questionText ? 'var(--ink)' : 'var(--rule)'}`,
+                      opacity: (iqRunning && iqActiveQuestion !== q.questionText) ? 0.5 : 1,
+                    }}
+                  >
+                    {q.questionText}
+                  </button>
+                ))}
+              </div>
+            ) : (
+              <p className="text-[12px] py-2 mb-4" style={{ color: 'var(--m-muted)' }}>
+                No questions available yet. Run an audit to generate industry-specific questions.
+              </p>
+            )}
+
+            {/* Results */}
+            {iqResults.length > 0 && (
+              <div>
+                {iqActiveQuestion && (
+                  <p className="text-[14px] font-medium mb-3" style={{ color: 'var(--ink)' }}>
+                    {iqActiveQuestion}
+                  </p>
+                )}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  {iqResults.map((r) => {
+                    const provider = providerKeyToIcon(r.modelShortId);
+                    return (
+                      <div key={r.modelSlug} className="rounded-lg p-4" style={{ background: 'var(--paper-2)', border: '1px solid var(--rule)' }}>
+                        <div className="flex items-center justify-between mb-2">
+                          <div className="flex items-center gap-2">
+                            {provider && <AIProviderIcon provider={provider} size={16} />}
+                            <span className="text-[12px] font-semibold" style={{ color: 'var(--ink)' }}>{r.modelDisplayName}</span>
+                          </div>
+                          {r.status === 'running' && (
+                            <Loader2 size={12} className="animate-spin" style={{ color: 'var(--m-muted)' }} />
+                          )}
+                          {r.status === 'failed' && (
+                            <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full" style={{ background: 'rgba(239,68,68,0.1)', color: 'var(--severe)' }}>
+                              Error
+                            </span>
+                          )}
+                        </div>
+                        {r.status === 'running' ? (
+                          <div className="space-y-2">
+                            <div className="animate-pulse rounded h-3 w-full" style={{ background: 'var(--rule)' }} />
+                            <div className="animate-pulse rounded h-3 w-3/4" style={{ background: 'var(--rule)' }} />
+                            <div className="animate-pulse rounded h-3 w-1/2" style={{ background: 'var(--rule)' }} />
+                          </div>
+                        ) : r.status === 'failed' ? (
+                          <p className="text-[12px]" style={{ color: 'var(--severe)' }}>{r.error || 'Request failed'}</p>
+                        ) : (
+                          <p className="text-[13px] leading-relaxed" style={{ color: 'var(--m-muted)' }}>{r.responseText}</p>
+                        )}
+                        {r.themes && r.themes.length > 0 && r.status !== 'running' && r.status !== 'failed' && (
+                          <div className="flex flex-wrap gap-1 mt-2 pt-2" style={{ borderTop: '1px solid var(--rule)' }}>
+                            {r.themes.map((t, i) => (
+                              <span key={i} className="text-[10px] px-1.5 py-0.5 rounded" style={{ background: 'var(--paper)', color: 'var(--m-muted)' }}>{t}</span>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
+            {/* Upgrade nudge if no checks available */}
+            {iqUsage && !iqUsage.canInterrogate && iqUsage.checksLimit > 0 && (
+              <p className="text-[12px] mt-2" style={{ color: 'var(--m-muted)' }}>
+                You have used all your AI checks for this period.
+              </p>
+            )}
+            {iqUsage && iqUsage.checksLimit === 0 && (
+              <p className="text-[12px] mt-2" style={{ color: 'var(--m-muted)' }}>
+                Upgrade your plan to unlock AI interrogation checks.
+              </p>
+            )}
+          </DashCard>
 
           {/* ── Page-level AI readability (cross-link to Pages tab) ── */}
           {auditPages.length > 0 && (
