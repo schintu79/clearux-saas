@@ -116,8 +116,52 @@ export async function getAuditUsage(
   const p = profile as any ?? {}
   const plan = SUBSCRIPTION_PLANS.find(pl => pl.id === p.subscription_plan)
   const hasActiveSub = p.subscription_status === 'active'
-  const periodStart = p.billing_period_start as string | null
-  const periodEnd = p.billing_period_end as string | null
+  let periodStart = p.billing_period_start as string | null
+  let periodEnd = p.billing_period_end as string | null
+
+  // Auto-roll expired billing periods forward so usage counts stay accurate.
+  // Without this, manually assigned plans (or missed Stripe webhooks) would
+  // show 0 usage once the original period lapses.
+  if (hasActiveSub && periodStart && periodEnd) {
+    const endDate = new Date(periodEnd)
+    const now = new Date()
+    if (endDate < now) {
+      // Roll forward in 1-month increments until the period covers "now"
+      const startDate = new Date(periodStart)
+      while (endDate < now) {
+        startDate.setMonth(startDate.getMonth() + 1)
+        endDate.setMonth(endDate.getMonth() + 1)
+      }
+      periodStart = startDate.toISOString()
+      periodEnd = endDate.toISOString()
+      // Persist the rolled-forward period so we don't recompute every call
+      await db
+        .from('profiles')
+        .update({
+          billing_period_start: periodStart,
+          billing_period_end: periodEnd,
+          updated_at: now.toISOString(),
+        } as any)
+        .eq('id', userId)
+    }
+  }
+
+  // If subscription is active but billing period was never set, initialize it now
+  if (hasActiveSub && !periodStart) {
+    const now = new Date()
+    const end = new Date(now)
+    end.setMonth(end.getMonth() + 1)
+    periodStart = now.toISOString()
+    periodEnd = end.toISOString()
+    await db
+      .from('profiles')
+      .update({
+        billing_period_start: periodStart,
+        billing_period_end: periodEnd,
+        updated_at: now.toISOString(),
+      } as any)
+      .eq('id', userId)
+  }
 
   // Limits from plan config (source of truth) with profile fallback
   const reAuditsLimit = plan?.reAuditsPerMonth ?? (p.audits_per_month ?? 0)

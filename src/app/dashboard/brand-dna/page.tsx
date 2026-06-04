@@ -1574,9 +1574,14 @@ function BrandAuditInProgress({ audit }: { audit: AuditRecord }) {
       <div className="flex items-center gap-2.5">
         <Loader2 size={14} className="animate-spin flex-shrink-0" style={{ color: 'var(--signal)' }} />
         <div className="flex-1 min-w-0">
-          <p className="text-[12px] font-semibold" style={{ color: 'var(--ink)' }}>
-            {stageLabels[audit.status] || 'Processing...'}
-          </p>
+          <div className="flex items-center justify-between gap-2">
+            <p className="text-[12px] font-semibold" style={{ color: 'var(--ink)' }}>
+              {stageLabels[audit.status] || 'Processing...'}
+            </p>
+            <span className="text-[11px] font-medium tabular-nums" style={{ color: 'var(--ink-2)' }}>
+              {progressPct}%
+            </span>
+          </div>
           <div className="mt-1.5 h-1 w-full rounded-full overflow-hidden" style={{ background: 'color-mix(in srgb, var(--signal) 12%, transparent)' }}>
             <div
               className="h-full rounded-full transition-all duration-700 ease-out"
