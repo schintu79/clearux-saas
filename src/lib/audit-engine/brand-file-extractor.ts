@@ -643,12 +643,22 @@ export async function classifyAndSuggestProfile(
   // Step 1: Extract content from all files
   const extractions = await extractAllBrandFiles(files, 3)
 
-  // Step 2: Classify each file by content
-  const classifications: ClassifiedFile[] = []
-  for (const ext of extractions) {
-    const detection = await classifyFileContent(ext)
-    classifications.push({ fileName: ext.fileName, fileType: ext.fileType, detection })
+  // Step 2: Classify each file by content (parallel, concurrency 3)
+  const classifyBatch = async (items: typeof extractions, concurrency: number) => {
+    const results: ClassifiedFile[] = []
+    for (let i = 0; i < items.length; i += concurrency) {
+      const batch = items.slice(i, i + concurrency)
+      const batchResults = await Promise.all(
+        batch.map(async (ext) => {
+          const detection = await classifyFileContent(ext)
+          return { fileName: ext.fileName, fileType: ext.fileType, detection } as ClassifiedFile
+        }),
+      )
+      results.push(...batchResults)
+    }
+    return results
   }
+  const classifications = await classifyBatch(extractions, 3)
 
   // Step 3: Aggregate — pick the highest-confidence data for each field
   let bestVoice: string | null = null

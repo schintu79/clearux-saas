@@ -400,7 +400,7 @@ function BrandDnaPage() {
           fetch(`/api/brand-identities/${latest.id}`, {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ website_url: url }),
+            body: JSON.stringify({ name: latest.name, website_url: url }),
           }).catch(() => {}); // fire-and-forget persist
         }
 
@@ -604,17 +604,17 @@ function BrandDnaPage() {
     }
   };
 
-  /* ── Simulated analysis progress — ticks from 0→90% while waiting for API ── */
+  /* ── Simulated analysis progress — ticks from 0→90% over ~55 seconds ── */
   const startAnalyzeProgress = useCallback(() => {
     setAnalyzeProgress(0);
     const iv = setInterval(() => {
       setAnalyzeProgress(prev => {
         if (prev >= 90) { clearInterval(iv); return 90; }
-        // Fast at start, slows as it approaches 90
-        const step = prev < 30 ? 8 : prev < 60 ? 5 : prev < 80 ? 3 : 1;
+        // Smooth ramp: ~54s to reach 90% (1s intervals, decreasing steps)
+        const step = prev < 20 ? 3 : prev < 50 ? 2.5 : prev < 75 ? 1.5 : 0.8;
         return Math.min(prev + step, 90);
       });
-    }, 400);
+    }, 1000);
     return iv;
   }, []);
 
