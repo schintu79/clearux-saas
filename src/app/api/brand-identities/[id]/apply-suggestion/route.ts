@@ -93,6 +93,7 @@ export async function POST(
     // Only write if there are actual changes beyond the timestamp
     let applied = false
     if (Object.keys(updates).length > 1) {
+      // Try update with embedded select first; fall back to bare update + manual file load
       const { data: updated, error: updateErr } = await db
         .from('brand_identities')
         .update(updates as any)
@@ -100,9 +101,22 @@ export async function POST(
         .select('*, brand_identity_files(*)')
         .single()
 
-      if (updateErr) throw updateErr
-      applied = true
-      return NextResponse.json({ applied, identity: updated })
+      if (!updateErr) {
+        return NextResponse.json({ applied: true, identity: updated })
+      }
+
+      // Fallback: embedded select failed (missing columns in brand_identity_files)
+      // Do bare update + reload
+      const { error: bareUpdateErr } = await db
+        .from('brand_identities')
+        .update(updates as any)
+        .eq('id', brandIdentityId)
+
+      if (bareUpdateErr) throw bareUpdateErr
+
+      // Reload identity with safe helper
+      const refreshed = await safeGetBrandIdentity(db, brandIdentityId, user.id)
+      return NextResponse.json({ applied: true, identity: refreshed })
     }
 
     // Nothing new to apply — return current identity

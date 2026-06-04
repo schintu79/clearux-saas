@@ -326,6 +326,7 @@ function BrandDnaPage() {
 
   /* ── Content analysis state ── */
   const [analyzing, setAnalyzing] = useState(false);
+  const [analyzeProgress, setAnalyzeProgress] = useState(0);
   const [suggestion, setSuggestion] = useState<BrandProfileSuggestion | null>(null);
   const [applyingProfile, setApplyingProfile] = useState(false);
 
@@ -603,10 +604,25 @@ function BrandDnaPage() {
     }
   };
 
+  /* ── Simulated analysis progress — ticks from 0→90% while waiting for API ── */
+  const startAnalyzeProgress = useCallback(() => {
+    setAnalyzeProgress(0);
+    const iv = setInterval(() => {
+      setAnalyzeProgress(prev => {
+        if (prev >= 90) { clearInterval(iv); return 90; }
+        // Fast at start, slows as it approaches 90
+        const step = prev < 30 ? 8 : prev < 60 ? 5 : prev < 80 ? 3 : 1;
+        return Math.min(prev + step, 90);
+      });
+    }, 400);
+    return iv;
+  }, []);
+
   /* ── Auto-analyze after upload ── */
   const autoAnalyzeAfterUpload = async (brandId: string) => {
     setAnalyzing(true);
     setSuggestion(null);
+    const iv = startAnalyzeProgress();
     try {
       const res = await fetch(`/api/brand-identities/${brandId}/analyze-files`, {
         method: 'POST',
@@ -618,6 +634,7 @@ function BrandDnaPage() {
         throw new Error(body.error || 'Analysis failed');
       }
       const data = await res.json();
+      setAnalyzeProgress(100);
       setSuggestion(data.suggestion || null);
       // Reload identity to pick up file tags from classification
       const refreshed = await loadIdentity();
@@ -625,7 +642,7 @@ function BrandDnaPage() {
     } catch (err) {
       console.warn('Auto-analysis after upload failed:', err);
       setError(err instanceof Error ? err.message : 'File analysis failed. Try again.');
-    } finally { setAnalyzing(false); }
+    } finally { clearInterval(iv); setAnalyzing(false); setAnalyzeProgress(0); }
   };
 
   const deleteFile = async (fileId: string) => {
@@ -645,6 +662,7 @@ function BrandDnaPage() {
     setAnalyzing(true);
     setSuggestion(null);
     setError(null);
+    const iv = startAnalyzeProgress();
     try {
       const res = await fetch(`/api/brand-identities/${identity.id}/analyze-files`, {
         method: 'POST',
@@ -656,13 +674,14 @@ function BrandDnaPage() {
         throw new Error(body.error || 'Analysis failed');
       }
       const data = await res.json();
+      setAnalyzeProgress(100);
       setSuggestion(data.suggestion || null);
       // Reload identity to pick up file tags
       const refreshed = await loadIdentity();
       if (refreshed) setIdentity(refreshed);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'File analysis failed. Try again.');
-    } finally { setAnalyzing(false); }
+    } finally { clearInterval(iv); setAnalyzing(false); setAnalyzeProgress(0); }
   };
 
   /* ── Apply detected profile fields (fast path — no re-classification) ── */
@@ -1152,14 +1171,24 @@ function BrandDnaPage() {
                   </div>
                   {/* Analyze button */}
                   {identity.brand_identity_files.length > 0 && !suggestion && (
-                    <button
-                      onClick={analyzeFiles}
-                      disabled={analyzing}
-                      className="inline-flex items-center gap-1 text-[11px] font-semibold px-2.5 py-1 rounded-md transition-all hover:opacity-80"
-                      style={{ background: 'color-mix(in srgb, var(--signal) 10%, transparent)', color: 'var(--signal)', border: '1px solid color-mix(in srgb, var(--signal) 20%, transparent)' }}
-                    >
-                      {analyzing ? <><Loader2 size={10} className="animate-spin" /> Analyzing...</> : <><Sparkles size={10} /> Detect brand info</>}
-                    </button>
+                    analyzing ? (
+                      <div className="flex items-center gap-2">
+                        <div className="w-20 h-1.5 rounded-full overflow-hidden" style={{ background: 'color-mix(in srgb, var(--signal) 12%, transparent)' }}>
+                          <div className="h-full rounded-full transition-all duration-300 ease-out" style={{ width: `${analyzeProgress}%`, background: 'var(--signal)' }} />
+                        </div>
+                        <span className="text-[11px] font-semibold tabular-nums" style={{ color: 'var(--signal)' }}>
+                          <Loader2 size={10} className="animate-spin inline mr-1" />{analyzeProgress}%
+                        </span>
+                      </div>
+                    ) : (
+                      <button
+                        onClick={analyzeFiles}
+                        className="inline-flex items-center gap-1 text-[11px] font-semibold px-2.5 py-1 rounded-md transition-all hover:opacity-80"
+                        style={{ background: 'color-mix(in srgb, var(--signal) 10%, transparent)', color: 'var(--signal)', border: '1px solid color-mix(in srgb, var(--signal) 20%, transparent)' }}
+                      >
+                        <Sparkles size={10} /> Detect brand info
+                      </button>
+                    )
                   )}
                 </div>
               </div>
@@ -1488,7 +1517,11 @@ function ProfileRow({ label, value, filled, colors }: { label: string; value: st
         )}
         <p className="text-[12px] truncate font-medium" style={{ color: filled ? 'var(--ink)' : 'var(--m-muted)' }}>{value}</p>
       </div>
-      {filled && <CheckCircle2 size={10} className="flex-shrink-0" style={{ color: 'var(--ok)' }} />}
+      {filled && (
+        <div className="w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0" style={{ background: 'color-mix(in srgb, var(--ok) 14%, transparent)' }}>
+          <Check size={12} strokeWidth={2.5} style={{ color: 'var(--ok)' }} />
+        </div>
+      )}
     </div>
   );
 }

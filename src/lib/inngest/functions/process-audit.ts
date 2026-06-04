@@ -729,7 +729,7 @@ Return 2-6 findings. Be specific and evidence-based. Reference specific files/co
       await setProgress(auditId, stageProgress('crawling', 0), 'crawling')
       await auditLog(auditId, 'crawl_started', 'info', `Crawling ${auditDetails.productUrl}`)
 
-      const maxPages = auditDetails.plan === 'free_preview' ? 5 : auditDetails.plan === 'starter' ? 15 : 25
+      const maxPages = auditDetails.plan === 'free_preview' ? 5 : auditDetails.plan === 'starter' ? 20 : 25
       // 180s hard timeout on crawl — deep mode with 25 pages can be slow,
       // but anything beyond 3 minutes is a hung connection.
       const CRAWL_TIMEOUT_MS = 180_000
