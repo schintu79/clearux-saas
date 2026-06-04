@@ -612,7 +612,7 @@ function BrandDnaPage() {
         if (prev >= 90) { clearInterval(iv); return 90; }
         // Smooth ramp: ~54s to reach 90% (1s intervals, decreasing steps)
         const step = prev < 20 ? 3 : prev < 50 ? 2.5 : prev < 75 ? 1.5 : 0.8;
-        return Math.min(prev + step, 90);
+        return Math.round(Math.min(prev + step, 90));
       });
     }, 1000);
     return iv;
@@ -1177,7 +1177,7 @@ function BrandDnaPage() {
                           <div className="h-full rounded-full transition-all duration-300 ease-out" style={{ width: `${analyzeProgress}%`, background: 'var(--signal)' }} />
                         </div>
                         <span className="text-[11px] font-semibold tabular-nums" style={{ color: 'var(--signal)' }}>
-                          <Loader2 size={10} className="animate-spin inline mr-1" />{analyzeProgress}%
+                          <Loader2 size={10} className="animate-spin inline mr-1" />{Math.round(analyzeProgress)}%
                         </span>
                       </div>
                     ) : (
