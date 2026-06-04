@@ -692,9 +692,12 @@ export default function IntelligencePage() {
   }, [biSummary, modelProbes]);
 
   const visibilityScore = useMemo(() => {
-    if (biSummary?.shareOfVoice != null) return biSummary.shareOfVoice;
-    const sovs = modelProbes.map(p => p.share_of_voice).filter((s): s is number => s != null);
-    return sovs.length > 0 ? Math.round(sovs.reduce((a, b) => a + b, 0) / sovs.length) : null;
+    // Use aiVisibility (% of models that mention the brand) — matches BrandIntelligenceCard
+    if (biSummary?.aiVisibility != null) return biSummary.aiVisibility;
+    // Fallback: compute from probe data (models with accuracy > 0 = brand mentioned)
+    if (modelProbes.length === 0) return null;
+    const mentioned = modelProbes.filter(p => p.accuracy_score > 0).length;
+    return Math.round((mentioned / modelProbes.length) * 100);
   }, [biSummary, modelProbes]);
 
   // Hallucinations — extract from probe results where accuracy is inaccurate/fabricated
@@ -1110,35 +1113,140 @@ export default function IntelligencePage() {
 
         {hasData ? (
           <>
-            {/* Hero score + sub-metrics */}
-            <div className="flex flex-col md:flex-row items-center gap-6 mb-5">
-              {/* Main hero score */}
+            {/* Hero score + executive summary side-by-side */}
+            <div className="flex flex-col md:flex-row items-start gap-5 mb-5">
               <div className="flex-shrink-0">
                 <ScoreCircle score={biSummary?.score ?? overallScore} size="medium" />
                 <p className="text-[11px] font-semibold text-center mt-2" style={{ color: 'var(--m-muted)' }}>Brand Intelligence</p>
               </div>
 
-              {/* Sub-metric row */}
-              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 flex-1 w-full">
-                <SubMetric label="AI visibility" value={visibilityScore} suffix="%" tooltip="How often AI models mention your brand when asked about your category" />
-                <SubMetric label="Accuracy" value={avgAccuracy} tooltip="How accurately AI describes your brand compared to your actual site content" />
-                <SubMetric label="Sentiment" value={sentimentScore} tooltip="How positively or negatively AI portrays your brand reputation" />
-                <SubMetric label="Avg. placement" value={avgPlacement != null ? Math.round((5 - avgPlacement) / 4 * 100) : null} tooltip="Where your brand appears in AI responses (higher = mentioned earlier)" />
-                <SubMetric label="Coverage" value={coverageScore} suffix="%" tooltip={`${recognizedCount} of ${modelProbes.length} models recognize your brand`} />
-              </div>
-            </div>
-
-            {/* Executive summary */}
-            {executiveSummary.length > 0 && (
-              <div className="rounded-lg px-4 py-3.5" style={{ background: 'color-mix(in srgb, var(--signal) 4%, transparent)', border: '1px solid color-mix(in srgb, var(--signal) 10%, transparent)' }}>
-                <div className="flex items-start gap-2.5">
-                  <Lightbulb size={14} className="mt-0.5 flex-shrink-0" style={{ color: 'var(--signal)' }} />
-                  <div className="space-y-1.5">
-                    {executiveSummary.map((line, i) => (
-                      <p key={i} className="text-[12.5px] leading-[1.6]" style={{ color: 'var(--ink)', opacity: 0.85 }}>{line}</p>
-                    ))}
+              {executiveSummary.length > 0 && (
+                <div className="flex-1 rounded-lg px-4 py-3.5" style={{ background: 'color-mix(in srgb, var(--signal) 4%, transparent)', border: '1px solid color-mix(in srgb, var(--signal) 10%, transparent)' }}>
+                  <div className="flex items-start gap-2.5">
+                    <Lightbulb size={14} className="mt-0.5 flex-shrink-0" style={{ color: 'var(--signal)' }} />
+                    <div className="space-y-1.5">
+                      {executiveSummary.map((line, i) => (
+                        <p key={i} className="text-[12.5px] leading-[1.6]" style={{ color: 'var(--ink)', opacity: 0.85 }}>{line}</p>
+                      ))}
+                    </div>
                   </div>
                 </div>
+              )}
+            </div>
+
+            {/* Metric dashboard cards — merged overview + key signals */}
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+              {/* AI Visibility */}
+              <button type="button" onClick={() => setActiveTab('perception')} className="text-left rounded-lg p-3.5 transition-all hover:shadow-sm" style={{ background: 'var(--paper-2)', border: '1px solid var(--rule)' }}>
+                <div className="flex items-center gap-1.5 mb-2">
+                  <Eye size={11} style={{ color: 'var(--m-muted)' }} />
+                  <p className="text-[10px] font-semibold uppercase tracking-[0.05em]" style={{ color: 'var(--m-muted)' }}>AI Visibility</p>
+                </div>
+                <div className="flex items-baseline gap-0.5 mb-1.5">
+                  <span className="text-[22px] font-bold tabular-nums leading-none" style={{ color: scoreColor(visibilityScore) }}>{visibilityScore != null ? Math.round(visibilityScore) : '--'}</span>
+                  {visibilityScore != null && <span className="text-[11px]" style={{ color: 'var(--m-muted)' }}>%</span>}
+                </div>
+                <p className="text-[11px] leading-snug" style={{ color: 'var(--m-muted)' }}>
+                  {modelProbes.length > 0
+                    ? `${recognizedCount} of ${modelProbes.length} models mention your brand`
+                    : 'How often AI mentions your brand'}
+                </p>
+                {recognizedCount < modelProbes.length && modelProbes.length > 0 && (
+                  <div className="flex items-center gap-1 text-[10px] font-medium mt-2 px-2 py-1 rounded" style={{ background: 'color-mix(in srgb, var(--severe) 6%, transparent)', color: 'var(--severe)' }}>
+                    <Bot size={9} className="flex-shrink-0" /> {modelProbes.length - recognizedCount} don&apos;t recognize {brandName}
+                  </div>
+                )}
+                <span className="text-[10px] font-semibold flex items-center gap-0.5 mt-2.5" style={{ color: 'var(--ink)' }}>
+                  Details <ArrowRight size={8} />
+                </span>
+              </button>
+
+              {/* Accuracy */}
+              <button type="button" onClick={() => setActiveTab('perception')} className="text-left rounded-lg p-3.5 transition-all hover:shadow-sm" style={{ background: 'var(--paper-2)', border: '1px solid var(--rule)' }}>
+                <div className="flex items-center gap-1.5 mb-2">
+                  <Target size={11} style={{ color: 'var(--m-muted)' }} />
+                  <p className="text-[10px] font-semibold uppercase tracking-[0.05em]" style={{ color: 'var(--m-muted)' }}>Accuracy</p>
+                </div>
+                <div className="flex items-baseline gap-0.5 mb-1.5">
+                  <span className="text-[22px] font-bold tabular-nums leading-none" style={{ color: scoreColor(avgAccuracy) }}>{avgAccuracy > 0 ? avgAccuracy : '--'}</span>
+                  {avgAccuracy > 0 && <span className="text-[11px]" style={{ color: 'var(--m-muted)' }}>%</span>}
+                </div>
+                <p className="text-[11px] leading-snug" style={{ color: 'var(--m-muted)' }}>
+                  How well AI matches your actual site content
+                </p>
+                {hallucinations.length > 0 && (
+                  <div className="flex items-center gap-1 text-[10px] font-medium mt-2 px-2 py-1 rounded" style={{ background: 'color-mix(in srgb, var(--severe) 6%, transparent)', color: 'var(--severe)' }}>
+                    <AlertTriangle size={9} className="flex-shrink-0" /> {hallucinations.length} factually wrong answer{hallucinations.length > 1 ? 's' : ''}
+                  </div>
+                )}
+                {avgAccuracy > 0 && avgAccuracy < 60 && hallucinations.length === 0 && (
+                  <div className="flex items-center gap-1 text-[10px] font-medium mt-2 px-2 py-1 rounded" style={{ background: 'color-mix(in srgb, var(--warn) 6%, transparent)', color: 'var(--warn)' }}>
+                    <AlertTriangle size={9} className="flex-shrink-0" /> AI has an incomplete picture
+                  </div>
+                )}
+                <span className="text-[10px] font-semibold flex items-center gap-0.5 mt-2.5" style={{ color: 'var(--ink)' }}>
+                  Details <ArrowRight size={8} />
+                </span>
+              </button>
+
+              {/* Sentiment */}
+              <button type="button" onClick={() => setActiveTab('perception')} className="text-left rounded-lg p-3.5 transition-all hover:shadow-sm" style={{ background: 'var(--paper-2)', border: '1px solid var(--rule)' }}>
+                <div className="flex items-center gap-1.5 mb-2">
+                  {sentimentScore != null && sentimentScore >= 60 ? <ThumbsUp size={11} style={{ color: 'var(--ok)' }} /> : sentimentScore != null && sentimentScore < 40 ? <ThumbsDown size={11} style={{ color: 'var(--severe)' }} /> : <Minus size={11} style={{ color: 'var(--m-muted)' }} />}
+                  <p className="text-[10px] font-semibold uppercase tracking-[0.05em]" style={{ color: 'var(--m-muted)' }}>Sentiment</p>
+                </div>
+                <div className="flex items-baseline gap-1.5 mb-1.5">
+                  <span className="text-[22px] font-bold tabular-nums leading-none" style={{ color: scoreColor(sentimentScore) }}>{sentimentScore ?? '--'}</span>
+                  {sentimentScore != null && (
+                    <span className="text-[11px] font-semibold" style={{ color: scoreColor(sentimentScore) }}>{sentimentLabel(sentimentScore).label}</span>
+                  )}
+                </div>
+                <p className="text-[11px] leading-snug" style={{ color: 'var(--m-muted)' }}>
+                  How AI portrays your brand reputation
+                </p>
+                {sentimentScore != null && sentimentScore < 40 && (
+                  <div className="flex items-center gap-1 text-[10px] font-medium mt-2 px-2 py-1 rounded" style={{ background: 'color-mix(in srgb, var(--severe) 6%, transparent)', color: 'var(--severe)' }}>
+                    <ThumbsDown size={9} className="flex-shrink-0" /> Negative AI sentiment
+                  </div>
+                )}
+                <span className="text-[10px] font-semibold flex items-center gap-0.5 mt-2.5" style={{ color: 'var(--ink)' }}>
+                  Details <ArrowRight size={8} />
+                </span>
+              </button>
+
+              {/* AI Readability */}
+              <button type="button" onClick={() => setActiveTab('pages')} className="text-left rounded-lg p-3.5 transition-all hover:shadow-sm" style={{ background: 'var(--paper-2)', border: '1px solid var(--rule)' }}>
+                <div className="flex items-center gap-1.5 mb-2">
+                  <Brain size={11} style={{ color: 'var(--m-muted)' }} />
+                  <p className="text-[10px] font-semibold uppercase tracking-[0.05em]" style={{ color: 'var(--m-muted)' }}>AI Readability</p>
+                </div>
+                <div className="flex items-baseline gap-0.5 mb-1.5">
+                  <span className="text-[22px] font-bold tabular-nums leading-none" style={{ color: scoreColor(avgPageScore) }}>{avgPageScore ?? '--'}</span>
+                  {avgPageScore != null && <span className="text-[11px]" style={{ color: 'var(--m-muted)' }}>/100</span>}
+                </div>
+                <p className="text-[11px] leading-snug" style={{ color: 'var(--m-muted)' }}>
+                  {pagesScored.length > 0
+                    ? `${pagesScored.length} page${pagesScored.length !== 1 ? 's' : ''} scored`
+                    : 'How well bots extract your content'}
+                </p>
+                {pagesRed > 0 && (
+                  <div className="flex items-center gap-1 text-[10px] font-medium mt-2 px-2 py-1 rounded" style={{ background: 'color-mix(in srgb, var(--severe) 6%, transparent)', color: 'var(--severe)' }}>
+                    <Globe size={9} className="flex-shrink-0" /> {pagesRed} page{pagesRed > 1 ? 's' : ''} with poor readability
+                  </div>
+                )}
+                <span className="text-[10px] font-semibold flex items-center gap-0.5 mt-2.5" style={{ color: 'var(--ink)' }}>
+                  View pages <ArrowRight size={8} />
+                </span>
+              </button>
+            </div>
+
+            {/* All-clear banner */}
+            {recognizedCount === modelProbes.length && modelProbes.length > 0 && avgAccuracy >= 60 && hallucinations.length === 0 && (sentimentScore == null || sentimentScore >= 50) && pagesRed === 0 && (
+              <div className="flex items-center gap-3 px-3.5 py-2.5 rounded-lg mt-3" style={{ background: 'color-mix(in srgb, var(--ok) 4%, transparent)', border: '1px solid color-mix(in srgb, var(--ok) 10%, transparent)' }}>
+                <CheckCircle2 size={13} className="flex-shrink-0" style={{ color: 'var(--ok)' }} />
+                <p className="text-[12px]" style={{ color: 'var(--ink)', opacity: 0.85 }}>
+                  No critical issues — your brand has strong AI visibility across all models
+                </p>
               </div>
             )}
 
@@ -1157,82 +1265,6 @@ export default function IntelligencePage() {
       </DashCard>
 
 
-      {/* ═══════════════════════════════════════════════════
-          SECTION 2: Key signals (compact alerts)
-         ═══════════════════════════════════════════════════ */}
-      {hasData && (modelProbes.length > 0 || pagesRed > 0) && (
-        <DashCard className="mb-4">
-          <div className="flex items-center gap-2 mb-3">
-            <AlertCircle size={14} strokeWidth={1.75} style={{ color: 'var(--signal)' }} />
-            <h2 className="text-[15px] font-semibold" style={{ color: 'var(--ink)' }}>Key signals</h2>
-          </div>
-          <div className="space-y-2">
-            {recognizedCount < modelProbes.length && modelProbes.length > 0 && (
-              <div className="flex items-center gap-3 px-3.5 py-2.5 rounded-lg" style={{ background: 'color-mix(in srgb, var(--severe) 4%, transparent)', border: '1px solid color-mix(in srgb, var(--severe) 10%, transparent)' }}>
-                <Bot size={13} className="flex-shrink-0" style={{ color: 'var(--severe)' }} />
-                <p className="text-[12px] flex-1" style={{ color: 'var(--ink)', opacity: 0.85 }}>
-                  {modelProbes.length - recognizedCount} of {modelProbes.length} AI models don{"'"}t recognize {brandName}
-                </p>
-                <button type="button" onClick={() => setActiveTab('perception')} className="text-[11px] font-semibold flex-shrink-0 hover:underline" style={{ color: 'var(--ink)' }}>
-                  Details <ArrowRight size={9} className="inline ml-0.5" />
-                </button>
-              </div>
-            )}
-            {avgAccuracy > 0 && avgAccuracy < 60 && (
-              <div className="flex items-center gap-3 px-3.5 py-2.5 rounded-lg" style={{ background: 'color-mix(in srgb, var(--warn) 4%, transparent)', border: '1px solid color-mix(in srgb, var(--warn) 10%, transparent)' }}>
-                <Target size={13} className="flex-shrink-0" style={{ color: 'var(--warn)' }} />
-                <p className="text-[12px] flex-1" style={{ color: 'var(--ink)', opacity: 0.85 }}>
-                  Average accuracy is {avgAccuracy}% — AI models have an incomplete picture
-                </p>
-                <button type="button" onClick={() => setActiveTab('perception')} className="text-[11px] font-semibold flex-shrink-0 hover:underline" style={{ color: 'var(--ink)' }}>
-                  Details <ArrowRight size={9} className="inline ml-0.5" />
-                </button>
-              </div>
-            )}
-            {hallucinations.length > 0 && (
-              <div className="flex items-center gap-3 px-3.5 py-2.5 rounded-lg" style={{ background: 'color-mix(in srgb, var(--severe) 4%, transparent)', border: '1px solid color-mix(in srgb, var(--severe) 10%, transparent)' }}>
-                <AlertTriangle size={13} className="flex-shrink-0" style={{ color: 'var(--severe)' }} />
-                <p className="text-[12px] flex-1" style={{ color: 'var(--ink)', opacity: 0.85 }}>
-                  {hallucinations.length} AI answer{hallucinations.length > 1 ? 's are' : ' is'} factually wrong
-                </p>
-                <button type="button" onClick={() => setActiveTab('perception')} className="text-[11px] font-semibold flex-shrink-0 hover:underline" style={{ color: 'var(--ink)' }}>
-                  Details <ArrowRight size={9} className="inline ml-0.5" />
-                </button>
-              </div>
-            )}
-            {sentimentScore != null && sentimentScore < 50 && (
-              <div className="flex items-center gap-3 px-3.5 py-2.5 rounded-lg" style={{ background: 'color-mix(in srgb, var(--warn) 4%, transparent)', border: '1px solid color-mix(in srgb, var(--warn) 10%, transparent)' }}>
-                <ThumbsDown size={13} className="flex-shrink-0" style={{ color: 'var(--warn)' }} />
-                <p className="text-[12px] flex-1" style={{ color: 'var(--ink)', opacity: 0.85 }}>
-                  AI sentiment is negative ({sentimentScore}/100)
-                </p>
-                <button type="button" onClick={() => setActiveTab('perception')} className="text-[11px] font-semibold flex-shrink-0 hover:underline" style={{ color: 'var(--ink)' }}>
-                  Details <ArrowRight size={9} className="inline ml-0.5" />
-                </button>
-              </div>
-            )}
-            {pagesRed > 0 && (
-              <div className="flex items-center gap-3 px-3.5 py-2.5 rounded-lg" style={{ background: 'color-mix(in srgb, var(--severe) 4%, transparent)', border: '1px solid color-mix(in srgb, var(--severe) 10%, transparent)' }}>
-                <Globe size={13} className="flex-shrink-0" style={{ color: 'var(--severe)' }} />
-                <p className="text-[12px] flex-1" style={{ color: 'var(--ink)', opacity: 0.85 }}>
-                  {pagesRed} page{pagesRed > 1 ? 's have' : ' has'} poor AI readability
-                </p>
-                <button type="button" onClick={() => setActiveTab('pages')} className="text-[11px] font-semibold flex-shrink-0 hover:underline" style={{ color: 'var(--ink)' }}>
-                  View pages <ArrowRight size={9} className="inline ml-0.5" />
-                </button>
-              </div>
-            )}
-            {recognizedCount === modelProbes.length && modelProbes.length > 0 && avgAccuracy >= 60 && hallucinations.length === 0 && (sentimentScore == null || sentimentScore >= 50) && pagesRed === 0 && (
-              <div className="flex items-center gap-3 px-3.5 py-2.5 rounded-lg" style={{ background: 'color-mix(in srgb, var(--ok) 4%, transparent)', border: '1px solid color-mix(in srgb, var(--ok) 10%, transparent)' }}>
-                <CheckCircle2 size={13} className="flex-shrink-0" style={{ color: 'var(--ok)' }} />
-                <p className="text-[12px]" style={{ color: 'var(--ink)', opacity: 0.85 }}>
-                  No critical issues — your brand has strong AI visibility across all models
-                </p>
-              </div>
-            )}
-          </div>
-        </DashCard>
-      )}
 
       {/* ═══════════════════════════════════════════════════
           SECTION 3: Perception snapshot (compact themes)
@@ -1543,24 +1575,6 @@ export default function IntelligencePage() {
         )}
       </div>
 
-      {/* Link to pages tab */}
-      {auditPages.length > 0 && (
-        <div className="mb-4">
-          <button
-            type="button"
-            onClick={() => setActiveTab('pages')}
-            className="w-full flex items-center gap-2.5 px-4 py-3 rounded-xl text-left transition-colors hover:opacity-90"
-            style={{ background: 'color-mix(in srgb, var(--signal) 5%, transparent)', border: '1px solid color-mix(in srgb, var(--signal) 12%, transparent)' }}
-          >
-            <Brain size={14} style={{ color: 'var(--signal)' }} />
-            <span className="text-[12px] font-medium flex-1" style={{ color: 'var(--ink)' }}>
-              View page-level AI visibility — {auditPages.length} page{auditPages.length !== 1 ? 's' : ''} crawled
-              {avgPageScore != null && <span style={{ color: scoreColor(avgPageScore) }}> · avg {avgPageScore}/100</span>}
-            </span>
-            <ArrowRight size={12} style={{ color: 'var(--signal)' }} />
-          </button>
-        </div>
-      )}
 
       </>)}
 
