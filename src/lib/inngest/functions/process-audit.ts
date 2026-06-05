@@ -2663,6 +2663,9 @@ RULES FOR RE-AUDIT:
       // ════════════════════════════════════════════════════════════
       // DEEP MODE (first audit or explicit Dig Deeper) — FULL AI ANALYSIS
       // ════════════════════════════════════════════════════════════
+      await logActivity(auditId, 'Preparing analysis modules...')
+      await setProgress(auditId, stageProgress('analysing', 0) + 1, 'analysing')
+
       // ── Determine which modules (and thus categories) to analyze ──
       // Module slug → category index mapping (each module = 4 categories):
       //   foundation → 0-3, human_experience → 4-7, inclusive_design → 8-11,
@@ -2696,8 +2699,17 @@ RULES FOR RE-AUDIT:
       // explicitly enabled brand_consistency AND meaningful brand files exist.
       let includeBrandDnaEnrichment = false
       if (activeSlugs.includes('brand_consistency') && auditDetails.brandIdentityId) {
-        const hasMeaningful = await hasMeaningfulBrandDna(auditDetails.brandIdentityId)
-        includeBrandDnaEnrichment = hasMeaningful
+        try {
+          const hasMeaningful = await withTimeout(
+            hasMeaningfulBrandDna(auditDetails.brandIdentityId),
+            10_000,
+            'hasMeaningfulBrandDna',
+          )
+          includeBrandDnaEnrichment = !!hasMeaningful
+        } catch {
+          console.warn('[inngest] hasMeaningfulBrandDna timed out — skipping brand enrichment')
+          includeBrandDnaEnrichment = false
+        }
       }
       // Normalize slug: 'brand_consistency' → 'design_consistency' for category resolution
       activeSlugs = activeSlugs.map(s => s === 'brand_consistency' ? 'design_consistency' : s)
@@ -2705,8 +2717,12 @@ RULES FOR RE-AUDIT:
       if (!activeSlugs.includes('design_consistency')) {
         activeSlugs.push('design_consistency')
       }
-      await auditLog(auditId, 'design_mode', 'info',
-        `Design Consistency: always active. Brand DNA enrichment: ${includeBrandDnaEnrichment ? 'enabled (meaningful brand files found)' : 'disabled'}`)
+      await withTimeout(
+        auditLog(auditId, 'design_mode', 'info',
+          `Design Consistency: always active. Brand DNA enrichment: ${includeBrandDnaEnrichment ? 'enabled (meaningful brand files found)' : 'disabled'}`),
+        10_000,
+        'auditLog-design-mode',
+      )
 
       // Build the set of category indices to analyze
       const selectedIndices = new Set<number>()
@@ -2721,35 +2737,39 @@ RULES FOR RE-AUDIT:
       let categoriesToAnalyze = UX_CATEGORY_NAMES.filter((_, idx) => selectedIndices.has(idx))
 
       // ── Fetch brand content only when user explicitly enabled Brand DNA comparison ──
+      // Wrapped with 60s timeout to prevent hanging outside step.run() boundary
       let brandContext = ''
       if (includeBrandDnaEnrichment && auditDetails.brandIdentityId) {
-        try {
-          const db = getDb()
-          const { data: brandFiles } = await db
-            .from('brand_identity_files')
-            .select('file_name, file_url, file_type')
-            .eq('brand_identity_id', auditDetails.brandIdentityId)
+        const brandExtractionResult = await withTimeout(
+          (async () => {
+            const db = getDb()
+            const { data: brandFiles } = await db
+              .from('brand_identity_files')
+              .select('file_name, file_url, file_type')
+              .eq('brand_identity_id', auditDetails.brandIdentityId)
 
-          if (brandFiles && brandFiles.length > 0) {
-            const extracted = await extractAllBrandFiles(
-              brandFiles.map((f: any) => ({
-                file_name: f.file_name as string,
-                file_url: f.file_url as string,
-                file_type: f.file_type as string | null,
-              })),
-            )
-            const textParts = extracted
-              .filter(e => e.textContent && e.textContent.length > 0)
-              .map(e => `[Brand file: ${e.fileName}]\n${e.textContent}`)
-            brandContext = textParts.join('\n\n---\n\n')
-            await auditLog(auditId, 'brand_files_extracted', 'success',
-              `Extracted content from ${extracted.length} brand file(s)`)
-          }
-        } catch (err) {
-          console.error('[inngest] Brand file extraction error (non-fatal):', err)
-          await auditLog(auditId, 'brand_extraction_error', 'warning',
-            `Brand file extraction failed: ${err instanceof Error ? err.message : String(err)}`)
-        }
+            if (brandFiles && brandFiles.length > 0) {
+              const extracted = await extractAllBrandFiles(
+                brandFiles.map((f: any) => ({
+                  file_name: f.file_name as string,
+                  file_url: f.file_url as string,
+                  file_type: f.file_type as string | null,
+                })),
+              )
+              const textParts = extracted
+                .filter(e => e.textContent && e.textContent.length > 0)
+                .map(e => `[Brand file: ${e.fileName}]\n${e.textContent}`)
+              const ctx = textParts.join('\n\n---\n\n')
+              await auditLog(auditId, 'brand_files_extracted', 'success',
+                `Extracted content from ${extracted.length} brand file(s)`)
+              return ctx
+            }
+            return ''
+          })(),
+          60_000,
+          'brand-file-extraction',
+        )
+        brandContext = brandExtractionResult ?? ''
       }
 
       const BATCH_SIZE = 8 // 8 parallel calls per batch — fast with Anthropic tier-3+ rate limits
@@ -2774,9 +2794,15 @@ RULES FOR RE-AUDIT:
       )
 
       let totalFindingsCount = 0
+      await logActivity(auditId, `Starting deep analysis: ${categoriesToAnalyze.length} categories across ${batches.length} batch${batches.length === 1 ? '' : 'es'}...`)
 
       for (let batchIdx = 0; batchIdx < batches.length; batchIdx++) {
         const batch = batches[batchIdx]
+
+        // Visibility: log each batch start so the user sees progress
+        const batchStartProgress = Math.round(30 + (batchIdx / batches.length) * 35)
+        await logActivity(auditId, `Analysing batch ${batchIdx + 1}/${batches.length}: ${batch.slice(0, 3).join(', ')}${batch.length > 3 ? '...' : ''}`)
+        await setProgress(auditId, batchStartProgress, 'analysing')
 
         const batchResult = await step.run(`analyze-batch-${batchIdx + 1}`, async () => {
           const db = getDb()
