@@ -129,6 +129,21 @@ async function refundCredit(auditId: string) {
   }
 }
 
+/* ── Stall protection helper ── */
+
+/** How long any single step can run before we consider it stalled (15 minutes) */
+const STEP_TIMEOUT_MS = 15 * 60 * 1000
+
+/** Wrap an async operation with a timeout. Throws if the operation takes too long. */
+async function withTimeout<T>(label: string, ms: number, fn: () => Promise<T>): Promise<T> {
+  return Promise.race([
+    fn(),
+    new Promise<T>((_, reject) =>
+      setTimeout(() => reject(new Error(`Step "${label}" timed out after ${Math.round(ms / 1000)}s`)), ms),
+    ),
+  ])
+}
+
 /* ── The Inngest function ── */
 
 export const processBrandAuditFn = inngest.createFunction(
@@ -234,13 +249,16 @@ export const processBrandAuditFn = inngest.createFunction(
         await auditLog(auditId, 'extract_started', 'info',
           `Extracting content from ${auditDetails.files.length} file(s)`)
 
-        const results = await extractAllBrandFiles(
-          auditDetails.files.map((f: any) => ({
-            file_name: f.file_name,
-            file_url: f.file_url,
-            file_type: f.file_type,
-          })),
-          3, // concurrency
+        // Wrap extraction with step-level timeout to prevent infinite hangs
+        const results = await withTimeout('extract-files', STEP_TIMEOUT_MS, () =>
+          extractAllBrandFiles(
+            auditDetails.files.map((f: any) => ({
+              file_name: f.file_name,
+              file_url: f.file_url,
+              file_type: f.file_type,
+            })),
+            3, // concurrency
+          ),
         )
 
         const successCount = results.filter((r) => !r.error).length
@@ -249,6 +267,12 @@ export const processBrandAuditFn = inngest.createFunction(
         await auditLog(auditId, 'extract_complete', failCount > 0 ? 'warning' : 'success',
           `Extracted ${successCount}/${results.length} files` +
           (failCount > 0 ? ` (${failCount} failed)` : ''))
+
+        // If ALL files failed, this is a hard failure — don't proceed with empty data
+        if (successCount === 0 && results.length > 0) {
+          const errors = results.map(r => r.error).filter(Boolean).join('; ')
+          throw new Error(`All ${results.length} file(s) failed extraction: ${errors}`)
+        }
 
         // Serialize for step data
         return results.map((r) => ({
@@ -270,11 +294,13 @@ export const processBrandAuditFn = inngest.createFunction(
         await auditLog(auditId, 'analysis_started', 'info',
           `Analyzing ${BRAND_AUDIT_CATEGORIES.length} brand categories`)
 
-        const results = await analyzeAllBrandCategories(
-          extractedFiles as ExtractedContent[],
-          auditDetails.brandName,
-          auditDetails.language,
-          3, // batch size
+        const results = await withTimeout('analyze-categories', STEP_TIMEOUT_MS, () =>
+          analyzeAllBrandCategories(
+            extractedFiles as ExtractedContent[],
+            auditDetails.brandName,
+            auditDetails.language,
+            3, // batch size
+          ),
         )
 
         const totalFindings = results.reduce((sum, r) => sum + r.findings.length, 0)

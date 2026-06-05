@@ -30,13 +30,25 @@ export interface ExtractedContent {
 
 // ── Helpers ────────────────────────────────────────────────────
 
-/** Fetch a file from a URL and return it as a Buffer + detected media type */
+/** Fetch a file from a URL and return it as a Buffer + detected media type.
+ *  Enforces a 30-second timeout to prevent hanging on unresponsive storage. */
 async function fetchFile(url: string): Promise<{ buffer: Buffer; mediaType: string }> {
-  const res = await fetch(url)
-  if (!res.ok) throw new Error(`Failed to fetch file: ${res.status} ${res.statusText}`)
-  const arrayBuffer = await res.arrayBuffer()
-  const contentType = res.headers.get('content-type') || 'application/octet-stream'
-  return { buffer: Buffer.from(arrayBuffer), mediaType: contentType }
+  const controller = new AbortController()
+  const timeout = setTimeout(() => controller.abort(), 30_000)
+  try {
+    const res = await fetch(url, { signal: controller.signal })
+    if (!res.ok) throw new Error(`Failed to fetch file: ${res.status} ${res.statusText}`)
+    const arrayBuffer = await res.arrayBuffer()
+    const contentType = res.headers.get('content-type') || 'application/octet-stream'
+    return { buffer: Buffer.from(arrayBuffer), mediaType: contentType }
+  } catch (err) {
+    if ((err as Error).name === 'AbortError') {
+      throw new Error(`File download timed out after 30s: ${url.slice(0, 120)}`)
+    }
+    throw err
+  } finally {
+    clearTimeout(timeout)
+  }
 }
 
 /** Use Claude vision to describe an image */
@@ -407,19 +419,54 @@ export async function extractBrandFileContent(
   }
 }
 
-/** Extract content from multiple brand files in parallel (with concurrency limit) */
+/** Per-file extraction timeout (2 minutes — covers download + API calls) */
+const PER_FILE_TIMEOUT_MS = 120_000
+
+/** Overall extraction timeout for all files (10 minutes) */
+const TOTAL_EXTRACTION_TIMEOUT_MS = 600_000
+
+/** Extract content from multiple brand files in parallel (with concurrency limit).
+ *  Each file has a 2-minute timeout. The entire batch has a 10-minute ceiling. */
 export async function extractAllBrandFiles(
   files: Array<{ file_name: string; file_url: string; file_type: string | null }>,
   concurrency = 3,
 ): Promise<ExtractedContent[]> {
   const results: ExtractedContent[] = []
   const queue = [...files]
+  const startTime = Date.now()
 
   async function worker() {
     while (queue.length > 0) {
+      // Check total extraction ceiling
+      if (Date.now() - startTime > TOTAL_EXTRACTION_TIMEOUT_MS) {
+        console.warn(`[brand-extractor] Total extraction timeout reached (${TOTAL_EXTRACTION_TIMEOUT_MS / 1000}s). Skipping remaining files.`)
+        break
+      }
+
       const file = queue.shift()!
-      const content = await extractBrandFileContent(file.file_url, file.file_name, file.file_type)
-      results.push(content)
+
+      // Per-file timeout: race extraction against a timer
+      try {
+        const content = await Promise.race([
+          extractBrandFileContent(file.file_url, file.file_name, file.file_type),
+          new Promise<ExtractedContent>((_, reject) =>
+            setTimeout(() => reject(new Error(`Extraction timed out after ${PER_FILE_TIMEOUT_MS / 1000}s`)), PER_FILE_TIMEOUT_MS),
+          ),
+        ])
+        results.push(content)
+      } catch (err) {
+        // File failed or timed out — return error result, don't block others
+        console.error(`[brand-extractor] File "${file.file_name}" failed:`, (err as Error).message)
+        results.push({
+          fileName: file.file_name,
+          fileType: file.file_type || file.file_name.split('.').pop() || 'unknown',
+          textContent: '',
+          visualDescription: null,
+          pageCount: null,
+          extractionMethod: 'text',
+          error: `Extraction failed: ${(err as Error).message}`,
+        })
+      }
     }
   }
 
