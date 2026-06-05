@@ -7,6 +7,7 @@
 
 import type { AuditPage } from '@/types/database'
 import { isFirecrawlConfigured, firecrawlScrape, firecrawlMap } from '@/lib/crawl/firecrawl-client'
+import { getFeatureFlags } from '@/lib/feature-flags'
 
 /* ── Hostname normalization ───────────────────────────────── */
 
@@ -427,12 +428,42 @@ const USER_AGENTS = [
   'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.5 Safari/605.1.15',
 ]
 
+// ── Polite crawl configuration ────────────────────────────────
+// When FEATURE_POLITE_CRAWLER is on, the crawler uses a consistent UA
+// per session, lower concurrency, and longer delays with jitter.
+
+/** Session-scoped UA — set once per crawlPages() call when polite mode is on */
+let _sessionUA: string | null = null
+
+/** Get the user-agent for this request. Polite mode = consistent per session. */
+function getRequestUA(): string {
+  if (_sessionUA) return _sessionUA
+  return USER_AGENTS[Math.floor(Math.random() * USER_AGENTS.length)]
+}
+
+/** Polite delay with jitter — returns a promise that resolves after 500-2000ms */
+function politeDelay(): Promise<void> {
+  const baseMs = 500
+  const jitterMs = Math.floor(Math.random() * 1500)
+  return new Promise(resolve => setTimeout(resolve, baseMs + jitterMs))
+}
+
+/** Standard (legacy) brief delay between batches — 150ms */
+function legacyDelay(): Promise<void> {
+  return new Promise(resolve => setTimeout(resolve, 150))
+}
+
+/** Crawl batch size — polite mode uses 3, legacy uses 5 */
+function getCrawlBatchSize(polite: boolean): number {
+  return polite ? 3 : 5
+}
+
 async function directFetch(url: string, timeoutMs: number = 8000): Promise<CrawledPage | null> {
   const controller = new AbortController()
   const timeout = setTimeout(() => controller.abort(), timeoutMs)
 
   try {
-    const ua = USER_AGENTS[Math.floor(Math.random() * USER_AGENTS.length)]
+    const ua = getRequestUA()
     const fetchStart = Date.now()
 
     const response = await fetch(url, {
@@ -992,7 +1023,7 @@ async function probeCommonPaths(baseUrl: string, hostname: string): Promise<URL[
 
         const res = await fetch(probeUrl, {
           method: 'HEAD',
-          headers: { 'User-Agent': USER_AGENTS[0] },
+          headers: { 'User-Agent': getRequestUA() },
           signal: controller.signal,
           redirect: 'follow',
         })
@@ -1166,6 +1197,19 @@ export async function crawlPages(
   let jsPagesDetected = 0
   let pagesBlocked = 0
   let pagesDuplicate = 0
+
+  // ── Polite crawl mode: consistent UA per session, lower concurrency, jittered delays ──
+  const politeMode = getFeatureFlags().politeCrawler
+  const batchSize = getCrawlBatchSize(politeMode)
+  const interBatchDelay = politeMode ? politeDelay : legacyDelay
+
+  // Set session-scoped UA (same UA for every request in this crawl run)
+  if (politeMode) {
+    _sessionUA = USER_AGENTS[Math.floor(Math.random() * USER_AGENTS.length)]
+    console.log(`[crawler] Polite mode: batch=${batchSize}, UA=${_sessionUA.substring(0, 40)}...`)
+  } else {
+    _sessionUA = null
+  }
 
   /** Mark a URL as visited using normalized key */
   function markVisited(urlStr: string) {
@@ -1387,12 +1431,12 @@ export async function crawlPages(
 
       console.log(`[crawler] Level 1: ${level1ToVisit.length} pages to crawl (merged from all strategies)`)
 
-      // Crawl level 1 in parallel (5 at a time for speed)
+      // Crawl level 1 in parallel (batchSize at a time — polite mode uses 3, legacy uses 5)
       const level1Pages: CrawledPage[] = []
-      for (let i = 0; i < level1ToVisit.length; i += 5) {
+      for (let i = 0; i < level1ToVisit.length; i += batchSize) {
         if (pages.length >= maxPages) break
 
-        const batch = level1ToVisit.slice(i, Math.min(i + 5, level1ToVisit.length))
+        const batch = level1ToVisit.slice(i, Math.min(i + batchSize, level1ToVisit.length))
         const results = await Promise.all(
           batch.map((link) => fetchPageRobust(link.toString())),
         )
@@ -1430,9 +1474,9 @@ export async function crawlPages(
         const crawlPct = Math.round(8 + (5 * Math.min(pages.length, maxPages) / maxPages))
         await onProgress?.(crawlPct, 'crawling')
 
-        // Brief rate limit between batches
-        if (i + 5 < level1ToVisit.length && pages.length < maxPages) {
-          await new Promise((resolve) => setTimeout(resolve, 150))
+        // Rate limit between batches (polite mode: 500-2000ms jitter, legacy: 150ms)
+        if (i + batchSize < level1ToVisit.length && pages.length < maxPages) {
+          await interBatchDelay()
         }
       }
 
@@ -1469,10 +1513,10 @@ export async function crawlPages(
 
         console.log(`[crawler] Level 2: ${level2ToVisit.length} pages to crawl`)
 
-        for (let i = 0; i < level2ToVisit.length; i += 5) {
+        for (let i = 0; i < level2ToVisit.length; i += batchSize) {
           if (pages.length >= maxPages) break
 
-          const batch = level2ToVisit.slice(i, Math.min(i + 5, level2ToVisit.length))
+          const batch = level2ToVisit.slice(i, Math.min(i + batchSize, level2ToVisit.length))
           const results = await Promise.all(
             batch.map((link) => fetchPageRobust(link.toString())),
           )
@@ -1497,8 +1541,8 @@ export async function crawlPages(
             }
           }
 
-          if (i + 5 < level2ToVisit.length && pages.length < maxPages) {
-            await new Promise((resolve) => setTimeout(resolve, 150))
+          if (i + batchSize < level2ToVisit.length && pages.length < maxPages) {
+            await interBatchDelay()
           }
         }
       }

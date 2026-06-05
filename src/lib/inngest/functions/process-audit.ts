@@ -825,7 +825,16 @@ Return 2-6 findings. Be specific and evidence-based. Reference specific files/co
           coverage_notes: [] as string[],
           // Additional observability from acquisition pipeline
           acquisition_state: acquisitionResult.state,
-          acquisition_summary: acquisitionResult.summary,
+          acquisition_summary: {
+            state: acquisitionResult.summary.state,
+            pages_by_method: acquisitionResult.summary.pagesByMethod,
+            pages_by_quality: acquisitionResult.summary.pagesByQuality,
+            used_browser_fallback: acquisitionResult.summary.usedBrowserFallback,
+            has_blocked_pages: acquisitionResult.summary.hasBlockedPages,
+            detected_protection: acquisitionResult.summary.detectedProtection,
+            pages_attempted: acquisitionResult.summary.pagesAttempted,
+            pages_acquired: acquisitionResult.summary.pagesAcquired,
+          },
         }
 
         if (acqCrawlStats.jsPagesDetected > 0) {

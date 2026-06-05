@@ -121,9 +121,25 @@ async function checkHttpAccess(url: string): Promise<{
 
     // Clear HTTP errors
     if (httpStatus === 403 || httpStatus === 429 || httpStatus === 503) {
+      // Parse Retry-After header if present (RFC 7231 §7.1.3)
+      const retryAfter = res.headers.get('retry-after')
+      let retryInfo = ''
+      if (retryAfter) {
+        const retrySeconds = parseInt(retryAfter, 10)
+        if (!isNaN(retrySeconds)) {
+          retryInfo = ` (Retry-After: ${retrySeconds}s)`
+        } else {
+          // HTTP-date format
+          const retryDate = new Date(retryAfter)
+          if (!isNaN(retryDate.getTime())) {
+            const waitMs = retryDate.getTime() - Date.now()
+            retryInfo = ` (Retry-After: ${Math.max(0, Math.round(waitMs / 1000))}s)`
+          }
+        }
+      }
       return {
         status: 'crawl-blocked',
-        reason: `HTTP ${httpStatus} — server is blocking automated requests`,
+        reason: `HTTP ${httpStatus} — server is blocking automated requests${retryInfo}`,
         httpStatus,
       }
     }
