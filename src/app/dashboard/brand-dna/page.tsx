@@ -342,6 +342,7 @@ function BrandDnaPage() {
   const [shareCopied, setShareCopied] = useState(false);
   const [shareLoading, setShareLoading] = useState(false);
   const [deletingAudit, setDeletingAudit] = useState(false);
+  const [restartingAudit, setRestartingAudit] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
 
@@ -803,6 +804,19 @@ function BrandDnaPage() {
     } catch {
       setError('Failed to delete audit.');
     } finally { setDeletingAudit(false); }
+  };
+
+  /* ── Restart stuck audit ── */
+  const handleRestartAudit = async () => {
+    if (!audit || !identity) return;
+    setRestartingAudit(true);
+    try {
+      const res = await fetch(`/api/audits/${audit.id}/restart`, { method: 'POST' });
+      if (!res.ok) throw new Error();
+      await loadBrandAudit(identity.id);
+    } catch {
+      setError('Failed to restart audit.');
+    } finally { setRestartingAudit(false); }
   };
 
   /* ── Computed ── */
@@ -1379,7 +1393,15 @@ function BrandDnaPage() {
             </div>
 
             {/* Audit in progress */}
-            {isAuditInProgress && audit && <BrandAuditInProgress audit={audit} />}
+            {isAuditInProgress && audit && (
+              <BrandAuditInProgress
+                audit={audit}
+                onRestart={handleRestartAudit}
+                onDelete={handleDeleteAudit}
+                restarting={restartingAudit}
+                deleting={deletingAudit}
+              />
+            )}
 
             {/* Audit failed */}
             {isAuditFailed && audit && (
@@ -1555,7 +1577,13 @@ function Field({ label, required, children }: { label: string; required?: boolea
 
 /* ── Brand audit in-progress ── */
 
-function BrandAuditInProgress({ audit }: { audit: AuditRecord }) {
+function BrandAuditInProgress({ audit, onRestart, onDelete, restarting, deleting }: {
+  audit: AuditRecord;
+  onRestart: () => void;
+  onDelete: () => void;
+  restarting: boolean;
+  deleting: boolean;
+}) {
   const { data: progress } = useAuditProgress(audit.id);
 
   const steps = ['payment_received', 'crawling', 'analysing', 'generating_report'] as const;
@@ -1569,26 +1597,76 @@ function BrandAuditInProgress({ audit }: { audit: AuditRecord }) {
 
   const progressPct = progress?.progress || Math.round(((currentIdx + 1) / steps.length) * 100);
 
+  // Stall detection: stuck for > 5 minutes with no progress update
+  const stuckMinutes = audit.updated_at
+    ? (Date.now() - new Date(audit.updated_at).getTime()) / 60_000
+    : 0;
+  const isStuck = stuckMinutes > 5;
+
   return (
-    <div className="rounded-lg p-3" style={{ background: 'color-mix(in srgb, var(--signal) 4%, transparent)', border: '1px solid color-mix(in srgb, var(--signal) 15%, transparent)' }}>
-      <div className="flex items-center gap-2.5">
-        <Loader2 size={14} className="animate-spin flex-shrink-0" style={{ color: 'var(--signal)' }} />
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center justify-between gap-2">
-            <p className="text-[12px] font-semibold" style={{ color: 'var(--ink)' }}>
-              {stageLabels[audit.status] || 'Processing...'}
-            </p>
-            <span className="text-[11px] font-medium tabular-nums" style={{ color: 'var(--ink-2)' }}>
-              {progressPct}%
-            </span>
-          </div>
-          <div className="mt-1.5 h-1 w-full rounded-full overflow-hidden" style={{ background: 'color-mix(in srgb, var(--signal) 12%, transparent)' }}>
-            <div
-              className="h-full rounded-full transition-all duration-700 ease-out"
-              style={{ width: `${progressPct}%`, background: 'var(--signal)' }}
-            />
+    <div className="space-y-2">
+      <div className="rounded-lg p-3" style={{
+        background: isStuck
+          ? 'color-mix(in srgb, var(--warn) 4%, transparent)'
+          : 'color-mix(in srgb, var(--signal) 4%, transparent)',
+        border: isStuck
+          ? '1px solid color-mix(in srgb, var(--warn) 15%, transparent)'
+          : '1px solid color-mix(in srgb, var(--signal) 15%, transparent)',
+      }}>
+        <div className="flex items-center gap-2.5">
+          {isStuck
+            ? <AlertTriangle size={14} className="flex-shrink-0" style={{ color: 'var(--warn)' }} />
+            : <Loader2 size={14} className="animate-spin flex-shrink-0" style={{ color: 'var(--signal)' }} />
+          }
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center justify-between gap-2">
+              <p className="text-[12px] font-semibold" style={{ color: 'var(--ink)' }}>
+                {isStuck ? 'Audit appears stuck' : (stageLabels[audit.status] || 'Processing...')}
+              </p>
+              <span className="text-[11px] font-medium tabular-nums" style={{ color: 'var(--ink-2)' }}>
+                {progressPct}%
+              </span>
+            </div>
+            {isStuck && (
+              <p className="text-[11px] mt-0.5" style={{ color: 'var(--m-muted)' }}>
+                No progress for {Math.round(stuckMinutes)} min. You can restart or delete this audit.
+              </p>
+            )}
+            <div className="mt-1.5 h-1 w-full rounded-full overflow-hidden" style={{
+              background: isStuck
+                ? 'color-mix(in srgb, var(--warn) 12%, transparent)'
+                : 'color-mix(in srgb, var(--signal) 12%, transparent)',
+            }}>
+              <div
+                className="h-full rounded-full transition-all duration-700 ease-out"
+                style={{
+                  width: `${progressPct}%`,
+                  background: isStuck ? 'var(--warn)' : 'var(--signal)',
+                }}
+              />
+            </div>
           </div>
         </div>
+        {isStuck && (
+          <div className="flex items-center gap-2 mt-3 pt-2" style={{ borderTop: '1px solid color-mix(in srgb, var(--warn) 12%, transparent)' }}>
+            <button
+              onClick={onRestart}
+              disabled={restarting}
+              className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-md text-[11px] font-semibold transition-all hover:opacity-80 disabled:opacity-50"
+              style={{ background: 'var(--ink)', color: 'var(--paper)' }}
+            >
+              {restarting ? <><Loader2 size={10} className="animate-spin" /> Restarting...</> : <><RefreshCw size={10} /> Restart audit</>}
+            </button>
+            <button
+              onClick={onDelete}
+              disabled={deleting}
+              className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-md text-[11px] font-semibold transition-all hover:opacity-80 disabled:opacity-50"
+              style={{ background: 'color-mix(in srgb, var(--severe) 8%, transparent)', color: 'var(--severe)' }}
+            >
+              {deleting ? <><Loader2 size={10} className="animate-spin" /> Deleting...</> : <><Trash2 size={10} /> Delete audit</>}
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );
