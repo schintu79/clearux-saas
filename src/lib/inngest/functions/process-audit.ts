@@ -69,6 +69,12 @@ import {
   logActivity,
 } from '@/lib/audit-engine/activity-logger'
 
+// ── Protected Site Audit Mode (feature-flagged) ──────────────
+import { acquirePages, AcquisitionError, BROWSER_FALLBACK_CONFIG } from '@/lib/audit-engine/acquisition-pipeline'
+import { getFeatureFlags } from '@/lib/feature-flags'
+import { formatPagesForAnalysis } from '@/lib/audit-engine/normalized-page'
+import { formatDiagnosticsMessage } from '@/lib/audit-engine/acquisition-diagnostics'
+
 /* ── Timeout helper — prevents enrichment promises from hanging forever ── */
 /* CRITICAL: This rejects on timeout rather than resolving to null.
    Promise.allSettled() in the caller handles rejections gracefully.
@@ -730,6 +736,189 @@ Return 2-6 findings. Be specific and evidence-based. Reference specific files/co
       await auditLog(auditId, 'crawl_started', 'info', `Crawling ${auditDetails.productUrl}`)
 
       const maxPages = auditDetails.plan === 'free_preview' ? 5 : auditDetails.plan === 'starter' ? 20 : 25
+
+      // ── Protected Site Mode: staged acquisition pipeline ────────
+      // When the feature flag is on, use the new graduated fallback
+      // chain instead of the binary crawl→validate logic below.
+      // When off, the existing code runs completely unchanged.
+      const featureFlags = getFeatureFlags()
+      if (featureFlags.protectedSiteMode) {
+        const acquisitionConfig = BROWSER_FALLBACK_CONFIG
+
+        let acquisitionResult: Awaited<ReturnType<typeof acquirePages>>
+        try {
+          acquisitionResult = await acquirePages(
+            auditDetails.productUrl,
+            maxPages,
+            auditId,
+            acquisitionConfig,
+            async (pct, stage) => { await setProgress(auditId, pct, stage) },
+          )
+        } catch (err) {
+          // Log diagnostics on failure before re-throwing
+          if (err instanceof AcquisitionError && featureFlags.acquisitionDiagnostics) {
+            await auditLog(auditId, 'acquisition_diagnostics', 'warning',
+              formatDiagnosticsMessage(err.diagnostics),
+              { diagnostics: err.diagnostics })
+          }
+          throw err
+        }
+
+        // Merge acquisition limitations into audit-level limitations
+        for (const lim of acquisitionResult.limitations) {
+          auditLimitations.push(lim)
+        }
+
+        // Log diagnostics if enabled
+        if (featureFlags.acquisitionDiagnostics) {
+          await auditLog(auditId, 'acquisition_diagnostics', 'info',
+            formatDiagnosticsMessage(acquisitionResult.diagnostics),
+            { diagnostics: acquisitionResult.diagnostics })
+        }
+
+        // ── Store pages in DB (same schema as existing inserts) ──
+        const db = getDb()
+        const pageInserts = acquisitionResult.pages.map(page => ({
+          audit_id: auditId,
+          url: page.url,
+          title: page.title,
+          h1: page.h1,
+          meta_description: page.metaDescription,
+          content_text: page.contentText,
+          links_found: page.linksFound,
+          broken_links: [],
+          has_structured_data: false,
+          structured_data: null,
+          status_code: page.statusCode,
+          load_time_ms: page.loadTimeMs,
+          is_mobile_friendly: null,
+          viewport_meta: null,
+          crawled_at: page.acquiredAt,
+          crawl_status: page.contentText && page.contentText.length > 50 ? 'success' : (page.blockedByBot ? 'blocked' : 'failed'),
+          skip_reason: page.blockedByBot ? (page.blockReason || 'Bot protection') : null,
+          canonical_url: page.headTags?.canonical || null,
+          is_duplicate: false,
+          page_type: 'content',
+          fetch_strategy: page.acquisition.method,
+        }))
+        if (pageInserts.length > 0) {
+          await db.from('audit_pages').insert(pageInserts as any)
+        }
+
+        // ── Build crawl summary (same shape as existing) ──
+        const acqCrawlStats = acquisitionResult.crawlStats
+        const acqAvgLoadTime = acquisitionResult.pages.filter(p => p.loadTimeMs).length > 0
+          ? Math.round(acquisitionResult.pages.filter(p => p.loadTimeMs).reduce((sum, p) => sum + (p.loadTimeMs || 0), 0) / acquisitionResult.pages.filter(p => p.loadTimeMs).length)
+          : null
+
+        const acqCrawlSummary = {
+          urls_discovered: acqCrawlStats.urlsDiscovered,
+          pages_analyzed: acqCrawlStats.pagesAnalyzed,
+          pages_skipped: acqCrawlStats.pagesSkipped,
+          pages_blocked: acqCrawlStats.pagesBlocked,
+          pages_duplicate: acqCrawlStats.pagesDuplicate,
+          pages_excluded: acqCrawlStats.pagesExcluded,
+          js_pages_detected: acqCrawlStats.jsPagesDetected,
+          avg_load_time_ms: acqAvgLoadTime,
+          discovery_sources: acqCrawlStats.discoverySources,
+          excluded_urls: acqCrawlStats.excludedUrls,
+          coverage_notes: [] as string[],
+          // Additional observability from acquisition pipeline
+          acquisition_state: acquisitionResult.state,
+          acquisition_summary: acquisitionResult.summary,
+        }
+
+        if (acqCrawlStats.jsPagesDetected > 0) {
+          acqCrawlSummary.coverage_notes.push(`${acqCrawlStats.jsPagesDetected} page(s) required JavaScript rendering`)
+        }
+        if (acqCrawlStats.pagesBlocked > 0) {
+          acqCrawlSummary.coverage_notes.push(`${acqCrawlStats.pagesBlocked} page(s) blocked by bot protection`)
+        }
+        if (acquisitionResult.summary.usedBrowserFallback) {
+          acqCrawlSummary.coverage_notes.push(`Browser rendering fallback used for ${acquisitionResult.summary.pagesByMethod.browser_render} page(s)`)
+        }
+        if (acqCrawlStats.pagesExcluded > 0) {
+          acqCrawlSummary.coverage_notes.push(`${acqCrawlStats.pagesExcluded} URL(s) excluded (infrastructure, assets, or API paths)`)
+        }
+
+        await db
+          .from('audits')
+          .update({
+            pages_crawled: acquisitionResult.pages.length,
+            crawl_summary: acqCrawlSummary,
+            crawl_started_at: acqCrawlStats.crawlStartedAt,
+            crawl_completed_at: acqCrawlStats.crawlCompletedAt,
+            updated_at: new Date().toISOString(),
+          } as any)
+          .eq('id', auditId)
+
+        // ── Auth-gated page filter (identical to existing logic) ──
+        const ACQ_AUTH_PAGE_SIGNALS = [
+          /(?:sign\s*in|log\s*in|login)\s+(?:to\s+)?(?:your\s+)?(?:account|dashboard|continue)/i,
+          /(?:forgot|reset)\s+(?:your\s+)?password/i,
+          /don.t\s+have\s+an?\s+account\?\s*(?:sign\s*up|register)/i,
+          /(?:enter|provide)\s+your\s+(?:email|credentials|password)/i,
+        ]
+        const ACQ_AUTH_PATH_SEGMENTS = ['/dashboard', '/app', '/admin', '/account', '/settings', '/profile', '/billing']
+
+        const acqAuthFiltered = acquisitionResult.pages.filter((p) => {
+          const url = p.url || ''
+          const isAuthPath = ACQ_AUTH_PATH_SEGMENTS.some((seg) => url.includes(seg))
+          if (!isAuthPath) return true
+          const content = (p.contentText || '').toLowerCase()
+          const hitCount = ACQ_AUTH_PAGE_SIGNALS.filter((pat) => pat.test(content)).length
+          return hitCount < 2
+        })
+
+        // ── Pre-analysis content quality filter (identical to existing) ──
+        const ACQ_ERROR_PAGE_SIGNALS = [
+          /^404\b|page\s+not\s+found|doesn.t\s+exist/i,
+          /^403\b|access\s+denied|forbidden/i,
+          /^500\b|internal\s+server\s+error/i,
+          /under\s+(?:construction|maintenance)/i,
+          /coming\s+soon/i,
+        ]
+        const ACQ_MIN_CONTENT_LENGTH = 200
+        const acqSeenContentHashes = new Set<string>()
+
+        const acqFilteredPages = acqAuthFiltered.filter((p, idx) => {
+          if (idx === 0) {
+            const hash = (p.contentText || '').substring(0, 500).toLowerCase().replace(/\s+/g, ' ')
+            acqSeenContentHashes.add(hash)
+            return true
+          }
+          const content = p.contentText || ''
+          if (content.length < ACQ_MIN_CONTENT_LENGTH) return false
+          if (ACQ_ERROR_PAGE_SIGNALS.some(pat => pat.test(content.substring(0, 500)))) return false
+          const hash = content.substring(0, 500).toLowerCase().replace(/\s+/g, ' ')
+          if (acqSeenContentHashes.has(hash)) return false
+          acqSeenContentHashes.add(hash)
+          return true
+        })
+
+        // ── Build analysis input (byte-identical format via formatPagesForAnalysis) ──
+        const acqPageContent = formatPagesForAnalysis(acqFilteredPages, formatHeadTagsForAnalysis)
+
+        const acqHeadTags = acqFilteredPages
+          .filter((p) => p.headTags)
+          .map((p) => ({ url: p.url, headTags: p.headTags! }))
+
+        const acqCrawlQuality = acqFilteredPages.length >= 3 ? 'full' : acqFilteredPages.length >= 2 ? 'limited' : 'homepage-only'
+
+        await logStageCompleted(auditId, 'crawling', `Acquired ${acquisitionResult.pages.length} pages (${acquisitionResult.state})`, { pageCount: acquisitionResult.pages.length, state: acquisitionResult.state })
+        await auditLog(auditId, 'crawl_completed', 'success', `Acquired ${acquisitionResult.pages.length} page(s) — state: ${acquisitionResult.state}`)
+
+        return {
+          pageCount: acquisitionResult.pages.length,
+          pageContent: acqPageContent,
+          firstPageUrl: acquisitionResult.pages[0]?.url || '',
+          crawledUrls: acquisitionResult.pages.map((p) => p.url).filter(Boolean) as string[],
+          headTags: acqHeadTags,
+          crawlQuality: acqCrawlQuality,
+        }
+      }
+
+      // ── Legacy path (feature flag off — existing code unchanged) ──
       // 180s hard timeout on crawl — deep mode with 25 pages can be slow,
       // but anything beyond 3 minutes is a hung connection.
       const CRAWL_TIMEOUT_MS = 180_000
