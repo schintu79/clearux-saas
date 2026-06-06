@@ -135,8 +135,10 @@ export async function extractModelSentiment(
       })),
     }
   } catch {
-    // Fallback if LLM call fails
-    return { sentimentScore: 50, visibility: true, themes: [], placement: null, shareOfVoice: 0 }
+    // Fallback if LLM call fails — absence of evidence is NOT evidence of visibility.
+    // A failed sentiment analysis means we couldn't determine anything about this model.
+    // Defaulting to visible: true was causing 100% AI Visibility when most calls failed.
+    return { sentimentScore: 50, visibility: false, themes: [], placement: null, shareOfVoice: 0 }
   }
 }
 

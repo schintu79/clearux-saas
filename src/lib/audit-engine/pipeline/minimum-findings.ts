@@ -173,9 +173,9 @@ Return ONLY a valid JSON array:
         .map((block) => block.text)
         .join('')
 
-      const jsonMatch = responseText.match(/\[[\s\S]*\]/m)
-      if (jsonMatch) {
-        const parsed = JSON.parse(jsonMatch[0]) as AnalysisFinding[]
+      const jsonStr = (responseText.match(/\[[\s\S]*\]/m) ?? [])[0] ?? ''
+      if (jsonStr.length > 0) {
+        const parsed = JSON.parse(jsonStr) as AnalysisFinding[]
         const findings: AnalysisFinding[] = parsed.slice(0, targetCount).map((f) => ({
           severity: f.severity,
           title: f.title,

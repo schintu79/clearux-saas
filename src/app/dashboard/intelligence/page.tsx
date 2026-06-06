@@ -694,9 +694,10 @@ export default function IntelligencePage() {
   const visibilityScore = useMemo(() => {
     // Use aiVisibility (% of models that mention the brand) — matches BrandIntelligenceCard
     if (biSummary?.aiVisibility != null) return biSummary.aiVisibility;
-    // Fallback: compute from probe data (models with accuracy > 0 = brand mentioned)
+    // Fallback: compute from probe data — use same threshold as recognizedCount (>= 20)
+    // so the percentage and the "X of Y" text never contradict each other
     if (modelProbes.length === 0) return null;
-    const mentioned = modelProbes.filter(p => p.accuracy_score > 0).length;
+    const mentioned = modelProbes.filter(p => p.accuracy_score >= 20).length;
     return Math.round((mentioned / modelProbes.length) * 100);
   }, [biSummary, modelProbes]);
 

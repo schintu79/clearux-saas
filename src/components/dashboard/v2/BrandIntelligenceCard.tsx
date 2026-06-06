@@ -88,11 +88,19 @@ export default function BrandIntelligenceCard({
   const metrics: Array<{ label: string; Icon: React.ElementType; value: string; color: string }> = []
 
   if (data) {
+    // Show honest model recognition count instead of potentially inflated aiVisibility %.
+    // "2 of 6" is surgical and true. "100%" when 5 calls failed is a lie.
+    const totalModels = data.perModel.length
+    const recognizedModels = probes.length > 0
+      ? probes.filter(p => p.accuracy_score >= 20).length  // same threshold as intelligence page
+      : data.perModel.filter(m => m.visibility).length     // fallback to stored visibility
+    const visPercent = totalModels > 0 ? Math.round((recognizedModels / totalModels) * 100) : 0
+
     metrics.push({
       label: 'AI Visibility',
       Icon: Eye,
-      value: `${data.aiVisibility}%`,
-      color: valueColor(data.aiVisibility),
+      value: `${recognizedModels} of ${totalModels}`,
+      color: valueColor(visPercent),
     })
 
     const sent = sentimentInfo(data.overallSentiment)
