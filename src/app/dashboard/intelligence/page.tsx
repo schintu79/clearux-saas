@@ -56,6 +56,8 @@ import {
   Search,
   Minus,
   Loader2,
+  XCircle,
+  CircleDot,
 } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { useAuditBundle } from '@/context/AuditBundleContext';
@@ -482,6 +484,21 @@ export default function IntelligencePage() {
     fetchIqPastResults();
   }, [workspaceId, fetchIqQuestions, fetchIqUsage, fetchIqPastResults]);
 
+  // Auto-load answers for the first pinned question when past results are available
+  useEffect(() => {
+    if (iqActiveQuestion || iqQuestions.length === 0 || iqPastResults.size === 0) return;
+    // Find the first question (pinned = first 3) that has cached results
+    for (let i = 0; i < Math.min(3, iqQuestions.length); i++) {
+      const q = iqQuestions[i];
+      const cached = iqPastResults.get(q.questionText);
+      if (cached && cached.length > 0) {
+        setIqActiveQuestion(q.questionText);
+        setIqResults(cached);
+        break;
+      }
+    }
+  }, [iqQuestions, iqPastResults, iqActiveQuestion]);
+
   const toggleIqModel = (slug: string) => {
     setIqSelectedModels((prev) => {
       if (prev.includes(slug)) return prev.filter((s) => s !== slug);
@@ -494,12 +511,116 @@ export default function IntelligencePage() {
     if (!workspaceId || !questionText.trim() || iqRunning) return;
     const trimmed = questionText.trim();
 
-    // If we already have saved results for this question, show them instantly (no credit charge)
+    // Check for saved (cached) results for this question
     const savedResults = iqPastResults.get(trimmed);
+
+    // Per-question model memory: if we have saved results, check if any
+    // currently-selected models already have cached answers we can show instantly
     if (savedResults && savedResults.length > 0) {
-      setIqActiveQuestion(trimmed);
-      setIqResults(savedResults);
-      return;
+      // Find which selected models already have cached answers
+      const cachedForSelected = savedResults.filter(r => iqSelectedModels.includes(r.modelSlug));
+      // Find which selected models need new answers
+      const uncachedModels = iqSelectedModels.filter(slug => !savedResults.some(r => r.modelSlug === slug));
+
+      if (uncachedModels.length === 0) {
+        // All selected models have cached results — show instantly, no API call
+        setIqActiveQuestion(trimmed);
+        setIqResults(cachedForSelected.length > 0 ? cachedForSelected : savedResults);
+        return;
+      }
+
+      // Some models have cached answers, some don't — show cached immediately
+      // and fire API call for only the uncached ones
+      if (cachedForSelected.length > 0) {
+        setIqActiveQuestion(trimmed);
+        const pendingNew = uncachedModels.map((slug) => {
+          const shortId = IQ_MODEL_DISPLAY.find((m) => m.slug === slug)?.shortId ?? slug;
+          const provider = providerKeyToIcon(shortId);
+          return {
+            modelSlug: slug,
+            modelShortId: shortId,
+            modelDisplayName: provider ? PROVIDER_LABEL[provider] : shortId,
+            status: 'running' as string,
+            responseText: null,
+            themes: [] as string[],
+            accuracy: null as string | null,
+            accuracyNote: null as string | null,
+            latencyMs: null,
+            error: null,
+          };
+        });
+        setIqResults([...cachedForSelected, ...pendingNew]);
+        setIqRunning(true);
+
+        const matchingQuestion = iqQuestions.find((q) => q.questionText === trimmed);
+        try {
+          const res = await fetch('/api/ai-interrogation/run', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              workspace_id: workspaceId,
+              question_id: matchingQuestion?.questionId ?? null,
+              question_text: trimmed,
+              question_family: family ?? matchingQuestion?.family ?? 'general_discovery',
+              selected_models: uncachedModels,
+            }),
+          });
+          if (!res.ok) {
+            const err = await res.json().catch(() => ({ error: 'Request failed' }));
+            throw new Error(err.error ?? 'Request failed');
+          }
+          const data = await res.json();
+          const mapped = (data.results ?? []).map((r: any) => {
+            const slug = r.modelSlug ?? r.model_slug ?? '';
+            const shortId = IQ_MODEL_DISPLAY.find((m) => m.slug === slug)?.shortId ?? slug;
+            const prov = providerKeyToIcon(shortId);
+            return {
+              modelSlug: slug,
+              modelShortId: shortId,
+              modelDisplayName: r.modelLabel ?? r.model_label ?? (prov ? PROVIDER_LABEL[prov] : shortId),
+              status: r.status ?? 'completed',
+              responseText: r.responseText ?? r.response_text ?? null,
+              themes: r.themes ?? [],
+              accuracy: r.accuracy ?? null,
+              accuracyNote: r.accuracyNote ?? r.accuracy_note ?? null,
+              latencyMs: r.latencyMs ?? r.latency_ms ?? null,
+              error: r.error ?? r.errorMessage ?? r.error_message ?? null,
+            };
+          });
+          const combined = [...cachedForSelected, ...mapped];
+          setIqResults(combined);
+          // Update cache with merged results
+          if (combined.length > 0) {
+            setIqPastResults(prev => {
+              const next = new Map(prev);
+              const existing = next.get(trimmed) ?? [];
+              // Merge: keep existing + add new (no duplicates by modelSlug)
+              const merged = [...existing];
+              for (const r of mapped) {
+                if (!merged.some(e => e.modelSlug === r.modelSlug)) merged.push(r);
+              }
+              next.set(trimmed, merged);
+              return next;
+            });
+          }
+          if (data.usage) {
+            setIqUsage({
+              checksUsed: data.usage.checksUsed ?? 0,
+              checksLimit: data.usage.checksLimit ?? 0,
+              checksRemaining: data.usage.checksRemaining ?? 0,
+              canInterrogate: (data.usage.checksRemaining ?? 0) > 0,
+            });
+          } else {
+            fetchIqUsage();
+          }
+        } catch (err) {
+          const msg = err instanceof Error ? err.message : 'Something went wrong';
+          setIqResults([...cachedForSelected, ...pendingNew.map((r) => ({ ...r, status: 'failed', error: msg }))]);
+        } finally {
+          setIqRunning(false);
+        }
+        return;
+      }
     }
 
     // Need models selected for a new query
@@ -568,7 +689,12 @@ export default function IntelligencePage() {
       if (mapped.length > 0) {
         setIqPastResults(prev => {
           const next = new Map(prev);
-          next.set(trimmed, mapped);
+          const existing = next.get(trimmed) ?? [];
+          const merged = [...existing];
+          for (const r of mapped) {
+            if (!merged.some(e => e.modelSlug === r.modelSlug)) merged.push(r);
+          }
+          next.set(trimmed, merged);
           return next;
         });
       }
@@ -1760,19 +1886,19 @@ export default function IntelligencePage() {
               </div>
             </div>
             <p className="text-[12px] mb-3" style={{ color: 'var(--m-muted)' }}>
-              Pick a question and choose which AI models to ask. Saved answers load instantly at no cost.
+              Select up to {IQ_MAX_MODELS} models, then pick a question. Previously asked questions load instantly at no cost.
             </p>
 
             {/* Split layout: left panel (models + questions) | right panel (answers) */}
             <div className="flex flex-col lg:flex-row gap-3 flex-1 min-h-0 overflow-hidden">
               {/* ── Left panel: Models + Questions ── */}
-              <div className="lg:w-[320px] flex-shrink-0 flex flex-col overflow-hidden">
+              <div className="lg:w-[340px] flex-shrink-0 flex flex-col overflow-hidden">
                 {/* Model selector — sticky at top */}
-                <div className="flex-shrink-0 pb-2 z-10" style={{ background: 'var(--card)' }}>
-                  <p className="text-[10px] font-semibold uppercase tracking-[0.06em] mb-1.5" style={{ color: 'var(--m-muted)' }}>
+                <div className="flex-shrink-0 pb-3 z-10" style={{ background: 'var(--card)' }}>
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.05em] mb-2" style={{ color: 'var(--m-muted)' }}>
                     Models {iqSelectedModels.length > 0 && <span className="normal-case font-normal">({iqSelectedModels.length}/{IQ_MAX_MODELS})</span>}
                   </p>
-                  <div className="flex flex-wrap gap-1">
+                  <div className="flex flex-wrap gap-1.5">
                     {IQ_MODEL_DISPLAY.map((m) => {
                       const selected = iqSelectedModels.includes(m.slug);
                       const provider = providerKeyToIcon(m.shortId);
@@ -1781,7 +1907,7 @@ export default function IntelligencePage() {
                           key={m.slug}
                           onClick={() => toggleIqModel(m.slug)}
                           disabled={iqRunning}
-                          className="flex items-center gap-1 px-1.5 py-0.5 rounded-md text-[10px] font-medium transition-all"
+                          className="flex items-center gap-1.5 px-2 py-1 rounded-md text-[11px] font-medium transition-all"
                           style={{
                             background: selected ? 'var(--ink)' : 'var(--paper-2)',
                             color: selected ? 'var(--paper)' : 'var(--m-muted)',
@@ -1790,9 +1916,9 @@ export default function IntelligencePage() {
                           }}
                           title={m.free ? 'Included free with every audit' : 'Uses 1 check'}
                         >
-                          {provider && <AIProviderIcon provider={provider} size={11} />}
+                          {provider && <AIProviderIcon provider={provider} size={13} />}
                           {provider ? PROVIDER_LABEL[provider] : m.shortId}
-                          {m.free && <span className="text-[8px] opacity-60">✓</span>}
+                          {m.free && <CheckCircle2 size={9} strokeWidth={2} className="opacity-50" />}
                         </button>
                       );
                     })}
@@ -1801,7 +1927,7 @@ export default function IntelligencePage() {
 
                 {/* Questions list — scrollable */}
                 <div className="flex-1 overflow-y-auto min-h-0">
-                  <p className="text-[10px] font-semibold uppercase tracking-[0.06em] mb-1 sticky top-0 py-1 z-10" style={{ color: 'var(--m-muted)', background: 'var(--card)' }}>
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.05em] mb-1.5 sticky top-0 py-1 z-10" style={{ color: 'var(--m-muted)', background: 'var(--card)' }}>
                     Questions
                   </p>
                   {iqQuestionsLoading ? (
@@ -1810,9 +1936,11 @@ export default function IntelligencePage() {
                       <span className="text-[12px]" style={{ color: 'var(--m-muted)' }}>Loading questions...</span>
                     </div>
                   ) : (() => {
-                    const allQs: Array<{ key: string; text: string; family?: string; onClick: () => void }> = [];
-                    for (const q of iqQuestions) {
-                      allQs.push({ key: q.questionId, text: q.questionText, family: q.family, onClick: () => handleIqAsk(q.questionText, q.family) });
+                    const allQs: Array<{ key: string; text: string; family?: string; isPinned?: boolean; onClick: () => void }> = [];
+                    // Pin first 3 audit questions at the top (these are included in every audit)
+                    for (let i = 0; i < iqQuestions.length; i++) {
+                      const q = iqQuestions[i];
+                      allQs.push({ key: q.questionId, text: q.questionText, family: q.family, isPinned: i < 3, onClick: () => handleIqAsk(q.questionText, q.family) });
                     }
                     for (const group of questionGroups) {
                       if (!iqQuestions.some(q => q.questionText === group.question)) {
@@ -1826,9 +1954,13 @@ export default function IntelligencePage() {
                         </p>
                       );
                     }
+                    // Sort: pinned questions first, then rest in original order
+                    const pinnedQs = allQs.filter(q => q.isPinned);
+                    const otherQs = allQs.filter(q => !q.isPinned);
+                    const sortedQs = [...pinnedQs, ...otherQs];
                     return (
-                      <div className="rounded-lg" style={{ border: '1px solid var(--rule)' }}>
-                        {allQs.map((q, idx) => {
+                      <div className="rounded-lg overflow-hidden" style={{ border: '1px solid var(--rule)' }}>
+                        {sortedQs.map((q, idx) => {
                           const isActive = iqActiveQuestion === q.text;
                           const hasSaved = iqPastResults.has(q.text);
                           const pastR = iqPastResults.get(q.text);
@@ -1839,7 +1971,7 @@ export default function IntelligencePage() {
                               const n = normalizeAccuracy(r.accuracy);
                               if (n === 'Accurate') accCount++;
                               else if (n === 'Partial') partCount++;
-                              else if (n === 'Wrong') wrongCount++;
+                              else if (n === 'Inaccurate') wrongCount++;
                             }
                           } else if (probeGroup) {
                             for (const a of probeGroup.answers) {
@@ -1851,37 +1983,48 @@ export default function IntelligencePage() {
                           }
                           const hasAccuracy = accCount > 0 || partCount > 0 || wrongCount > 0;
                           const canAsk = hasSaved || (iqUsage == null || iqUsage.canInterrogate);
+                          const showPinDivider = q.isPinned && idx === pinnedQs.length - 1 && otherQs.length > 0;
                           return (
                             <button
                               key={q.key}
                               onClick={q.onClick}
                               disabled={iqRunning || !canAsk}
-                              className="w-full text-left flex items-start gap-2 px-2.5 py-1.5 transition-colors"
+                              className="w-full text-left flex items-start gap-2.5 px-3 py-2 transition-colors"
                               style={{
-                                background: isActive ? 'var(--ink)' : idx % 2 === 0 ? 'transparent' : 'color-mix(in srgb, var(--ink) 2%, transparent)',
+                                background: isActive ? 'var(--ink)' : q.isPinned ? 'color-mix(in srgb, var(--ok) 4%, transparent)' : idx % 2 === 0 ? 'transparent' : 'color-mix(in srgb, var(--ink) 2%, transparent)',
                                 color: isActive ? 'var(--paper)' : 'var(--ink)',
-                                borderBottom: idx < allQs.length - 1 ? '1px solid var(--rule)' : 'none',
+                                borderBottom: showPinDivider ? '2px solid var(--rule)' : idx < sortedQs.length - 1 ? '1px solid var(--rule)' : 'none',
                                 opacity: (iqRunning && !isActive) ? 0.5 : 1,
                               }}
                             >
-                              <span className="text-[10px] font-mono font-medium mt-px flex-shrink-0 w-4 text-right" style={{ color: isActive ? 'var(--paper)' : 'var(--m-muted)', opacity: 0.6 }}>
+                              <span className="text-[10px] font-mono font-medium mt-0.5 flex-shrink-0 w-4 text-right" style={{ color: isActive ? 'var(--paper)' : 'var(--m-muted)', opacity: 0.6 }}>
+                                {q.isPinned && <CircleDot size={8} className="inline -mt-px mr-0.5" style={{ color: isActive ? 'var(--paper)' : 'var(--ok)' }} />}
                                 {idx + 1}
                               </span>
                               <div className="flex-1 min-w-0">
-                                <span className="text-[11px] leading-tight">{q.text}</span>
+                                <span className="text-[13px] leading-snug">{q.text}</span>
                                 {!isActive && (hasAccuracy || hasSaved) && (
-                                  <div className="flex items-center gap-1 mt-0.5">
+                                  <div className="flex items-center gap-1.5 mt-1">
                                     {accCount > 0 && (
-                                      <span className="text-[8px] font-medium px-1 rounded" style={{ background: 'rgba(34,197,94,0.1)', color: 'var(--ok)' }}>{accCount}✓</span>
+                                      <span className="flex items-center gap-0.5 text-[10px] font-medium px-1.5 py-px rounded" style={{ background: 'rgba(34,197,94,0.1)', color: 'var(--ok)' }}>
+                                        <CheckCircle2 size={10} strokeWidth={2} />
+                                        {accCount}
+                                      </span>
                                     )}
                                     {partCount > 0 && (
-                                      <span className="text-[8px] font-medium px-1 rounded" style={{ background: 'rgba(234,179,8,0.1)', color: 'var(--warn)' }}>{partCount}~</span>
+                                      <span className="flex items-center gap-0.5 text-[10px] font-medium px-1.5 py-px rounded" style={{ background: 'rgba(234,179,8,0.1)', color: 'var(--warn)' }}>
+                                        <AlertTriangle size={10} strokeWidth={2} />
+                                        {partCount}
+                                      </span>
                                     )}
                                     {wrongCount > 0 && (
-                                      <span className="text-[8px] font-medium px-1 rounded" style={{ background: 'rgba(239,68,68,0.1)', color: 'var(--severe)' }}>{wrongCount}✗</span>
+                                      <span className="flex items-center gap-0.5 text-[10px] font-medium px-1.5 py-px rounded" style={{ background: 'rgba(239,68,68,0.1)', color: 'var(--severe)' }}>
+                                        <XCircle size={10} strokeWidth={2} />
+                                        {wrongCount}
+                                      </span>
                                     )}
                                     {hasSaved && !hasAccuracy && (
-                                      <span className="text-[8px] font-medium px-1 rounded" style={{ background: 'var(--paper-2)', color: 'var(--m-muted)' }}>saved</span>
+                                      <span className="text-[10px] font-medium px-1.5 py-px rounded" style={{ background: 'var(--paper-2)', color: 'var(--m-muted)' }}>saved</span>
                                     )}
                                   </div>
                                 )}
@@ -1915,28 +2058,32 @@ export default function IntelligencePage() {
                         {iqActiveQuestion}
                       </p>
                     )}
-                    <div className="space-y-2">
+                    <div className="space-y-2.5">
                       {iqResults.map((r) => {
                         const provider = providerKeyToIcon(r.modelShortId);
                         const ac = accuracyColor(r.accuracy);
                         const normAcc = normalizeAccuracy(r.accuracy);
                         return (
-                          <div key={r.modelSlug} className="rounded-lg p-3" style={{ background: 'var(--paper-2)', border: '1px solid var(--rule)' }}>
-                            <div className="flex items-center justify-between mb-1.5">
+                          <div key={r.modelSlug} className="rounded-lg p-3.5" style={{ background: 'var(--paper-2)', border: '1px solid var(--rule)' }}>
+                            <div className="flex items-center justify-between mb-2">
                               <div className="flex items-center gap-2">
-                                {provider && <AIProviderIcon provider={provider} size={14} />}
-                                <span className="text-[12px] font-semibold" style={{ color: 'var(--ink)' }}>{r.modelDisplayName}</span>
+                                {provider && <AIProviderIcon provider={provider} size={16} />}
+                                <span className="text-[13px] font-semibold" style={{ color: 'var(--ink)' }}>{r.modelDisplayName}</span>
                               </div>
                               {r.status === 'running' && (
-                                <Loader2 size={12} className="animate-spin" style={{ color: 'var(--m-muted)' }} />
+                                <Loader2 size={13} className="animate-spin" style={{ color: 'var(--m-muted)' }} />
                               )}
                               {r.status === 'failed' && (
-                                <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full" style={{ background: 'rgba(239,68,68,0.1)', color: 'var(--severe)' }}>
+                                <span className="flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-full" style={{ background: 'rgba(239,68,68,0.1)', color: 'var(--severe)' }}>
+                                  <XCircle size={10} strokeWidth={2} />
                                   Error
                                 </span>
                               )}
                               {r.status !== 'running' && r.status !== 'failed' && normAcc && (
-                                <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full" style={{ background: ac.bg, color: ac.color }}>
+                                <span className="flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-full" style={{ background: ac.bg, color: ac.color }}>
+                                  {normAcc === 'Accurate' && <CheckCircle2 size={10} strokeWidth={2} />}
+                                  {normAcc === 'Partial' && <AlertTriangle size={10} strokeWidth={2} />}
+                                  {normAcc === 'Inaccurate' && <XCircle size={10} strokeWidth={2} />}
                                   {normAcc}
                                 </span>
                               )}
@@ -1950,15 +2097,15 @@ export default function IntelligencePage() {
                             ) : r.status === 'failed' ? (
                               <p className="text-[12px]" style={{ color: 'var(--severe)' }}>{r.error || 'Request failed'}</p>
                             ) : (
-                              <p className="text-[12px] leading-relaxed" style={{ color: 'var(--m-muted)' }}>{r.responseText}</p>
+                              <p className="text-[13px] leading-relaxed" style={{ color: 'var(--m-muted)' }}>{r.responseText}</p>
                             )}
                             {r.accuracyNote && r.status !== 'running' && r.status !== 'failed' && (
-                              <p className="text-[10px] mt-1.5 pt-1.5 italic" style={{ color: 'var(--m-muted)', borderTop: '1px solid var(--rule)', opacity: 0.8 }}>{r.accuracyNote}</p>
+                              <p className="text-[11px] mt-2 pt-2 italic" style={{ color: 'var(--m-muted)', borderTop: '1px solid var(--rule)', opacity: 0.8 }}>{r.accuracyNote}</p>
                             )}
                             {r.themes && r.themes.length > 0 && r.status !== 'running' && r.status !== 'failed' && (
-                              <div className="flex flex-wrap gap-1 mt-1.5 pt-1.5" style={{ borderTop: r.accuracyNote ? 'none' : '1px solid var(--rule)' }}>
+                              <div className="flex flex-wrap gap-1 mt-2 pt-2" style={{ borderTop: r.accuracyNote ? 'none' : '1px solid var(--rule)' }}>
                                 {r.themes.map((t, ti) => (
-                                  <span key={ti} className="text-[9px] px-1.5 py-0.5 rounded" style={{ background: 'var(--paper)', color: 'var(--m-muted)' }}>{t}</span>
+                                  <span key={ti} className="text-[10px] px-1.5 py-0.5 rounded" style={{ background: 'var(--paper)', color: 'var(--m-muted)' }}>{t}</span>
                                 ))}
                               </div>
                             )}
