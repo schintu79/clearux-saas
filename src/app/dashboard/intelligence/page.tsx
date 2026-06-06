@@ -1123,42 +1123,67 @@ export default function IntelligencePage() {
       {activeTab === 'overview' && (<>
 
       {/* ═══════════════════════════════════════════════════
-          SECTION 1: Executive Overview
+          SECTION 1: Hero Score Card (consistent with AI Perception tab)
          ═══════════════════════════════════════════════════ */}
-      <DashCard className="mb-4">
-        <div className="flex items-center gap-2 mb-1">
-          <Activity size={14} strokeWidth={1.75} style={{ color: 'var(--signal)' }} />
-          <h2 className="text-[15px] font-semibold" style={{ color: 'var(--ink)' }}>Executive overview</h2>
-        </div>
-        <p className="text-[11px] mb-4" style={{ color: 'var(--m-muted)' }}>
-          How AI models understand, rank, and describe {brandName}
-        </p>
-
-        {hasData ? (
-          <>
-            {/* Hero score + executive summary side-by-side */}
-            <div className="flex flex-col md:flex-row items-start gap-5 mb-5">
-              <div className="flex-shrink-0">
-                <ScoreCircle score={biSummary?.score ?? overallScore} size="medium" />
-                <p className="text-[11px] font-semibold text-center mt-2" style={{ color: 'var(--m-muted)' }}>Brand Intelligence</p>
-              </div>
-
-              {executiveSummary.length > 0 && (
-                <div className="flex-1 rounded-lg px-4 py-3.5" style={{ background: 'color-mix(in srgb, var(--signal) 4%, transparent)', border: '1px solid color-mix(in srgb, var(--signal) 10%, transparent)' }}>
-                  <div className="flex items-start gap-2.5">
-                    <Lightbulb size={14} className="mt-0.5 flex-shrink-0" style={{ color: 'var(--signal)' }} />
-                    <div className="space-y-1.5">
-                      {executiveSummary.map((line, i) => (
-                        <p key={i} className="text-[12.5px] leading-[1.6]" style={{ color: 'var(--ink)', opacity: 0.85 }}>{line}</p>
-                      ))}
+      <div className="overflow-hidden rounded-xl mb-4" style={{ background: 'var(--card)', border: '1px solid var(--rule)' }}>
+        <div className="p-6 sm:p-8">
+          {hasData ? (<>
+            <div className="flex flex-col lg:flex-row gap-6">
+              {/* Left — Scores */}
+              <div className="flex items-center gap-5 lg:pr-8 lg:border-r flex-shrink-0" style={{ borderColor: 'var(--rule)' }}>
+                <ScoreCircle score={biSummary?.score ?? overallScore} size="big" />
+                <div>
+                  <p className="text-[11px] font-semibold uppercase tracking-wider" style={{ color: 'var(--m-muted)' }}>Brand Intelligence</p>
+                  <p className="text-[26px] font-bold tabular-nums leading-tight mt-0.5" style={{ color: 'var(--ink)' }}>
+                    {(biSummary?.score ?? overallScore) != null ? `${biSummary?.score ?? overallScore}%` : 'Not measured'}
+                  </p>
+                  <p className="text-[13px] mt-1" style={{ color: 'var(--m-muted)' }}>
+                    How AI models understand {brandName}
+                  </p>
+                  {sentimentScore != null && (
+                    <div className="flex items-center gap-2.5 mt-3 pt-3" style={{ borderTop: '1px solid var(--rule)' }}>
+                      <ScoreCircle score={sentimentScore} size="small" />
+                      <div>
+                        <p className="text-[11px] font-semibold uppercase tracking-wider" style={{ color: 'var(--m-muted)' }}>Sentiment</p>
+                        <p className="text-[15px] font-semibold" style={{ color: 'var(--ink)' }}>
+                          {sentimentLabel(sentimentScore).label}{' '}
+                          <span className="text-[13px] font-normal" style={{ color: 'var(--m-muted)' }}>{sentimentScore}/100</span>
+                        </p>
+                      </div>
                     </div>
-                  </div>
+                  )}
                 </div>
-              )}
+              </div>
+              {/* Right — Info cards */}
+              <div className="flex-1 grid grid-cols-1 sm:grid-cols-2 gap-3">
+                {/* What this measures */}
+                <div className="rounded-lg p-4" style={{ background: 'var(--paper-2)', border: '1px solid var(--rule)' }}>
+                  <div className="flex items-center gap-2 mb-2">
+                    <Search size={14} strokeWidth={1.75} style={{ color: 'var(--m-muted)' }} />
+                    <p className="text-[12px] font-semibold" style={{ color: 'var(--ink)' }}>What this measures</p>
+                  </div>
+                  <p className="text-[12px] leading-relaxed" style={{ color: 'var(--m-muted)' }}>
+                    We query leading AI models about your brand, then compare their answers to your actual website content.
+                    This score combines accuracy, visibility, and sentiment into one composite metric.
+                  </p>
+                </div>
+                {/* Executive insight */}
+                <div className="rounded-lg p-4" style={{ background: 'var(--paper-2)', border: '1px solid var(--rule)' }}>
+                  <div className="flex items-center gap-2 mb-2">
+                    <Lightbulb size={14} strokeWidth={1.75} style={{ color: 'var(--m-muted)' }} />
+                    <p className="text-[12px] font-semibold" style={{ color: 'var(--ink)' }}>Key insight</p>
+                  </div>
+                  <p className="text-[12px] leading-relaxed" style={{ color: 'var(--m-muted)' }}>
+                    {executiveSummary.length > 0
+                      ? executiveSummary[0]
+                      : 'Run an audit with the Brand module enabled to see how AI models represent your brand.'}
+                  </p>
+                </div>
+              </div>
             </div>
 
             {/* Metric dashboard cards — merged overview + key signals */}
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mt-5 pt-4" style={{ borderTop: '1px solid var(--rule)' }}>
               {/* AI Visibility */}
               <button type="button" onClick={() => setActiveTab('perception')} className="text-left rounded-lg p-3.5 transition-all hover:shadow-sm" style={{ background: 'var(--paper-2)', border: '1px solid var(--rule)' }}>
                 <div className="flex items-center gap-1.5 mb-2">
@@ -1285,7 +1310,7 @@ export default function IntelligencePage() {
         ) : (
           <EmptyCardBody message="Run an audit with the Brand module enabled to generate AI performance metrics." />
         )}
-      </DashCard>
+      </div></div>
 
 
 
