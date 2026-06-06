@@ -257,8 +257,14 @@ export const processAuditFn = inngest.createFunction(
 
         if (terminalStatuses.includes(status)) return // Already resolved
 
-        // If we got past the report step (progress >= 82%), the audit has useful data
-        const hasReport = progress >= 82
+        // Check if a report row actually exists in the DB — don't rely on progress %
+        // (progress=82 means reporting STARTED, not that the report was written)
+        const { data: reportCheck } = await db
+          .from('reports')
+          .select('id')
+          .eq('audit_id', auditId)
+          .maybeSingle()
+        const hasReport = !!reportCheck
         const forcedStatus = hasReport ? 'completed_with_warnings' : 'failed'
 
         console.warn(`[inngest/onFailure] Audit ${auditId} stuck at status=${status} progress=${progress}%. Forcing to ${forcedStatus}.`)
@@ -3460,6 +3466,7 @@ RULES FOR RE-AUDIT:
 
       const db = getDb()
 
+      try {
       // Fetch all findings from DB
       const { data: allFindings } = await db
         .from('audit_findings')
@@ -3622,6 +3629,18 @@ RULES FOR RE-AUDIT:
         ...severityCount,
         has_pdf: !!pdfUrl,
       })
+
+      } catch (reportErr) {
+        // CRITICAL: Report generation failed. Log the error and re-throw so the
+        // outer catch handler can refund the credit and mark the audit as failed.
+        // Do NOT swallow this error — without a report row in the DB, the audit
+        // is unusable and should not be marked completed_with_warnings.
+        const errMsg = reportErr instanceof Error ? reportErr.message : String(reportErr)
+        console.error(`[inngest] Report generation failed for audit ${auditId}:`, reportErr)
+        await logStageFailed(auditId, 'reporting', 'Report generation failed', errMsg.slice(0, 300))
+        await auditLog(auditId, 'report_failed', 'error', `Report generation failed: ${errMsg.slice(0, 200)}`)
+        throw reportErr // Let outer catch handle refund + status
+      }
     })
 
     // ──────────────────────────────────────────────────────────
@@ -4169,9 +4188,14 @@ RULES FOR RE-AUDIT:
 
           if (!terminalStatuses.includes(status)) {
             // Audit is stuck in a non-terminal state — force complete
-            // If we got past the report step (progress >= 82%), mark as completed_with_warnings
-            // Otherwise mark as failed
-            const hasReport = progress >= 82
+            // Check if a report row actually exists in the DB — don't rely on progress %
+            // (progress=82 means reporting STARTED, not that the report was written)
+            const { data: reportCheck } = await db
+              .from('reports')
+              .select('id')
+              .eq('audit_id', auditId)
+              .maybeSingle()
+            const hasReport = !!reportCheck
             const forcedStatus = hasReport ? 'completed_with_warnings' : 'failed'
             const forcedProgress = hasReport ? 100 : progress
 
