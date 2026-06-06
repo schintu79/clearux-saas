@@ -381,14 +381,15 @@ export default function IntelligencePage() {
   const [signalFilter, setSignalFilter] = useState<'all' | 'positive' | 'neutral' | 'negative'>('all');
   const [showMethodology, setShowMethodology] = useState(false);
   const [showAllRecs, setShowAllRecs] = useState(false);
+  const [metricsExpanded, setMetricsExpanded] = useState(false);
 
   // AI Interrogation state
   const [iqQuestions, setIqQuestions] = useState<Array<{ questionId: string; questionText: string; family: string; relevanceScore: number; rankReason: string }>>([]);
   const [iqQuestionsLoading, setIqQuestionsLoading] = useState(false);
   const [iqSelectedModels, setIqSelectedModels] = useState<string[]>([
-    'openai/gpt-4o-mini',
-    'google/gemini-2.5-flash',
     'perplexity/sonar',
+    'deepseek/deepseek-chat-v3-0324',
+    'openai/gpt-4o-mini',
   ]);
   const [iqUsage, setIqUsage] = useState<{ checksUsed: number; checksLimit: number; checksRemaining: number; canInterrogate: boolean } | null>(null);
   const [iqRunning, setIqRunning] = useState(false);
@@ -402,13 +403,15 @@ export default function IntelligencePage() {
   const [pageSort, setPageSort] = useState<'score-asc' | 'score-desc' | 'name'>('score-desc');
 
   /* ── AI Interrogation constants ─────────────────────── */
-  const IQ_MODEL_DISPLAY: { shortId: string; slug: string }[] = useMemo(() => [
-    { shortId: 'chatgpt', slug: 'openai/gpt-4o-mini' },
+  const IQ_MODEL_DISPLAY: { shortId: string; slug: string; free?: boolean }[] = useMemo(() => [
+    // Free models — included with every audit
+    { shortId: 'perplexity', slug: 'perplexity/sonar', free: true },
+    { shortId: 'deepseek', slug: 'deepseek/deepseek-chat-v3-0324', free: true },
+    { shortId: 'chatgpt', slug: 'openai/gpt-4o-mini', free: true },
+    // Premium models — opt-in, costs a check
     { shortId: 'gemini', slug: 'google/gemini-2.5-flash' },
-    { shortId: 'perplexity', slug: 'perplexity/sonar' },
     { shortId: 'grok', slug: 'x-ai/grok-4.3' },
     { shortId: 'meta', slug: 'meta-llama/llama-4-scout-17b-16e-instruct' },
-    { shortId: 'deepseek', slug: 'deepseek/deepseek-chat-v3-0324' },
   ], []);
   const IQ_MAX_MODELS = 3;
 
@@ -1700,45 +1703,360 @@ export default function IntelligencePage() {
             </div>
           )}
 
-          {/* ── Summary metrics ── */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            <PerceptionMetricCard
-              icon={<Target size={18} strokeWidth={1.75} style={{ color: scoreColor(perceptionAccuracy) }} />}
-              label="Accuracy"
-              value={perceptionAccuracy != null ? `${perceptionAccuracy}%` : 'Not measured'}
-              subtext={perceptionAccuracy != null ? `${perceptionMeasured.length} model${perceptionMeasured.length !== 1 ? 's' : ''} tested` : 'Run an audit to measure'}
-              description="How well AI answers match what your website actually claims. We ask each model about your brand and grade their responses against your real content."
-              scoreCircle={<ScoreCircle score={perceptionAccuracy} size="small" />}
-            />
+          {/* ── Collapsible metrics dashboard ── */}
+          <DashCard className="!p-0 overflow-hidden">
+            <button
+              type="button"
+              onClick={() => setMetricsExpanded(!metricsExpanded)}
+              className="w-full flex items-center gap-3 px-4 py-3 text-left transition-colors hover:bg-[color-mix(in_srgb,var(--ink)_2%,transparent)]"
+            >
+              {/* Compact inline metrics */}
+              <div className="flex items-center gap-4 flex-1 min-w-0">
+                <div className="flex items-center gap-1.5">
+                  <Target size={12} style={{ color: scoreColor(perceptionAccuracy) }} />
+                  <span className="text-[11px] font-medium" style={{ color: 'var(--m-muted)' }}>Accuracy</span>
+                  <span className="text-[13px] font-bold tabular-nums" style={{ color: scoreColor(perceptionAccuracy) }}>{perceptionAccuracy != null ? `${perceptionAccuracy}%` : '--'}</span>
+                </div>
+                <span className="text-[11px]" style={{ color: 'var(--rule)' }}>·</span>
+                <div className="flex items-center gap-1.5">
+                  {sentimentScore != null && sentimentScore >= 60 ? <ThumbsUp size={12} style={{ color: 'var(--ok)' }} /> : sentimentScore != null && sentimentScore < 40 ? <ThumbsDown size={12} style={{ color: 'var(--severe)' }} /> : <Minus size={12} style={{ color: 'var(--m-muted)' }} />}
+                  <span className="text-[11px] font-medium" style={{ color: 'var(--m-muted)' }}>Sentiment</span>
+                  <span className="text-[13px] font-bold tabular-nums" style={{ color: scoreColor(perceptionSentiment) }}>{perceptionSentiment ?? '--'}</span>
+                </div>
+                <span className="text-[11px]" style={{ color: 'var(--rule)' }}>·</span>
+                <div className="flex items-center gap-1.5">
+                  <ArrowUpDown size={12} style={{ color: scoreColor(placementScoreToPercent(perceptionPlacement)) }} />
+                  <span className="text-[11px] font-medium" style={{ color: 'var(--m-muted)' }}>Placement</span>
+                  <span className="text-[13px] font-bold tabular-nums" style={{ color: scoreColor(placementScoreToPercent(perceptionPlacement)) }}>
+                    {perceptionPlacement != null ? `#${perceptionPlacement}` : '--'}
+                  </span>
+                </div>
+              </div>
+              <ChevronDown size={13} className={`flex-shrink-0 transition-transform duration-200 ${metricsExpanded ? 'rotate-180' : ''}`} style={{ color: 'var(--m-muted)' }} />
+            </button>
 
-            <PerceptionMetricCard
-              icon={
-                hasPerceptionSentiment ? (
-                  perceptionSentiment! >= 60 ? <ThumbsUp size={18} strokeWidth={1.75} style={{ color: 'var(--ok)' }} /> :
-                  perceptionSentiment! >= 40 ? <Minus size={18} strokeWidth={1.75} style={{ color: 'var(--warn)' }} /> :
-                  <ThumbsDown size={18} strokeWidth={1.75} style={{ color: 'var(--severe)' }} />
-                ) : <ThumbsUp size={18} strokeWidth={1.75} style={{ color: 'var(--m-muted)' }} />
-              }
-              label="Sentiment"
-              value={perceptionSentimentLabel(perceptionSentiment)}
-              subtext={hasPerceptionSentiment ? `${perceptionSentiment}/100 average tone` : 'Not enough probe data yet'}
-              description="The overall tone AI models use when talking about your brand. Positive sentiment means AI recommends you confidently; negative means it hedges or warns users."
-              scoreCircle={<ScoreCircle score={perceptionSentiment} size="small" />}
-            />
+            {metricsExpanded && (
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 px-4 pb-4" style={{ borderTop: '1px solid var(--rule)' }}>
+                <div className="pt-3">
+                  <div className="flex items-start gap-3">
+                    <ScoreCircle score={perceptionAccuracy} size="small" />
+                    <div className="flex-1 min-w-0">
+                      <p className="text-[10px] font-semibold uppercase tracking-wider" style={{ color: 'var(--m-muted)' }}>Accuracy</p>
+                      <p className="text-[14px] font-semibold mt-0.5" style={{ color: 'var(--ink)' }}>{perceptionAccuracy != null ? `${perceptionAccuracy}%` : 'Not measured'}</p>
+                      <p className="text-[11px] mt-0.5" style={{ color: 'var(--m-muted)' }}>
+                        {perceptionAccuracy != null ? `${perceptionMeasured.length} model${perceptionMeasured.length !== 1 ? 's' : ''} tested` : 'Run an audit to measure'}
+                      </p>
+                    </div>
+                  </div>
+                  <p className="text-[11px] leading-relaxed mt-2 pt-2" style={{ color: 'var(--m-muted)', borderTop: '1px solid var(--rule)' }}>
+                    How well AI answers match what your website actually claims.
+                  </p>
+                </div>
+                <div className="pt-3">
+                  <div className="flex items-start gap-3">
+                    <ScoreCircle score={perceptionSentiment} size="small" />
+                    <div className="flex-1 min-w-0">
+                      <p className="text-[10px] font-semibold uppercase tracking-wider" style={{ color: 'var(--m-muted)' }}>Sentiment</p>
+                      <p className="text-[14px] font-semibold mt-0.5" style={{ color: 'var(--ink)' }}>{perceptionSentimentLabel(perceptionSentiment)}</p>
+                      <p className="text-[11px] mt-0.5" style={{ color: 'var(--m-muted)' }}>
+                        {hasPerceptionSentiment ? `${perceptionSentiment}/100 average tone` : 'Not enough data yet'}
+                      </p>
+                    </div>
+                  </div>
+                  <p className="text-[11px] leading-relaxed mt-2 pt-2" style={{ color: 'var(--m-muted)', borderTop: '1px solid var(--rule)' }}>
+                    How positively AI models talk about your brand.
+                  </p>
+                </div>
+                <div className="pt-3">
+                  <div className="flex items-start gap-3">
+                    <ScoreCircle score={placementScoreToPercent(perceptionPlacement)} size="small" />
+                    <div className="flex-1 min-w-0">
+                      <p className="text-[10px] font-semibold uppercase tracking-wider" style={{ color: 'var(--m-muted)' }}>Avg placement</p>
+                      <p className="text-[14px] font-semibold mt-0.5" style={{ color: 'var(--ink)' }}>{placementLabel(perceptionPlacement)}</p>
+                      <p className="text-[11px] mt-0.5" style={{ color: 'var(--m-muted)' }}>
+                        {hasPerceptionPlacement ? 'position when AI lists options' : 'Not enough data yet'}
+                      </p>
+                    </div>
+                  </div>
+                  <p className="text-[11px] leading-relaxed mt-2 pt-2" style={{ color: 'var(--m-muted)', borderTop: '1px solid var(--rule)' }}>
+                    Where your brand appears in AI recommendation lists.
+                  </p>
+                </div>
+              </div>
+            )}
+          </DashCard>
 
-            <PerceptionMetricCard
-              icon={
-                <span className="text-[15px] font-bold tabular-nums" style={{ color: scoreColor(placementScoreToPercent(perceptionPlacement)) }}>
-                  {perceptionPlacement != null ? `#${perceptionPlacement}` : '--'}
-                </span>
-              }
-              label="Avg placement"
-              value={placementLabel(perceptionPlacement)}
-              subtext={hasPerceptionPlacement ? 'position when AI lists options' : 'Not enough probe data yet'}
-              description="Where your brand appears in AI responses when someone asks for recommendations in your category. #1 means you are the first brand mentioned; #5 means you are buried at the bottom."
-              scoreCircle={<ScoreCircle score={placementScoreToPercent(perceptionPlacement)} size="small" />}
-            />
-          </div>
+          {/* ── What AI models say about you (primary action section) ── */}
+          <DashCard style={{ display: 'flex', flexDirection: 'column', maxHeight: '720px' }}>
+            <div className="flex items-center justify-between mb-1">
+              <div className="flex items-center gap-2">
+                <MessageSquare size={15} strokeWidth={1.75} style={{ color: 'var(--ink)' }} />
+                <h2 className="text-[15px] font-semibold" style={{ color: 'var(--ink)' }}>What AI models say about you</h2>
+              </div>
+              <div className="flex items-center gap-2">
+                {iqUsage && (
+                  <span className="text-[11px] font-medium px-2 py-0.5 rounded-full" style={{ background: 'var(--paper-2)', color: 'var(--m-muted)' }}>
+                    {iqUsage.checksRemaining} check{iqUsage.checksRemaining !== 1 ? 's' : ''} left
+                  </span>
+                )}
+                {!rescanAvailable && cooldownMessage && (
+                  <span className="text-[10px] px-2 py-0.5 rounded-full" style={{ background: 'color-mix(in srgb, var(--warn) 8%, transparent)', color: 'var(--warn)' }}>
+                    <Clock size={9} className="inline -mt-0.5 mr-0.5" />
+                    Cooldown active
+                  </span>
+                )}
+              </div>
+            </div>
+            <p className="text-[12px] mb-3" style={{ color: 'var(--m-muted)' }}>
+              Pick a question and choose which AI models to ask. Saved answers load instantly at no cost.
+            </p>
+
+            {/* Split layout: left panel (models + questions) | right panel (answers) */}
+            <div className="flex flex-col lg:flex-row gap-3 flex-1 min-h-0 overflow-hidden">
+              {/* ── Left panel: Models + Questions ── */}
+              <div className="lg:w-[320px] flex-shrink-0 flex flex-col overflow-hidden">
+                {/* Model selector — sticky at top */}
+                <div className="flex-shrink-0 pb-2 z-10" style={{ background: 'var(--card)' }}>
+                  <p className="text-[10px] font-semibold uppercase tracking-[0.06em] mb-1.5" style={{ color: 'var(--m-muted)' }}>
+                    Models {iqSelectedModels.length > 0 && <span className="normal-case font-normal">({iqSelectedModels.length}/{IQ_MAX_MODELS})</span>}
+                  </p>
+                  <div className="flex flex-wrap gap-1">
+                    {IQ_MODEL_DISPLAY.map((m) => {
+                      const selected = iqSelectedModels.includes(m.slug);
+                      const provider = providerKeyToIcon(m.shortId);
+                      return (
+                        <button
+                          key={m.slug}
+                          onClick={() => toggleIqModel(m.slug)}
+                          disabled={iqRunning}
+                          className="flex items-center gap-1 px-1.5 py-0.5 rounded-md text-[10px] font-medium transition-all"
+                          style={{
+                            background: selected ? 'var(--ink)' : 'var(--paper-2)',
+                            color: selected ? 'var(--paper)' : 'var(--m-muted)',
+                            border: `1px solid ${selected ? 'var(--ink)' : 'var(--rule)'}`,
+                            opacity: iqRunning ? 0.5 : 1,
+                          }}
+                          title={m.free ? 'Included free with every audit' : 'Uses 1 check'}
+                        >
+                          {provider && <AIProviderIcon provider={provider} size={11} />}
+                          {provider ? PROVIDER_LABEL[provider] : m.shortId}
+                          {m.free && <span className="text-[8px] opacity-60">✓</span>}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* Questions list — scrollable */}
+                <div className="flex-1 overflow-y-auto min-h-0">
+                  <p className="text-[10px] font-semibold uppercase tracking-[0.06em] mb-1 sticky top-0 py-1 z-10" style={{ color: 'var(--m-muted)', background: 'var(--card)' }}>
+                    Questions
+                  </p>
+                  {iqQuestionsLoading ? (
+                    <div className="flex items-center gap-2 py-3">
+                      <Loader2 size={14} className="animate-spin" style={{ color: 'var(--m-muted)' }} />
+                      <span className="text-[12px]" style={{ color: 'var(--m-muted)' }}>Loading questions...</span>
+                    </div>
+                  ) : (() => {
+                    const allQs: Array<{ key: string; text: string; family?: string; onClick: () => void }> = [];
+                    for (const q of iqQuestions) {
+                      allQs.push({ key: q.questionId, text: q.questionText, family: q.family, onClick: () => handleIqAsk(q.questionText, q.family) });
+                    }
+                    for (const group of questionGroups) {
+                      if (!iqQuestions.some(q => q.questionText === group.question)) {
+                        allQs.push({ key: `probe-${group.question}`, text: group.question, onClick: () => handleIqAsk(group.question) });
+                      }
+                    }
+                    if (allQs.length === 0) {
+                      return (
+                        <p className="text-[12px] py-2" style={{ color: 'var(--m-muted)' }}>
+                          No questions available yet. Run an audit to generate industry-specific questions.
+                        </p>
+                      );
+                    }
+                    return (
+                      <div className="rounded-lg" style={{ border: '1px solid var(--rule)' }}>
+                        {allQs.map((q, idx) => {
+                          const isActive = iqActiveQuestion === q.text;
+                          const hasSaved = iqPastResults.has(q.text);
+                          const pastR = iqPastResults.get(q.text);
+                          const probeGroup = questionGroups.find(g => g.question === q.text);
+                          let accCount = 0, partCount = 0, wrongCount = 0;
+                          if (pastR && pastR.length > 0) {
+                            for (const r of pastR) {
+                              const n = normalizeAccuracy(r.accuracy);
+                              if (n === 'Accurate') accCount++;
+                              else if (n === 'Partial') partCount++;
+                              else if (n === 'Wrong') wrongCount++;
+                            }
+                          } else if (probeGroup) {
+                            for (const a of probeGroup.answers) {
+                              const n = normalizeAccuracy(a.accuracy);
+                              if (n === 'Accurate') accCount++;
+                              else if (n === 'Partial') partCount++;
+                              else wrongCount++;
+                            }
+                          }
+                          const hasAccuracy = accCount > 0 || partCount > 0 || wrongCount > 0;
+                          const canAsk = hasSaved || (iqUsage == null || iqUsage.canInterrogate);
+                          return (
+                            <button
+                              key={q.key}
+                              onClick={q.onClick}
+                              disabled={iqRunning || !canAsk}
+                              className="w-full text-left flex items-start gap-2 px-2.5 py-1.5 transition-colors"
+                              style={{
+                                background: isActive ? 'var(--ink)' : idx % 2 === 0 ? 'transparent' : 'color-mix(in srgb, var(--ink) 2%, transparent)',
+                                color: isActive ? 'var(--paper)' : 'var(--ink)',
+                                borderBottom: idx < allQs.length - 1 ? '1px solid var(--rule)' : 'none',
+                                opacity: (iqRunning && !isActive) ? 0.5 : 1,
+                              }}
+                            >
+                              <span className="text-[10px] font-mono font-medium mt-px flex-shrink-0 w-4 text-right" style={{ color: isActive ? 'var(--paper)' : 'var(--m-muted)', opacity: 0.6 }}>
+                                {idx + 1}
+                              </span>
+                              <div className="flex-1 min-w-0">
+                                <span className="text-[11px] leading-tight">{q.text}</span>
+                                {!isActive && (hasAccuracy || hasSaved) && (
+                                  <div className="flex items-center gap-1 mt-0.5">
+                                    {accCount > 0 && (
+                                      <span className="text-[8px] font-medium px-1 rounded" style={{ background: 'rgba(34,197,94,0.1)', color: 'var(--ok)' }}>{accCount}✓</span>
+                                    )}
+                                    {partCount > 0 && (
+                                      <span className="text-[8px] font-medium px-1 rounded" style={{ background: 'rgba(234,179,8,0.1)', color: 'var(--warn)' }}>{partCount}~</span>
+                                    )}
+                                    {wrongCount > 0 && (
+                                      <span className="text-[8px] font-medium px-1 rounded" style={{ background: 'rgba(239,68,68,0.1)', color: 'var(--severe)' }}>{wrongCount}✗</span>
+                                    )}
+                                    {hasSaved && !hasAccuracy && (
+                                      <span className="text-[8px] font-medium px-1 rounded" style={{ background: 'var(--paper-2)', color: 'var(--m-muted)' }}>saved</span>
+                                    )}
+                                  </div>
+                                )}
+                              </div>
+                            </button>
+                          );
+                        })}
+                      </div>
+                    );
+                  })()}
+
+                  {iqUsage && !iqUsage.canInterrogate && iqUsage.checksLimit > 0 && (
+                    <p className="text-[10px] mt-1.5 px-1" style={{ color: 'var(--m-muted)' }}>
+                      All checks used. Saved answers still load free.
+                    </p>
+                  )}
+                  {iqUsage && iqUsage.checksLimit === 0 && (
+                    <p className="text-[10px] mt-1.5 px-1" style={{ color: 'var(--m-muted)' }}>
+                      Upgrade your plan to unlock AI interrogation checks.
+                    </p>
+                  )}
+                </div>
+              </div>
+
+              {/* ── Right panel: Answers ── */}
+              <div className="flex-1 min-w-0 overflow-y-auto">
+                {iqResults.length > 0 ? (
+                  <div>
+                    {iqActiveQuestion && (
+                      <p className="text-[15px] font-semibold mb-3 leading-snug" style={{ color: 'var(--ink)' }}>
+                        {iqActiveQuestion}
+                      </p>
+                    )}
+                    <div className="space-y-2">
+                      {iqResults.map((r) => {
+                        const provider = providerKeyToIcon(r.modelShortId);
+                        const ac = accuracyColor(r.accuracy);
+                        const normAcc = normalizeAccuracy(r.accuracy);
+                        return (
+                          <div key={r.modelSlug} className="rounded-lg p-3" style={{ background: 'var(--paper-2)', border: '1px solid var(--rule)' }}>
+                            <div className="flex items-center justify-between mb-1.5">
+                              <div className="flex items-center gap-2">
+                                {provider && <AIProviderIcon provider={provider} size={14} />}
+                                <span className="text-[12px] font-semibold" style={{ color: 'var(--ink)' }}>{r.modelDisplayName}</span>
+                              </div>
+                              {r.status === 'running' && (
+                                <Loader2 size={12} className="animate-spin" style={{ color: 'var(--m-muted)' }} />
+                              )}
+                              {r.status === 'failed' && (
+                                <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full" style={{ background: 'rgba(239,68,68,0.1)', color: 'var(--severe)' }}>
+                                  Error
+                                </span>
+                              )}
+                              {r.status !== 'running' && r.status !== 'failed' && normAcc && (
+                                <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full" style={{ background: ac.bg, color: ac.color }}>
+                                  {normAcc}
+                                </span>
+                              )}
+                            </div>
+                            {r.status === 'running' ? (
+                              <div className="space-y-1.5">
+                                <div className="animate-pulse rounded h-3 w-full" style={{ background: 'var(--rule)' }} />
+                                <div className="animate-pulse rounded h-3 w-3/4" style={{ background: 'var(--rule)' }} />
+                                <div className="animate-pulse rounded h-3 w-1/2" style={{ background: 'var(--rule)' }} />
+                              </div>
+                            ) : r.status === 'failed' ? (
+                              <p className="text-[12px]" style={{ color: 'var(--severe)' }}>{r.error || 'Request failed'}</p>
+                            ) : (
+                              <p className="text-[12px] leading-relaxed" style={{ color: 'var(--m-muted)' }}>{r.responseText}</p>
+                            )}
+                            {r.accuracyNote && r.status !== 'running' && r.status !== 'failed' && (
+                              <p className="text-[10px] mt-1.5 pt-1.5 italic" style={{ color: 'var(--m-muted)', borderTop: '1px solid var(--rule)', opacity: 0.8 }}>{r.accuracyNote}</p>
+                            )}
+                            {r.themes && r.themes.length > 0 && r.status !== 'running' && r.status !== 'failed' && (
+                              <div className="flex flex-wrap gap-1 mt-1.5 pt-1.5" style={{ borderTop: r.accuracyNote ? 'none' : '1px solid var(--rule)' }}>
+                                {r.themes.map((t, ti) => (
+                                  <span key={ti} className="text-[9px] px-1.5 py-0.5 rounded" style={{ background: 'var(--paper)', color: 'var(--m-muted)' }}>{t}</span>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                ) : iqActiveQuestion == null && questionGroups.length > 0 ? (
+                  <div>
+                    <p className="text-[15px] font-semibold mb-3 leading-snug" style={{ color: 'var(--ink)' }}>
+                      {questionGroups[0].question}
+                    </p>
+                    <div className="space-y-2">
+                      {questionGroups[0].answers.map((a) => {
+                        const ac = accuracyColor(a.accuracy);
+                        return (
+                          <div key={a.model_id} className="rounded-lg p-3" style={{ background: 'var(--paper-2)', border: '1px solid var(--rule)' }}>
+                            <div className="flex items-center justify-between mb-1.5">
+                              <div className="flex items-center gap-2">
+                                <AIProviderIcon provider={providerKeyToIcon(a.model_id) ?? 'chatgpt'} size={14} />
+                                <span className="text-[12px] font-semibold" style={{ color: 'var(--ink)' }}>{a.model_label}</span>
+                              </div>
+                              {a.accuracy && (
+                                <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full" style={{ background: ac.bg, color: ac.color }}>
+                                  {normalizeAccuracy(a.accuracy)}
+                                </span>
+                              )}
+                            </div>
+                            <p className="text-[12px] leading-relaxed" style={{ color: 'var(--m-muted)' }}>{a.answer}</p>
+                            {a.accuracyNote && (
+                              <p className="text-[10px] mt-1.5 pt-1.5 italic" style={{ color: 'var(--m-muted)', borderTop: '1px solid var(--rule)', opacity: 0.8 }}>{a.accuracyNote}</p>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                ) : (
+                  <div className="flex items-center justify-center h-full min-h-[180px] rounded-lg" style={{ background: 'color-mix(in srgb, var(--ink) 2%, transparent)', border: '1px dashed var(--rule)' }}>
+                    <div className="text-center px-6">
+                      <Bot size={22} className="mx-auto mb-2" style={{ color: 'var(--m-muted)', opacity: 0.4 }} />
+                      <p className="text-[12px] font-medium" style={{ color: 'var(--m-muted)' }}>Select a question to see what AI models say</p>
+                      <p className="text-[11px] mt-1" style={{ color: 'var(--m-muted)', opacity: 0.6 }}>Saved answers load instantly — no check needed</p>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          </DashCard>
 
           {/* ── Per-model breakdown ── */}
           {hasProbes && (
@@ -1877,273 +2195,6 @@ export default function IntelligencePage() {
               </div>
             </DashCard>
           )}
-
-          {/* ── What AI models say about you (unified) ────────── */}
-          <DashCard style={{ display: 'flex', flexDirection: 'column', maxHeight: '680px' }}>
-            <div className="flex items-center justify-between mb-1">
-              <div className="flex items-center gap-2">
-                <MessageSquare size={15} strokeWidth={1.75} style={{ color: 'var(--ink)' }} />
-                <h2 className="text-[15px] font-semibold" style={{ color: 'var(--ink)' }}>What AI models say about you</h2>
-              </div>
-              {iqUsage && (
-                <span className="text-[11px] font-medium px-2 py-0.5 rounded-full" style={{ background: 'var(--paper-2)', color: 'var(--m-muted)' }}>
-                  {iqUsage.checksRemaining} check{iqUsage.checksRemaining !== 1 ? 's' : ''} remaining
-                </span>
-              )}
-            </div>
-            <p className="text-[12px] mb-3" style={{ color: 'var(--m-muted)' }}>
-              Pick a question and choose which AI models to ask. Previously asked questions load instantly at no cost.
-            </p>
-
-            {/* Split layout: left panel (models + questions) | right panel (answers) */}
-            <div className="flex flex-col lg:flex-row gap-3 flex-1 min-h-0 overflow-hidden">
-              {/* ── Left panel: Models + Questions ── */}
-              <div className="lg:w-[320px] flex-shrink-0 space-y-3 overflow-y-auto">
-                {/* Model selector */}
-                <div>
-                  <p className="text-[10px] font-semibold uppercase tracking-[0.06em] mb-1.5" style={{ color: 'var(--m-muted)' }}>
-                    Models {iqSelectedModels.length > 0 && <span className="normal-case font-normal">({iqSelectedModels.length}/{IQ_MAX_MODELS})</span>}
-                  </p>
-                  <div className="flex flex-wrap gap-1.5">
-                    {IQ_MODEL_DISPLAY.map((m) => {
-                      const selected = iqSelectedModels.includes(m.slug);
-                      const provider = providerKeyToIcon(m.shortId);
-                      return (
-                        <button
-                          key={m.slug}
-                          onClick={() => toggleIqModel(m.slug)}
-                          disabled={iqRunning}
-                          className="flex items-center gap-1.5 px-1.5 py-0.5 rounded-md text-[10px] font-medium transition-all"
-                          style={{
-                            background: selected ? 'var(--ink)' : 'var(--paper-2)',
-                            color: selected ? 'var(--paper)' : 'var(--m-muted)',
-                            border: `1px solid ${selected ? 'var(--ink)' : 'var(--rule)'}`,
-                            opacity: iqRunning ? 0.5 : 1,
-                          }}
-                        >
-                          {provider && <AIProviderIcon provider={provider} size={12} />}
-                          {provider ? PROVIDER_LABEL[provider] : m.shortId}
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
-
-                {/* Questions list — numbered rows in scrollable container */}
-                <div>
-                  <p className="text-[10px] font-semibold uppercase tracking-[0.06em] mb-1.5" style={{ color: 'var(--m-muted)' }}>
-                    Questions
-                  </p>
-                  {iqQuestionsLoading ? (
-                    <div className="flex items-center gap-2 py-3">
-                      <Loader2 size={14} className="animate-spin" style={{ color: 'var(--m-muted)' }} />
-                      <span className="text-[12px]" style={{ color: 'var(--m-muted)' }}>Loading questions...</span>
-                    </div>
-                  ) : (() => {
-                    // Merge iq questions + extra probe questions into a single numbered list
-                    const allQs: Array<{ key: string; text: string; family?: string; onClick: () => void }> = [];
-                    for (const q of iqQuestions) {
-                      allQs.push({ key: q.questionId, text: q.questionText, family: q.family, onClick: () => handleIqAsk(q.questionText, q.family) });
-                    }
-                    for (const group of questionGroups) {
-                      if (!iqQuestions.some(q => q.questionText === group.question)) {
-                        allQs.push({ key: `probe-${group.question}`, text: group.question, onClick: () => handleIqAsk(group.question) });
-                      }
-                    }
-                    if (allQs.length === 0) {
-                      return (
-                        <p className="text-[12px] py-2" style={{ color: 'var(--m-muted)' }}>
-                          No questions available yet. Run an audit to generate industry-specific questions.
-                        </p>
-                      );
-                    }
-                    return (
-                      <div className="rounded-lg" style={{ border: '1px solid var(--rule)' }}>
-                        {allQs.map((q, idx) => {
-                          const isActive = iqActiveQuestion === q.text;
-                          const hasSaved = iqPastResults.has(q.text);
-                          // Derive accuracy summary from past results OR probe data
-                          const pastR = iqPastResults.get(q.text);
-                          const probeGroup = questionGroups.find(g => g.question === q.text);
-                          let accCount = 0, partCount = 0, wrongCount = 0;
-                          if (pastR && pastR.length > 0) {
-                            for (const r of pastR) {
-                              const n = normalizeAccuracy(r.accuracy);
-                              if (n === 'Accurate') accCount++;
-                              else if (n === 'Partial') partCount++;
-                              else if (n === 'Wrong') wrongCount++;
-                            }
-                          } else if (probeGroup) {
-                            for (const a of probeGroup.answers) {
-                              const n = normalizeAccuracy(a.accuracy);
-                              if (n === 'Accurate') accCount++;
-                              else if (n === 'Partial') partCount++;
-                              else wrongCount++;
-                            }
-                          }
-                          const hasAccuracy = accCount > 0 || partCount > 0 || wrongCount > 0;
-                          const canAsk = hasSaved || (iqUsage == null || iqUsage.canInterrogate);
-                          return (
-                            <button
-                              key={q.key}
-                              onClick={q.onClick}
-                              disabled={iqRunning || !canAsk}
-                              className="w-full text-left flex items-start gap-2 px-2.5 py-2 transition-colors"
-                              style={{
-                                background: isActive ? 'var(--ink)' : idx % 2 === 0 ? 'transparent' : 'color-mix(in srgb, var(--ink) 2%, transparent)',
-                                color: isActive ? 'var(--paper)' : 'var(--ink)',
-                                borderBottom: idx < allQs.length - 1 ? '1px solid var(--rule)' : 'none',
-                                opacity: (iqRunning && !isActive) ? 0.5 : 1,
-                              }}
-                            >
-                              <span className="text-[10px] font-mono font-medium mt-0.5 flex-shrink-0 w-4 text-right" style={{ color: isActive ? 'var(--paper)' : 'var(--m-muted)', opacity: 0.6 }}>
-                                {idx + 1}
-                              </span>
-                              <div className="flex-1 min-w-0">
-                                <span className="text-[12px] leading-snug">{q.text}</span>
-                                {!isActive && (hasAccuracy || hasSaved) && (
-                                  <div className="flex items-center gap-1 mt-0.5">
-                                    {accCount > 0 && (
-                                      <span className="text-[9px] font-medium px-1 py-px rounded" style={{ background: 'rgba(34,197,94,0.1)', color: 'var(--ok)' }}>{accCount} accurate</span>
-                                    )}
-                                    {partCount > 0 && (
-                                      <span className="text-[9px] font-medium px-1 py-px rounded" style={{ background: 'rgba(234,179,8,0.1)', color: 'var(--warn)' }}>{partCount} partial</span>
-                                    )}
-                                    {wrongCount > 0 && (
-                                      <span className="text-[9px] font-medium px-1 py-px rounded" style={{ background: 'rgba(239,68,68,0.1)', color: 'var(--severe)' }}>{wrongCount} wrong</span>
-                                    )}
-                                    {hasSaved && !hasAccuracy && (
-                                      <span className="text-[9px] font-medium px-1 py-px rounded" style={{ background: 'var(--paper-2)', color: 'var(--m-muted)' }}>saved</span>
-                                    )}
-                                  </div>
-                                )}
-                              </div>
-                            </button>
-                          );
-                        })}
-                      </div>
-                    );
-                  })()}
-
-                  {/* Upgrade nudge */}
-                  {iqUsage && !iqUsage.canInterrogate && iqUsage.checksLimit > 0 && (
-                    <p className="text-[11px] mt-1.5 px-1" style={{ color: 'var(--m-muted)' }}>
-                      All checks used. Previously asked questions still load free.
-                    </p>
-                  )}
-                  {iqUsage && iqUsage.checksLimit === 0 && (
-                    <p className="text-[11px] mt-1.5 px-1" style={{ color: 'var(--m-muted)' }}>
-                      Upgrade your plan to unlock AI interrogation checks.
-                    </p>
-                  )}
-                </div>
-              </div>
-
-              {/* ── Right panel: Answers ── */}
-              <div className="flex-1 min-w-0 overflow-y-auto">
-                {iqResults.length > 0 ? (
-                  <div>
-                    {iqActiveQuestion && (
-                      <p className="text-[17px] font-semibold mb-3 leading-snug" style={{ color: 'var(--ink)' }}>
-                        {iqActiveQuestion}
-                      </p>
-                    )}
-                    <div className="space-y-2.5">
-                      {iqResults.map((r) => {
-                        const provider = providerKeyToIcon(r.modelShortId);
-                        const ac = accuracyColor(r.accuracy);
-                        const normAcc = normalizeAccuracy(r.accuracy);
-                        return (
-                          <div key={r.modelSlug} className="rounded-lg p-3" style={{ background: 'var(--paper-2)', border: '1px solid var(--rule)' }}>
-                            <div className="flex items-center justify-between mb-1.5">
-                              <div className="flex items-center gap-2">
-                                {provider && <AIProviderIcon provider={provider} size={14} />}
-                                <span className="text-[12px] font-semibold" style={{ color: 'var(--ink)' }}>{r.modelDisplayName}</span>
-                              </div>
-                              {r.status === 'running' && (
-                                <Loader2 size={12} className="animate-spin" style={{ color: 'var(--m-muted)' }} />
-                              )}
-                              {r.status === 'failed' && (
-                                <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full" style={{ background: 'rgba(239,68,68,0.1)', color: 'var(--severe)' }}>
-                                  Error
-                                </span>
-                              )}
-                              {r.status !== 'running' && r.status !== 'failed' && normAcc && (
-                                <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full" style={{ background: ac.bg, color: ac.color }}>
-                                  {normAcc}
-                                </span>
-                              )}
-                            </div>
-                            {r.status === 'running' ? (
-                              <div className="space-y-1.5">
-                                <div className="animate-pulse rounded h-3 w-full" style={{ background: 'var(--rule)' }} />
-                                <div className="animate-pulse rounded h-3 w-3/4" style={{ background: 'var(--rule)' }} />
-                                <div className="animate-pulse rounded h-3 w-1/2" style={{ background: 'var(--rule)' }} />
-                              </div>
-                            ) : r.status === 'failed' ? (
-                              <p className="text-[12px]" style={{ color: 'var(--severe)' }}>{r.error || 'Request failed'}</p>
-                            ) : (
-                              <p className="text-[12px] leading-relaxed" style={{ color: 'var(--m-muted)' }}>{r.responseText}</p>
-                            )}
-                            {r.accuracyNote && r.status !== 'running' && r.status !== 'failed' && (
-                              <p className="text-[10px] mt-1.5 pt-1.5 italic" style={{ color: 'var(--m-muted)', borderTop: '1px solid var(--rule)', opacity: 0.8 }}>{r.accuracyNote}</p>
-                            )}
-                            {r.themes && r.themes.length > 0 && r.status !== 'running' && r.status !== 'failed' && (
-                              <div className="flex flex-wrap gap-1 mt-1.5 pt-1.5" style={{ borderTop: r.accuracyNote ? 'none' : '1px solid var(--rule)' }}>
-                                {r.themes.map((t, ti) => (
-                                  <span key={ti} className="text-[9px] px-1.5 py-0.5 rounded" style={{ background: 'var(--paper)', color: 'var(--m-muted)' }}>{t}</span>
-                                ))}
-                              </div>
-                            )}
-                          </div>
-                        );
-                      })}
-                    </div>
-                  </div>
-                ) : iqActiveQuestion == null && questionGroups.length > 0 ? (
-                  /* Show latest probe results when no active interrogation */
-                  <div>
-                    <p className="text-[17px] font-semibold mb-3 leading-snug" style={{ color: 'var(--ink)' }}>
-                      {questionGroups[0].question}
-                    </p>
-                    <div className="space-y-2.5">
-                      {questionGroups[0].answers.map((a) => {
-                        const ac = accuracyColor(a.accuracy);
-                        return (
-                          <div key={a.model_id} className="rounded-lg p-3" style={{ background: 'var(--paper-2)', border: '1px solid var(--rule)' }}>
-                            <div className="flex items-center justify-between mb-1.5">
-                              <div className="flex items-center gap-2">
-                                <AIProviderIcon provider={providerKeyToIcon(a.model_id) ?? 'chatgpt'} size={14} />
-                                <span className="text-[12px] font-semibold" style={{ color: 'var(--ink)' }}>{a.model_label}</span>
-                              </div>
-                              {a.accuracy && (
-                                <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full" style={{ background: ac.bg, color: ac.color }}>
-                                  {normalizeAccuracy(a.accuracy)}
-                                </span>
-                              )}
-                            </div>
-                            <p className="text-[12px] leading-relaxed" style={{ color: 'var(--m-muted)' }}>{a.answer}</p>
-                            {a.accuracyNote && (
-                              <p className="text-[10px] mt-1.5 pt-1.5 italic" style={{ color: 'var(--m-muted)', borderTop: '1px solid var(--rule)', opacity: 0.8 }}>{a.accuracyNote}</p>
-                            )}
-                          </div>
-                        );
-                      })}
-                    </div>
-                  </div>
-                ) : (
-                  /* Empty state */
-                  <div className="flex items-center justify-center h-full min-h-[180px] rounded-lg" style={{ background: 'color-mix(in srgb, var(--ink) 2%, transparent)', border: '1px dashed var(--rule)' }}>
-                    <div className="text-center px-6">
-                      <Bot size={22} className="mx-auto mb-2" style={{ color: 'var(--m-muted)', opacity: 0.4 }} />
-                      <p className="text-[12px] font-medium" style={{ color: 'var(--m-muted)' }}>Select a question to see what AI models say</p>
-                      <p className="text-[11px] mt-1" style={{ color: 'var(--m-muted)', opacity: 0.6 }}>Results appear here — saved answers load instantly</p>
-                    </div>
-                  </div>
-                )}
-              </div>
-            </div>
-          </DashCard>
 
           {/* ── How to improve ── */}
           {hasProbes && (
