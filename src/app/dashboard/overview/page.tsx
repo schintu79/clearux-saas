@@ -353,6 +353,57 @@ function OverviewInner() {
     void refreshModelProbes(latestCompleted.id);
   }, [latestCompleted, bundle]);
 
+  // ── Late-enrichment catch-up for brand intelligence ──
+  // Brand intelligence is written to the report row AFTER the audit status
+  // transitions to 'completed' (Wave 2 enrichment). If the bundle was
+  // fetched before enrichment finished, brand_intelligence will be null.
+  // Detect this and fetch directly from the intelligence API with retries.
+  const biRetryRef = useRef<NodeJS.Timeout | null>(null);
+  useEffect(() => {
+    if (biRetryRef.current) { clearTimeout(biRetryRef.current); biRetryRef.current = null; }
+    if (!latestCompleted?.id) return;
+    const reportBI = (bundle?.report as any)?.brand_intelligence;
+    if (reportBI) return; // Already have it — nothing to do
+
+    const auditStatus = (latestCompleted as any)?.status;
+    if (auditStatus !== 'completed' && auditStatus !== 'completed_with_warnings') return;
+
+    // Completed audit with missing brand_intelligence — fetch with retries
+    let attempt = 0;
+    const maxAttempts = 3;
+    const delays = [5000, 10000, 20000]; // 5s, 10s, 20s
+
+    const tryFetch = async () => {
+      try {
+        const r = await fetch(`/api/audits/intelligence?audit_id=${latestCompleted.id}`);
+        if (!r.ok) return false;
+        const d = await r.json();
+        if (d?.brandIntelligence) {
+          setBrandIntelligence(d.brandIntelligence as BrandIntelligenceSummary);
+          return true;
+        }
+      } catch {}
+      return false;
+    };
+
+    const scheduleRetry = () => {
+      if (attempt >= maxAttempts) return;
+      biRetryRef.current = setTimeout(async () => {
+        const success = await tryFetch();
+        if (!success) {
+          attempt++;
+          scheduleRetry();
+        }
+      }, delays[attempt] || 20000);
+    };
+
+    scheduleRetry();
+
+    return () => {
+      if (biRetryRef.current) { clearTimeout(biRetryRef.current); biRetryRef.current = null; }
+    };
+  }, [latestCompleted, bundle?.report]);
+
   const refreshModelProbes = useCallback(async (auditId: string) => {
     try {
       const r = await fetch(`/api/audits/intelligence?audit_id=${auditId}`);

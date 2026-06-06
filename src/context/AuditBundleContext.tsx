@@ -104,6 +104,32 @@ export function AuditBundleProvider({ children }: { children: React.ReactNode })
       : null;
   const needsPolling = isInProgressAuditStatus(inProgressStatus);
 
+  // Track previous polling state to detect completion transitions.
+  // When an audit finishes, enrichment (brand_intelligence, etc.) runs
+  // AFTER the status flips to 'completed'. Schedule delayed re-fetches
+  // so consumers pick up the late writes without a manual refresh.
+  const prevNeedsPollingRef = useRef(false);
+
+  useEffect(() => {
+    const wasPolling = prevNeedsPollingRef.current;
+    prevNeedsPollingRef.current = needsPolling;
+
+    if (wasPolling && !needsPolling && user && workspaceIdRef.current) {
+      const timers: NodeJS.Timeout[] = [];
+      for (const delay of [5000, 12000]) {
+        timers.push(setTimeout(() => {
+          const id = ++fetchIdRef.current;
+          loadLatestAuditBundle(user.id, workspaceIdRef.current!)
+            .then((b) => {
+              if (id === fetchIdRef.current) setBundle(b);
+            })
+            .catch(() => {});
+        }, delay));
+      }
+      return () => timers.forEach(clearTimeout);
+    }
+  }, [needsPolling, user]);
+
   useEffect(() => {
     if (!needsPolling || !user || !workspaceId) {
       if (pollingRef.current) {
