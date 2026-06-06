@@ -2409,7 +2409,7 @@ RULES FOR RE-AUDIT:
 
       // Design Consistency always runs. Brand DNA enrichment only when explicitly enabled.
       let includeBrandDnaEnrichmentBl = false
-      if (activeSlugsBl.includes('brand_consistency') && auditDetails.brandIdentityId) {
+      if ((activeSlugsBl.includes('brand_consistency') || activeSlugsBl.includes('design_consistency')) && auditDetails.brandIdentityId) {
         const hasMeaningful = await hasMeaningfulBrandDna(auditDetails.brandIdentityId)
         includeBrandDnaEnrichmentBl = hasMeaningful
       }
@@ -2715,7 +2715,7 @@ RULES FOR RE-AUDIT:
       // visual system consistency. Brand DNA enrichment is ONLY added when the user
       // explicitly enabled brand_consistency AND meaningful brand files exist.
       let includeBrandDnaEnrichment = false
-      if (activeSlugs.includes('brand_consistency') && auditDetails.brandIdentityId) {
+      if ((activeSlugs.includes('brand_consistency') || activeSlugs.includes('design_consistency')) && auditDetails.brandIdentityId) {
         try {
           const hasMeaningful = await withTimeout(
             hasMeaningfulBrandDna(auditDetails.brandIdentityId),

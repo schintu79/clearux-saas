@@ -1379,11 +1379,12 @@ export async function generateReport(
 
         let score: number
         let summary: string
+        // RULE 4: Uncertainty is not positivity. Must match BASE_SCORE = 82 in deep mode.
         if (catFindings.length === 0) {
-          score = 92
+          score = 82
           summary = 'No specific issues identified — strong performance in this category.'
         } else {
-          score = 92
+          score = 82
           for (const f of catFindings) { score -= severityPenalty[f.severity] || 6 }
           score = Math.max(0, Math.min(100, Math.round(score)))
           const top = catFindings[0]
