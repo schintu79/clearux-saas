@@ -68,6 +68,25 @@ import PageHeader from '@/components/dashboard/v2/PageHeader';
 import OverviewBreadcrumb from '@/components/dashboard/OverviewBreadcrumb';
 import type { BrandIntelligenceSummary } from '@/lib/audit-engine/brand-intelligence';
 
+/* ── Fix instructions for missing AI readability signals ── */
+
+const SIGNAL_FIX_MAP: Record<string, string> = {
+  'page title': 'Add a <title> tag inside <head>. Keep it under 60 characters, include your brand name and primary keyword.',
+  'h1 heading': 'Add exactly one <h1> tag with a clear, descriptive heading. AI models use it to understand what the page is about.',
+  'meta description': 'Add <meta name="description" content="..."> inside <head>. 150–160 characters summarizing the page content.',
+  'main content text': 'The page has very little readable text. AI models need substantial text to understand your content. Add descriptive copy.',
+  'substantial text content (page may be image/js-heavy)': 'The page relies on images or JavaScript-rendered content. Add HTML text that describes your offering clearly.',
+  'canonical url': 'Add <link rel="canonical" href="https://yoursite.com/page"> inside <head> to tell AI models which URL is the primary version.',
+  'language declaration (lang attribute)': 'Add lang="en" (or your language code) to the <html> tag. AI models use it for language detection.',
+  'open graph title (og:title)': 'Add <meta property="og:title" content="Your Title"> inside <head>. Used by social platforms and some AI models.',
+  'open graph description (og:description)': 'Add <meta property="og:description" content="..."> inside <head>. Helps AI models understand the page context.',
+  'open graph image (og:image)': 'Add <meta property="og:image" content="https://yoursite.com/image.jpg"> for rich previews in AI-powered surfaces.',
+  'twitter card tags': 'Add <meta name="twitter:card" content="summary_large_image"> and matching title/description/image meta tags.',
+  'viewport meta tag': 'Add <meta name="viewport" content="width=device-width, initial-scale=1"> inside <head> for mobile compatibility.',
+  'json-ld structured data': 'Add JSON-LD schema markup (Organization, Product, LocalBusiness, etc.) inside a <script type="application/ld+json"> tag.',
+  'page is set to noindex (ai crawlers may skip)': 'Your page has <meta name="robots" content="noindex">. AI crawlers may skip it entirely. Remove noindex if you want AI visibility.',
+}
+
 /* ── Types ─────────────────────────────────────────── */
 
 type Competitor = {
@@ -2328,13 +2347,28 @@ export default function IntelligencePage() {
                             </p>
                           )}
                           {missing.length > 0 && (
-                            <Link
-                              href={`${dashPrefix}/fix?module=Foundation`}
-                              className="inline-flex items-center gap-1 mt-3 text-[11px] font-semibold hover:underline"
-                              style={{ color: 'var(--ink)' }}
-                            >
-                              Fix {missing.length} missing signal{missing.length === 1 ? '' : 's'} <ArrowRight size={11} />
-                            </Link>
+                            <details className="mt-3 group/fix">
+                              <summary
+                                className="inline-flex items-center gap-1 text-[11px] font-semibold cursor-pointer list-none [&::-webkit-details-marker]:hidden hover:underline"
+                                style={{ color: 'var(--ink)' }}
+                              >
+                                Fix {missing.length} missing signal{missing.length === 1 ? '' : 's'} <ChevronDown size={10} className="transition-transform group-open/fix:rotate-180" />
+                              </summary>
+                              <div className="mt-2 space-y-2">
+                                {missing.map((signal) => {
+                                  const fix = SIGNAL_FIX_MAP[signal.toLowerCase()] || `Add the missing "${signal}" to this page's HTML.`
+                                  return (
+                                    <div key={signal} className="flex gap-2 text-[11px] leading-relaxed rounded-lg px-3 py-2" style={{ background: 'color-mix(in srgb, var(--severe) 5%, transparent)' }}>
+                                      <AlertTriangle size={11} className="flex-shrink-0 mt-0.5" style={{ color: 'var(--severe)' }} />
+                                      <div>
+                                        <span className="font-semibold" style={{ color: 'var(--ink)' }}>{signal}:</span>{' '}
+                                        <span style={{ color: 'var(--m-muted)' }}>{fix}</span>
+                                      </div>
+                                    </div>
+                                  )
+                                })}
+                              </div>
+                            </details>
                           )}
                         </div>
                       </details>

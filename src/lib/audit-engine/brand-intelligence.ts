@@ -197,8 +197,12 @@ export async function runBrandIntelligenceAnalysis(
   )
 
   // Compute aggregate metrics
+  // IMPORTANT: Use accuracyScore (from probes — hard data) as the source of truth
+  // for "does this model know the brand", NOT the sentiment visibility boolean
+  // (which comes from a separate LLM call that can independently fail).
+  // Threshold >= 20 matches recognizedCount on the intelligence page.
   const totalModels = modelResults.length
-  const visibleModels = modelResults.filter(m => m.visibility).length
+  const visibleModels = modelResults.filter(m => m.accuracyScore >= 20).length
   const aiVisibility = totalModels > 0 ? Math.round((visibleModels / totalModels) * 100) : 0
 
   const sentimentScores = modelResults.map(m => m.sentimentScore)
@@ -249,7 +253,7 @@ export async function runBrandIntelligenceAnalysis(
   // Each model's shareOfVoice represents what % of its response content
   // was dedicated to this brand vs competitors mentioned.
   const modelShareScores = modelResults
-    .filter(m => m.visibility && m.shareOfVoice > 0)
+    .filter(m => m.accuracyScore >= 20 && m.shareOfVoice > 0)
     .map(m => m.shareOfVoice)
   const shareOfVoice = modelShareScores.length > 0
     ? Math.round(modelShareScores.reduce((a, b) => a + b, 0) / modelShareScores.length)
@@ -273,7 +277,9 @@ export async function runBrandIntelligenceAnalysis(
     modelLabel: m.modelLabel,
     sentimentScore: m.sentimentScore,
     themes: m.themes,
-    visibility: m.visibility,
+    // Use accuracyScore as the canonical visibility signal — consistent with aiVisibility above.
+    // The sentiment LLM's visibility boolean is unreliable (can fail independently).
+    visibility: m.accuracyScore >= 20,
     placement: m.placement,
     shareOfVoice: m.shareOfVoice,
   }))
