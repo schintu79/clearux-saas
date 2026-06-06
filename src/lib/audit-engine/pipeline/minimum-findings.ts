@@ -105,6 +105,24 @@ export async function generateFindingsForStarvedCategories(
   siteUrl: string,
   language: string = 'en',
 ): Promise<Map<number, AnalysisFinding[]>> {
+  // ============================================================
+  // DISABLED (regression fix): Synthetic finding generation is the ROOT CAUSE
+  // of false positives in the audit engine. This function generates findings
+  // from AI report summaries — an AI-from-AI chain with no connection to
+  // actual page evidence. The resulting findings:
+  // - Violate RULE 1: surfaced from category expectation, not evidence
+  // - Violate RULE 4: uncertainty rewarded as positivity (low score assumed real)
+  // - Cannot be validated against page content
+  // - Are never contradiction-checked
+  //
+  // The score-finding disconnect is now handled by the lowered BASE_SCORE (82)
+  // which prevents inflated scores when few findings exist.
+  //
+  // To re-enable: remove this early return and audit the evidence chain.
+  // ============================================================
+  console.log(`[minimum-findings] DISABLED — skipping synthetic generation for ${starvedCategories.length} starved categories. Scores now calibrated to avoid disconnect.`)
+  return new Map()
+
   if (starvedCategories.length === 0) return new Map()
 
   const anthropic = getAnthropicClient()

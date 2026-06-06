@@ -237,3 +237,14 @@ export type {
   ReconciliationSummary,
   ReconciliationResult as LegacyReconciliationResult,
 } from './reconciliation'
+
+// ── Debug: Finding Lifecycle Trace ─────────────────────────
+export {
+  FindingTracer,
+  createTracer,
+} from './finding-trace'
+export type {
+  TraceAction,
+  TraceEvent,
+  FindingTrace,
+} from './finding-trace'

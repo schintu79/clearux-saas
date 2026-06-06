@@ -424,9 +424,18 @@ export const processAuditFn = inngest.createFunction(
           })),
         )
 
+        // Regression fix: Include visualDescription alongside textContent.
+        // Previously only textContent was used, dropping all visual/image descriptions
+        // from PDFs and images — causing Brand DNA comparison to miss logo, color,
+        // and visual identity data entirely.
         const textParts = extracted
-          .filter(e => e.textContent && e.textContent.length > 0)
-          .map(e => `[Brand file: ${e.fileName}]\n${e.textContent}`)
+          .filter(e => (e.textContent && e.textContent.length > 0) || (e.visualDescription && e.visualDescription.length > 0))
+          .map(e => {
+            const parts = [`[Brand file: ${e.fileName}]`]
+            if (e.textContent) parts.push(e.textContent)
+            if (e.visualDescription) parts.push(`[Visual description]: ${e.visualDescription}`)
+            return parts.join('\n')
+          })
         const brandContent = textParts.join('\n\n---\n\n')
 
         if (!brandContent || brandContent.length < 50) {
@@ -2470,11 +2479,19 @@ RULES FOR RE-AUDIT:
                   file_type: f.file_type as string | null,
                 })),
               )
+              // Regression fix: Include visualDescription alongside textContent.
               const textParts = extracted
-                .filter(e => e.textContent && e.textContent.length > 0)
-                .map(e => `[Brand file: ${e.fileName}]\n${e.textContent}`)
+                .filter(e => (e.textContent && e.textContent.length > 0) || (e.visualDescription && e.visualDescription.length > 0))
+                .map(e => {
+                  const parts = [`[Brand file: ${e.fileName}]`]
+                  if (e.textContent) parts.push(e.textContent)
+                  if (e.visualDescription) parts.push(`[Visual description]: ${e.visualDescription}`)
+                  return parts.join('\n')
+                })
               const brandCtx = textParts.join('\n\n---\n\n')
-              designConsistencyContentBl = `=== BRAND IDENTITY GUIDELINES ===\n${brandCtx}\n\n=== ADDITIONAL INSTRUCTION ===\nIn addition to checking the site's internal design consistency, ALSO compare against the uploaded brand guidelines above. Flag any deviations from the brand standards.\n\n=== WEBSITE CONTENT ===\n${contentWithContextBl}`
+              // Regression fix: Strengthened from weak "ALSO compare" to dedicated comparison
+              // section. RULE 5: Brand DNA comparison must highlight real mismatches.
+              designConsistencyContentBl = `=== BRAND IDENTITY GUIDELINES (PRIMARY REFERENCE) ===\n${brandCtx}\n\n=== MANDATORY COMPARISON INSTRUCTION ===\nYour PRIMARY task for this category is to compare the website's actual implementation against the brand guidelines above. For EACH aspect of the brand guidelines (colors, typography, voice, tone, visual style, messaging patterns), check whether the website follows or deviates from them.\n\nYou MUST flag:\n- Any mismatch between documented brand colors/fonts and what the site actually uses\n- Voice/tone deviations from the brand personality\n- Visual style inconsistencies with brand guidelines\n- Messaging that contradicts the brand positioning\n\nDo NOT smooth over discrepancies. If the brand says "professional and authoritative" but the site uses casual slang, that is a HIGH severity finding. If the brand specifies specific colors but the site uses different ones, flag it.\n\n=== WEBSITE CONTENT (TO COMPARE AGAINST BRAND) ===\n${contentWithContextBl}`
             }
           } catch (err) {
             console.error('[inngest] Brand file extraction error in gap fill (non-fatal):', err)
@@ -2756,9 +2773,18 @@ RULES FOR RE-AUDIT:
                   file_type: f.file_type as string | null,
                 })),
               )
+              // Regression fix: Include visualDescription alongside textContent.
+              // Previously only textContent was used, dropping all visual/image descriptions
+              // from PDFs and images — causing Brand DNA comparison to miss logo, color,
+              // and visual identity data entirely.
               const textParts = extracted
-                .filter(e => e.textContent && e.textContent.length > 0)
-                .map(e => `[Brand file: ${e.fileName}]\n${e.textContent}`)
+                .filter(e => (e.textContent && e.textContent.length > 0) || (e.visualDescription && e.visualDescription.length > 0))
+                .map(e => {
+                  const parts = [`[Brand file: ${e.fileName}]`]
+                  if (e.textContent) parts.push(e.textContent)
+                  if (e.visualDescription) parts.push(`[Visual description]: ${e.visualDescription}`)
+                  return parts.join('\n')
+                })
               const ctx = textParts.join('\n\n---\n\n')
               await auditLog(auditId, 'brand_files_extracted', 'success',
                 `Extracted content from ${extracted.length} brand file(s)`)
@@ -2785,8 +2811,11 @@ RULES FOR RE-AUDIT:
       const contentWithContext = `${patchedContext}\n\n${crawlResult.pageContent}${aiDiscoveryBlock}${structuredDataBlock}${llmProbeBlock}`
       // Design Consistency categories use standard content by default.
       // When Brand DNA enrichment is enabled, prepend brand guidelines for comparison.
+      // Regression fix: Strengthened from weak "ALSO compare" afterthought to a dedicated
+      // comparison section with explicit instructions. RULE 5: Brand DNA comparison must
+      // highlight real mismatches, not smooth them over.
       const designConsistencyContent = brandContext
-        ? `=== BRAND IDENTITY GUIDELINES ===\n${brandContext}\n\n=== ADDITIONAL INSTRUCTION ===\nIn addition to checking the site's internal design consistency, ALSO compare against the uploaded brand guidelines above. Flag any deviations from the brand standards.\n\n=== WEBSITE CONTENT ===\n${contentWithContext}`
+        ? `=== BRAND IDENTITY GUIDELINES (PRIMARY REFERENCE) ===\n${brandContext}\n\n=== MANDATORY COMPARISON INSTRUCTION ===\nYour PRIMARY task for this category is to compare the website's actual implementation against the brand guidelines above. For EACH aspect of the brand guidelines (colors, typography, voice, tone, visual style, messaging patterns), check whether the website follows or deviates from them.\n\nYou MUST flag:\n- Any mismatch between documented brand colors/fonts and what the site actually uses\n- Voice/tone deviations from the brand personality\n- Visual style inconsistencies with brand guidelines\n- Messaging that contradicts the brand positioning\n\nDo NOT smooth over discrepancies. If the brand says "professional and authoritative" but the site uses casual slang, that is a HIGH severity finding. If the brand specifies specific colors but the site uses different ones, flag it.\n\n=== WEBSITE CONTENT (TO COMPARE AGAINST BRAND) ===\n${contentWithContext}`
         : contentWithContext
       // Design Consistency category names (indices 24-27)
       const designConsistencyCategoryNames = new Set(

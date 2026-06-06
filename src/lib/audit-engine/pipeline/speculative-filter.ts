@@ -52,9 +52,11 @@ export const SPECULATIVE_LANGUAGE: RegExp[] = [
   /full\s+(?:wcag|accessibility)\s+audit\s+cannot/i,
   /no\s+(?:css|html|javascript|meta)\s+(?:data|content|code|source)\s+(?:visible|available|provided)/i,
   /(?:not|cannot)\s+(?:be\s+)?(?:determined|confirmed|assessed)\s+from\s+(?:text|crawled|extracted)/i,
-  /(?:may|might)\s+(?:not\s+)?(?:have|be|include)/i,
-  /potentially\s+(?:missing|lacking|absent)/i,
-  /appears?\s+to\s+(?:lack|be\s+missing|not\s+have)/i,
+  // REMOVED (regression fix): These patterns were far too broad and killed legitimate findings:
+  // - "may/might have/be/include" matches virtually any hedged professional language
+  // - "potentially missing" matches valid observations about absent features
+  // - "appears to lack" matches valid evidence-based assessments
+  // Only catch genuinely speculative AI admissions, not professional uncertainty language.
   /conduct\s+a\s+(?:css|accessibility|visual|manual)\s+audit/i,
   /(?:minor|low[\s-]severity)\s+(?:localization|internationalisation|internationalization)\s+(?:gap|issue)/i,
   /worth\s+noting\s+as\s+part\s+of/i,
@@ -64,11 +66,12 @@ export const SPECULATIVE_LANGUAGE: RegExp[] = [
   /(?:dashboard|app|admin)\s+(?:page\s+)?(?:shows?|displays?|renders?)\s+(?:a\s+)?login/i,
   /(?:requires?|needs?)\s+(?:authentication|login|sign[\s-]?in)\s+(?:to\s+)?(?:access|view)/i,
   /(?:redirects?|forwards?)\s+to\s+(?:a\s+)?(?:login|sign[\s-]?in|auth)/i,
-  // Hedging language — AI admits uncertainty
-  /(?:it\s+is\s+)?(?:unclear|uncertain|unknown)\s+(?:whether|if|from)/i,
-  /(?:would\s+need|requires?)\s+(?:further|additional|deeper)\s+(?:analysis|review|testing|investigation)/i,
-  /(?:should|could)\s+be\s+(?:further\s+)?(?:investigated|reviewed|tested|examined)/i,
-  /based\s+on\s+(?:the\s+)?(?:limited|available)\s+(?:content|data|information)/i,
+  // REMOVED (regression fix): These hedging patterns removed findings that were honestly
+  // stating their confidence level. Legitimate findings CAN acknowledge limits while still
+  // being evidence-based. Only catch patterns where the AI literally has NO evidence.
+  // Kept: the genuinely speculative admissions above (lines 43-54).
+  // Removed: "unclear whether", "would need further analysis", "could be investigated",
+  //          "based on limited content" — all of which match valid professional analysis.
 ]
 
 // ── Unverifiable topic patterns ──────────────────────────────

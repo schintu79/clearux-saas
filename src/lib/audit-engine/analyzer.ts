@@ -897,6 +897,15 @@ Adapt interpretation of findings to market context. The same wording can perform
 ANTI-TIMIDITY RULE — SURFACE REAL PROBLEMS:
 Do NOT become so afraid of generating noise that obvious structural problems are ignored. Do NOT assume elegant visuals mean good UX (premium bias). Do NOT use "brand style" or "creative direction" as an excuse for broken navigation, weak discoverability, confusing hierarchy, or poor task flow (brand excuse bias). Do NOT prioritize easy-to-detect technical issues over more important structural or trust problems (technical tunnel vision). Do NOT suppress real issues to keep scores high — Fixpath's value is surgical truth, not flattery.
 
+CONTRADICTION CHECK — EVIDENCE INTEGRITY (MANDATORY):
+Before finalizing any finding, check the page content for CONTRADICTORY evidence:
+- If you claim "navigation is hidden on desktop" but the content shows visible nav links → DROP the finding.
+- If you claim "no trust signals" but the content shows testimonials, certifications, or security badges → DROP the finding.
+- If you claim "missing pricing information" but the content clearly shows a pricing section → DROP the finding.
+- A finding CANNOT survive if contradictory page evidence exists. (RULE 2)
+- A finding CANNOT be surfaced from category expectations alone — it must have specific evidence FROM THE PROVIDED CONTENT. (RULE 1)
+- If you cannot point to a specific text passage that supports the finding, do NOT surface it.
+
 FINDING WORDING STANDARD:
 Every surfaced finding must clearly communicate:
 1. WHAT is happening — state the issue plainly and concretely
@@ -1053,7 +1062,7 @@ SITE PROFILE (detected from crawled content — use this to calibrate your evalu
 CALIBRATION RULES (based on site profile):
 You MUST evaluate this site against the standards, norms, and expectations of its specific industry and audience — NOT against generic best practices for all websites.
 - If the audience is "expert" or "professional", subtle/understated messaging is NOT a weakness. Do NOT flag it as "weak CTA" or "unclear value proposition" if the messaging matches the audience's expectations.
-- If the market position is "leader" or "challenger", the brand has earned trust through reputation. Do NOT over-penalize for missing trust signals that a new/unknown brand would need.
+- If the market position is "leader" or "challenger", adjust expectations proportionally — but do NOT suppress valid findings just because the brand is established. A leader with missing trust signals still has missing trust signals. RULE 6: Do not protect the website from criticism. Protect the report from being wrong.
 - If the communication style is minimalist/craft-focused, do NOT flag clean design as "missing visual interest" or "lacking engagement elements."
 - Evaluate against COMPETITORS IN THE SAME INDUSTRY, not against a generic ideal website template.
 - A finding is only valid if it would be a REAL problem for THIS specific audience. "A professional designer visiting Sketch.com" has different expectations than "a first-time visitor to a random SaaS."
@@ -1472,7 +1481,11 @@ export async function generateReport(
     medium: 6,
     low: 2,
   }
-  const BASE_SCORE = 92 // Strong site with no findings = 92 (not 100, leaving room for "exceptional")
+  // Regression fix: lowered from 92 to 82. A score of 92 with zero findings
+  // communicates "almost perfect" — but zero findings means the AI found nothing
+  // to criticize, NOT that the site is exceptional. 82 = "good baseline, room to grow."
+  // RULE 4: Uncertainty is not positivity. Weak evidence = suppress the claim, do NOT reward the site.
+  const BASE_SCORE = 82
 
   // Group findings by category_index (0-27)
   const findingsByCategory: Map<number, AuditFinding[]> = new Map()
@@ -1790,26 +1803,32 @@ function getDefaultRecommendation(language: string): string {
 }
 
 function clampScore(v: number | undefined): number {
-  if (v == null || isNaN(v)) return 70 // Default to 70 (decent) not 50 — absence of findings is positive
+  // Regression fix: default changed from 70 to 50.
+  // RULE 4: Uncertainty is not positivity. Missing data should NOT reward the site.
+  // A score of 70 for "we don't know" tells the user "pretty good!" which is a lie.
+  // 50 = neutral/unknown, which is honest.
+  if (v == null || isNaN(v)) return 50
   return Math.min(100, Math.max(0, Math.round(v)))
 }
 
 function getDefaultCategoryScores(language: string = 'en'): CategoryScore[] {
   const names = getCategoryNames(language)
-  return names.map((name) => ({ name, score: 70, summary: '' }))
+  // Regression fix: default changed from 70 to 50 (neutral/unknown, not "pretty good")
+  return names.map((name) => ({ name, score: 50, summary: '' }))
 }
 
 /**
  * Calculate scores from findings when report generation fails.
  * Uses the SAME deterministic formula as DEEP MODE:
- *   Base = 92, deductions: critical=-18, high=-12, medium=-6, low=-2.
- *   Categories with 0 findings = 92 (strong baseline).
+ *   Base = 82, deductions: critical=-18, high=-12, medium=-6, low=-2.
+ *   Categories with 0 findings = 82 (good baseline, room to grow).
  * This ensures scores ALWAYS match the deterministic model, even in fallback paths.
  */
 function calculateScoresFromFindings(findings: AuditFinding[], language: string = 'en'): ReportData {
   const categoryNames = getCategoryNames(language)
   const severityPenalty: Record<string, number> = { critical: 18, high: 12, medium: 6, low: 2 }
-  const BASE_SCORE = 92
+  // Regression fix: must match generateReport() BASE_SCORE = 82
+  const BASE_SCORE = 82
 
   // Assign findings to categories — prefer category_index, fall back to keyword matching
   const findingsPerCategory: Record<string, AuditFinding[]> = {}

@@ -93,7 +93,14 @@ export interface BrandReportData {
 function isSpeculativeBrandFinding(f: BrandFinding): boolean {
   const text = `${f.title} ${f.description}`.toLowerCase()
 
+  // Regression fix: Only catch genuinely speculative AI admissions — patterns where the AI
+  // literally has NO evidence and is admitting it. Previously included broad hedging patterns
+  // ('may not have', 'unclear whether', 'appears to lack', etc.) that killed legitimate
+  // findings which were honestly stating their confidence level. Aligned with the same fix
+  // applied to speculative-filter.ts — see RULE 3: a finding should survive if it is
+  // evidenced, material, and not contradicted.
   const speculativePatterns = [
+    // Genuinely speculative: AI admits it has no evidence
     'not verified',
     'could not verify',
     'could not confirm',
@@ -102,25 +109,18 @@ function isSpeculativeBrandFinding(f: BrandFinding): boolean {
     'not tested',
     'could not be tested',
     'cannot be confirmed',
-    'unclear whether',
-    'unclear if',
-    'it is unclear',
-    'may not have',
-    'may not be',
-    'may lack',
-    'might not',
-    'might lack',
-    'potentially missing',
-    'potentially lacks',
-    'possible lack of',
-    'appears to be missing',
-    'appears to lack',
+    'cannot determine from',
+    'not possible to assess',
     'without further testing',
     'would need to be tested',
     'requires manual testing',
-    'requires further investigation',
-    'cannot determine from',
-    'not possible to assess',
+    // REMOVED (regression fix): These hedging patterns match valid professional analysis:
+    // - 'unclear whether', 'unclear if', 'it is unclear' — valid uncertainty language
+    // - 'may not have', 'may not be', 'may lack' — valid hedged observations
+    // - 'might not', 'might lack' — valid hedged observations
+    // - 'potentially missing', 'potentially lacks', 'possible lack of' — valid observations
+    // - 'appears to be missing', 'appears to lack' — valid evidence-based assessments
+    // - 'requires further investigation' — valid professional recommendation
     // Patterns for "can't see it from provided content" admissions
     'provided content does not',
     'provided content doesn\'t',

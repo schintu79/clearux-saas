@@ -82,25 +82,34 @@ export const SYNONYM_GROUPS: string[][] = [
   ['feedback', 'response', 'indication', 'notification', 'confirmation', 'success'],
   ['contrast', 'readability', 'legibility', 'readable'],
   ['value', 'proposition', 'benefit', 'offering'],
-  ['content', 'copy', 'text', 'messaging', 'message', 'wording'],
+  // NARROWED (regression fix): "text" and "content" are too generic
+  ['copy', 'messaging', 'message', 'wording'],
   ['language', 'lang', 'locale', 'localization', 'i18n', 'multilingual', 'hreflang'],
   ['error', 'failure', 'issue', 'problem'],
-  ['button', 'action', 'control', 'element'],
+  // NARROWED (regression fix): "element" is too generic to be a synonym for "button"
+  ['button', 'control'],
   ['headline', 'heading', 'title', 'hero', 'h1'],
   ['free', 'trial', 'freemium', 'offer'],
   ['trust', 'credibility', 'confidence', 'reassurance', 'proof'],
   ['consent', 'checkbox', 'opt-in', 'opt-out', 'subscribe', 'updates'],
-  ['pricing', 'price', 'cost', 'credit', 'credits', 'audit', 'audits'],
+  // SPLIT (regression fix): "pricing" and "credit" and "audit" are distinct business concepts.
+  // Merging them caused findings about pricing transparency, credit systems, and audit quality
+  // to be treated as duplicates of each other.
+  ['pricing', 'price', 'cost'],
+  ['credit', 'credits'],
   ['signup', 'register', 'registration', 'sign-up', 'onboarding'],
   ['login', 'sign-in', 'signin', 'authentication'],
-  ['form', 'input', 'field', 'fields', 'label', 'labels'],
+  // NARROWED (regression fix): "label" is distinct from "form" — label issues vs form issues
+  ['form', 'input', 'field', 'fields'],
+  ['label', 'labels'],
   ['clarity', 'clear', 'explicit', 'transparent', 'transparency'],
   ['technical', 'non-technical', 'jargon', 'terminology'],
   ['cta', 'call-to-action', 'call to action', 'conversion', 'convert'],
   ['dark', 'patterns', 'manipulative', 'deceptive', 'confirmshaming'],
   ['seo', 'search', 'crawl', 'index', 'indexing', 'ranking'],
   ['sitemap', 'robots', 'crawlability', 'discoverability'],
-  ['page', 'screen', 'view', 'route', 'section'],
+  // NARROWED (regression fix): "section" is structurally different from "page"
+  ['page', 'screen', 'view', 'route'],
   ['across', 'throughout', 'multiple', 'various', 'several', 'every'],
 ]
 
@@ -134,11 +143,11 @@ export const TOPIC_PATTERNS: { topic: string; keywords: string[] }[] = [
 // Adaptive: tighter context = lower threshold needed to merge.
 
 export const THRESHOLDS = {
-  BASE: 0.50,              // Cross-module findings
-  SAME_MODULE: 0.42,       // Same module (4 categories share context)
-  SAME_PAGE_MODULE: 0.38,  // Same page + same module (very likely dups)
-  TOPIC_FLOOR: 0.40,       // Minimum similarity for same-topic findings
-  TOPIC_BOOST: 0.10,       // Additional boost for shared topic
+  BASE: 0.55,              // Cross-module findings (raised from 0.50 — less aggressive merging)
+  SAME_MODULE: 0.50,       // Same module (raised from 0.42 — distinct issues within same module preserved)
+  SAME_PAGE_MODULE: 0.45,  // Same page + same module (raised from 0.38 — only true dups merge)
+  TOPIC_FLOOR: 0.35,       // Minimum similarity for same-topic findings (lowered from 0.40 — topic alone cannot drive merge)
+  TOPIC_BOOST: 0.05,       // Additional boost for shared topic (halved from 0.10 — topic is a hint, not a verdict)
 }
 
 // ── Internal helpers ─────────────────────────────────────────
@@ -203,7 +212,10 @@ function textSimilarity(a: string, b: string): number {
   for (const w of wordsA) {
     if (wordsB.has(w)) overlap++
   }
-  return overlap / Math.min(wordsA.size, wordsB.size)
+  // Use max denominator: prevents inflated similarity when one set is small.
+  // Before: "pricing unclear" (2 words) vs "pricing page lacks breakdown of credit costs" (7 words)
+  // shared 1 word → old: 1/2 = 0.50 (merged!) → new: 1/7 = 0.14 (preserved)
+  return overlap / Math.max(wordsA.size, wordsB.size)
 }
 
 function sharedTopic(findingA: FindingForDedup, findingB: FindingForDedup): boolean {
