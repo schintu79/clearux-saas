@@ -63,7 +63,7 @@ function isStageEvent(event: string): boolean {
   return event.startsWith('stage_') || event.startsWith('pipeline_')
 }
 
-const STUCK_THRESHOLD_MS = 3 * 60 * 1000 // 3 minutes
+const STUCK_THRESHOLD_MS = 6 * 60 * 1000 // 6 minutes — deep audits with 28 categories can legitimately take 4-5min per batch
 
 const AuditActivityFeed: React.FC<AuditActivityFeedProps> = ({
   auditId,

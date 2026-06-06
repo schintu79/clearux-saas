@@ -62,11 +62,19 @@ function extractSlugFromPath(pathname: string | null): string | null {
   // /dashboard/[slug]/... → parts = ['dashboard', slug, ...]
   if (parts.length >= 2 && parts[0] === 'dashboard') {
     const candidate = parts[1];
-    // These are known non-slug dashboard routes at /dashboard level
+    // These are known non-slug dashboard routes at /dashboard level.
+    // IMPORTANT: Every route under /dashboard/ that is NOT a workspace slug
+    // must be listed here. Missing entries cause the shell to interpret the
+    // route segment as a workspace slug, breaking sidebar navigation.
     const nonSlugRoutes = new Set([
+      // Core pages
       'settings', 'buy-credits', 'notifications', 'new-audit',
       'portfolio', 'reports', 'audits', 'brand-identity',
       'deploy', 'admin',
+      // Workspace-scoped pages (also accessible without slug prefix)
+      'overview', 'find', 'fix', 'track', 'connect',
+      'intelligence', 'competitors', 'speed',
+      'ai-perception', 'ai-readability', 'brand-dna',
     ]);
     if (!nonSlugRoutes.has(candidate)) {
       return candidate;

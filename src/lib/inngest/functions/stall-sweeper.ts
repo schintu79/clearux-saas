@@ -21,13 +21,17 @@ export const stallSweeperFn = inngest.createFunction(
   async () => {
     const db = createServiceSupabase()
 
-    // Find audits stuck in non-terminal states for longer than threshold
+    // Find audits stuck in ACTIVE processing states for longer than threshold.
+    // IMPORTANT: Only sweep audits that have actually started processing.
+    // `pending_payment` and `payment_received` are valid pre-processing states
+    // where the audit is queued behind the Inngest concurrency limit (3).
+    // Sweeping these causes false failures on audits that haven't started yet.
     const cutoff = new Date(Date.now() - STALL_THRESHOLD_MINUTES * 60 * 1000).toISOString()
 
     const { data: stalledAudits, error } = await db
       .from('audits')
       .select('id, status, progress_percent, updated_at')
-      .not('status', 'in', '("completed","failed","completed_with_warnings","stalled")')
+      .in('status', ['crawling', 'analysing', 'generating_report'])
       .lt('updated_at', cutoff)
       .limit(20) // Process max 20 per sweep to avoid timeouts
 
