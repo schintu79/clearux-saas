@@ -47,9 +47,14 @@ export const stallSweeperFn = inngest.createFunction(
       const progress = (audit as any).progress_percent as number ?? 0
       const status = (audit as any).status as string
 
-      // If progress >= 82% the report has been generated — mark completed_with_warnings
-      // Otherwise mark as failed and the user sees an error state
-      const hasReport = progress >= 82
+      // Check if a report row actually exists in the DB — don't rely on progress %
+      // (progress=82 means reporting STARTED, not that the report was written)
+      const { data: reportCheck } = await db
+        .from('reports')
+        .select('id')
+        .eq('audit_id', auditId)
+        .maybeSingle()
+      const hasReport = !!reportCheck
       const forcedStatus = hasReport ? 'completed_with_warnings' : 'failed'
 
       console.warn(

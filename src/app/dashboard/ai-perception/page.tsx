@@ -290,7 +290,7 @@ export default function AIPerceptionPage() {
   const [promptResults, setPromptResults] = useState<PromptResult[]>([]);
   const [biSummary, setBiSummary] = useState<BrandIntelligenceSummary | null>(null);
   const [pages, setPages] = useState<AuditPageRow[]>([]);
-  const [expandedQuestion, setExpandedQuestion] = useState<number | null>(null);
+  const [expandedQuestion, setExpandedQuestion] = useState<number | null>(0); // auto-expand first question
   const [expandedPage, setExpandedPage] = useState<string | null>(null);
 
   // Fallback competitor data from detect-competitors API
@@ -406,9 +406,23 @@ export default function AIPerceptionPage() {
 
   const measured = useMemo(() => modelProbes.filter(p => p.status === 'measured' && p.accuracy_score != null), [modelProbes]);
 
+  // Recompute accuracy from the actual displayed results_json labels
+  // to ensure the % matches the per-answer badges. The DB accuracy_score
+  // may be averaged across multiple probe runs while results_json is
+  // deduplicated to first-run only — causing a mismatch.
   const overallAccuracy = useMemo(() => {
     if (measured.length === 0) return null;
-    return Math.round(measured.reduce((s, p) => s + p.accuracy_score, 0) / measured.length);
+    const allResults = measured.flatMap(p => p.results_json || []);
+    if (allResults.length === 0) return null;
+    const counts = { accurate: 0, partial: 0, inaccurate: 0, hallucinated: 0, noData: 0 };
+    for (const r of allResults) {
+      const norm = normalizeAccuracy(r.accuracy);
+      if (norm === 'Accurate') counts.accurate++;
+      else if (norm === 'Partial') counts.partial++;
+      else counts.inaccurate++;
+    }
+    const total = allResults.length;
+    return Math.round(((counts.accurate * 100 + counts.partial * 50 + counts.noData * 25) / (total * 100)) * 100);
   }, [measured]);
 
   const avgSentiment = useMemo(() => {
@@ -478,7 +492,7 @@ export default function AIPerceptionPage() {
       .slice(0, 10);
   }, [promptResults]);
 
-  // Question groups across models
+  // Question groups across models — sorted: questions with all models answered first
   const questionGroups = useMemo(() => {
     const groups = new Map<string, Array<{ model_id: string; model_label: string; answer: string; accuracy: string | null; accuracyNote?: string | null }>>();
     for (const probe of modelProbes) {
@@ -495,8 +509,17 @@ export default function AIPerceptionPage() {
         });
       }
     }
-    return Array.from(groups.entries()).map(([question, answers]) => ({ question, answers }));
-  }, [modelProbes]);
+    const all = Array.from(groups.entries()).map(([question, answers]) => ({ question, answers }));
+    // Sort: questions answered by ALL measured models come first (fully answered),
+    // then by number of answers descending
+    const measuredCount = measured.length || 1;
+    return all.sort((a, b) => {
+      const aFull = a.answers.length >= measuredCount ? 1 : 0;
+      const bFull = b.answers.length >= measuredCount ? 1 : 0;
+      if (bFull !== aFull) return bFull - aFull;
+      return b.answers.length - a.answers.length;
+    });
+  }, [modelProbes, measured]);
 
   const handleRescan = async () => {
     const auditId = bundle?.audit?.id;
@@ -663,47 +686,63 @@ export default function AIPerceptionPage() {
         </div>
       )}
 
-      {/* ── Summary metrics ── */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <MetricCard
-          icon={<Target size={18} strokeWidth={1.75} style={{ color: scoreColorVar(overallAccuracy) }} />}
-          label="Accuracy"
-          value={overallAccuracy != null ? `${overallAccuracy}%` : 'Not measured'}
-          subtext={overallAccuracy != null ? `${measured.length} model${measured.length !== 1 ? 's' : ''} tested` : 'Run an audit to measure'}
-          description="How well AI answers match what your website actually claims. We ask each model about your brand and grade their responses against your real content."
-          scoreCircle={<ScoreCircle score={overallAccuracy} size="small" />}
-        />
+      {/* ── Summary score bar ── */}
+      <DashCard>
+        <div className="flex flex-col sm:flex-row items-stretch gap-6">
+          {/* Left column — big score */}
+          <div className="flex items-center gap-5 sm:pr-6 sm:border-r" style={{ borderColor: 'var(--rule)' }}>
+            <ScoreCircle score={overallAccuracy} size="medium" />
+            <div>
+              <p className="text-[13px] font-semibold uppercase tracking-wider" style={{ color: 'var(--m-muted)' }}>
+                AI Accuracy
+              </p>
+              <p className="text-[22px] font-bold tabular-nums leading-tight" style={{ color: 'var(--ink)' }}>
+                {overallAccuracy != null ? `${overallAccuracy}%` : 'Not measured'}
+              </p>
+              <p className="text-[13px] mt-0.5" style={{ color: 'var(--m-muted)' }}>
+                {overallAccuracy != null ? `Across ${measured.length} model${measured.length !== 1 ? 's' : ''}` : 'Run an audit to measure'}
+              </p>
+            </div>
+          </div>
 
-        <MetricCard
-          icon={
-            hasSentiment ? (
-              avgSentiment! >= 60 ? <ThumbsUp size={18} strokeWidth={1.75} style={{ color: 'var(--ok)' }} /> :
-              avgSentiment! >= 40 ? <Minus size={18} strokeWidth={1.75} style={{ color: 'var(--warn)' }} /> :
-              <ThumbsDown size={18} strokeWidth={1.75} style={{ color: 'var(--severe)' }} />
-            ) : <ThumbsUp size={18} strokeWidth={1.75} style={{ color: 'var(--m-muted)' }} />
-          }
-          label="Sentiment"
-          value={sentimentLabel(avgSentiment)}
-          subtext={hasSentiment ? `${avgSentiment}/100 average tone` : 'Needs brand intelligence analysis'}
-          description="The overall tone AI models use when talking about your brand. Positive sentiment means AI recommends you confidently; negative means it hedges or warns users."
-          scoreCircle={<ScoreCircle score={avgSentiment} size="small" />}
-        />
+          {/* Right column — sentiment + placement */}
+          <div className="flex-1 grid grid-cols-2 gap-4">
+            <div>
+              <div className="flex items-center gap-2 mb-1">
+                <ScoreCircle score={avgSentiment} size="small" />
+                <div>
+                  <p className="text-[11px] font-semibold uppercase tracking-wider" style={{ color: 'var(--m-muted)' }}>
+                    Sentiment
+                  </p>
+                  <p className="text-[16px] font-semibold" style={{ color: 'var(--ink)' }}>
+                    {sentimentLabel(avgSentiment)}
+                  </p>
+                </div>
+              </div>
+              <p className="text-[12px] mt-1 leading-relaxed" style={{ color: 'var(--m-muted)' }}>
+                {hasSentiment ? `${avgSentiment}/100 — how confidently AI recommends you` : 'Needs brand intelligence analysis'}
+              </p>
+            </div>
 
-        <MetricCard
-          icon={
-            <span className="text-[15px] font-bold tabular-nums" style={{ color: scoreColorVar(placementScoreToPercent(avgPlacement)) }}>
-              {avgPlacement != null ? `#${avgPlacement}` : '--'}
-            </span>
-          }
-          label="Avg placement"
-          value={placementLabel(avgPlacement)}
-          subtext={hasPlacement ? 'position when AI lists options' : 'Needs brand intelligence analysis'}
-          description="Where your brand appears in AI responses when someone asks for recommendations in your category. #1 means you are the first brand mentioned; #5 means you are buried at the bottom."
-          scoreCircle={
-            <ScoreCircle score={placementScoreToPercent(avgPlacement)} size="small" />
-          }
-        />
-      </div>
+            <div>
+              <div className="flex items-center gap-2 mb-1">
+                <ScoreCircle score={placementScoreToPercent(avgPlacement)} size="small" />
+                <div>
+                  <p className="text-[11px] font-semibold uppercase tracking-wider" style={{ color: 'var(--m-muted)' }}>
+                    Placement
+                  </p>
+                  <p className="text-[16px] font-semibold" style={{ color: 'var(--ink)' }}>
+                    {avgPlacement != null ? `#${avgPlacement}` : 'Not measured'}
+                  </p>
+                </div>
+              </div>
+              <p className="text-[12px] mt-1 leading-relaxed" style={{ color: 'var(--m-muted)' }}>
+                {hasPlacement ? `${placementLabel(avgPlacement)} in category prompts` : 'Needs brand intelligence analysis'}
+              </p>
+            </div>
+          </div>
+        </div>
+      </DashCard>
 
       {/* ── Per-model breakdown ── */}
       {hasProbes && (
@@ -900,7 +939,7 @@ export default function AIPerceptionPage() {
             We asked each AI model the same questions about your brand. Expand a question to see how each model answered and whether its response matches your website.
           </p>
 
-          <div className="space-y-2">
+          <div className="space-y-1">
             {questionGroups.map((group, i) => {
               const expanded = expandedQuestion === i;
               const accurate = group.answers.filter(a => normalizeAccuracy(a.accuracy) === 'Accurate').length;
@@ -911,24 +950,27 @@ export default function AIPerceptionPage() {
                 <div key={i} className="rounded-lg overflow-hidden" style={{ border: '1px solid var(--rule)' }}>
                   <button
                     onClick={() => setExpandedQuestion(expanded ? null : i)}
-                    className="w-full flex items-center gap-3 px-4 py-3.5 text-left transition-colors hover:bg-black/[0.02]"
+                    className="w-full flex items-center gap-3 px-4 py-2.5 text-left transition-colors hover:bg-black/[0.02]"
                   >
                     <div className="flex-1 min-w-0">
-                      <p className="text-[15px] font-medium" style={{ color: 'var(--ink)' }}>{group.question}</p>
+                      <p className="text-[14px] font-medium leading-snug" style={{ color: 'var(--ink)' }}>{group.question}</p>
                     </div>
                     <div className="flex items-center gap-2 flex-shrink-0">
                       {accurate > 0 && (
-                        <span className="text-[11px] font-medium px-1.5 py-0.5 rounded" style={{ background: 'rgba(34,197,94,0.1)', color: 'var(--ok)' }}>
+                        <span className="flex items-center gap-1 text-[12px] font-medium px-2 py-0.5 rounded" style={{ background: 'rgba(34,197,94,0.1)', color: 'var(--ok)' }}>
+                          <CheckCircle2 size={11} />
                           {accurate} accurate
                         </span>
                       )}
                       {partial > 0 && (
-                        <span className="text-[11px] font-medium px-1.5 py-0.5 rounded" style={{ background: 'rgba(234,179,8,0.1)', color: 'var(--warn)' }}>
+                        <span className="flex items-center gap-1 text-[12px] font-medium px-2 py-0.5 rounded" style={{ background: 'rgba(234,179,8,0.1)', color: 'var(--warn)' }}>
+                          <AlertTriangle size={11} />
                           {partial} partial
                         </span>
                       )}
                       {wrong > 0 && (
-                        <span className="text-[11px] font-medium px-1.5 py-0.5 rounded" style={{ background: 'rgba(239,68,68,0.1)', color: 'var(--severe)' }}>
+                        <span className="flex items-center gap-1 text-[12px] font-medium px-2 py-0.5 rounded" style={{ background: 'rgba(239,68,68,0.1)', color: 'var(--severe)' }}>
+                          <Info size={11} />
                           {wrong} wrong
                         </span>
                       )}
@@ -950,13 +992,13 @@ export default function AIPerceptionPage() {
                               style={{ background: 'var(--paper-2)', border: '1px solid var(--rule)' }}
                             >
                               <div className="flex items-center justify-between mb-2">
-                                <div className="flex items-center gap-2">
-                                  <AIProviderIcon provider={providerKeyToIcon(a.model_id) ?? 'chatgpt'} size={16} />
-                                  <span className="text-[12px] font-semibold" style={{ color: 'var(--ink)' }}>{a.model_label}</span>
+                                <div className="flex items-center gap-2.5">
+                                  <AIProviderIcon provider={providerKeyToIcon(a.model_id) ?? 'chatgpt'} size={20} />
+                                  <span className="text-[14px] font-semibold" style={{ color: 'var(--ink)' }}>{a.model_label}</span>
                                 </div>
                                 {a.accuracy && (
                                   <span
-                                    className="text-[10px] font-semibold px-2 py-0.5 rounded-full"
+                                    className="text-[12px] font-semibold px-2.5 py-1 rounded-full"
                                     style={{ background: ac.bg, color: ac.color }}
                                   >
                                     {normalizeAccuracy(a.accuracy)}

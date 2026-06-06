@@ -3459,14 +3459,13 @@ RULES FOR RE-AUDIT:
     // STEP 8: Generate report (screenshots moved to enrichment)
     // ──────────────────────────────────────────────────────────
     await step.run('generate-report', async () => {
+      const db = getDb()
+
+      try {
       await logStageStarted(auditId, 'reporting', 'Generating report...')
       await logActivity(auditId, 'Writing executive summary and calculating scores...')
       await setStatus(auditId, 'generating_report', stageProgress('reporting', 0))
       await setProgress(auditId, stageProgress('reporting', 0), 'reporting')
-
-      const db = getDb()
-
-      try {
       // Fetch all findings from DB
       const { data: allFindings } = await db
         .from('audit_findings')
