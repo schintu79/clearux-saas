@@ -487,7 +487,7 @@ Return 2-6 findings. Be specific and evidence-based. Reference specific files/co
                   auditDetails.userFocus,
                   auditDetails.language,
                   'deep',
-                  siteProfile,
+                  null,
                 ),
                 45_000,
                 `brand-analyze-${cat.name}`,
@@ -1261,11 +1261,11 @@ Return 2-6 findings. Be specific and evidence-based. Reference specific files/co
             let sortOrder = ((existingFindings?.[0] as any)?.sort_order ?? -1) + 1
 
             const responsiveInserts = result.findings.map((finding) => {
-              const cls = classifyFinding({ title: finding.title, description: finding.description, recommendation: finding.recommendation, severity: finding.severity, categoryIndex: finding.categoryIndex ?? null })
+              const cls = classifyFinding({ title: finding.title, description: finding.description, recommendation: finding.recommendation, severity: finding.severity, categoryIndex: finding.categoryIndex ?? 11 })
               return {
                 audit_id: auditId,
                 checklist_item_id: null,
-                category_index: finding.categoryIndex ?? null,
+                category_index: finding.categoryIndex ?? 11,
                 finding_type: cls.findingType,
                 fix_type: cls.fixType,
                 severity: finding.severity,
@@ -1355,7 +1355,7 @@ Return 2-6 findings. Be specific and evidence-based. Reference specific files/co
             const findingRows = speedFindings.map((f, i) => ({
               audit_id: auditId,
               category: 'Performance & Page Speed',
-              category_index: 23,
+              category_index: 12, // Module 3 (future_readiness), cat 0 = Performance & Technical Health
               title: f.title,
               description: f.description,
               recommendation: f.recommendation,
@@ -1585,7 +1585,7 @@ Return 2-6 findings. Be specific and evidence-based. Reference specific files/co
               const classification = classifyFinding({
                 title: finding.title, description: finding.description,
                 recommendation: finding.recommendation, severity: finding.severity,
-                categoryIndex: finding.categoryIndex ?? 17,
+                categoryIndex: finding.categoryIndex ?? 18,
               })
               const validated = validateFixableRecommendation({
                 ...finding, ...classification,
@@ -1594,7 +1594,7 @@ Return 2-6 findings. Be specific and evidence-based. Reference specific files/co
               })
               return {
                 audit_id: auditId, checklist_item_id: null,
-                category_index: finding.categoryIndex ?? 17, severity: finding.severity,
+                category_index: finding.categoryIndex ?? 18, severity: finding.severity,
                 title: finding.title, description: finding.description, evidence: null,
                 page_url: finding.pageUrl || crawlResult.firstPageUrl,
                 recommendation: finding.recommendation,
@@ -2331,11 +2331,19 @@ RULES FOR RE-AUDIT:
         await auditLog(auditId, 'verification_started', 'info',
           `Verifying ${copiedFindings.length} findings against live site`)
 
-        const verificationResults = await verifyFindings(
-          copiedFindings as any[],
-          freshContent,
-          auditDetails.language,
-        )
+        const verificationResults = await Promise.race([
+          verifyFindings(
+            copiedFindings as any[],
+            freshContent,
+            auditDetails.language,
+          ),
+          new Promise<never>((_, reject) =>
+            setTimeout(() => reject(new Error('verifyFindings exceeded 240s aggregate timeout')), 240_000)
+          ),
+        ]).catch((err) => {
+          console.error('[inngest] ai-verify-findings timeout:', err?.message)
+          return [] as Array<{ findingId: string; status: string; note: string }>
+        })
 
         // Update findings in DB in parallel (columns may not exist yet — graceful fallback)
         let likelyFixedCount = 0
@@ -2608,19 +2616,27 @@ RULES FOR RE-AUDIT:
           await auditLog(auditId, 'deep_pre_verify_started', 'info',
             `Pre-verifying ${openFindings.length} open findings against live site before deep analysis`)
 
-          const verificationResults = await verifyFindings(
-            openFindings.map((f: any) => ({
-              id: f.id,
-              title: f.title,
-              description: f.description,
-              recommendation: f.recommendation,
-              page_url: f.page_url,
-              severity: f.severity,
-              target_element: f.target_element,
-            })),
-            crawlResult.pageContent,
-            auditDetails.language,
-          )
+          const verificationResults = await Promise.race([
+            verifyFindings(
+              openFindings.map((f: any) => ({
+                id: f.id,
+                title: f.title,
+                description: f.description,
+                recommendation: f.recommendation,
+                page_url: f.page_url,
+                severity: f.severity,
+                target_element: f.target_element,
+              })),
+              crawlResult.pageContent,
+              auditDetails.language,
+            ),
+            new Promise<never>((_, reject) =>
+              setTimeout(() => reject(new Error('deep-pre-verify exceeded 240s aggregate timeout')), 240_000)
+            ),
+          ]).catch((err) => {
+            console.error('[inngest] deep-pre-verify timeout:', err?.message)
+            return [] as Array<{ findingId: string; status: string; note: string }>
+          })
 
           const fixedTitles = verificationResults
             .filter(r => r.status === 'likely_fixed')

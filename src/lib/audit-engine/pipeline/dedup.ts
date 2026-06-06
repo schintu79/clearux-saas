@@ -32,6 +32,7 @@ export interface FindingForDedup {
   severity: string
   page_url: string | null
   sort_order: number
+  category_index?: number | null
   confidence_level?: 'deterministic' | 'heuristic' | 'interpretive'
   detection_source?: string
 }
@@ -258,7 +259,10 @@ function combinedSimilarity(a: FindingForDedup, b: FindingForDedup): number {
 }
 
 function sameModule(a: FindingForDedup, b: FindingForDedup): boolean {
-  return Math.floor((a.sort_order ?? 0) / 4) === Math.floor((b.sort_order ?? 0) / 4)
+  // Use category_index (reliable) instead of sort_order arithmetic (fragile)
+  const aModule = a.category_index != null ? Math.floor(a.category_index / 4) : Math.floor((a.sort_order ?? 0) / 4)
+  const bModule = b.category_index != null ? Math.floor(b.category_index / 4) : Math.floor((b.sort_order ?? 0) / 4)
+  return aModule === bModule
 }
 
 function samePage(a: FindingForDedup, b: FindingForDedup): boolean {

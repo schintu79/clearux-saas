@@ -122,9 +122,10 @@ export const UNVERIFIABLE_TOPICS: RegExp[] = [
   /(?:h1|primary\s+heading)\s+(?:tag\s+)?(?:is\s+)?(?:missing|absent|not\s+found|not\s+present)/i,
   /no\s+h1\s+(?:heading|tag|element)\s+(?:found|detected|present)/i,
 
-  // Server-level files (cannot be verified from page text)
-  /missing\s+(?:robots\.?txt|sitemap\.?xml)/i,
-  /no\s+(?:robots\.?txt|sitemap\.?xml)\s+(?:found|detected|present|configured)/i,
+  // Server-level files — REMOVED: crawler CAN verify robots.txt/sitemap.xml
+  // via HTTP probing, so these are valid deterministic findings.
+  // /missing\s+(?:robots\.?txt|sitemap\.?xml)/i,
+  // /no\s+(?:robots\.?txt|sitemap\.?xml)\s+(?:found|detected|present|configured)/i,
 
   // JavaScript-dependent
   // REMOVED: form validation, success/confirmation, and loading states ARE valid findings

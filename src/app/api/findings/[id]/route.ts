@@ -22,14 +22,16 @@ function normalizeDomain(url: string): string {
   } catch { return url }
 }
 
-/** Severity weight — how much an open finding of this severity drags the score down */
+/** Severity weight — how much an open finding of this severity drags the score down.
+ *  Must match pipeline weights in analyzer.ts calculateScoresFromFindings():
+ *  critical=18, high=12, medium=6, low=2 (from base 82). */
 function severityPenalty(severity: string): number {
   switch (severity) {
-    case 'critical': return 8
-    case 'high': return 5
-    case 'medium': return 3
-    case 'low': return 1.5
-    default: return 3
+    case 'critical': return 18
+    case 'high': return 12
+    case 'medium': return 6
+    case 'low': return 2
+    default: return 6
   }
 }
 
