@@ -1140,18 +1140,6 @@ export default function IntelligencePage() {
                   <p className="text-[13px] mt-1" style={{ color: 'var(--m-muted)' }}>
                     How AI models understand {brandName}
                   </p>
-                  {sentimentScore != null && (
-                    <div className="flex items-center gap-2.5 mt-3 pt-3" style={{ borderTop: '1px solid var(--rule)' }}>
-                      <ScoreCircle score={sentimentScore} size="small" />
-                      <div>
-                        <p className="text-[11px] font-semibold uppercase tracking-wider" style={{ color: 'var(--m-muted)' }}>Sentiment</p>
-                        <p className="text-[15px] font-semibold" style={{ color: 'var(--ink)' }}>
-                          {sentimentLabel(sentimentScore).label}{' '}
-                          <span className="text-[13px] font-normal" style={{ color: 'var(--m-muted)' }}>{sentimentScore}/100</span>
-                        </p>
-                      </div>
-                    </div>
-                  )}
                 </div>
               </div>
               {/* Right — Info cards */}
@@ -2203,63 +2191,94 @@ export default function IntelligencePage() {
          ══════════════════════════════════════════════════════ */}
       {activeTab === 'pages' && (
         <div>
-          {/* Context link back to AI Perception */}
-          <div className="flex items-center gap-2 mb-4 px-3.5 py-2.5 rounded-lg" style={{ background: 'color-mix(in srgb, var(--signal) 4%, transparent)', border: '1px solid color-mix(in srgb, var(--signal) 10%, transparent)' }}>
-            <Brain size={13} style={{ color: 'var(--signal)' }} />
-            <p className="text-[12px] flex-1" style={{ color: 'var(--ink)', opacity: 0.85 }}>
-              These page-level signals feed the model-level analysis.
-            </p>
-            <button type="button" onClick={() => setActiveTab('perception')} className="text-[11px] font-semibold flex-shrink-0 hover:underline" style={{ color: 'var(--ink)' }}>
-              See AI Perception <ArrowRight size={9} className="inline ml-0.5" />
-            </button>
-          </div>
-
-          {/* Strongest + weakest page highlight */}
-          {pagesScored.length >= 2 && (() => {
-            const best = [...pagesScored].sort((a, b) => (b.ai_readability?.overallScore ?? 0) - (a.ai_readability?.overallScore ?? 0))[0];
-            const worst = [...pagesScored].sort((a, b) => (a.ai_readability?.overallScore ?? 999) - (b.ai_readability?.overallScore ?? 999))[0];
-            if (best === worst) return null;
-            return (
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4">
-                <div className="rounded-lg px-4 py-3" style={{ background: 'color-mix(in srgb, var(--ok) 4%, transparent)', border: '1px solid color-mix(in srgb, var(--ok) 10%, transparent)' }}>
-                  <p className="text-[10px] font-semibold uppercase tracking-[0.05em] mb-1 flex items-center gap-1" style={{ color: 'var(--ok)' }}>
-                    <CheckCircle2 size={10} /> Strongest page
-                  </p>
-                  <p className="text-[12px] font-medium truncate" style={{ color: 'var(--ink)' }}>{best.title || best.url}</p>
-                  <p className="text-[14px] font-bold tabular-nums mt-0.5" style={{ color: 'var(--ok)' }}>{best.ai_readability?.overallScore}/100</p>
+          {/* ═══════════════════════════════════════════════════
+              Hero Score Card (consistent with Overview + AI Perception tabs)
+             ═══════════════════════════════════════════════════ */}
+          <div className="overflow-hidden rounded-xl mb-4" style={{ background: 'var(--card)', border: '1px solid var(--rule)' }}>
+            <div className="p-6 sm:p-8">
+              {pagesScored.length > 0 ? (<>
+                <div className="flex flex-col lg:flex-row gap-6">
+                  {/* Left — Score */}
+                  <div className="flex items-center gap-5 lg:pr-8 lg:border-r flex-shrink-0" style={{ borderColor: 'var(--rule)' }}>
+                    <ScoreCircle score={avgPageScore} size="big" />
+                    <div>
+                      <p className="text-[11px] font-semibold uppercase tracking-wider" style={{ color: 'var(--m-muted)' }}>AI Readability</p>
+                      <p className="text-[26px] font-bold tabular-nums leading-tight mt-0.5" style={{ color: 'var(--ink)' }}>
+                        {avgPageScore != null ? `${avgPageScore}/100` : 'Not measured'}
+                      </p>
+                      <p className="text-[13px] mt-1" style={{ color: 'var(--m-muted)' }}>
+                        Average across {pagesScored.length} page{pagesScored.length !== 1 ? 's' : ''}
+                      </p>
+                    </div>
+                  </div>
+                  {/* Right — Info cards */}
+                  <div className="flex-1 grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    {/* What this measures */}
+                    <div className="rounded-lg p-4" style={{ background: 'var(--paper-2)', border: '1px solid var(--rule)' }}>
+                      <div className="flex items-center gap-2 mb-2">
+                        <Search size={14} strokeWidth={1.75} style={{ color: 'var(--m-muted)' }} />
+                        <p className="text-[12px] font-semibold" style={{ color: 'var(--ink)' }}>What this measures</p>
+                      </div>
+                      <p className="text-[12px] leading-relaxed" style={{ color: 'var(--m-muted)' }}>
+                        How well AI bots can extract and understand your page content — headings, metadata,
+                        structured data, and semantic clarity that determines how AI represents each page.
+                      </p>
+                    </div>
+                    {/* Page breakdown */}
+                    <div className="rounded-lg p-4" style={{ background: 'var(--paper-2)', border: '1px solid var(--rule)' }}>
+                      <div className="flex items-center gap-2 mb-2">
+                        <Globe size={14} strokeWidth={1.75} style={{ color: 'var(--m-muted)' }} />
+                        <p className="text-[12px] font-semibold" style={{ color: 'var(--ink)' }}>Page breakdown</p>
+                      </div>
+                      <div className="flex items-center gap-4 text-[12px]">
+                        <span className="flex items-center gap-1.5">
+                          <span className="w-2 h-2 rounded-full" style={{ background: 'var(--ok)' }} />
+                          <span style={{ color: 'var(--m-muted)' }}>Good</span>
+                          <span className="font-semibold" style={{ color: 'var(--ink)' }}>{pagesGreen}</span>
+                        </span>
+                        <span className="flex items-center gap-1.5">
+                          <span className="w-2 h-2 rounded-full" style={{ background: 'var(--warn)' }} />
+                          <span style={{ color: 'var(--m-muted)' }}>Needs work</span>
+                          <span className="font-semibold" style={{ color: 'var(--ink)' }}>{pagesAmber}</span>
+                        </span>
+                        <span className="flex items-center gap-1.5">
+                          <span className="w-2 h-2 rounded-full" style={{ background: 'var(--severe)' }} />
+                          <span style={{ color: 'var(--m-muted)' }}>Poor</span>
+                          <span className="font-semibold" style={{ color: 'var(--ink)' }}>{pagesRed}</span>
+                        </span>
+                      </div>
+                      {pagesScored.length >= 2 && (() => {
+                        const best = [...pagesScored].sort((a, b) => (b.ai_readability?.overallScore ?? 0) - (a.ai_readability?.overallScore ?? 0))[0];
+                        const worst = [...pagesScored].sort((a, b) => (a.ai_readability?.overallScore ?? 999) - (b.ai_readability?.overallScore ?? 999))[0];
+                        if (best === worst) return null;
+                        return (
+                          <div className="mt-3 pt-3 space-y-1.5" style={{ borderTop: '1px solid var(--rule)' }}>
+                            <p className="text-[11px] flex items-center gap-1.5" style={{ color: 'var(--m-muted)' }}>
+                              <CheckCircle2 size={10} style={{ color: 'var(--ok)' }} />
+                              Best: <span className="font-medium truncate" style={{ color: 'var(--ink)' }}>{best.title || best.url}</span>
+                              <span className="font-semibold tabular-nums" style={{ color: 'var(--ok)' }}>{best.ai_readability?.overallScore}</span>
+                            </p>
+                            <p className="text-[11px] flex items-center gap-1.5" style={{ color: 'var(--m-muted)' }}>
+                              <AlertTriangle size={10} style={{ color: 'var(--severe)' }} />
+                              Weakest: <span className="font-medium truncate" style={{ color: 'var(--ink)' }}>{worst.title || worst.url}</span>
+                              <span className="font-semibold tabular-nums" style={{ color: 'var(--severe)' }}>{worst.ai_readability?.overallScore}</span>
+                            </p>
+                          </div>
+                        );
+                      })()}
+                    </div>
+                  </div>
                 </div>
-                <div className="rounded-lg px-4 py-3" style={{ background: 'color-mix(in srgb, var(--severe) 4%, transparent)', border: '1px solid color-mix(in srgb, var(--severe) 10%, transparent)' }}>
-                  <p className="text-[10px] font-semibold uppercase tracking-[0.05em] mb-1 flex items-center gap-1" style={{ color: 'var(--severe)' }}>
-                    <AlertTriangle size={10} /> Weakest page
+              </>) : (
+                <div className="text-center py-6">
+                  <Globe size={24} className="mx-auto mb-3" style={{ color: 'var(--m-muted)', opacity: 0.5 }} />
+                  <p className="text-[13px]" style={{ color: 'var(--m-muted)' }}>
+                    Run a website audit to populate per-page AI readability data.
                   </p>
-                  <p className="text-[12px] font-medium truncate" style={{ color: 'var(--ink)' }}>{worst.title || worst.url}</p>
-                  <p className="text-[14px] font-bold tabular-nums mt-0.5" style={{ color: 'var(--severe)' }}>{worst.ai_readability?.overallScore}/100</p>
                 </div>
-              </div>
-            );
-          })()}
-
-          {/* Summary stats */}
-          {pagesScored.length > 0 && (
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-4">
-              <div className="rounded-lg px-3 py-2.5" style={{ background: 'color-mix(in srgb, var(--ink) 3%, transparent)' }}>
-                <p className="text-[10px] font-medium uppercase tracking-[0.05em] mb-1" style={{ color: 'var(--m-muted)' }}>Avg. score</p>
-                <span className="text-[20px] font-bold tabular-nums leading-none" style={{ color: scoreColor(avgPageScore) }}>{avgPageScore ?? '--'}</span>
-              </div>
-              <div className="rounded-lg px-3 py-2.5" style={{ background: 'color-mix(in srgb, var(--ok) 5%, transparent)' }}>
-                <p className="text-[10px] font-medium uppercase tracking-[0.05em] mb-1" style={{ color: 'var(--ok)' }}>Good</p>
-                <span className="text-[20px] font-bold tabular-nums leading-none" style={{ color: 'var(--ok)' }}>{pagesGreen}</span>
-              </div>
-              <div className="rounded-lg px-3 py-2.5" style={{ background: 'color-mix(in srgb, var(--warn) 5%, transparent)' }}>
-                <p className="text-[10px] font-medium uppercase tracking-[0.05em] mb-1" style={{ color: 'var(--warn)' }}>Needs work</p>
-                <span className="text-[20px] font-bold tabular-nums leading-none" style={{ color: 'var(--warn)' }}>{pagesAmber}</span>
-              </div>
-              <div className="rounded-lg px-3 py-2.5" style={{ background: 'color-mix(in srgb, var(--severe) 5%, transparent)' }}>
-                <p className="text-[10px] font-medium uppercase tracking-[0.05em] mb-1" style={{ color: 'var(--severe)' }}>Poor</p>
-                <span className="text-[20px] font-bold tabular-nums leading-none" style={{ color: 'var(--severe)' }}>{pagesRed}</span>
-              </div>
+              )}
             </div>
-          )}
+          </div>
 
           {/* Sort controls */}
           {auditPages.length > 1 && (
