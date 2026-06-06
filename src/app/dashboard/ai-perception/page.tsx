@@ -622,20 +622,65 @@ export default function AIPerceptionPage() {
         )}
       </div>
 
-      {/* ── Explainer banner ── */}
-      <div
-        className="flex items-start gap-3 rounded-lg border px-4 py-3"
-        style={{
-          background: 'color-mix(in srgb, var(--ink) 3%, transparent)',
-          borderColor: 'var(--rule)',
-        }}
-      >
-        <Search size={15} strokeWidth={1.75} className="mt-0.5 flex-shrink-0" style={{ color: 'var(--m-muted)' }} />
-        <p className="text-[13px] leading-relaxed" style={{ color: 'var(--m-muted)' }}>
-          We ask leading AI models — ChatGPT, Claude, Gemini, and Perplexity — questions about your brand,
-          then compare their answers to what your website actually says. This shows you how accurately AI
-          represents your brand to the millions of people using it every day.
-        </p>
+      {/* ── Hero Score Card (editorial style matching Executive Summary) ── */}
+      <div className="overflow-hidden rounded-xl" style={{ background: 'var(--card)', border: '1px solid var(--rule)' }}>
+        <div className="p-6 sm:p-8">
+          <div className="flex flex-col lg:flex-row gap-6">
+            {/* Left — Scores */}
+            <div className="flex items-center gap-5 lg:pr-8 lg:border-r flex-shrink-0" style={{ borderColor: 'var(--rule)' }}>
+              <ScoreCircle score={overallAccuracy} size="big" />
+              <div>
+                <p className="text-[11px] font-semibold uppercase tracking-wider" style={{ color: 'var(--m-muted)' }}>
+                  AI Accuracy
+                </p>
+                <p className="text-[26px] font-bold tabular-nums leading-tight mt-0.5" style={{ color: 'var(--ink)' }}>
+                  {overallAccuracy != null ? `${overallAccuracy}%` : 'Not measured'}
+                </p>
+                <p className="text-[13px] mt-1" style={{ color: 'var(--m-muted)' }}>
+                  {overallAccuracy != null ? `Across ${measured.length} model${measured.length !== 1 ? 's' : ''}` : 'Run an audit to measure'}
+                </p>
+                {hasSentiment && (
+                  <div className="flex items-center gap-2.5 mt-3 pt-3" style={{ borderTop: '1px solid var(--rule)' }}>
+                    <ScoreCircle score={avgSentiment} size="small" />
+                    <div>
+                      <p className="text-[11px] font-semibold uppercase tracking-wider" style={{ color: 'var(--m-muted)' }}>Sentiment</p>
+                      <p className="text-[15px] font-semibold" style={{ color: 'var(--ink)' }}>
+                        {sentimentLabel(avgSentiment)}{' '}
+                        <span className="text-[13px] font-normal" style={{ color: 'var(--m-muted)' }}>{avgSentiment}/100</span>
+                      </p>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Right — Info cards */}
+            <div className="flex-1 grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div className="rounded-lg p-4" style={{ background: 'var(--paper-2)', border: '1px solid var(--rule)' }}>
+                <div className="flex items-center gap-2 mb-2">
+                  <Search size={14} strokeWidth={1.75} style={{ color: 'var(--m-muted)' }} />
+                  <p className="text-[11px] font-semibold uppercase tracking-wider" style={{ color: 'var(--m-muted)' }}>How we measure</p>
+                </div>
+                <p className="text-[13px] leading-relaxed" style={{ color: 'var(--m-muted)' }}>
+                  We ask leading AI models — ChatGPT, Claude, Gemini, and Perplexity — questions about your brand,
+                  then compare their answers to what your website actually says. This shows you how accurately AI
+                  represents your brand to the millions of people using it every day.
+                </p>
+              </div>
+              <div className="rounded-lg p-4" style={{ background: 'var(--paper-2)', border: '1px solid var(--rule)' }}>
+                <div className="flex items-center gap-2 mb-2">
+                  <Info size={14} strokeWidth={1.75} style={{ color: 'var(--m-muted)' }} />
+                  <p className="text-[11px] font-semibold uppercase tracking-wider" style={{ color: 'var(--m-muted)' }}>Why it matters</p>
+                </div>
+                <p className="text-[13px] leading-relaxed" style={{ color: 'var(--m-muted)' }}>
+                  Low accuracy is normal for newer brands. AI models can read your website, but they won{"'"}t
+                  confidently endorse your claims until independent sources corroborate them. Focus on building
+                  authoritative backlinks, earning press mentions, and keeping your content clear.
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
 
       {/* ── Brand unknown to AI notice ── */}
@@ -667,82 +712,6 @@ export default function AIPerceptionPage() {
         </div>
       )}
 
-      {/* ── New brand notice (low but non-zero accuracy) ── */}
-      {hasProbes && overallAccuracy != null && overallAccuracy > 0 && overallAccuracy < 50 && (
-        <div
-          className="flex items-start gap-3 rounded-lg border px-4 py-3"
-          style={{
-            background: 'rgba(34,197,94,0.04)',
-            borderColor: 'rgba(34,197,94,0.15)',
-          }}
-        >
-          <Info size={15} strokeWidth={1.75} className="mt-0.5 flex-shrink-0" style={{ color: 'var(--ok)' }} />
-          <p className="text-[12px] leading-relaxed" style={{ color: 'var(--ink)' }}>
-            <span className="font-semibold">Low accuracy is normal for newer brands.</span>{' '}
-            AI models can read your website, but they won{"'"}t confidently endorse your claims until
-            independent sources corroborate them. Focus on building authoritative backlinks, earning
-            press mentions, and keeping your content clear — AI confidence follows web authority.
-          </p>
-        </div>
-      )}
-
-      {/* ── Summary score bar ── */}
-      <DashCard>
-        <div className="flex flex-col sm:flex-row items-stretch gap-6">
-          {/* Left column — big score */}
-          <div className="flex items-center gap-5 sm:pr-6 sm:border-r" style={{ borderColor: 'var(--rule)' }}>
-            <ScoreCircle score={overallAccuracy} size="medium" />
-            <div>
-              <p className="text-[13px] font-semibold uppercase tracking-wider" style={{ color: 'var(--m-muted)' }}>
-                AI Accuracy
-              </p>
-              <p className="text-[22px] font-bold tabular-nums leading-tight" style={{ color: 'var(--ink)' }}>
-                {overallAccuracy != null ? `${overallAccuracy}%` : 'Not measured'}
-              </p>
-              <p className="text-[13px] mt-0.5" style={{ color: 'var(--m-muted)' }}>
-                {overallAccuracy != null ? `Across ${measured.length} model${measured.length !== 1 ? 's' : ''}` : 'Run an audit to measure'}
-              </p>
-            </div>
-          </div>
-
-          {/* Right column — sentiment + placement */}
-          <div className="flex-1 grid grid-cols-2 gap-4">
-            <div>
-              <div className="flex items-center gap-2 mb-1">
-                <ScoreCircle score={avgSentiment} size="small" />
-                <div>
-                  <p className="text-[11px] font-semibold uppercase tracking-wider" style={{ color: 'var(--m-muted)' }}>
-                    Sentiment
-                  </p>
-                  <p className="text-[16px] font-semibold" style={{ color: 'var(--ink)' }}>
-                    {sentimentLabel(avgSentiment)}
-                  </p>
-                </div>
-              </div>
-              <p className="text-[12px] mt-1 leading-relaxed" style={{ color: 'var(--m-muted)' }}>
-                {hasSentiment ? `${avgSentiment}/100 — how confidently AI recommends you` : 'Needs brand intelligence analysis'}
-              </p>
-            </div>
-
-            <div>
-              <div className="flex items-center gap-2 mb-1">
-                <ScoreCircle score={placementScoreToPercent(avgPlacement)} size="small" />
-                <div>
-                  <p className="text-[11px] font-semibold uppercase tracking-wider" style={{ color: 'var(--m-muted)' }}>
-                    Placement
-                  </p>
-                  <p className="text-[16px] font-semibold" style={{ color: 'var(--ink)' }}>
-                    {avgPlacement != null ? `#${avgPlacement}` : 'Not measured'}
-                  </p>
-                </div>
-              </div>
-              <p className="text-[12px] mt-1 leading-relaxed" style={{ color: 'var(--m-muted)' }}>
-                {hasPlacement ? `${placementLabel(avgPlacement)} in category prompts` : 'Needs brand intelligence analysis'}
-              </p>
-            </div>
-          </div>
-        </div>
-      </DashCard>
 
       {/* ── Per-model breakdown ── */}
       {hasProbes && (
@@ -759,8 +728,6 @@ export default function AIPerceptionPage() {
             {modelProbes.map(probe => {
               const badge = accuracyBadge(probe.accuracy_score);
               const hasSent = probe.sentiment_score != null;
-              const hasPlace = probe.placement_score != null;
-
               return (
                 <div
                   key={probe.model_id}
@@ -797,13 +764,6 @@ export default function AIPerceptionPage() {
                       </span>
                     </div>
 
-                    {/* Placement */}
-                    <div className="flex items-center justify-between">
-                      <span className="text-[11px]" style={{ color: 'var(--m-muted)' }}>Placement</span>
-                      <span className="text-[12px] font-semibold tabular-nums" style={{ color: hasPlace ? 'var(--ink)' : 'var(--m-muted)' }}>
-                        {hasPlace ? `#${probe.placement_score}` : '--'}
-                      </span>
-                    </div>
                   </div>
 
                   {/* Themes */}
@@ -1139,12 +1099,6 @@ export default function AIPerceptionPage() {
               <p className="text-[15px] font-semibold mb-1" style={{ color: 'var(--ink)' }}>Boost sentiment</p>
               <p className="text-[13px] leading-relaxed" style={{ color: 'var(--m-muted)' }}>
                 Earn positive mentions from authoritative sources — press coverage, expert reviews, satisfied customers on trusted platforms. AI sentiment follows public perception.
-              </p>
-            </div>
-            <div className="rounded-lg p-4" style={{ background: 'rgba(34,197,94,0.04)', border: '1px solid var(--rule)' }}>
-              <p className="text-[15px] font-semibold mb-1" style={{ color: 'var(--ink)' }}>Climb placement rankings</p>
-              <p className="text-[13px] leading-relaxed" style={{ color: 'var(--m-muted)' }}>
-                Be the most cited and linked-to brand in your category. AI models rank brands higher when many independent sources reference them consistently.
               </p>
             </div>
             <div className="rounded-lg p-4" style={{ background: 'rgba(34,197,94,0.04)', border: '1px solid var(--rule)' }}>
