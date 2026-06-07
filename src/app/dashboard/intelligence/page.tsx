@@ -12,7 +12,7 @@
  *  6. Methodology Transparency — what was queried, when, how
  */
 
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { Suspense, useCallback, useEffect, useMemo, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import {
@@ -343,7 +343,15 @@ function generateExecutiveSummary(params: {
 
 /* ── Main Page ─────────────────────────────────────── */
 
-export default function IntelligencePage() {
+export default function IntelligencePageWrapper() {
+  return (
+    <Suspense fallback={null}>
+      <IntelligencePage />
+    </Suspense>
+  );
+}
+
+function IntelligencePage() {
   const { user, loading: authLoading } = useAuth();
   const { workspace, workspaceSlug, workspaceId, loading: wsLoading } = useWorkspace();
   const dashPrefix = workspaceSlug ? `/dashboard/${workspaceSlug}` : '/dashboard';
