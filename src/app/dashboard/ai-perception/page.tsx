@@ -88,19 +88,37 @@ function scoreColorVar(s: number | null | undefined): string {
   return 'var(--severe)';
 }
 
+/**
+ * Normalize raw accuracy label from the evaluator to a canonical display category.
+ *
+ * IMPORTANT: This aligns with buildBenchmark() in multi-model-probe.ts:
+ *   - 'accurate'      → 'Accurate'     (100 pts)
+ *   - 'partial'       → 'Partial'      (50 pts)
+ *   - 'inaccurate'    → 'Inaccurate'   (0 pts)
+ *   - 'hallucinated'  → 'Hallucinated' (0 pts)
+ *   - null / no_data  → 'No Data'      (25 pts — model correctly said "I don't know")
+ */
 function normalizeAccuracy(raw: string | null | undefined): string | null {
-  if (!raw) return null;
+  if (!raw) return 'No Data';
   const a = raw.toLowerCase().trim();
+  if (a === 'accurate') return 'Accurate';
+  if (a === 'partial') return 'Partial';
+  if (a === 'inaccurate') return 'Inaccurate';
+  if (a === 'hallucinated') return 'Hallucinated';
+  if (a === 'no_data' || a === 'no data') return 'No Data';
+  // Fallback: try to fuzzy-match legacy values
   if (a.includes('accurate') && !a.includes('partial') && !a.includes('in')) return 'Accurate';
   if (a.includes('partial')) return 'Partial';
+  if (a.includes('hallucin')) return 'Hallucinated';
   return 'Inaccurate';
 }
 
 function accuracyColor(accuracy: string | null | undefined): { bg: string; color: string } {
   const norm = normalizeAccuracy(accuracy);
-  if (!norm) return { bg: 'var(--paper-2)', color: 'var(--m-muted)' };
+  if (!norm || norm === 'No Data') return { bg: 'var(--paper-2)', color: 'var(--m-muted)' };
   if (norm === 'Accurate') return { bg: 'rgba(34,197,94,0.1)', color: 'var(--ok)' };
   if (norm === 'Partial') return { bg: 'rgba(234,179,8,0.1)', color: 'var(--warn)' };
+  // Inaccurate and Hallucinated both get red
   return { bg: 'rgba(239,68,68,0.1)', color: 'var(--severe)' };
 }
 
@@ -406,24 +424,41 @@ export default function AIPerceptionPage() {
 
   const measured = useMemo(() => modelProbes.filter(p => p.status === 'measured' && p.accuracy_score != null), [modelProbes]);
 
-  // Recompute accuracy from the actual displayed results_json labels
-  // to ensure the % matches the per-answer badges. The DB accuracy_score
-  // may be averaged across multiple probe runs while results_json is
-  // deduplicated to first-run only — causing a mismatch.
-  const overallAccuracy = useMemo(() => {
-    if (measured.length === 0) return null;
-    const allResults = measured.flatMap(p => p.results_json || []);
-    if (allResults.length === 0) return null;
+  // ────────────────────────────────────────────────────────────────
+  // CANONICAL ACCURACY FORMULA — single source of truth.
+  // Matches buildBenchmark() in multi-model-probe.ts exactly:
+  //   accurate = 100pts, partial = 50pts, no_data = 25pts,
+  //   inaccurate = 0pts, hallucinated = 0pts.
+  //
+  // We compute from results_json (the actual displayed answers) so
+  // the overall % always matches the per-question badges below.
+  // ────────────────────────────────────────────────────────────────
+  const computeAccuracyFromResults = (results: Array<{ accuracy: string | null }>) => {
     const counts = { accurate: 0, partial: 0, inaccurate: 0, hallucinated: 0, noData: 0 };
-    for (const r of allResults) {
+    for (const r of results) {
       const norm = normalizeAccuracy(r.accuracy);
       if (norm === 'Accurate') counts.accurate++;
       else if (norm === 'Partial') counts.partial++;
+      else if (norm === 'Hallucinated') counts.hallucinated++;
+      else if (norm === 'No Data') counts.noData++;
       else counts.inaccurate++;
     }
-    const total = allResults.length;
-    return Math.round(((counts.accurate * 100 + counts.partial * 50 + counts.noData * 25) / (total * 100)) * 100);
+    const total = results.length;
+    if (total === 0) return null;
+    return {
+      score: Math.round(((counts.accurate * 100 + counts.partial * 50 + counts.noData * 25) / (total * 100)) * 100),
+      counts,
+      total,
+    };
+  };
+
+  const overallAccuracyData = useMemo(() => {
+    if (measured.length === 0) return null;
+    const allResults = measured.flatMap(p => p.results_json || []);
+    return computeAccuracyFromResults(allResults);
   }, [measured]);
+
+  const overallAccuracy = overallAccuracyData?.score ?? null;
 
   const avgSentiment = useMemo(() => {
     const valid = modelProbes.filter(p => p.sentiment_score != null);
@@ -637,7 +672,9 @@ export default function AIPerceptionPage() {
                   {overallAccuracy != null ? `${overallAccuracy}%` : 'Not measured'}
                 </p>
                 <p className="text-[13px] mt-1" style={{ color: 'var(--m-muted)' }}>
-                  {overallAccuracy != null ? `Across ${measured.length} model${measured.length !== 1 ? 's' : ''}` : 'Run an audit to measure'}
+                  {overallAccuracy != null
+                    ? `Across ${measured.length} model${measured.length !== 1 ? 's' : ''}, ${overallAccuracyData?.total ?? 0} question${(overallAccuracyData?.total ?? 0) !== 1 ? 's' : ''}`
+                    : 'Run an audit to measure'}
                 </p>
                 {hasSentiment && (
                   <div className="flex items-center gap-2.5 mt-3 pt-3" style={{ borderTop: '1px solid var(--rule)' }}>
@@ -721,12 +758,19 @@ export default function AIPerceptionPage() {
             <h2 className="text-[15px] font-semibold" style={{ color: 'var(--ink)' }}>Model-by-model breakdown</h2>
           </div>
           <p className="text-[13px] mb-4" style={{ color: 'var(--m-muted)' }}>
-            How each AI model performs when asked about your brand. Accuracy, sentiment, and placement vary by model.
+            How each AI model performs when asked about your brand. Accuracy is recomputed from the displayed answers below — the same formula, the same data.
           </p>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
             {modelProbes.map(probe => {
-              const badge = accuracyBadge(probe.accuracy_score);
+              // Compute accuracy FROM the same results_json displayed in the
+              // question panel — single source of truth. Never use the averaged
+              // probe.accuracy_score from the DB (it may reflect different data).
+              const probeResults = probe.results_json || [];
+              const probeAccData = computeAccuracyFromResults(probeResults);
+              const displayScore = probeAccData?.score ?? 0;
+              const questionsAnswered = probeAccData?.total ?? 0;
+              const badge = accuracyBadge(displayScore);
               const hasSent = probe.sentiment_score != null;
               return (
                 <div
@@ -740,12 +784,12 @@ export default function AIPerceptionPage() {
                   </div>
 
                   <div className="space-y-2">
-                    {/* Accuracy */}
+                    {/* Accuracy — recomputed from results_json */}
                     <div className="flex items-center justify-between">
                       <span className="text-[11px]" style={{ color: 'var(--m-muted)' }}>Accuracy</span>
                       <div className="flex items-center gap-1.5">
                         <span className="text-[12px] font-semibold tabular-nums" style={{ color: 'var(--ink)' }}>
-                          {probe.accuracy_score}%
+                          {displayScore}%
                         </span>
                         <span
                           className="text-[10px] font-semibold px-1.5 py-0.5 rounded"
@@ -756,13 +800,25 @@ export default function AIPerceptionPage() {
                       </div>
                     </div>
 
-                    {/* Sentiment */}
-                    <div className="flex items-center justify-between">
-                      <span className="text-[11px]" style={{ color: 'var(--m-muted)' }}>Sentiment</span>
-                      <span className="text-[12px] font-semibold tabular-nums" style={{ color: hasSent ? scoreColorVar(probe.sentiment_score) : 'var(--m-muted)' }}>
-                        {hasSent ? `${probe.sentiment_score}/100` : '--'}
-                      </span>
-                    </div>
+                    {/* Coverage — how many questions this model answered */}
+                    {questionsAnswered > 0 && (
+                      <div className="flex items-center justify-between">
+                        <span className="text-[11px]" style={{ color: 'var(--m-muted)' }}>Coverage</span>
+                        <span className="text-[12px] tabular-nums" style={{ color: 'var(--m-muted)' }}>
+                          {questionsAnswered} question{questionsAnswered !== 1 ? 's' : ''}
+                        </span>
+                      </div>
+                    )}
+
+                    {/* Sentiment — only show if actually measured (RULE 5: hide unavailable metrics) */}
+                    {hasSent && (
+                      <div className="flex items-center justify-between">
+                        <span className="text-[11px]" style={{ color: 'var(--m-muted)' }}>Sentiment</span>
+                        <span className="text-[12px] font-semibold tabular-nums" style={{ color: scoreColorVar(probe.sentiment_score) }}>
+                          {probe.sentiment_score}/100
+                        </span>
+                      </div>
+                    )}
 
                   </div>
 
@@ -904,7 +960,8 @@ export default function AIPerceptionPage() {
               const expanded = expandedQuestion === i;
               const accurate = group.answers.filter(a => normalizeAccuracy(a.accuracy) === 'Accurate').length;
               const partial = group.answers.filter(a => normalizeAccuracy(a.accuracy) === 'Partial').length;
-              const wrong = group.answers.length - accurate - partial;
+              const noData = group.answers.filter(a => normalizeAccuracy(a.accuracy) === 'No Data').length;
+              const wrong = group.answers.length - accurate - partial - noData;
 
               return (
                 <div key={i} className="rounded-lg overflow-hidden" style={{ border: '1px solid var(--rule)' }}>
@@ -932,6 +989,12 @@ export default function AIPerceptionPage() {
                         <span className="flex items-center gap-1 text-[12px] font-medium px-2 py-0.5 rounded" style={{ background: 'rgba(239,68,68,0.1)', color: 'var(--severe)' }}>
                           <Info size={11} />
                           {wrong} wrong
+                        </span>
+                      )}
+                      {noData > 0 && (
+                        <span className="flex items-center gap-1 text-[12px] font-medium px-2 py-0.5 rounded" style={{ background: 'var(--paper-2)', color: 'var(--m-muted)' }}>
+                          <Minus size={11} />
+                          {noData} no data
                         </span>
                       )}
                       <ChevronDown

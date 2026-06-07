@@ -187,11 +187,21 @@ function recognitionStatus(accuracy: number): { label: string; color: string; bg
   return { label: 'Not recognized', color: 'var(--severe)', bg: 'color-mix(in srgb, var(--severe) 8%, transparent)' };
 }
 
+/**
+ * Normalize raw accuracy label — aligned with buildBenchmark() in multi-model-probe.ts.
+ * Returns: 'Accurate' | 'Partial' | 'Inaccurate' | 'Hallucinated' | 'No Data'
+ */
 function normalizeAccuracy(raw: string | null | undefined): string | null {
-  if (!raw) return null;
+  if (!raw) return 'No Data';
   const a = raw.toLowerCase().trim();
+  if (a === 'accurate') return 'Accurate';
+  if (a === 'partial') return 'Partial';
+  if (a === 'inaccurate') return 'Inaccurate';
+  if (a === 'hallucinated') return 'Hallucinated';
+  if (a === 'no_data' || a === 'no data') return 'No Data';
   if (a.includes('accurate') && !a.includes('partial') && !a.includes('in')) return 'Accurate';
   if (a.includes('partial')) return 'Partial';
+  if (a.includes('hallucin')) return 'Hallucinated';
   return 'Inaccurate';
 }
 
@@ -199,7 +209,7 @@ function normalizeAccuracy(raw: string | null | undefined): string | null {
 
 function accuracyColor(accuracy: string | null | undefined): { bg: string; color: string } {
   const norm = normalizeAccuracy(accuracy);
-  if (!norm) return { bg: 'var(--paper-2)', color: 'var(--m-muted)' };
+  if (!norm || norm === 'No Data') return { bg: 'var(--paper-2)', color: 'var(--m-muted)' };
   if (norm === 'Accurate') return { bg: 'rgba(34,197,94,0.1)', color: 'var(--ok)' };
   if (norm === 'Partial') return { bg: 'rgba(234,179,8,0.1)', color: 'var(--warn)' };
   return { bg: 'rgba(239,68,68,0.1)', color: 'var(--severe)' };
@@ -856,7 +866,7 @@ export default function IntelligencePage() {
       if (!probe.results_json) continue;
       for (const r of probe.results_json) {
         const norm = normalizeAccuracy(r.accuracy);
-        if (norm === 'Inaccurate') {
+        if (norm === 'Inaccurate' || norm === 'Hallucinated') {
           items.push({ model: probe.model_label, question: r.question, answer: r.answer, note: r.accuracyNote || undefined });
         }
       }
@@ -1971,14 +1981,14 @@ export default function IntelligencePage() {
                               const n = normalizeAccuracy(r.accuracy);
                               if (n === 'Accurate') accCount++;
                               else if (n === 'Partial') partCount++;
-                              else if (n === 'Inaccurate') wrongCount++;
+                              else if (n === 'Inaccurate' || n === 'Hallucinated') wrongCount++;
                             }
                           } else if (probeGroup) {
                             for (const a of probeGroup.answers) {
                               const n = normalizeAccuracy(a.accuracy);
                               if (n === 'Accurate') accCount++;
                               else if (n === 'Partial') partCount++;
-                              else wrongCount++;
+                              else if (n === 'Inaccurate' || n === 'Hallucinated') wrongCount++;
                             }
                           }
                           const hasAccuracy = accCount > 0 || partCount > 0 || wrongCount > 0;
@@ -2764,7 +2774,8 @@ function ModelCard({ probe, brandName, expanded, onToggle }: { probe: ModelProbe
       const n = normalizeAccuracy(r.accuracy);
       if (n === 'Accurate') accurate++;
       else if (n === 'Partial') partial++;
-      else if (n === 'Inaccurate') inaccurate++;
+      else if (n === 'Inaccurate' || n === 'Hallucinated') inaccurate++;
+      // 'No Data' is not counted as inaccurate
     }
     return { accurate, partial, inaccurate, total: probe.results_json.length };
   }, [probe.results_json]);

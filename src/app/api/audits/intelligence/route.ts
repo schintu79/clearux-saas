@@ -197,8 +197,30 @@ export async function GET(req: NextRequest) {
     }
   }
   const avg = (arr: number[]) => arr.length ? Math.round(arr.reduce((a, b) => a + b, 0) / arr.length) : 0
+
+  // Recompute accuracy_score from the DEDUPLICATED results_json using the
+  // same formula as buildBenchmark() in multi-model-probe.ts. This ensures
+  // the score always reflects the exact answers the UI will display.
+  // Formula: (accurate*100 + partial*50 + noData*25) / (total*100) * 100
+  const recomputeAccuracy = (results: any[]): number => {
+    if (!results || results.length === 0) return 0
+    const counts = { accurate: 0, partial: 0, inaccurate: 0, hallucinated: 0, noData: 0 }
+    for (const r of results) {
+      const a = (r.accuracy || '').toLowerCase().trim()
+      if (a === 'accurate') counts.accurate++
+      else if (a === 'partial') counts.partial++
+      else if (a === 'inaccurate') counts.inaccurate++
+      else if (a === 'hallucinated') counts.hallucinated++
+      else counts.noData++
+    }
+    const total = results.length
+    return Math.round(((counts.accurate * 100 + counts.partial * 50 + counts.noData * 25) / (total * 100)) * 100)
+  }
+
   const aggregatedProbes = Array.from(probeMap.values()).map(p => {
-    p.accuracy_score = avg(p._accuracyScores)
+    // CRITICAL: accuracy_score is recomputed from deduplicated results_json,
+    // NOT averaged across DB rows. This is the single source of truth.
+    p.accuracy_score = recomputeAccuracy(p.results_json)
     p.sentiment_score = p._sentimentScores.length ? avg(p._sentimentScores) : null
     p.placement_score = p._placementScores.length ? avg(p._placementScores) : null
     p.share_of_voice = p._sovScores.length ? avg(p._sovScores) : null
