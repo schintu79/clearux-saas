@@ -139,6 +139,17 @@ export class FindingTracer {
   }
 
   /**
+   * Batch-register contradiction checker results.
+   */
+  recordContradictionResults(contradictedIds: string[], reasons: Record<string, string>): void {
+    if (!this.enabled) return
+    for (const id of contradictedIds) {
+      const reason = reasons[id] || 'Contradicted by hard evidence (responsive checker or DOM)'
+      this.addEvent(id, 'contradiction-checker', 'dropped', reason)
+    }
+  }
+
+  /**
    * Batch-register relevance scorer results.
    */
   recordRelevanceResults(droppedIds: string[], reason: string = 'Below relevance threshold'): void {

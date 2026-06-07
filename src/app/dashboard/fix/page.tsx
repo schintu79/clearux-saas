@@ -64,6 +64,28 @@ function hostnameOf(url: string | null | undefined): string | null {
   try { return new URL(url).hostname.replace(/^www\./, ''); } catch { return null; }
 }
 
+const VIEWPORT_CHIP_META: Record<string, { label: string; color: string; bg: string }> = {
+  mobile:           { label: 'Mobile',          color: '#8b5cf6', bg: 'color-mix(in srgb, #8b5cf6 12%, transparent)' },
+  desktop:          { label: 'Desktop',         color: '#0ea5e9', bg: 'color-mix(in srgb, #0ea5e9 12%, transparent)' },
+  tablet:           { label: 'Tablet',          color: '#f97316', bg: 'color-mix(in srgb, #f97316 12%, transparent)' },
+  'cross-viewport': { label: 'Cross-viewport',  color: '#ec4899', bg: 'color-mix(in srgb, #ec4899 12%, transparent)' },
+  technical:        { label: 'Technical',       color: '#6b7280', bg: 'color-mix(in srgb, #6b7280 12%, transparent)' },
+  'brand-dna':      { label: 'Brand DNA',       color: '#d97706', bg: 'color-mix(in srgb, #d97706 12%, transparent)' },
+};
+
+function ViewportChip({ viewport }: { viewport: string }) {
+  const meta = VIEWPORT_CHIP_META[viewport];
+  if (!meta) return null;
+  return (
+    <span
+      className="inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-semibold tracking-[0.03em]"
+      style={{ background: meta.bg, color: meta.color }}
+    >
+      {meta.label}
+    </span>
+  );
+}
+
 /** Filter dropdown shared by Status, Severity, Module. Goes dark when active. */
 function FilterDropdown({
   value,
@@ -189,6 +211,9 @@ function SidebarItem({
             >
               {badgeLabel}
             </span>
+            {(finding as any).viewport && (finding as any).viewport !== 'all' && (
+              <ViewportChip viewport={(finding as any).viewport} />
+            )}
             {(finding as any).status_in_audit === 'still_present' && (
               <span className="text-[9px] font-semibold text-m-muted bg-paper-2 px-1 py-0.5 rounded tracking-[0.03em] uppercase">Returning</span>
             )}
@@ -305,6 +330,12 @@ function ActiveFindingDetail({
                   </React.Fragment>
                 );
               })}
+              {finding.viewport && finding.viewport !== 'all' && (
+                <>
+                  <span style={{ color: 'var(--m-muted)' }} aria-hidden>·</span>
+                  <ViewportChip viewport={finding.viewport} />
+                </>
+              )}
               {finding.page_url && (
                 <>
                   <span style={{ color: 'var(--m-muted)' }} aria-hidden>·</span>

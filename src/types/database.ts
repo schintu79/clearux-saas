@@ -56,6 +56,16 @@ export type FindingSeverity =
   | 'medium'
   | 'low'
 
+export type FindingViewport =
+  | 'mobile'
+  | 'desktop'
+  | 'tablet'
+  | 'all'
+  | 'cross-viewport'
+  | 'technical'
+  | 'brand-dna'
+  | null
+
 export type AuditDepthMode = 'standard' | 'deep'
 
 export type AuditType = 'website' | 'brand_identity' | 'design'
@@ -588,6 +598,8 @@ export interface AuditFinding {
   handoff_payload:     HandoffPayload | null
   /** Dual-layer communication: plain-language + technical (JSONB, nullable for legacy) */
   communication:       FindingCommunication | null
+  /** Viewport context: which viewport(s) this finding applies to */
+  viewport:            FindingViewport
   created_at:        string
   // Canonical issue reconciliation (migration 050)
   issue_family_id:     string | null

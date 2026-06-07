@@ -69,6 +69,10 @@ export type { FindingForDedup, TemplateGroup } from './dedup'
 export { identifySpeculativeFindings, SPECULATIVE_LANGUAGE, UNVERIFIABLE_TOPICS } from './speculative-filter'
 export type { FindingForFilter } from './speculative-filter'
 
+// ── Step 2b: Contradiction Checker ──────────────────────────
+export { checkContradictions } from './contradiction-checker'
+export type { FindingForContradiction, ResponsiveEvidence, PageContentEvidence, ContradictionResult } from './contradiction-checker'
+
 // ── Step 3: Prompt Rules ────────────────────────────────────
 export {
   composePromptRules,

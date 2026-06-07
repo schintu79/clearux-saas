@@ -26,6 +26,7 @@ import {
   identifyDuplicates,
   identifyTemplateGroups,
   identifySpeculativeFindings,
+  checkContradictions,
   scoreFindings,
   recordFindingShown,
   recordAuditStats,
@@ -1310,12 +1311,21 @@ Return 2-6 findings. Be specific and evidence-based. Reference specific files/co
               viewports: [375, 768, 1024, 1440],
             })
 
-          return { summary: result.summary, findingsCount: result.findings.length }
+          // Return raw viewport data for contradiction checker
+          const allViewportIssues = result.results.flatMap(r => r.viewportIssues.map((vi: any) => ({
+            viewport: vi.viewport as string,
+            width: vi.width as number,
+            type: vi.type as string,
+            title: (vi.title || '') as string,
+            description: (vi.description || '') as string,
+          })))
+          const hasMobileViewport = result.results.some((r: any) => r.hasMobileViewport)
+          return { summary: result.summary, findingsCount: result.findings.length, viewportIssues: allViewportIssues, hasMobileViewport }
         } catch (err) {
           console.error('[inngest] Responsive check failed (non-fatal):', err)
           await auditLog(auditId, 'responsive_check_failed', 'warning',
             `Responsive check failed: ${err instanceof Error ? err.message : String(err)}. Continuing with text-based analysis.`)
-          return { summary: '', findingsCount: 0 }
+          return { summary: '', findingsCount: 0, viewportIssues: [] as any[], hasMobileViewport: false }
         }
       })()
 
@@ -1505,7 +1515,7 @@ Return 2-6 findings. Be specific and evidence-based. Reference specific files/co
         console.error(`[inngest] Parallel site checks failed or timed out: ${err?.message || err}`)
         // Return safe defaults so the pipeline can continue
         return [
-          { summary: '', findingsCount: 0 },  // responsive
+          { summary: '', findingsCount: 0, viewportIssues: [], hasMobileViewport: false },  // responsive
           null,                                 // pagespeed
           { summary: '', findingsCount: 0, overallScore: 0 }, // wcag
         ] as any
@@ -2579,6 +2589,7 @@ RULES FOR RE-AUDIT:
                 sort_order: sortOrder++,
                 finding_type: validated.findingType,
                 fix_type: validated.fixType,
+                viewport: finding.viewport || null,
                 confidence_level: 'heuristic',
                 detection_source: 'deep_analyzer',
                 communication: buildCommunicationForGenericFinding({ title: finding.title, description: finding.description, recommendation: finding.recommendation, estimatedImpact: finding.estimatedImpact || null, severity: finding.severity }, siteProfile),
@@ -2941,6 +2952,7 @@ RULES FOR RE-AUDIT:
                 sort_order: sortOrder++,
                 ai_interpretation: finding.aiInterpretation || null,
                 human_interpretation: finding.humanInterpretation || null,
+                viewport: finding.viewport || null,
                 confidence_level: 'heuristic',
                 detection_source: 'analyzer',
                 communication: comm,
@@ -3139,6 +3151,45 @@ RULES FOR RE-AUDIT:
               description: `Our quality filter removed ${speculativeIds.length} finding${speculativeIds.length > 1 ? 's' : ''} that could not be fully verified from the crawled content. We only report issues we can back with evidence from your site. If important areas seem under-reported, a re-audit with more pages may help.`,
             })
           }
+        }
+      }
+
+      // ── 2b. Contradiction checker — cross-reference findings against hard evidence ───
+      if (findings.length > 0) {
+        try {
+          // Build responsive evidence from parallel-site-checks step
+          const responsiveEvidence = (responsiveCheck?.viewportIssues && responsiveCheck.viewportIssues.length > 0) ? {
+            viewportIssues: responsiveCheck.viewportIssues as Array<{ viewport: string; width: number; type: string; title: string; description: string }>,
+            hasMobileViewport: responsiveCheck.hasMobileViewport ?? false,
+          } : null
+
+          // Build page content evidence from crawl
+          const headTagsRaw = crawlResult.headTags?.[0]?.headTags
+          const pageContentEvidence = crawlResult.pageContent ? {
+            textContent: crawlResult.pageContent,
+            headTags: headTagsRaw ? JSON.stringify(headTagsRaw) : null,
+          } : null
+
+          const { contradictedIds, reasons } = checkContradictions(
+            findings.map(f => ({ id: f.id, title: f.title, description: f.description, viewport: null, pageUrl: f.page_url })),
+            responsiveEvidence,
+            pageContentEvidence,
+          )
+
+          if (contradictedIds.length > 0) {
+            for (const id of contradictedIds) idsToDelete.add(id)
+            findings = findings.filter(f => !idsToDelete.has(f.id))
+            await auditLog(auditId, 'contradiction_checked', 'info',
+              `Removed ${contradictedIds.length} finding${contradictedIds.length > 1 ? 's' : ''} contradicted by hard evidence (responsive checker / DOM)`)
+            console.log(`[inngest] Contradiction checker: removed ${contradictedIds.length} findings`)
+            // Log individual reasons for debug
+            for (const [id, reason] of Object.entries(reasons)) {
+              console.log(`[inngest]   → ${id}: ${reason}`)
+            }
+          }
+        } catch (err) {
+          // Non-fatal — don't block pipeline if contradiction checker errors
+          console.error('[inngest] Contradiction checker error (non-fatal):', err)
         }
       }
 
@@ -3931,6 +3982,7 @@ RULES FOR RE-AUDIT:
                 recommendation: finding.recommendation, estimated_impact: finding.estimatedImpact || null,
                 target_element: finding.targetElement || null, screenshot_url: null,
                 sort_order: sortOrder++, finding_type: validated.findingType, fix_type: validated.fixType,
+                viewport: finding.viewport || null,
                 confidence_level: 'interpretive', detection_source: 'analyzer',
                 communication: buildCommunicationForGenericFinding({ title: finding.title, description: finding.description, recommendation: finding.recommendation, estimatedImpact: finding.estimatedImpact || null, severity: finding.severity }, siteProfile),
               })

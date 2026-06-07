@@ -74,6 +74,8 @@ export interface AnalysisFinding {
   aiInterpretation?: string | null
   /** AI X-Ray: how a human interprets this element */
   humanInterpretation?: string | null
+  /** Viewport context: which viewport(s) this finding applies to */
+  viewport?: 'mobile' | 'desktop' | 'tablet' | 'all' | 'cross-viewport' | 'technical' | 'brand-dna' | null
   /** Dual-layer communication — plain-language issue title */
   titlePlain?: string | null
   /** Dual-layer communication — what we found in plain language */
@@ -906,6 +908,19 @@ Before finalizing any finding, check the page content for CONTRADICTORY evidence
 - A finding CANNOT be surfaced from category expectations alone — it must have specific evidence FROM THE PROVIDED CONTENT. (RULE 1)
 - If you cannot point to a specific text passage that supports the finding, do NOT surface it.
 
+VIEWPORT ASSIGNMENT (MANDATORY):
+Every UX/UI finding MUST explicitly state which viewport it applies to. This is non-negotiable.
+RULES:
+- If you found the issue in responsive checker data for a specific width → assign that viewport.
+- If the issue is about mobile-specific behavior (hamburger menu, touch targets, mobile layout) → "mobile".
+- If the issue is about desktop-specific behavior (hover states, wide layout, desktop nav) → "desktop".
+- If the issue exists at ALL viewports (missing content, broken flow, unclear messaging) → "all".
+- If the issue is about an INCONSISTENCY between viewports (visible on one, hidden on another) → "cross-viewport".
+- If the issue is purely technical (meta tags, schema, crawlability, HTML structure) → "technical".
+- If the issue is about brand voice, identity, tone mismatch → "brand-dna".
+- NEVER leave viewport null. If unsure between "all" and a specific viewport, choose the specific one.
+- A finding about "mobile menu" MUST be "mobile". A finding about "desktop navigation hidden" MUST be "desktop".
+
 FINDING WORDING STANDARD:
 Every surfaced finding must clearly communicate:
 1. WHAT is happening — state the issue plainly and concretely
@@ -1011,7 +1026,8 @@ Return a JSON array. Each issue:
   "whyMatters": "Why this matters to the business or users, in plain language. No jargon. Example: 'Most of your visitors won't click that icon because they don't expect to look for it on a desktop screen. This means they may never discover your menu, pricing page, or booking options — and leave without taking action.'",
   "technicalNote": "Developer-facing detail: CSS selectors, HTML structure, WCAG references, rendering behavior, or implementation specifics. Set to null if the finding is purely strategic.",
   "fixPlain": "What to do about it — in plain language the site owner can understand. Example: 'Show your full navigation menu as a horizontal bar across the top of the page when visitors are on desktop or laptop screens.'",
-  "fixTechnical": "Technical implementation details for a developer. For fixable findings: exact HTML/CSS/meta changes. For strategic findings: technical approach and architecture considerations. Set to null if no technical detail is needed."
+  "fixTechnical": "Technical implementation details for a developer. For fixable findings: exact HTML/CSS/meta changes. For strategic findings: technical approach and architecture considerations. Set to null if no technical detail is needed.",
+  "viewport": "REQUIRED — Which viewport(s) this finding applies to. Must be one of: 'mobile' (issue only at mobile widths), 'desktop' (issue only at desktop widths), 'tablet' (issue only at tablet widths), 'all' (issue present at all viewports), 'cross-viewport' (inconsistency between viewports — e.g., element visible on one but not another), 'technical' (not viewport-specific — SEO, meta, schema, crawlability), 'brand-dna' (brand identity mismatch — not tied to any viewport). NEVER leave null. Navigation/menu issues on mobile = 'mobile'. Navigation hidden on desktop = 'desktop'. Missing meta tags = 'technical'. Brand voice mismatch = 'brand-dna'."
 }
 
 CRITICAL — NO DUPLICATE FINDINGS (STRICTLY ENFORCED):
