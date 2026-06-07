@@ -73,6 +73,10 @@ export type { FindingForFilter } from './speculative-filter'
 export { checkContradictions } from './contradiction-checker'
 export type { FindingForContradiction, ResponsiveEvidence, PageContentEvidence, ContradictionResult } from './contradiction-checker'
 
+// ── Step 2c: Fix History Gate ──────────────────────────────
+export { applyFixHistoryGate } from './fix-history-gate'
+export type { FindingForHistoryGate, FixedIssueFamily, FindingState, FixHistoryGateResult } from './fix-history-gate'
+
 // ── Step 3: Prompt Rules ────────────────────────────────────
 export {
   composePromptRules,

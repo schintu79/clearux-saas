@@ -27,6 +27,7 @@ import {
   identifyTemplateGroups,
   identifySpeculativeFindings,
   checkContradictions,
+  applyFixHistoryGate,
   scoreFindings,
   recordFindingShown,
   recordAuditStats,
@@ -3190,6 +3191,73 @@ RULES FOR RE-AUDIT:
         } catch (err) {
           // Non-fatal — don't block pipeline if contradiction checker errors
           console.error('[inngest] Contradiction checker error (non-fatal):', err)
+        }
+      }
+
+      // ── 2c. Fix history gate — suppress previously-fixed findings ───
+      // Prevents trust-destroying inconsistency where audit says "open issue"
+      // while Fix/Deploy says "was fixed before". Default: suppress matches.
+      // Exception: deterministic evidence from automated checkers → reopened.
+      if (findings.length > 0) {
+        try {
+          // Fetch workspace_id from audit
+          const { data: auditForWs } = await db
+            .from('audits')
+            .select('workspace_id')
+            .eq('id', auditId)
+            .single()
+
+          const workspaceId = (auditForWs as any)?.workspace_id
+          if (workspaceId) {
+            // Load issue families with fix_status indicating prior fix
+            const { data: fixedFamilies } = await db
+              .from('issue_families')
+              .select('id, issue_key, title_canonical, category_key, fix_status, fix_updated_at, current_lifecycle_state, scope_signature')
+              .eq('workspace_id', workspaceId)
+              .in('fix_status', ['pending_verification', 'validated_fixed', 'implemented'])
+
+            if (fixedFamilies && fixedFamilies.length > 0) {
+              const gateResult = applyFixHistoryGate(
+                findings.map(f => ({
+                  id: f.id,
+                  title: f.title,
+                  description: f.description,
+                  severity: f.severity,
+                  page_url: f.page_url,
+                  category_index: null, // not available in this context
+                  confidence_level: f.confidence_level || null,
+                  detection_source: f.detection_source || null,
+                })),
+                fixedFamilies as any,
+              )
+
+              // Remove suppressed findings
+              if (gateResult.suppressedIds.length > 0) {
+                for (const id of gateResult.suppressedIds) idsToDelete.add(id)
+                findings = findings.filter(f => !idsToDelete.has(f.id))
+                await auditLog(auditId, 'fix_history_gate', 'info',
+                  `Suppressed ${gateResult.suppressedIds.length} finding${gateResult.suppressedIds.length > 1 ? 's' : ''} that match previously-fixed issues`)
+                console.log(`[inngest] Fix history gate: suppressed ${gateResult.suppressedIds.length} findings`)
+                // Log individual suppression reasons for debug
+                for (const [id, reason] of Object.entries(gateResult.suppressionReasons)) {
+                  console.log(`[inngest]   → ${id}: ${reason}`)
+                }
+              }
+
+              // Mark reopened findings (genuine regression detected by automated checker)
+              if (gateResult.reopenedIds.length > 0) {
+                for (const id of gateResult.reopenedIds) {
+                  batchUpdates.push({ id, updates: { finding_state: 'reopened' } })
+                }
+                await auditLog(auditId, 'fix_history_reopened', 'info',
+                  `${gateResult.reopenedIds.length} finding${gateResult.reopenedIds.length > 1 ? 's' : ''} reopened — deterministic evidence of genuine regression`)
+                console.log(`[inngest] Fix history gate: ${gateResult.reopenedIds.length} findings marked as reopened`)
+              }
+            }
+          }
+        } catch (err) {
+          // Non-fatal — don't block pipeline if fix history gate errors
+          console.error('[inngest] Fix history gate error (non-fatal):', err)
         }
       }
 

@@ -600,6 +600,8 @@ export interface AuditFinding {
   communication:       FindingCommunication | null
   /** Viewport context: which viewport(s) this finding applies to */
   viewport:            FindingViewport
+  /** Fix history gate: finding lifecycle state relative to prior audits */
+  finding_state:       'new' | 'still_present' | 'reopened' | null
   created_at:        string
   // Canonical issue reconciliation (migration 050)
   issue_family_id:     string | null
