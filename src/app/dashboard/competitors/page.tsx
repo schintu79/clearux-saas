@@ -500,10 +500,10 @@ function AIVisibilityPerceptionCard({
         </div>
       )}
 
-      {/* ── Link to AI Perception tab ────────────────── */}
+      {/* ── Link to Brand Intelligence > AI Perception tab ── */}
       <div className="mt-4 pt-3" style={{ borderTop: '1px solid var(--rule)' }}>
         <Link
-          href={`${dashPrefix}/ai-perception`}
+          href={`${dashPrefix}/intelligence?tab=perception`}
           className="inline-flex items-center gap-1.5 text-[12px] font-medium transition-opacity hover:opacity-70"
           style={{ color: 'var(--m-muted)' }}
         >

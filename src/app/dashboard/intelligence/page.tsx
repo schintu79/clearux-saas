@@ -13,6 +13,7 @@
  */
 
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import {
   Radio,
@@ -384,8 +385,16 @@ export default function IntelligencePage() {
   const [rescanAvailable, setRescanAvailable] = useState(true);
   const [cooldownMessage, setCooldownMessage] = useState<string | null>(null);
 
+  // Read ?tab= from URL to allow deep-linking (e.g. from Competitors page)
+  const searchParams = useSearchParams();
+  const initialTab = (() => {
+    const t = searchParams.get('tab');
+    if (t === 'perception' || t === 'pages') return t;
+    return 'overview' as const;
+  })();
+
   // UI state
-  const [activeTab, setActiveTab] = useState<'overview' | 'perception' | 'pages'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'perception' | 'pages'>(initialTab);
   const [expandedModel, setExpandedModel] = useState<string | null>(null);
   const [expandedQuestion, setExpandedQuestion] = useState<number | null>(null);
   const [expandedPage, setExpandedPage] = useState<string | null>(null);
