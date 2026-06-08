@@ -88,6 +88,8 @@ import { CHECKPOINT_LABELS } from '@/lib/audit-checkpoints';
 import BrandAuditDetail from '@/components/dashboard/BrandAuditDetail';
 import { type CockpitSeverity, type ModuleScore } from '@/components/dashboard/AuditCockpit';
 import { groupFindingsForDisplay, reconciliationAwareSort, groupByReconciliationStatus, isBrandScorePartial, type GroupedFinding, type ReconciliationGroup } from '@/lib/audit-findings-presentation';
+import { PHASE1_MODULES } from '@/lib/dashboard/latest-audit';
+import { prepareFindingsForExport, buildExportMeta, renderMarkdown, processExportPipeline } from '@/lib/export/findings-formatter';
 import clsx from 'clsx';
 import { matchFindingToCategory } from '@/lib/audit-engine/pipeline/category-keywords';
 import { WcagOverview } from '@/components/dashboard/v2/WcagChecklist';
@@ -2257,6 +2259,36 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
               >
                 {shareCopied ? <><Check size={13} className="text-ok" /> Copied</> : <><Share2 size={13} /> Share</>}
               </button>
+              {findings.length > 0 && (
+                <button
+                  onClick={() => {
+                    const grouped = groupFindingsForDisplay(findings, findingModuleIndex);
+                    const exportFindings = prepareFindingsForExport(grouped, PHASE1_MODULES);
+                    const siteHostname = formatUrl(audit.product_url || '') || 'brand';
+                    const siteName = siteHostname;
+                    const auditDate = audit.completed_at || audit.created_at || new Date().toISOString();
+
+                    const { clusters, originalCount, uniqueCount } = processExportPipeline(exportFindings, siteHostname);
+                    const dedupedFindings = clusters.flatMap((c) => c.members);
+                    const meta = buildExportMeta(dedupedFindings, siteName, auditDate, auditId, { originalCount, uniqueCount });
+                    const md = renderMarkdown(dedupedFindings, meta, clusters);
+
+                    const blob = new Blob([md], { type: 'text/markdown;charset=utf-8' });
+                    const url = URL.createObjectURL(blob);
+                    const dateStr = new Date().toISOString().slice(0, 10);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = `fixpath-fixes-${siteHostname}-${dateStr}.md`;
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                    URL.revokeObjectURL(url);
+                  }}
+                  className="flex items-center gap-2 border border-ink/20 text-ink text-[11px] font-semibold tracking-[0.03em] uppercase px-4 py-2 rounded-lg hover:bg-paper-2 transition-colors"
+                >
+                  <Download size={13} /> Export fixes
+                </button>
+              )}
             </div>
           </div>
 
