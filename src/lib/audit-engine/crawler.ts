@@ -946,8 +946,10 @@ async function discoverSitemapUrls(baseUrl: string, hostname: string): Promise<U
     // robots.txt not available — continue with default candidates
   }
 
+  const MAX_CHILD_SITEMAPS = 5 // Fetch up to 5 child sitemaps from an index
+
   for (const sitemapUrl of sitemapCandidates) {
-    if (urls.length > 0) break // already found URLs from a sitemap
+    if (urls.length >= MAX_SITEMAP_URLS) break // enough URLs collected
 
     try {
       const controller = new AbortController()
@@ -965,29 +967,53 @@ async function discoverSitemapUrls(baseUrl: string, hostname: string): Promise<U
       // Check if this is a sitemap index (contains other sitemaps)
       const indexEntries = xml.match(/<sitemap>\s*<loc>([^<]+)<\/loc>/gi)
       if (indexEntries && indexEntries.length > 0) {
-        // It's a sitemap index — fetch only the FIRST child sitemap (with cap)
-        const firstChildMatch = indexEntries[0].match(/<loc>([^<]+)<\/loc>/i)
-        if (firstChildMatch) {
-          try {
+        // It's a sitemap index — fetch up to MAX_CHILD_SITEMAPS children
+        const childUrls: string[] = []
+        for (const entry of indexEntries.slice(0, MAX_CHILD_SITEMAPS)) {
+          const locMatch = entry.match(/<loc>([^<]+)<\/loc>/i)
+          if (locMatch) childUrls.push(locMatch[1].trim())
+        }
+        console.log(`[crawler] Sitemap index at ${sitemapUrl}: ${indexEntries.length} children, fetching ${childUrls.length}`)
+
+        // Fetch child sitemaps in parallel (all at once, they're small XML files)
+        const childResults = await Promise.allSettled(
+          childUrls.map(async (childUrl) => {
             const childController = new AbortController()
             const childTimeout = setTimeout(() => childController.abort(), SITEMAP_TIMEOUT)
-            const childRes = await fetch(firstChildMatch[1].trim(), {
-              headers: { 'User-Agent': USER_AGENTS[0] },
-              signal: childController.signal,
-            })
-            clearTimeout(childTimeout)
-
-            if (childRes.ok) {
+            try {
+              const childRes = await fetch(childUrl, {
+                headers: { 'User-Agent': USER_AGENTS[0] },
+                signal: childController.signal,
+              })
+              clearTimeout(childTimeout)
+              if (!childRes.ok) return []
               const childXml = await readCapped(childRes)
-              urls.push(...extractUrlsFromXml(childXml))
+              return extractUrlsFromXml(childXml)
+            } catch {
+              clearTimeout(childTimeout)
+              return []
             }
-          } catch { /* child sitemap fetch failed */ }
+          })
+        )
+
+        for (const result of childResults) {
+          if (result.status === 'fulfilled' && result.value.length > 0) {
+            urls.push(...result.value)
+            if (urls.length >= MAX_SITEMAP_URLS) break
+          }
         }
       }
 
-      // Also extract URLs from this sitemap directly (if it's not just an index)
-      if (urls.length === 0) {
-        urls.push(...extractUrlsFromXml(xml))
+      // Also extract URLs from this sitemap directly (covers flat sitemaps and
+      // hybrid sitemaps that contain both <sitemap> and <url> entries)
+      const directUrls = extractUrlsFromXml(xml)
+      if (directUrls.length > 0) {
+        for (const u of directUrls) {
+          if (urls.length >= MAX_SITEMAP_URLS) break
+          // Dedup against already-collected URLs
+          const key = u.toString()
+          if (!urls.some(existing => existing.toString() === key)) urls.push(u)
+        }
       }
     } catch {
       // This sitemap URL failed — try next candidate
@@ -1416,20 +1442,79 @@ export async function crawlPages(
         return false
       }
 
-      // Level 1: pages to crawl from all sources
-      const level1ToVisit: URL[] = []
+      // ── URL priority scoring ─────────────────────────────────
+      // Rank discovered URLs by business value so the page budget is spent
+      // on the most important pages, not whichever source happened to be first.
+      const HIGH_VALUE_PATHS = new Set([
+        '/pricing', '/product', '/products', '/features', '/about',
+        '/contact', '/how-it-works', '/services', '/solutions', '/demo',
+        '/why-fixpath', '/why-us', '/tour', '/platform', '/overview',
+      ])
+      const MEDIUM_VALUE_PATHS = new Set([
+        '/blog', '/resources', '/docs', '/faq', '/help', '/support',
+        '/careers', '/case-studies', '/customers', '/testimonials',
+        '/integrations', '/partners', '/changelog', '/wordpress',
+      ])
+      const LOW_VALUE_PATHS = new Set([
+        '/privacy', '/terms', '/cookies', '/legal', '/disclaimer',
+        '/login', '/register', '/signup', '/signin', '/reset-password',
+      ])
+
+      function scoreUrl(url: URL): number {
+        const path = url.pathname.toLowerCase().replace(/\/$/, '') || '/'
+        const segments = path.split('/').filter(Boolean)
+
+        // Homepage gets highest score (already crawled, but for completeness)
+        if (path === '/') return 100
+
+        // High-value business pages
+        if (HIGH_VALUE_PATHS.has(path)) return 90
+
+        // Medium-value content pages
+        if (MEDIUM_VALUE_PATHS.has(path)) return 70
+
+        // Low-value utility pages (still included, just ranked lower)
+        if (LOW_VALUE_PATHS.has(path)) return 20
+
+        // Depth penalty: shallow pages are more important
+        // /about = 1 segment = 80, /blog/post = 2 segments = 60, /a/b/c = 3 = 40
+        const depthScore = Math.max(10, 80 - (segments.length - 1) * 20)
+
+        // Boost for paths that look like important templates
+        if (segments.length === 1) return Math.max(depthScore, 75) // Top-level pages are likely important
+        return depthScore
+      }
+
+      // Collect ALL eligible candidates (no artificial cap during collection)
+      const CANDIDATE_POOL_CAP = Math.max(maxPages * 3, 60) // At least 3× page budget for fetch failures
+      const allCandidates: Array<{ url: URL; score: number }> = []
+      let skippedDifferentHost = 0
+      let skippedAlreadyVisited = 0
+
       for (const link of allDiscovered) {
-        if (!isSameHost(link.hostname, baseHostname) || isVisited(link.toString())) continue
+        if (!isSameHost(link.hostname, baseHostname)) { skippedDifferentHost++; continue }
+        if (isVisited(link.toString())) { skippedAlreadyVisited++; continue }
         if (isExcludedPath(link)) {
           excludedUrls.push({ url: link.toString(), reason: 'Non-content path (infrastructure, assets, or API)' })
           continue
         }
-        if (level1ToVisit.length < Math.min(40, maxPages - 1)) {
-          level1ToVisit.push(link)
-        }
+        allCandidates.push({ url: link, score: scoreUrl(link) })
       }
 
-      console.log(`[crawler] Level 1: ${level1ToVisit.length} pages to crawl (merged from all strategies)`)
+      // Sort by score descending — highest-value pages first
+      allCandidates.sort((a, b) => b.score - a.score)
+
+      // Take top candidates up to pool cap
+      const level1ToVisit = allCandidates.slice(0, CANDIDATE_POOL_CAP).map(c => c.url)
+
+      console.log(`[crawler] Discovery stats — total: ${allDiscovered.length}, eligible: ${allCandidates.length}, different host: ${skippedDifferentHost}, already visited: ${skippedAlreadyVisited}, excluded: ${excludedUrls.length}`)
+      console.log(`[crawler] Level 1: ${level1ToVisit.length} pages queued (top ${CANDIDATE_POOL_CAP} of ${allCandidates.length} by score, maxPages=${maxPages})`)
+      if (allCandidates.length > 0) {
+        const top5 = allCandidates.slice(0, 5).map(c => `${c.url.pathname}(${c.score})`).join(', ')
+        const bottom3 = allCandidates.slice(-3).map(c => `${c.url.pathname}(${c.score})`).join(', ')
+        console.log(`[crawler] Top 5 by score: ${top5}`)
+        console.log(`[crawler] Bottom 3 by score: ${bottom3}`)
+      }
 
       // Crawl level 1 in parallel (batchSize at a time — polite mode uses 3, legacy uses 5)
       const level1Pages: CrawledPage[] = []
