@@ -491,13 +491,32 @@ Return 2-6 findings. Be specific and evidence-based. Reference specific files/co
                 45_000,
                 `brand-analyze-${cat.name}`,
               )
-              return { cat, findings: findings || [] }
+              return { cat, findings: findings || [], timedOut: !findings || findings.length === 0 }
             } catch (catErr) {
               console.error(`[inngest] Brand category "${cat.name}" timed out/failed:`, (catErr as Error)?.message)
-              return { cat, findings: [] }
+              return { cat, findings: [], timedOut: true }
             }
           }),
         )
+
+        // Detect silent brand analysis failures
+        const brandEmptyCount = analysisResults.filter(r => r.timedOut).length
+        if (brandEmptyCount > 0) {
+          console.warn(`[inngest] Brand audit ${auditId}: ${brandEmptyCount}/${analysisResults.length} brand categories returned 0 findings`)
+          if (brandEmptyCount === analysisResults.length) {
+            auditLimitations.push({
+              id: 'brand_analysis_all_failed',
+              title: 'Brand analysis produced no findings',
+              description: 'All brand audit categories returned zero findings, likely due to analysis timeouts. Brand scores are not reliable. We recommend re-running the audit.',
+            })
+          } else if (brandEmptyCount >= 2) {
+            auditLimitations.push({
+              id: 'brand_analysis_partial_failure',
+              title: 'Some brand categories could not be analyzed',
+              description: `${brandEmptyCount} of ${analysisResults.length} brand categories did not return findings. A re-audit may provide more complete brand analysis.`,
+            })
+          }
+        }
 
         // Insert all findings in one batch
         const batchInserts: any[] = []
@@ -2876,6 +2895,8 @@ RULES FOR RE-AUDIT:
       )
 
       let totalFindingsCount = 0
+      let totalEmptyCategories = 0
+      let totalAnalyzedCategories = 0
       // NOTE: logActivity/setProgress calls are INSIDE each step.run below
       // so they don't re-execute on every Inngest invocation (which was
       // causing unnecessary DB writes and eating into the 300s Vercel budget).
@@ -2928,11 +2949,17 @@ RULES FOR RE-AUDIT:
 
           // Batch all findings for this analysis batch into a single insert
           const batchInserts: any[] = []
+          let emptyCategoriesInBatch = 0
 
           for (let catIdx = 0; catIdx < batchResults.length; catIdx++) {
             const findings = batchResults[catIdx]
             const categoryName = batch[catIdx]
             const absoluteCatIdx = UX_CATEGORY_NAMES.indexOf(categoryName)
+
+            if (!findings || findings.length === 0) {
+              emptyCategoriesInBatch++
+              console.warn(`[inngest] Category "${categoryName}" returned 0 findings — possible timeout or API failure`)
+            }
 
             for (const finding of findings) {
               let resolvedPageUrl = crawlResult.firstPageUrl
@@ -3009,10 +3036,39 @@ RULES FOR RE-AUDIT:
           const batchProgress = Math.round(30 + ((batchIdx + 1) / batches.length) * 35)
           await setProgress(auditId, batchProgress)
 
-          return { findingsInBatch, newSortOrder: sortOrder }
+          return { findingsInBatch, newSortOrder: sortOrder, emptyCategoriesInBatch, categoriesInBatch: batch.length }
         })
 
         totalFindingsCount = batchResult.newSortOrder
+        totalEmptyCategories += batchResult.emptyCategoriesInBatch
+        totalAnalyzedCategories += batchResult.categoriesInBatch
+      }
+
+      // ── Detect silent analysis failures ──────────────────────────────
+      // If too many categories returned zero findings, the analyzers likely
+      // timed out or the AI API was unresponsive. Flag this so the user
+      // sees a clear limitation instead of a misleadingly clean report.
+      if (totalAnalyzedCategories > 0 && totalEmptyCategories > 0) {
+        const emptyRatio = totalEmptyCategories / totalAnalyzedCategories
+        console.warn(`[inngest] Audit ${auditId}: ${totalEmptyCategories}/${totalAnalyzedCategories} categories returned 0 findings (${Math.round(emptyRatio * 100)}%)`)
+
+        if (emptyRatio >= 0.5) {
+          // More than half of categories failed — audit is severely evidence-limited
+          auditLimitations.push({
+            id: 'analysis_timeout_majority',
+            title: 'Limited analysis coverage',
+            description: `${totalEmptyCategories} of ${totalAnalyzedCategories} audit categories could not complete analysis within the time budget. This audit has limited evidence coverage — scores and findings may not reflect the full state of the site. We recommend re-running the audit when server load is lower.`,
+          })
+          await auditLog(auditId, 'analysis_coverage_warning', 'warning',
+            `${totalEmptyCategories}/${totalAnalyzedCategories} categories returned zero findings — likely timeout/API failures`)
+        } else if (totalEmptyCategories >= 3) {
+          // Several categories failed — note it but audit is still partially useful
+          auditLimitations.push({
+            id: 'analysis_timeout_partial',
+            title: 'Some categories could not be analyzed',
+            description: `${totalEmptyCategories} of ${totalAnalyzedCategories} categories did not return findings, possibly due to analysis timeouts. The remaining categories were analyzed normally. A re-audit may provide more complete results.`,
+          })
+        }
       }
     }
 
@@ -3036,8 +3092,14 @@ RULES FOR RE-AUDIT:
         .order('sort_order', { ascending: true })
 
       if (!allQGFindings || allQGFindings.length === 0) {
-        console.warn(`[inngest] Audit ${auditId}: zero findings — continuing`)
-        await auditLog(auditId, 'findings_warning', 'warning', 'Zero findings — site may be clean or all issues resolved')
+        console.error(`[inngest] Audit ${auditId}: ZERO findings after analysis — this likely means all analyzer calls timed out or failed`)
+        await auditLog(auditId, 'findings_critical', 'warning',
+          'Zero findings produced by analysis — all category analyzers may have timed out. Scores will reflect limited evidence.')
+        auditLimitations.push({
+          id: 'zero_findings_all_failed',
+          title: 'Analysis produced no findings',
+          description: 'All audit categories returned zero findings. This usually means the AI analysis calls timed out or encountered errors. The resulting scores are not reliable. We strongly recommend re-running this audit.',
+        })
         await setProgress(auditId, 75)
         return
       }
@@ -3199,6 +3261,8 @@ RULES FOR RE-AUDIT:
               const oldSeverity = f.severity
               f.severity = SEVERITY_DEMOTION[f.severity] || f.severity
               f.confidence_level = 'heuristic'
+              // Persist demotion to DB
+              batchUpdates.push({ id: f.id, updates: { severity: f.severity, confidence_level: 'heuristic' } })
               console.log(`[inngest] Speculative filter: demoted finding "${f.title}" from ${oldSeverity} to ${f.severity}`)
             }
           }
