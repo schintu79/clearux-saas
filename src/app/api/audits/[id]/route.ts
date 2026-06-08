@@ -161,6 +161,54 @@ export async function DELETE(
     }
 
     const service = createServiceSupabase()
+
+    // Refund the credit or subscription audit that was consumed
+    const { data: payment } = await service
+      .from('payments')
+      .select('stripe_payment_intent_id')
+      .eq('audit_id', auditId)
+      .single()
+
+    if (payment) {
+      const paymentId = (payment as any).stripe_payment_intent_id as string
+      if (paymentId.startsWith('credit_')) {
+        // Refund 1 credit
+        const { data: profile } = await service
+          .from('profiles')
+          .select('credits')
+          .eq('id', user.id)
+          .single()
+        const currentCredits = (profile as any)?.credits ?? 0
+        await service
+          .from('profiles')
+          .update({ credits: currentCredits + 1, updated_at: new Date().toISOString() } as any)
+          .eq('id', user.id)
+        console.log(`[audit-delete] Refunded 1 credit to user ${user.id}`)
+      } else if (paymentId.startsWith('reaudit_')) {
+        // Re-audits for subscribers are free — nothing to refund
+      } else if (paymentId.startsWith('free_first_')) {
+        // Free first audit — nothing to refund, but allow them to use it again
+        // (the free-first check already queries live non-deleted audits)
+      } else {
+        // Stripe payment — refund 1 subscription audit if the user has an active subscription
+        const { data: profile } = await service
+          .from('profiles')
+          .select('subscription_status, audits_remaining, audits_per_month')
+          .eq('id', user.id)
+          .single()
+        const p = profile as any
+        if (p?.subscription_status === 'active' && p?.audits_remaining != null) {
+          const maxAudits = p.audits_per_month ?? 1
+          const restored = Math.min((p.audits_remaining ?? 0) + 1, maxAudits)
+          await service
+            .from('profiles')
+            .update({ audits_remaining: restored, updated_at: new Date().toISOString() } as any)
+            .eq('id', user.id)
+          console.log(`[audit-delete] Restored subscription audit for user ${user.id}: ${restored}/${maxAudits}`)
+        }
+      }
+    }
+
     const { error: delError } = await service
       .from('audits')
       .update({ deleted_at: new Date().toISOString() } as any)

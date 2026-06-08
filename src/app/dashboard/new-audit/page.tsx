@@ -219,6 +219,8 @@ const NewAuditInner: React.FC = () => {
   );
   // Keep hasCredits as alias for backward compat in the template
   const hasCredits = canStartAudit;
+  // Subscriber with 0 credit-pack credits using re-audit allowance for an initial audit
+  const isSubscriptionInitial = !isDeepAudit && !isReAudit && credits !== null && credits <= 0 && canReaudit;
 
   const validateUrl = (value: string): boolean => {
     if (!value.trim()) {
@@ -806,18 +808,22 @@ const NewAuditInner: React.FC = () => {
                   ? `${deepAuditsRemaining} deep audit${deepAuditsRemaining !== 1 ? 's' : ''} remaining`
                   : isReAudit
                     ? `${reauditsRemaining} re-audit${reauditsRemaining !== 1 ? 's' : ''} remaining`
-                    : `${credits} credit${credits !== 1 ? 's' : ''} available`}
+                    : isSubscriptionInitial
+                      ? `${reauditsRemaining} audit${reauditsRemaining !== 1 ? 's' : ''} remaining this month`
+                      : `${credits} credit${credits !== 1 ? 's' : ''} available`}
               </p>
               <p className="text-xs text-muted">
                 {isDeepAudit
                   ? `1 deep audit will be used. ${deepAuditsRemaining - 1} left this month.`
                   : isReAudit
                     ? `1 re-audit will be used. ${reauditsRemaining - 1} left this month.`
-                    : '1 credit will be used. No payment needed.'}
+                    : isSubscriptionInitial
+                      ? `1 audit from your subscription. ${reauditsRemaining - 1} left this month.`
+                      : '1 credit will be used. No payment needed.'}
               </p>
             </div>
             <span className="text-2xl font-sans font-normal" style={{ color: 'var(--ok)' }}>
-              {isDeepAudit ? deepAuditsRemaining : isReAudit ? reauditsRemaining : credits}
+              {isDeepAudit ? deepAuditsRemaining : isReAudit ? reauditsRemaining : isSubscriptionInitial ? reauditsRemaining : credits}
             </span>
           </div>
         </div>
@@ -887,7 +893,9 @@ const NewAuditInner: React.FC = () => {
               ? 'Use 1 deep audit — start analysis'
               : isReAudit
                 ? 'Use 1 re-audit — start website audit'
-                : 'Use 1 credit — start website audit'}
+                : isSubscriptionInitial
+                  ? 'Start website audit — included in plan'
+                  : 'Use 1 credit — start website audit'}
             <ArrowRight size={20} />
           </>
         ) : (
@@ -907,6 +915,8 @@ const NewAuditInner: React.FC = () => {
           ? `1 re-audit will be used. ${reauditsRemaining - 1} of ${reauditsPerMonth} remaining this month.`
           : hasCredits && credits !== null && credits > 0
           ? `1 credit will be deducted. ${credits - 1} remaining after this audit.`
+          : isSubscriptionInitial
+          ? `Included in your subscription. ${reauditsRemaining - 1} audits left this month.`
           : 'Secure payment via Stripe. Credits never expire.'}
       </p>
     </div>
