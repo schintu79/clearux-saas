@@ -398,19 +398,47 @@ export async function runMultiModelBenchmark(
         .filter((m): m is AIModelDef => m != null)
     : DEFAULT_MODEL_CATALOG.filter((m) => m.defaultEnabled)
 
-  // Probe all models in parallel: Claude direct + OpenRouter models
-  const claudePromise = probeClaude(domain, questions)
+  // Probe all models in parallel: Claude direct + OpenRouter models.
+  // Each model probe gets its own 45s timeout so one hanging model
+  // doesn't block the entire benchmark. Promise.allSettled ensures
+  // we get results from every model that finishes in time.
+  const PER_MODEL_TIMEOUT = 45_000
+
+  const wrapWithTimeout = <T>(promise: Promise<T>, label: string): Promise<T> => {
+    let timer: ReturnType<typeof setTimeout>
+    return Promise.race([
+      promise.then(v => { clearTimeout(timer); return v }),
+      new Promise<never>((_, reject) => {
+        timer = setTimeout(() => reject(new Error(`${label} timed out after ${PER_MODEL_TIMEOUT}ms`)), PER_MODEL_TIMEOUT)
+      }),
+    ])
+  }
+
+  const timedOutProbe = (label: string, qs: string[]): ProbeRun => ({
+    answers: qs.map(q => ({ question: q, answer: `[${label} timed out]` })),
+    status: 'error',
+    errorMessage: `${label} exceeded ${PER_MODEL_TIMEOUT / 1000}s timeout`,
+  })
+
+  const claudePromise = wrapWithTimeout(probeClaude(domain, questions), 'Claude')
   const openRouterPromises = modelsToProbe.map((modelDef) =>
-    probeViaOpenRouter(modelDef, questions).then((run) => ({
-      modelDef,
-      run,
-    })),
+    wrapWithTimeout(
+      probeViaOpenRouter(modelDef, questions).then((run) => ({ modelDef, run })),
+      modelDef.displayName,
+    ),
   )
 
-  const [claudeRun, ...openRouterResults] = await Promise.all([
-    claudePromise,
-    ...openRouterPromises,
-  ])
+  const settled = await Promise.allSettled([claudePromise, ...openRouterPromises])
+
+  const claudeRun: ProbeRun = settled[0].status === 'fulfilled'
+    ? settled[0].value
+    : timedOutProbe('Claude', questions)
+
+  const openRouterResults = settled.slice(1).map((r, i) => {
+    if (r.status === 'fulfilled') return r.value as { modelDef: AIModelDef; run: ProbeRun }
+    console.warn(`[multi-model] ${modelsToProbe[i].displayName} probe timed out`)
+    return { modelDef: modelsToProbe[i], run: timedOutProbe(modelsToProbe[i].displayName, questions) }
+  })
 
   // Grade only providers that actually got real answers
   const gradeIfMeasured = async (
@@ -443,10 +471,30 @@ export async function runMultiModelBenchmark(
     })),
   )
 
-  const [claudeGrades, ...openRouterGraded] = await Promise.all([
-    claudeGradesPromise,
-    ...openRouterGradePromises,
+  const GRADING_TIMEOUT = 30_000
+  const gradingSettled = await Promise.allSettled([
+    wrapWithTimeout(claudeGradesPromise, 'grade-Claude'),
+    ...openRouterGradePromises.map((p, i) =>
+      wrapWithTimeout(p, `grade-${modelsToProbe[i]?.displayName || i}`),
+    ),
   ])
+
+  const emptyGrades = (modelId: string, label: string, qs: string[]): ModelProbeResult[] =>
+    qs.map(q => ({
+      modelId, modelLabel: label, question: q, answer: '[grading timed out]',
+      accuracy: 'no_data' as LlmProbeAccuracy, accuracyNote: 'Grading timed out',
+    }))
+
+  const claudeGrades: ModelProbeResult[] = gradingSettled[0].status === 'fulfilled'
+    ? gradingSettled[0].value
+    : emptyGrades('claude', 'Claude', questions)
+
+  const openRouterGraded = gradingSettled.slice(1).map((r, i) => {
+    const { modelDef, run } = openRouterResults[i]
+    if (r.status === 'fulfilled') return { modelDef, run, grades: r.value as ModelProbeResult[] }
+    console.warn(`[multi-model] Grading ${modelDef.displayName} timed out`)
+    return { modelDef, run, grades: emptyGrades(modelDef.shortId, modelDef.displayName, questions) }
+  })
 
   // Build benchmarks
   const benchmarks: ModelBenchmark[] = [

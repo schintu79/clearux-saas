@@ -1437,17 +1437,24 @@ Return 2-6 findings. Be specific and evidence-based. Reference specific files/co
 
           const heuristicResults = new Map<string, WcagCheckResult[]>()
           const Anthropic = (await import('@anthropic-ai/sdk')).default
-          const anthropic = new Anthropic()
-          await Promise.all(Array.from(heuristicPrompts.entries()).map(async ([url, prompt]) => {
+          const anthropic = new Anthropic({ timeout: 25_000 })
+          const WCAG_PER_URL_TIMEOUT = 20_000
+          await Promise.allSettled(Array.from(heuristicPrompts.entries()).map(async ([url, prompt]) => {
             try {
-              const msg = await anthropic.messages.create({
-                model: 'claude-sonnet-4-20250514',
-                max_tokens: 2000,
-                messages: [{ role: 'user', content: prompt }],
-              })
+              const msg = await Promise.race([
+                anthropic.messages.create({
+                  model: 'claude-sonnet-4-20250514',
+                  max_tokens: 2000,
+                  messages: [{ role: 'user', content: prompt }],
+                }),
+                new Promise<never>((_, reject) =>
+                  setTimeout(() => reject(new Error(`WCAG heuristic for ${url} timed out`)), WCAG_PER_URL_TIMEOUT),
+                ),
+              ])
               const text = msg.content.find(b => b.type === 'text')?.text || ''
               if (text) heuristicResults.set(url, parseHeuristicResponse(text))
-            } catch {
+            } catch (wcagErr) {
+              console.warn(`[inngest] WCAG heuristic for ${url} failed:`, (wcagErr as Error)?.message)
               // Heuristic analysis failed — automated results still valid
             }
           }))
@@ -1889,40 +1896,57 @@ Return 2-6 findings. Be specific and evidence-based. Reference specific files/co
         }
       }
 
-      // ── Run ALL probes in parallel for maximum speed ──
-      // Lightweight probes (AI discovery, structured data, readability) run
-      // alongside the heavier API probes (LLM probe, citation, multi-model).
-      // Rate limit risk is acceptable — providers use per-minute token budgets
-      // and our calls are spread across different providers (Anthropic, OpenAI,
-      // Google, Perplexity).
-      // Wrap all probes in a 90-second hard timeout to prevent indefinite blocking.
-      // If any single probe hangs (rate limit, unresponsive model), the entire
-      // Promise.all() would block. This timeout ensures forward progress.
-      const PROBE_TIMEOUT_MS = 90_000
-      const [aiDisc, sdResult, , llmProbe, citation, multiModel] = await Promise.race([
-        Promise.all([
-          aiDiscoveryPromise,
-          structuredDataPromise,
-          readabilityPromise,
-          runLlmProbeStep(),
-          runCitationStep(),
-          runMultiModelStep(),
-        ]),
-        new Promise<never>((_, reject) =>
-          setTimeout(() => reject(new Error('Parallel probes exceeded 90s timeout')), PROBE_TIMEOUT_MS),
-        ),
-      ]).catch(err => {
-        console.error(`[inngest] Parallel probes failed or timed out: ${err?.message || err}`)
-        // Return safe defaults so the pipeline can continue
-        return [
-          { summary: '', result: null },          // aiDiscovery
-          { summary: '', findingsCount: 0, typesFound: [] as string[] }, // structuredData
-          undefined,                               // readability (unused)
-          null,                                    // llmProbe
-          null,                                    // citation
-          { comparison: null, industry: null },    // multiModel
-        ] as any
+      // ── Run ALL probes in parallel with INDIVIDUAL timeouts ──
+      // Each probe is wrapped in its own withTimeout() so one hanging probe
+      // doesn't kill ALL results. Lightweight probes get 30s; heavy API
+      // probes get 60s. Promise.allSettled() ensures we collect every result
+      // that finishes in time, even if others fail.
+      const LIGHT_PROBE_TIMEOUT = 30_000
+      const HEAVY_PROBE_TIMEOUT = 60_000
+
+      const probeSettled = await Promise.allSettled([
+        withTimeout(aiDiscoveryPromise, LIGHT_PROBE_TIMEOUT, 'ai-discovery-probe'),
+        withTimeout(structuredDataPromise, LIGHT_PROBE_TIMEOUT, 'structured-data-probe'),
+        withTimeout(readabilityPromise, LIGHT_PROBE_TIMEOUT, 'readability-probe'),
+        withTimeout(runLlmProbeStep(), HEAVY_PROBE_TIMEOUT, 'llm-probe'),
+        withTimeout(runCitationStep(), HEAVY_PROBE_TIMEOUT, 'citation-probe'),
+        withTimeout(runMultiModelStep(), HEAVY_PROBE_TIMEOUT, 'multi-model-probe'),
+      ])
+
+      // Extract results — fulfilled probes return their value, rejected return safe defaults
+      const aiDisc = probeSettled[0].status === 'fulfilled' && probeSettled[0].value
+        ? probeSettled[0].value
+        : { summary: '', result: null }
+      const sdResult = probeSettled[1].status === 'fulfilled' && probeSettled[1].value
+        ? probeSettled[1].value
+        : { summary: '', findingsCount: 0, typesFound: [] as string[] }
+      // readability (index 2) — no return value needed
+      const llmProbe = probeSettled[3].status === 'fulfilled' ? probeSettled[3].value : null
+      const citation = probeSettled[4].status === 'fulfilled' ? probeSettled[4].value : null
+      const multiModel = probeSettled[5].status === 'fulfilled' && probeSettled[5].value
+        ? probeSettled[5].value
+        : { comparison: null, industry: null }
+
+      // Log which probes timed out and emit per-probe heartbeats
+      const probeLabels = ['ai-discovery', 'structured-data', 'readability', 'llm-probe', 'citation', 'multi-model']
+      let completedCount = 0
+      const totalProbes = probeSettled.length
+      probeSettled.forEach((r, i) => {
+        if (r.status === 'rejected') {
+          console.warn(`[inngest] Probe "${probeLabels[i]}" failed/timed out: ${r.reason?.message || r.reason}`)
+        }
+        completedCount++
       })
+      // Heartbeat: show probe completion progress (interpolate between probing start and end)
+      const probeProgress = stageProgress('probing', 0) + Math.round(
+        (stageProgress('probing', 1) - stageProgress('probing', 0)) * (completedCount / totalProbes) * 0.8
+      )
+      await setProgress(auditId, probeProgress)
+      await logActivity(auditId, `${completedCount}/${totalProbes} AI probes completed${
+        probeSettled.filter(r => r.status === 'rejected').length > 0
+          ? ` (${probeSettled.filter(r => r.status === 'rejected').length} timed out)`
+          : ''
+      }`)
 
       await setProgress(auditId, stageProgress('probing', 1))
       await logStageCompleted(auditId, 'probing', 'AI visibility probes complete')
