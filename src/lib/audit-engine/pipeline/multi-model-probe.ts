@@ -93,7 +93,7 @@ function getClient(): Anthropic {
 async function withRetry<T>(
   fn: () => Promise<T>,
   label: string,
-  maxRetries: number = 2,
+  maxRetries: number = 1,
   baseDelayMs: number = 2000,
 ): Promise<T> {
   let lastError: unknown
@@ -108,10 +108,9 @@ async function withRetry<T>(
         err.message.includes('overloaded') ||
         err.message.includes('529')
       )
-      const isTimeout = err instanceof Error && err.message.includes('Timeout')
-      if (attempt < maxRetries && (isRateLimit || isTimeout)) {
+      if (attempt < maxRetries && isRateLimit) {
         const delay = baseDelayMs * Math.pow(2, attempt) + Math.random() * 1000
-        console.warn(`[${label}] Attempt ${attempt + 1} failed (${isRateLimit ? 'rate limit' : 'timeout'}), retrying in ${Math.round(delay)}ms...`)
+        console.warn(`[${label}] Attempt ${attempt + 1} failed (rate limit), retrying in ${Math.round(delay)}ms...`)
         await new Promise(resolve => setTimeout(resolve, delay))
       }
     }
@@ -234,14 +233,26 @@ async function probeViaOpenRouter(
 
 /* ── Grading ───────────────────────────────────────────────── */
 
-async function gradeModelAnswers(
+interface ModelGradingInput {
+  modelId: string
+  modelLabel: string
+  answers: Array<{ question: string; answer: string }>
+}
+
+/**
+ * Grade ALL models' answers in a SINGLE Claude call to save API cost.
+ * Returns a Map from modelId to its graded results.
+ */
+async function gradeAllModelAnswers(
   domain: string,
-  modelLabel: string,
-  modelId: string,
-  answers: Array<{ question: string; answer: string }>,
+  models: ModelGradingInput[],
   groundTruth: SiteGroundTruth,
-): Promise<ModelProbeResult[]> {
+): Promise<Map<string, ModelProbeResult[]>> {
   const client = getClient()
+  const resultMap = new Map<string, ModelProbeResult[]>()
+
+  // If no models to grade, return empty
+  if (models.length === 0) return resultMap
 
   const truthParts: string[] = []
   if (groundTruth.siteName) truthParts.push(`Name: ${groundTruth.siteName}`)
@@ -249,13 +260,20 @@ async function gradeModelAnswers(
   if (groundTruth.offeringText) truthParts.push(`Offerings: ${groundTruth.offeringText.substring(0, 800)}`)
   if (groundTruth.fullContent) truthParts.push(`Content: ${groundTruth.fullContent.substring(0, 2000)}`)
 
-  const gradingPrompt = `Grade how accurately "${modelLabel}" answered questions about ${domain}.
+  // Build combined prompt with all models' answers
+  const modelSections = models.map((m) => {
+    const answersText = m.answers
+      .map((a, i) => `Q${i + 1}: ${a.question}\nA${i + 1}: ${a.answer}`)
+      .join('\n\n')
+    return `=== MODEL: ${m.modelLabel} (id: ${m.modelId}) ===\n${answersText}`
+  }).join('\n\n')
+
+  const gradingPrompt = `Grade how accurately each AI model answered questions about ${domain}.
 
 WEBSITE CONTENT (scraped from the actual site — use as reference, not as the ONLY truth):
 ${truthParts.join('\n')}
 
-ANSWERS:
-${answers.map((a, i) => `Q${i + 1}: ${a.question}\nA${i + 1}: ${a.answer}`).join('\n\n')}
+${modelSections}
 
 GRADING RULES (apply in order — use the FIRST one that fits):
 1. "accurate": Answer is factually correct and substantive. It matches the website content, OR it provides plausible, specific details consistent with what the site describes. If the answer correctly conveys what the company does, its products/services, or its value proposition — even with different wording — grade as accurate.
@@ -271,18 +289,21 @@ CRITICAL DISTINCTIONS:
 - "hallucinated" means PROVABLY WRONG with fabricated specifics, not merely "not on the website".
 - Grade generously when the answer captures the spirit of what the brand does, even if the exact wording differs.
 
-Respond with a JSON array:
-[{"accuracy": "accurate|partial|inaccurate|hallucinated|no_data", "note": "1 sentence why"}]`
+Respond with a JSON object keyed by model id. Each value is an array of grades (one per question, in order):
+{
+  "${models[0]?.modelId || 'model'}": [{"accuracy": "accurate|partial|inaccurate|hallucinated|no_data", "note": "1 sentence why"}, ...],
+  ...
+}`
 
   try {
     const resp = await withRetry(
       () => client.messages.create({
         model: 'claude-haiku-4-5-20251001',
-        max_tokens: 800,
+        max_tokens: 2000,
         temperature: 0,
         messages: [{ role: 'user', content: gradingPrompt }],
       }),
-      `multi-model-grading(${modelLabel})`,
+      `multi-model-grading-batch(${models.map(m => m.modelLabel).join(',')})`,
     )
 
     const text = resp.content
@@ -290,31 +311,61 @@ Respond with a JSON array:
       .map((b) => b.text)
       .join('')
 
-    const jsonMatch = text.match(/\[[\s\S]*\]/)
-    if (!jsonMatch) throw new Error('No JSON in grading response')
+    const jsonMatch = text.match(/\{[\s\S]*\}/)
+    if (!jsonMatch) throw new Error('No JSON in batched grading response')
 
-    const grades = JSON.parse(jsonMatch[0]) as Array<{
-      accuracy: string
-      note: string
-    }>
+    const allGrades = JSON.parse(jsonMatch[0]) as Record<
+      string,
+      Array<{ accuracy: string; note: string }>
+    >
 
-    return answers.map((a, i) => ({
-      modelId,
-      modelLabel,
-      question: a.question,
-      answer: a.answer,
-      accuracy: normalizeAccuracy(grades[i]?.accuracy),
-      accuracyNote: grades[i]?.note || 'Grading unavailable',
-    }))
+    for (const model of models) {
+      const grades = allGrades[model.modelId]
+      if (grades && Array.isArray(grades)) {
+        resultMap.set(
+          model.modelId,
+          model.answers.map((a, i) => ({
+            modelId: model.modelId,
+            modelLabel: model.modelLabel,
+            question: a.question,
+            answer: a.answer,
+            accuracy: normalizeAccuracy(grades[i]?.accuracy),
+            accuracyNote: grades[i]?.note || 'Grading unavailable',
+          })),
+        )
+      } else {
+        // Grades missing for this model — fall back to no_data
+        resultMap.set(
+          model.modelId,
+          model.answers.map((a) => ({
+            modelId: model.modelId,
+            modelLabel: model.modelLabel,
+            question: a.question,
+            answer: a.answer,
+            accuracy: 'no_data' as LlmProbeAccuracy,
+            accuracyNote: 'Grading parse error — model grades not found in response',
+          })),
+        )
+      }
+    }
+
+    return resultMap
   } catch {
-    return answers.map((a) => ({
-      modelId,
-      modelLabel,
-      question: a.question,
-      answer: a.answer,
-      accuracy: 'no_data' as LlmProbeAccuracy,
-      accuracyNote: 'Grading failed',
-    }))
+    // If the batch call fails entirely, return no_data for everything
+    for (const model of models) {
+      resultMap.set(
+        model.modelId,
+        model.answers.map((a) => ({
+          modelId: model.modelId,
+          modelLabel: model.modelLabel,
+          question: a.question,
+          answer: a.answer,
+          accuracy: 'no_data' as LlmProbeAccuracy,
+          accuracyNote: 'Grading failed',
+        })),
+      )
+    }
+    return resultMap
   }
 }
 
@@ -440,43 +491,39 @@ export async function runMultiModelBenchmark(
     return { modelDef: modelsToProbe[i], run: timedOutProbe(modelsToProbe[i].displayName, questions) }
   })
 
-  // Grade only providers that actually got real answers
-  const gradeIfMeasured = async (
-    label: string,
-    modelId: string,
-    run: ProbeRun,
-  ): Promise<ModelProbeResult[]> => {
-    if (run.status !== 'measured') {
-      return run.answers.map((a) => ({
-        modelId,
-        modelLabel: label,
-        question: a.question,
-        answer: a.answer,
-        accuracy: 'no_data' as LlmProbeAccuracy,
-        accuracyNote: run.status === 'skipped' ? 'Provider not configured' : (run.errorMessage || 'Probe failed'),
-      }))
+  // Separate measured models (need grading) from skipped/errored ones
+  const skippedGrades = (modelId: string, label: string, run: ProbeRun): ModelProbeResult[] =>
+    run.answers.map((a) => ({
+      modelId,
+      modelLabel: label,
+      question: a.question,
+      answer: a.answer,
+      accuracy: 'no_data' as LlmProbeAccuracy,
+      accuracyNote: run.status === 'skipped' ? 'Provider not configured' : (run.errorMessage || 'Probe failed'),
+    }))
+
+  // Collect all measured models into a single batch for grading
+  const modelsToGrade: ModelGradingInput[] = []
+  if (claudeRun.status === 'measured') {
+    modelsToGrade.push({ modelId: 'claude', modelLabel: 'Claude', answers: claudeRun.answers })
+  }
+  for (const { modelDef, run } of openRouterResults) {
+    if (run.status === 'measured') {
+      modelsToGrade.push({ modelId: modelDef.shortId, modelLabel: modelDef.displayName, answers: run.answers })
     }
-    return gradeModelAnswers(domain, label, modelId, run.answers, groundTruth)
   }
 
-  // Grade Claude
-  const claudeGradesPromise = gradeIfMeasured('Claude', 'claude', claudeRun)
-
-  // Grade all OpenRouter models
-  const openRouterGradePromises = openRouterResults.map(({ modelDef, run }) =>
-    gradeIfMeasured(modelDef.displayName, modelDef.shortId, run).then((grades) => ({
-      modelDef,
-      run,
-      grades,
-    })),
-  )
-
-  const gradingSettled = await Promise.allSettled([
-    wrapWithTimeout(claudeGradesPromise, 'grade-Claude'),
-    ...openRouterGradePromises.map((p, i) =>
-      wrapWithTimeout(p, `grade-${modelsToProbe[i]?.displayName || i}`),
-    ),
-  ])
+  // Single batched grading call for ALL measured models
+  let gradeMap: Map<string, ModelProbeResult[]>
+  try {
+    gradeMap = await wrapWithTimeout(
+      gradeAllModelAnswers(domain, modelsToGrade, groundTruth),
+      'grade-all-models',
+    )
+  } catch {
+    console.warn('[multi-model] Batched grading timed out — all grades will be no_data')
+    gradeMap = new Map()
+  }
 
   const emptyGrades = (modelId: string, label: string, qs: string[]): ModelProbeResult[] =>
     qs.map(q => ({
@@ -484,19 +531,17 @@ export async function runMultiModelBenchmark(
       accuracy: 'no_data' as LlmProbeAccuracy, accuracyNote: 'Grading timed out',
     }))
 
-  const claudeGrades: ModelProbeResult[] = gradingSettled[0].status === 'fulfilled'
-    ? gradingSettled[0].value
-    : emptyGrades('claude', 'Claude', questions)
+  // Resolve grades for Claude
+  const claudeGrades: ModelProbeResult[] = claudeRun.status === 'measured'
+    ? (gradeMap.get('claude') || emptyGrades('claude', 'Claude', questions))
+    : skippedGrades('claude', 'Claude', claudeRun)
 
-  const openRouterGraded = gradingSettled.slice(1).map((r, i) => {
-    const { modelDef, run } = openRouterResults[i]
-    if (r.status === 'fulfilled') {
-      // r.value is { modelDef, run, grades } from the .then() mapper — extract grades
-      const fulfilled = r.value as { modelDef: AIModelDef; run: ProbeRun; grades: ModelProbeResult[] }
-      return { modelDef, run, grades: fulfilled.grades }
-    }
-    console.warn(`[multi-model] Grading ${modelDef.displayName} timed out`)
-    return { modelDef, run, grades: emptyGrades(modelDef.shortId, modelDef.displayName, questions) }
+  // Resolve grades for OpenRouter models
+  const openRouterGraded = openRouterResults.map(({ modelDef, run }) => {
+    const grades = run.status === 'measured'
+      ? (gradeMap.get(modelDef.shortId) || emptyGrades(modelDef.shortId, modelDef.displayName, questions))
+      : skippedGrades(modelDef.shortId, modelDef.displayName, run)
+    return { modelDef, run, grades }
   })
 
   // Build benchmarks

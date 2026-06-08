@@ -2662,6 +2662,7 @@ RULES FOR RE-AUDIT:
           const gapResults = gapResultsRaw ?? gapCategories.map(() => [] as any[])
           console.log(`[inngest] ── Gap-fill END (${Date.now() - gapStartTs}ms${gapResultsRaw === null ? ' TIMED OUT' : ''}) ──`)
 
+          const gapRows: any[] = []
           for (let catIdx = 0; catIdx < gapResults.length; catIdx++) {
             const findings = gapResults[catIdx]
             const originalCatIdx = gapCategoryIndices[catIdx] ?? null
@@ -2682,7 +2683,7 @@ RULES FOR RE-AUDIT:
                 severity: finding.severity,
                 ...classification,
               })
-              await db.from('audit_findings').insert({
+              gapRows.push({
                 audit_id: auditId,
                 checklist_item_id: null,
                 category_index: originalCatIdx,
@@ -2703,9 +2704,12 @@ RULES FOR RE-AUDIT:
                 detection_source: 'deep_analyzer',
                 communication: buildCommunicationForGenericFinding({ title: finding.title, description: finding.description, recommendation: finding.recommendation, estimatedImpact: finding.estimatedImpact || null, severity: finding.severity }, siteProfile),
                 ...computeActionModelFields({ title: finding.title, description: finding.description, recommendation: finding.recommendation, fix_type: validated.fixType, finding_type: validated.findingType }),
-              } as any)
+              })
               findingsInGap++
             }
+          }
+          if (gapRows.length > 0) {
+            await db.from('audit_findings').insert(gapRows)
           }
 
           return { findingsInGap, categoriesAnalyzed: gapCategories.length }
@@ -3681,8 +3685,8 @@ RULES FOR RE-AUDIT:
         // Build crawled URLs set from crawl result
         const crawledUrls = new Set<string>()
         if (crawlResult.firstPageUrl) crawledUrls.add(crawlResult.firstPageUrl)
-        if (crawlResult.pageUrls) {
-          for (const u of crawlResult.pageUrls) crawledUrls.add(u)
+        if (crawlResult.crawledUrls) {
+          for (const u of crawlResult.crawledUrls) crawledUrls.add(u)
         }
 
         // Cast previous raw findings to AuditFinding shape for reconciliation
