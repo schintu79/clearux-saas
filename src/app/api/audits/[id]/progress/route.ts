@@ -80,7 +80,7 @@ export async function GET(
     analysing: !!(a.audit_stage === 'reporting' || a.audit_stage === 'enriching' || a.audit_stage === 'complete'),
     reporting: !!(report || a.audit_stage === 'enriching' || a.audit_stage === 'complete'),
     enriching: a.audit_stage === 'complete',
-    complete: a.status === 'completed',
+    complete: a.status === 'completed' || a.status === 'completed_with_warnings',
   }
 
   return NextResponse.json({

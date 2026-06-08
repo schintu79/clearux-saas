@@ -581,11 +581,15 @@ Return 2-6 findings. Be specific and evidence-based. Reference specific files/co
       })
 
       // ── Generate brand report ──
+      // Hard 180s timeout — prevents the step from consuming the
+      // full 300s Vercel budget and leaving no time for recovery.
       await step.run('brand-fast-report', async () => {
+        await withStepTimeout(async () => {
         await setStatus(auditId, 'generating_report', 80)
         await setProgress(auditId, 80, 'reporting')
         const db = getDb()
 
+        try {
         const { data: allFindings } = await db
           .from('audit_findings')
           .select('*')
@@ -606,6 +610,9 @@ Return 2-6 findings. Be specific and evidence-based. Reference specific files/co
           siteProfile,
         )
 
+        // ── Heartbeat: brand report narrative complete → 85% ──
+        await setProgress(auditId, 85)
+
         const severityCount = {
           critical: findings.filter((f) => f.severity === 'critical').length,
           high: findings.filter((f) => f.severity === 'high').length,
@@ -623,6 +630,9 @@ Return 2-6 findings. Be specific and evidence-based. Reference specific files/co
         } catch (pdfErr) {
           console.error('[inngest] Brand PDF generation error (non-fatal):', pdfErr)
         }
+
+        // ── Heartbeat: PDF done → 87% ──
+        await setProgress(auditId, 87)
 
         const reportJsonData = {
           ...reportData,
@@ -649,8 +659,20 @@ Return 2-6 findings. Be specific and evidence-based. Reference specific files/co
           pdf_generated_at: pdfUrl ? new Date().toISOString() : null,
         } as any)
 
+        // ── Heartbeat: report row inserted → 89% ──
+        await setProgress(auditId, 89)
+
         await auditLog(auditId, 'brand_report_generated', 'success',
           `Brand report: score ${reportData.overallScore}/100, ${findings.length} findings`)
+
+        } catch (reportErr) {
+          // Same pattern as website audit: log and re-throw so outer catch handles refund + status
+          const errMsg = reportErr instanceof Error ? reportErr.message : String(reportErr)
+          console.error(`[inngest] Brand report generation failed for audit ${auditId}:`, reportErr)
+          await auditLog(auditId, 'brand_report_failed', 'error', `Brand report generation failed: ${errMsg.slice(0, 200)}`)
+          throw reportErr
+        }
+        }, 180_000, 'brand-fast-report')
       })
 
       // ── Complete ──
@@ -3610,6 +3632,8 @@ RULES FOR RE-AUDIT:
       await logActivity(auditId, 'Writing executive summary and calculating scores...')
       await setStatus(auditId, 'generating_report', stageProgress('reporting', 0))
       await setProgress(auditId, stageProgress('reporting', 0), 'reporting')
+      const reportStepStart = Date.now()
+      console.log(`[inngest] Audit ${auditId} entered generate-report step at ${new Date().toISOString()}`)
       // Fetch all findings from DB
       const { data: allFindings } = await db
         .from('audit_findings')
@@ -3655,6 +3679,7 @@ RULES FOR RE-AUDIT:
       )
 
       // ── Heartbeat: report narrative complete → 85% ──
+      console.log(`[inngest] Audit ${auditId} generateReport() returned in ${Date.now() - reportStepStart}ms`)
       await setProgress(auditId, stageProgress('reporting', 0.4))
 
       const severityCount = {
@@ -3769,6 +3794,7 @@ RULES FOR RE-AUDIT:
       } as any)
 
       // ── Heartbeat: report inserted into DB → 89% ──
+      console.log(`[inngest] Audit ${auditId} report DB insert complete in ${Date.now() - reportStepStart}ms`)
       await setProgress(auditId, stageProgress('reporting', 0.9))
 
       await logStageCompleted(auditId, 'reporting', 'Report generated', {
@@ -4290,33 +4316,63 @@ RULES FOR RE-AUDIT:
     return { success: true, auditId }
 
     } catch (err) {
-      // Top-level failure handler: refund credit and mark audit as failed.
-      // But skip if the audit was already completed (error came from enrichment).
+      // Top-level failure handler: decide between completed_with_warnings and failed.
+      // CRITICAL: Check for report existence — not just status — because the
+      // generate-report step may have inserted a report row before timing out.
+      // Setting "failed" when a report exists loses the user's data and incorrectly
+      // refunds credit. The finally block can't fix this because "failed" is terminal.
       console.error(`[inngest] Audit ${auditId} FAILED:`, err)
       try {
         const db = getDb()
         const { data: auditCheck } = await db
           .from('audits')
-          .select('status')
+          .select('status, progress_percent')
           .eq('id', auditId)
           .single()
         const currentStatus = (auditCheck as any)?.status as string
+        const currentProgress = (auditCheck as any)?.progress_percent as number ?? 0
         if (currentStatus === 'completed' || currentStatus === 'completed_with_warnings') {
           // Audit already completed — this error is from post-completion enrichment, non-fatal
           console.warn(`[inngest] Audit ${auditId} already ${currentStatus} — ignoring post-completion error`)
         } else {
-          await refundCredit(auditId)
-          const errorMsg = err instanceof Error ? err.message : String(err)
-          await db
-            .from('audits')
-            .update({
-              status: 'failed',
-              crawl_error: errorMsg.length > 500 ? errorMsg.slice(0, 500) : errorMsg,
+          // Check if a report row exists — the generate-report step may have
+          // inserted one before the timeout/error fired. If so, the audit has
+          // usable data and should be completed_with_warnings, not failed.
+          const { data: reportCheck } = await db
+            .from('reports')
+            .select('id')
+            .eq('audit_id', auditId)
+            .maybeSingle()
+          const hasReport = !!reportCheck
+
+          if (hasReport) {
+            // Report exists — complete with warnings, don't refund
+            console.warn(`[inngest] Audit ${auditId} failed at status=${currentStatus} progress=${currentProgress}% but report EXISTS — completing with warnings`)
+            await db.from('audits').update({
+              status: 'completed_with_warnings',
+              progress_percent: 100,
+              audit_stage: 'complete',
+              completed_at: new Date().toISOString(),
               updated_at: new Date().toISOString(),
-            } as any)
-            .eq('id', auditId)
-          await logPipelineFailed(auditId, errorMsg.slice(0, 300))
-          await auditLog(auditId, 'audit_failed', 'error', `Audit failed: ${errorMsg.slice(0, 200)}. Credit refunded.`)
+            } as any).eq('id', auditId)
+            await logPipelineCompleted(auditId, Date.now() - pipelineStartTime)
+            await auditLog(auditId, 'audit_completed_with_warnings', 'warning',
+              'Audit completed with warnings — report was generated but pipeline failed during finalization.')
+          } else {
+            // No report — truly failed, refund credit
+            await refundCredit(auditId)
+            const errorMsg = err instanceof Error ? err.message : String(err)
+            await db
+              .from('audits')
+              .update({
+                status: 'failed',
+                crawl_error: errorMsg.length > 500 ? errorMsg.slice(0, 500) : errorMsg,
+                updated_at: new Date().toISOString(),
+              } as any)
+              .eq('id', auditId)
+            await logPipelineFailed(auditId, errorMsg.slice(0, 300))
+            await auditLog(auditId, 'audit_failed', 'error', `Audit failed: ${errorMsg.slice(0, 200)}. Credit refunded.`)
+          }
         }
       } catch (failErr) {
         console.error(`[inngest] Failed to handle audit failure for ${auditId}:`, failErr)
