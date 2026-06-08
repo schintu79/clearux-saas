@@ -2742,183 +2742,187 @@ RULES FOR RE-AUDIT:
       // ════════════════════════════════════════════════════════════
       // DEEP MODE (first audit or explicit Dig Deeper) — FULL AI ANALYSIS
       // ════════════════════════════════════════════════════════════
-      await logActivity(auditId, 'Preparing analysis modules...')
-      await setProgress(auditId, stageProgress('analysing', 0) + 1, 'analysing')
+      // CRITICAL: All expensive prep (brand file extraction, category selection,
+      // content building) is wrapped in a step.run so it's memoized across
+      // Inngest invocations. Without this, brand file extraction (up to 60s)
+      // re-runs on EVERY invocation, eating into the 300s Vercel budget and
+      // causing stalls at 56%.
+      const analysisPrepResult = await step.run('analysis-prep', async () => {
+        await logActivity(auditId, 'Preparing analysis modules...')
+        await setProgress(auditId, stageProgress('analysing', 0) + 1, 'analysing')
 
-      // ── Determine which modules (and thus categories) to analyze ──
-      // Module slug → category index mapping (each module = 4 categories):
-      //   foundation → 0-3, human_experience → 4-7, inclusive_design → 8-11,
-      //   future_readiness → 12-15, seo_structure → 16-19, accessibility_readiness → 20-23, design_consistency → 24-27
-      const MODULE_SLUG_ORDER = ['foundation', 'human_experience', 'inclusive_design', 'future_readiness', 'seo_structure', 'accessibility_readiness', 'design_consistency']
+        // ── Determine which modules (and thus categories) to analyze ──
+        const MODULE_SLUG_ORDER = ['foundation', 'human_experience', 'inclusive_design', 'future_readiness', 'seo_structure', 'accessibility_readiness', 'design_consistency']
 
-      let activeSlugs: string[]
-      if (auditDetails.selectedModules) {
-        // New system: explicit module slugs from DB
-        activeSlugs = auditDetails.selectedModules
-      } else if (auditDetails.selectedPillars) {
-        // Legacy fallback: convert old pillar indices to module slugs (0-3 only)
-        activeSlugs = auditDetails.selectedPillars
-          .filter((idx: number) => idx >= 0 && idx < 4)
-          .map((idx: number) => MODULE_SLUG_ORDER[idx])
-        // Also include modules that are part of a complete audit but have no legacy index
-        // (e.g. seo_structure was added after the legacy pillar system)
-        const legacyMappedSlugs = new Set(activeSlugs)
-        for (const mod of AUDIT_MODULES) {
-          if (mod.includedInComplete && mod.legacyPillarIndex == null && !legacyMappedSlugs.has(mod.slug)) {
-            activeSlugs.push(mod.slug)
+        let activeSlugs: string[]
+        if (auditDetails.selectedModules) {
+          activeSlugs = auditDetails.selectedModules
+        } else if (auditDetails.selectedPillars) {
+          activeSlugs = auditDetails.selectedPillars
+            .filter((idx: number) => idx >= 0 && idx < 4)
+            .map((idx: number) => MODULE_SLUG_ORDER[idx])
+          const legacyMappedSlugs = new Set(activeSlugs)
+          for (const mod of AUDIT_MODULES) {
+            if (mod.includedInComplete && mod.legacyPillarIndex == null && !legacyMappedSlugs.has(mod.slug)) {
+              activeSlugs.push(mod.slug)
+            }
+          }
+        } else {
+          activeSlugs = [...COMPLETE_AUDIT_SLUGS]
+        }
+
+        // Design Consistency always runs (categories 24-27)
+        let includeBrandDnaEnrichment = false
+        if ((activeSlugs.includes('brand_consistency') || activeSlugs.includes('design_consistency')) && auditDetails.brandIdentityId) {
+          try {
+            const hasMeaningful = await withTimeout(
+              hasMeaningfulBrandDna(auditDetails.brandIdentityId),
+              10_000,
+              'hasMeaningfulBrandDna',
+            )
+            includeBrandDnaEnrichment = !!hasMeaningful
+          } catch {
+            console.warn('[inngest] hasMeaningfulBrandDna timed out — skipping brand enrichment')
+            includeBrandDnaEnrichment = false
           }
         }
-      } else {
-        // Complete audit: all modules that are includedInComplete
-        activeSlugs = [...COMPLETE_AUDIT_SLUGS]
-      }
-
-      // Design Consistency always runs (categories 24-27) — evaluates the live site's
-      // visual system consistency. Brand DNA enrichment is ONLY added when the user
-      // explicitly enabled brand_consistency AND meaningful brand files exist.
-      let includeBrandDnaEnrichment = false
-      if ((activeSlugs.includes('brand_consistency') || activeSlugs.includes('design_consistency')) && auditDetails.brandIdentityId) {
-        try {
-          const hasMeaningful = await withTimeout(
-            hasMeaningfulBrandDna(auditDetails.brandIdentityId),
-            10_000,
-            'hasMeaningfulBrandDna',
-          )
-          includeBrandDnaEnrichment = !!hasMeaningful
-        } catch {
-          console.warn('[inngest] hasMeaningfulBrandDna timed out — skipping brand enrichment')
-          includeBrandDnaEnrichment = false
+        activeSlugs = activeSlugs.map(s => s === 'brand_consistency' ? 'design_consistency' : s)
+        if (!activeSlugs.includes('design_consistency')) {
+          activeSlugs.push('design_consistency')
         }
-      }
-      // Normalize slug: 'brand_consistency' → 'design_consistency' for category resolution
-      activeSlugs = activeSlugs.map(s => s === 'brand_consistency' ? 'design_consistency' : s)
-      // Ensure design_consistency is always in the active set
-      if (!activeSlugs.includes('design_consistency')) {
-        activeSlugs.push('design_consistency')
-      }
-      await withTimeout(
-        auditLog(auditId, 'design_mode', 'info',
-          `Design Consistency: always active. Brand DNA enrichment: ${includeBrandDnaEnrichment ? 'enabled (meaningful brand files found)' : 'disabled'}`),
-        10_000,
-        'auditLog-design-mode',
-      )
-
-      // Build the set of category indices to analyze
-      const selectedIndices = new Set<number>()
-      for (const slug of activeSlugs) {
-        const moduleIdx = MODULE_SLUG_ORDER.indexOf(slug)
-        if (moduleIdx === -1) continue
-        for (let c = moduleIdx * 4; c < moduleIdx * 4 + 4; c++) {
-          if (c < UX_CATEGORY_NAMES.length) selectedIndices.add(c)
-        }
-      }
-
-      let categoriesToAnalyze = UX_CATEGORY_NAMES.filter((_, idx) => selectedIndices.has(idx))
-
-      // ── Fetch brand content only when user explicitly enabled Brand DNA comparison ──
-      // Wrapped with 60s timeout to prevent hanging outside step.run() boundary
-      let brandContext = ''
-      if (includeBrandDnaEnrichment && auditDetails.brandIdentityId) {
-        const brandExtractionResult = await withTimeout(
-          (async () => {
-            const db = getDb()
-            const { data: brandFiles } = await db
-              .from('brand_identity_files')
-              .select('file_name, file_url, file_type')
-              .eq('brand_identity_id', auditDetails.brandIdentityId)
-
-            if (brandFiles && brandFiles.length > 0) {
-              const extracted = await extractAllBrandFiles(
-                brandFiles.map((f: any) => ({
-                  file_name: f.file_name as string,
-                  file_url: f.file_url as string,
-                  file_type: f.file_type as string | null,
-                })),
-              )
-              // Regression fix: Include visualDescription alongside textContent.
-              // Previously only textContent was used, dropping all visual/image descriptions
-              // from PDFs and images — causing Brand DNA comparison to miss logo, color,
-              // and visual identity data entirely.
-              const textParts = extracted
-                .filter(e => (e.textContent && e.textContent.length > 0) || (e.visualDescription && e.visualDescription.length > 0))
-                .map(e => {
-                  const parts = [`[Brand file: ${e.fileName}]`]
-                  if (e.textContent) parts.push(e.textContent)
-                  if (e.visualDescription) parts.push(`[Visual description]: ${e.visualDescription}`)
-                  return parts.join('\n')
-                })
-              const ctx = textParts.join('\n\n---\n\n')
-              await auditLog(auditId, 'brand_files_extracted', 'success',
-                `Extracted content from ${extracted.length} brand file(s)`)
-              return ctx
-            }
-            return ''
-          })(),
-          60_000,
-          'brand-file-extraction',
+        await withTimeout(
+          auditLog(auditId, 'design_mode', 'info',
+            `Design Consistency: always active. Brand DNA enrichment: ${includeBrandDnaEnrichment ? 'enabled (meaningful brand files found)' : 'disabled'}`),
+          10_000,
+          'auditLog-design-mode',
         )
-        brandContext = brandExtractionResult ?? ''
-      }
 
-      const BATCH_SIZE = 8 // 8 parallel calls per batch — fast with Anthropic tier-3+ rate limits
-      const batches = []
+        // Build category list
+        const selectedIndices = new Set<number>()
+        for (const slug of activeSlugs) {
+          const moduleIdx = MODULE_SLUG_ORDER.indexOf(slug)
+          if (moduleIdx === -1) continue
+          for (let c = moduleIdx * 4; c < moduleIdx * 4 + 4; c++) {
+            if (c < UX_CATEGORY_NAMES.length) selectedIndices.add(c)
+          }
+        }
+        const categoriesToAnalyze = UX_CATEGORY_NAMES.filter((_, idx) => selectedIndices.has(idx))
+
+        // ── Fetch brand content only when explicitly enabled ──
+        let brandContext = ''
+        if (includeBrandDnaEnrichment && auditDetails.brandIdentityId) {
+          const brandExtractionResult = await withTimeout(
+            (async () => {
+              const db = getDb()
+              const { data: brandFiles } = await db
+                .from('brand_identity_files')
+                .select('file_name, file_url, file_type')
+                .eq('brand_identity_id', auditDetails.brandIdentityId)
+
+              if (brandFiles && brandFiles.length > 0) {
+                const extracted = await extractAllBrandFiles(
+                  brandFiles.map((f: any) => ({
+                    file_name: f.file_name as string,
+                    file_url: f.file_url as string,
+                    file_type: f.file_type as string | null,
+                  })),
+                )
+                const textParts = extracted
+                  .filter(e => (e.textContent && e.textContent.length > 0) || (e.visualDescription && e.visualDescription.length > 0))
+                  .map(e => {
+                    const parts = [`[Brand file: ${e.fileName}]`]
+                    if (e.textContent) parts.push(e.textContent)
+                    if (e.visualDescription) parts.push(`[Visual description]: ${e.visualDescription}`)
+                    return parts.join('\n')
+                  })
+                const ctx = textParts.join('\n\n---\n\n')
+                await auditLog(auditId, 'brand_files_extracted', 'success',
+                  `Extracted content from ${extracted.length} brand file(s)`)
+                return ctx
+              }
+              return ''
+            })(),
+            60_000,
+            'brand-file-extraction',
+          )
+          brandContext = brandExtractionResult ?? ''
+        }
+
+        // Build content strings
+        const aiDiscoveryBlock = aiDiscovery.summary ? `\n\n${aiDiscovery.summary}` : ''
+        const structuredDataBlock = structuredDataResult.summary ? `\n\n${structuredDataResult.summary}` : ''
+        const llmProbeBlock = llmProbeResult.summary ? `\n\n${llmProbeResult.summary}` : ''
+        const contentWithContext = `${patchedContext}\n\n${crawlResult.pageContent}${aiDiscoveryBlock}${structuredDataBlock}${llmProbeBlock}`
+        const designConsistencyContent = brandContext
+          ? `=== BRAND IDENTITY GUIDELINES (PRIMARY REFERENCE) ===\n${brandContext}\n\n=== MANDATORY COMPARISON INSTRUCTION ===\nYour PRIMARY task for this category is to compare the website's actual implementation against the brand guidelines above. For EACH aspect of the brand guidelines (colors, typography, voice, tone, visual style, messaging patterns), check whether the website follows or deviates from them.\n\nYou MUST flag:\n- Any mismatch between documented brand colors/fonts and what the site actually uses\n- Voice/tone deviations from the brand personality\n- Visual style inconsistencies with brand guidelines\n- Messaging that contradicts the brand positioning\n\nDo NOT smooth over discrepancies. If the brand says "professional and authoritative" but the site uses casual slang, that is a HIGH severity finding. If the brand specifies specific colors but the site uses different ones, flag it.\n\n=== WEBSITE CONTENT (TO COMPARE AGAINST BRAND) ===\n${contentWithContext}`
+          : contentWithContext
+
+        return { categoriesToAnalyze, contentWithContext, designConsistencyContent }
+      })
+
+      // Destructure memoized prep result — these never re-execute on replay
+      const { categoriesToAnalyze, contentWithContext, designConsistencyContent } = analysisPrepResult
+
+      const BATCH_SIZE = 8
+      const batches: string[][] = []
       for (let i = 0; i < categoriesToAnalyze.length; i += BATCH_SIZE) {
         batches.push(categoriesToAnalyze.slice(i, i + BATCH_SIZE))
       }
 
-      const aiDiscoveryBlock = aiDiscovery.summary ? `\n\n${aiDiscovery.summary}` : ''
-      const structuredDataBlock = structuredDataResult.summary ? `\n\n${structuredDataResult.summary}` : ''
-      const llmProbeBlock = llmProbeResult.summary ? `\n\n${llmProbeResult.summary}` : ''
-      // Use patchedContext (which has [VERIFIED FIXED] labels) instead of siteContext.context
-      const contentWithContext = `${patchedContext}\n\n${crawlResult.pageContent}${aiDiscoveryBlock}${structuredDataBlock}${llmProbeBlock}`
-      // Design Consistency categories use standard content by default.
-      // When Brand DNA enrichment is enabled, prepend brand guidelines for comparison.
-      // Regression fix: Strengthened from weak "ALSO compare" afterthought to a dedicated
-      // comparison section with explicit instructions. RULE 5: Brand DNA comparison must
-      // highlight real mismatches, not smooth them over.
-      const designConsistencyContent = brandContext
-        ? `=== BRAND IDENTITY GUIDELINES (PRIMARY REFERENCE) ===\n${brandContext}\n\n=== MANDATORY COMPARISON INSTRUCTION ===\nYour PRIMARY task for this category is to compare the website's actual implementation against the brand guidelines above. For EACH aspect of the brand guidelines (colors, typography, voice, tone, visual style, messaging patterns), check whether the website follows or deviates from them.\n\nYou MUST flag:\n- Any mismatch between documented brand colors/fonts and what the site actually uses\n- Voice/tone deviations from the brand personality\n- Visual style inconsistencies with brand guidelines\n- Messaging that contradicts the brand positioning\n\nDo NOT smooth over discrepancies. If the brand says "professional and authoritative" but the site uses casual slang, that is a HIGH severity finding. If the brand specifies specific colors but the site uses different ones, flag it.\n\n=== WEBSITE CONTENT (TO COMPARE AGAINST BRAND) ===\n${contentWithContext}`
-        : contentWithContext
       // Design Consistency category names (indices 24-27)
       const designConsistencyCategoryNames = new Set(
         UX_CATEGORY_NAMES.slice(24, 28)
       )
 
       let totalFindingsCount = 0
-      await logActivity(auditId, `Starting deep analysis: ${categoriesToAnalyze.length} categories across ${batches.length} batch${batches.length === 1 ? '' : 'es'}...`)
+      // NOTE: logActivity/setProgress calls are INSIDE each step.run below
+      // so they don't re-execute on every Inngest invocation (which was
+      // causing unnecessary DB writes and eating into the 300s Vercel budget).
 
       for (let batchIdx = 0; batchIdx < batches.length; batchIdx++) {
         const batch = batches[batchIdx]
-
-        // Visibility: log each batch start so the user sees progress
-        const batchStartProgress = Math.round(30 + (batchIdx / batches.length) * 35)
-        await logActivity(auditId, `Analysing batch ${batchIdx + 1}/${batches.length}: ${batch.slice(0, 3).join(', ')}${batch.length > 3 ? '...' : ''}`)
-        await setProgress(auditId, batchStartProgress, 'analysing')
+        // NO coordination code here — DB writes moved inside step.run
 
         const batchResult = await step.run(`analyze-batch-${batchIdx + 1}`, async () => {
           const db = getDb()
           let sortOrder = totalFindingsCount
           let findingsInBatch = 0
 
+          // Log batch start INSIDE step.run so it's memoized (won't re-run on replay)
+          if (batchIdx === 0) {
+            await logActivity(auditId, `Starting deep analysis: ${categoriesToAnalyze.length} categories across ${batches.length} batch${batches.length === 1 ? '' : 'es'}...`)
+          }
+          const batchStartProgress = Math.round(30 + (batchIdx / batches.length) * 35)
+          await logActivity(auditId, `Analysing batch ${batchIdx + 1}/${batches.length}: ${batch.slice(0, 3).join(', ')}${batch.length > 3 ? '...' : ''}`)
+          await setProgress(auditId, batchStartProgress, 'analysing')
+
           console.log(`[inngest] Batch ${batchIdx + 1}: ${batch.join(', ')}`)
           const CATEGORY_TIMEOUT_MS = 45_000 // 45s hard budget per category
-          const batchResults = await Promise.all(
-            batch.map(async (categoryName) => {
-              const content = designConsistencyCategoryNames.has(categoryName)
-                ? designConsistencyContent
-                : contentWithContext
-              try {
-                const result = await withTimeout(
-                  analyzeCategory(content, categoryName, [], auditDetails.userFocus, auditDetails.language, 'deep', siteProfile),
-                  CATEGORY_TIMEOUT_MS,
-                  `analyze-${categoryName}`,
-                )
-                return result || [] // withTimeout returns null on timeout
-              } catch (err) {
-                console.error(`[inngest] Category ${categoryName} failed:`, err)
-                return []
-              }
-            }),
+          // withStepTimeout wraps the entire Promise.all so the batch can't
+          // hang indefinitely if AI APIs stall beyond individual timeouts.
+          // 120s = generous ceiling for 8 parallel 45s calls + DB writes.
+          const batchResults = await withStepTimeout(
+            () => Promise.all(
+              batch.map(async (categoryName) => {
+                const content = designConsistencyCategoryNames.has(categoryName)
+                  ? designConsistencyContent
+                  : contentWithContext
+                try {
+                  const result = await withTimeout(
+                    analyzeCategory(content, categoryName, [], auditDetails.userFocus, auditDetails.language, 'deep', siteProfile),
+                    CATEGORY_TIMEOUT_MS,
+                    `analyze-${categoryName}`,
+                  )
+                  return result || [] // withTimeout returns null on timeout
+                } catch (err) {
+                  console.error(`[inngest] Category ${categoryName} failed:`, err)
+                  return []
+                }
+              }),
+            ),
+            120_000,
+            `analyze-batch-${batchIdx + 1}-timeout`,
+            [] as any[], // fallback: empty results if entire batch times out
           )
 
           // Batch all findings for this analysis batch into a single insert
