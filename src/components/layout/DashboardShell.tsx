@@ -156,11 +156,11 @@ const DashboardShell: React.FC<DashboardShellProps> = ({ children }) => {
         subscription_plan: d.subscription_plan ?? null,
         subscription_status: d.subscription_status ?? null,
         reaudits_remaining: d.reaudits_remaining ?? 0,
-        reaudits_per_month: d.reaudits_per_month ?? 0,
+        reaudits_per_month: d.reaudits_limit ?? d.reaudits_per_month ?? 0,
         deep_audits_remaining: d.deep_audits_remaining ?? 0,
-        deep_audits_per_month: d.deep_audits_per_month ?? 0,
-        workspace_count: d.workspace_count ?? 0,
-        workspace_limit: d.workspace_limit ?? 1,
+        deep_audits_per_month: d.deep_audits_limit ?? d.deep_audits_per_month ?? 0,
+        workspace_count: d.active_workspaces ?? d.workspace_count ?? 0,
+        workspace_limit: d.max_active_workspaces ?? d.workspace_limit ?? 1,
         first_audit_free: d.first_audit_free ?? false,
       })).catch(() => {});
       fetch('/api/notifications').then((r) => r.json()).then((d) => setUnreadNotifications(d.unreadCount ?? 0)).catch(() => {});
