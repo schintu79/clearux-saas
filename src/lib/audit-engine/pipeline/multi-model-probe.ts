@@ -68,9 +68,9 @@ export interface MultiModelComparison {
   insight: string
 }
 
-/* ── Probe questions (compact — 3 questions for cost efficiency) ── */
+/* ── Fallback questions (used when no workspace shortlist is available) ── */
 
-const BENCHMARK_QUESTIONS = [
+const FALLBACK_BENCHMARK_QUESTIONS = [
   'What is {domain}? Describe the company/organization and what they offer in 2-3 sentences.',
   'What are the main products, services, or features of {domain}? List the key offerings.',
   'Why should someone choose {domain}? What makes it unique or different from alternatives?',
@@ -374,13 +374,22 @@ function buildBenchmark(
  * @param enabledModels Optional list of OpenRouter model slugs to
  *   probe (from user settings). If not provided, uses the default
  *   catalog with defaultEnabled: true.
+ * @param benchmarkQuestions Optional list of category-specific questions
+ *   from the workspace shortlist (Top 10). When provided, these replace
+ *   the generic fallback questions and become the scoring basis.
+ *   Questions should already have {business} interpolated but may still
+ *   contain {domain} placeholders.
  */
 export async function runMultiModelBenchmark(
   domain: string,
   groundTruth: SiteGroundTruth,
   enabledModels?: string[],
+  benchmarkQuestions?: string[],
 ): Promise<MultiModelComparison> {
-  const questions = BENCHMARK_QUESTIONS.map((q) => q.replace('{domain}', domain))
+  const rawQuestions = benchmarkQuestions && benchmarkQuestions.length > 0
+    ? benchmarkQuestions
+    : FALLBACK_BENCHMARK_QUESTIONS
+  const questions = rawQuestions.map((q) => q.replace('{domain}', domain))
 
   // Determine which non-Claude models to probe
   const modelsToProbe: AIModelDef[] = enabledModels

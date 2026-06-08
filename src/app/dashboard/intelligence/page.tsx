@@ -2076,15 +2076,17 @@ function IntelligencePage() {
                       <span className="text-[12px]" style={{ color: 'var(--m-muted)' }}>Loading questions...</span>
                     </div>
                   ) : (() => {
-                    const allQs: Array<{ key: string; text: string; family?: string; isPinned?: boolean; onClick: () => void }> = [];
-                    // Pin first 3 audit questions at the top (these are included in every audit)
+                    const allQs: Array<{ key: string; text: string; family?: string; isPinned?: boolean; isBenchmark?: boolean; onClick: () => void }> = [];
+                    // All shortlist questions are benchmark questions — these form the
+                    // category-specific Top 10 scoring basis. Pin the first 3 for visibility.
                     for (let i = 0; i < iqQuestions.length; i++) {
                       const q = iqQuestions[i];
-                      allQs.push({ key: q.questionId, text: q.questionText, family: q.family, isPinned: i < 3, onClick: () => handleIqAsk(q.questionText, q.family) });
+                      allQs.push({ key: q.questionId, text: q.questionText, family: q.family, isPinned: i < 3, isBenchmark: true, onClick: () => handleIqAsk(q.questionText, q.family) });
                     }
+                    // Legacy audit-time probe questions that aren't in the shortlist
                     for (const group of questionGroups) {
                       if (!iqQuestions.some(q => q.questionText === group.question)) {
-                        allQs.push({ key: `probe-${group.question}`, text: group.question, onClick: () => handleIqAsk(group.question) });
+                        allQs.push({ key: `probe-${group.question}`, text: group.question, isBenchmark: false, onClick: () => handleIqAsk(group.question) });
                       }
                     }
                     if (allQs.length === 0) {
@@ -2142,9 +2144,20 @@ function IntelligencePage() {
                                 {idx + 1}
                               </span>
                               <div className="flex-1 min-w-0">
-                                <span className="text-[13px] leading-snug">{q.text}</span>
-                                {!isActive && (hasAccuracy || hasSaved) && (
+                                <div className="flex items-center gap-1.5">
+                                  <span className="text-[13px] leading-snug">{q.text}</span>
+                                </div>
+                                {!isActive && (
                                   <div className="flex items-center gap-1.5 mt-1">
+                                    {q.isBenchmark ? (
+                                      <span className="text-[9px] font-semibold uppercase tracking-wider px-1.5 py-px rounded" style={{ background: isActive ? 'rgba(255,255,255,0.15)' : 'color-mix(in srgb, var(--ink) 6%, transparent)', color: isActive ? 'var(--paper)' : 'var(--m-muted)' }}>
+                                        Benchmark
+                                      </span>
+                                    ) : (
+                                      <span className="text-[9px] font-semibold uppercase tracking-wider px-1.5 py-px rounded" style={{ background: 'color-mix(in srgb, var(--warn) 10%, transparent)', color: 'var(--warn)' }}>
+                                        Custom
+                                      </span>
+                                    )}
                                     {accCount > 0 && (
                                       <span className="flex items-center gap-0.5 text-[10px] font-medium px-1.5 py-px rounded" style={{ background: 'rgba(34,197,94,0.1)', color: 'var(--ok)' }}>
                                         <CheckCircle2 size={10} strokeWidth={2} />
@@ -2163,7 +2176,7 @@ function IntelligencePage() {
                                         {wrongCount}
                                       </span>
                                     )}
-                                    {hasSaved && !hasAccuracy && (
+                                    {hasSaved && !hasAccuracy && accCount === 0 && partCount === 0 && wrongCount === 0 && (
                                       <span className="text-[10px] font-medium px-1.5 py-px rounded" style={{ background: 'var(--paper-2)', color: 'var(--m-muted)' }}>saved</span>
                                     )}
                                   </div>
@@ -2304,8 +2317,11 @@ function IntelligencePage() {
                 <BarChart3 size={15} strokeWidth={1.75} style={{ color: 'var(--ink)' }} />
                 <h2 className="text-[15px] font-semibold" style={{ color: 'var(--ink)' }}>Model-by-model breakdown</h2>
               </div>
-              <p className="text-[13px] mb-4" style={{ color: 'var(--m-muted)' }}>
-                How each AI model performs when asked about your brand. Accuracy computed from all evaluated questions.
+              <p className="text-[13px] mb-2" style={{ color: 'var(--m-muted)' }}>
+                How each AI model performs when asked about your brand. Accuracy is computed from all evaluated questions using the category-specific Top 10 benchmark set.
+              </p>
+              <p className="text-[11px] mb-4 px-3 py-2 rounded-lg" style={{ background: 'color-mix(in srgb, var(--ink) 3%, transparent)', color: 'var(--m-muted)' }}>
+                <strong style={{ color: 'var(--ink)' }}>Methodology:</strong> We select the 10 most relevant questions for your industry and category — the kind of questions real users ask Google and AI about businesses like yours. Each model answers the same questions, and responses are graded against your actual website content. Scores: Accurate = 100%, Partial = 50%, No data = 25%, Inaccurate/Hallucinated = 0%.
               </p>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">

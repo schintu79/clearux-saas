@@ -53,6 +53,7 @@ import { runCitationAudit } from '@/lib/audit-engine/ai-citation-audit'
 import { generateFixPlaybooks } from '@/lib/audit-engine/fix-playbooks'
 import { runMultiModelBenchmark } from '@/lib/audit-engine/pipeline/multi-model-probe'
 import { findModelBySlug } from '@/lib/ai/model-catalog'
+import { getOrRefreshShortlist } from '@/lib/ai/shortlist-generator'
 import { detectIndustry, getUserBenchmarkPosition } from '@/lib/audit-engine/industry-benchmark'
 import { generatePredictiveRecommendations } from '@/lib/audit-engine/predictive-recommendations'
 import { runBrandIntelligenceAnalysis } from '@/lib/audit-engine/brand-intelligence'
@@ -1844,7 +1845,22 @@ Return 2-6 findings. Be specific and evidence-based. Reference specific files/co
           } catch {
             // If table doesn't exist yet or query fails, use defaults
           }
-          const comparison = await runMultiModelBenchmark(domain, groundTruth, enabledModelSlugs)
+          // Fetch workspace's category-specific Top 10 questions from the
+          // shortlist generator. These replace the generic fallback questions
+          // and become the benchmark scoring basis.
+          let shortlistQuestions: string[] | undefined
+          if (auditDetails.workspaceId) {
+            try {
+              const shortlist = await getOrRefreshShortlist(auditDetails.workspaceId, db)
+              if (shortlist.length > 0) {
+                shortlistQuestions = shortlist.map(q => q.questionText)
+                console.log(`[inngest] Using ${shortlistQuestions.length} category-specific benchmark questions from workspace shortlist`)
+              }
+            } catch (err) {
+              console.warn('[inngest] Shortlist fetch failed, falling back to default questions:', err)
+            }
+          }
+          const comparison = await runMultiModelBenchmark(domain, groundTruth, enabledModelSlugs, shortlistQuestions)
           // Batch insert all multi-model benchmark results at once
           if (comparison.benchmarks.length > 0) {
             const benchInserts = comparison.benchmarks.map(b => ({
