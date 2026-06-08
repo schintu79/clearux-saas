@@ -353,9 +353,38 @@ export const processAuditFn = inngest.createFunction(
         .from('audits')
         .select('*, profiles(email, full_name)')
         .eq('id', auditId)
+        .is('deleted_at', null)
         .single()
 
-      if (error || !audit) throw new Error(`Audit not found: ${error?.message}`)
+      if (error || !audit) throw new Error(`Audit not found or deleted: ${error?.message}`)
+
+      // ── Workspace coherence gate ────────────────────────────
+      // Abort early if the workspace has been archived/deleted since
+      // the audit was queued, preventing stale processing.
+      const wsId = (audit as any).workspace_id
+      if (wsId) {
+        const { data: ws } = await db
+          .from('workspaces')
+          .select('status')
+          .eq('id', wsId)
+          .single()
+        if (!ws || ws.status !== 'active') {
+          throw new Error(`Workspace ${wsId} is archived or deleted — aborting audit processing`)
+        }
+      }
+
+      // If linked brand identity is soft-deleted, abort
+      const biId = (audit as any).brand_identity_id
+      if (biId) {
+        const { data: bi } = await db
+          .from('brand_identities')
+          .select('id, deleted_at')
+          .eq('id', biId)
+          .single()
+        if (bi && (bi as any).deleted_at) {
+          throw new Error(`Brand identity ${biId} is deleted — aborting audit processing`)
+        }
+      }
 
       // Parse selected_modules: new slug-based system
       const rawModules = (audit as any).selected_modules

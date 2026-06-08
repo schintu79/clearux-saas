@@ -167,23 +167,38 @@ export const processBrandAuditFn = inngest.createFunction(
           .from('audits')
           .select('*, profiles(email, full_name)')
           .eq('id', auditId)
+          .is('deleted_at', null)
           .single()
 
-        if (error || !audit) throw new Error(`Audit not found: ${error?.message}`)
+        if (error || !audit) throw new Error(`Audit not found or deleted: ${error?.message}`)
 
         const a = audit as any
         if (!a.brand_identity_id) {
           throw new Error('Brand identity audit requires a brand_identity_id')
         }
 
-        // Fetch brand identity
+        // ── Workspace coherence gate ──────────────────────────
+        const wsId = a.workspace_id as string | null
+        if (wsId) {
+          const { data: ws } = await db
+            .from('workspaces')
+            .select('status')
+            .eq('id', wsId)
+            .single()
+          if (!ws || ws.status !== 'active') {
+            throw new Error(`Workspace ${wsId} is archived or deleted — aborting brand audit`)
+          }
+        }
+
+        // Fetch brand identity — must not be soft-deleted
         const { data: brand } = await db
           .from('brand_identities')
-          .select('id, name, description')
+          .select('id, name, description, deleted_at')
           .eq('id', a.brand_identity_id)
           .single()
 
         if (!brand) throw new Error('Brand identity not found')
+        if ((brand as any).deleted_at) throw new Error('Brand identity is deleted — aborting brand audit')
 
         // Fetch brand files
         const { data: files } = await db

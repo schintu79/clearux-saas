@@ -1,7 +1,11 @@
 // ============================================================
-// ClearUX API — POST /api/sites/delete
-// Soft-delete all audits for a given domain (site-level delete).
-// Sites are implicit — no dedicated table, just grouped audits.
+// Fixpath API — POST /api/sites/delete
+// Soft-delete all audits for a given domain WITHIN A WORKSPACE.
+//
+// WORKSPACE-SCOPED: workspace_id is REQUIRED. Domain is used
+// only as a filter within the workspace boundary — never as the
+// primary identity key. This prevents cross-workspace deletion
+// when two workspaces share the same domain.
 // ============================================================
 
 import { NextRequest, NextResponse } from 'next/server'
@@ -19,23 +23,40 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const { domain } = await request.json()
+    const { domain, workspace_id } = await request.json()
     if (!domain || typeof domain !== 'string') {
       return NextResponse.json({ error: 'Domain is required' }, { status: 400 })
+    }
+    if (!workspace_id || typeof workspace_id !== 'string') {
+      return NextResponse.json({ error: 'workspace_id is required' }, { status: 400 })
     }
 
     const db = createServiceSupabase()
 
-    // Find all audits for this user whose product_url contains the domain
+    // ── Verify workspace ownership ────────────────────────────
+    const { data: ws } = await db
+      .from('workspaces')
+      .select('id')
+      .eq('id', workspace_id)
+      .eq('user_id', user.id)
+      .eq('status', 'active')
+      .single()
+
+    if (!ws) {
+      return NextResponse.json({ error: 'Workspace not found' }, { status: 404 })
+    }
+
+    // ── Find audits scoped by workspace_id + domain ───────────
     const { data: audits, error: fetchErr } = await db
       .from('audits')
       .select('id, product_url')
       .eq('user_id', user.id)
+      .eq('workspace_id', workspace_id)
       .is('deleted_at', null)
 
     if (fetchErr) throw fetchErr
 
-    // Filter to audits matching this domain
+    // Filter to audits matching this domain within the workspace
     const domainLower = domain.toLowerCase()
     const matchingIds = (audits || [])
       .filter((a: any) => {
@@ -51,7 +72,7 @@ export async function POST(request: NextRequest) {
       .map((a: any) => a.id)
 
     if (matchingIds.length === 0) {
-      return NextResponse.json({ error: 'No audits found for this domain' }, { status: 404 })
+      return NextResponse.json({ error: 'No audits found for this domain in this workspace' }, { status: 404 })
     }
 
     const now = new Date().toISOString()

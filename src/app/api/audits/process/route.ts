@@ -52,6 +52,41 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    // ── Workspace coherence preflight ─────────────────────────
+    // Abort if the audit's workspace is archived/deleted or if
+    // linked brand identity is soft-deleted.
+    const wsId = (audit as any).workspace_id
+    if (wsId) {
+      const { data: ws } = await supabase
+        .from('workspaces')
+        .select('status')
+        .eq('id', wsId)
+        .single()
+
+      if (!ws || ws.status !== 'active') {
+        return NextResponse.json(
+          { error: 'Cannot process audit — workspace is archived or deleted' },
+          { status: 409 },
+        )
+      }
+    }
+
+    const brandId = (audit as any).brand_identity_id
+    if (brandId) {
+      const { data: brand } = await supabase
+        .from('brand_identities')
+        .select('id, deleted_at')
+        .eq('id', brandId)
+        .single()
+
+      if (!brand || brand.deleted_at) {
+        return NextResponse.json(
+          { error: 'Cannot process audit — linked brand identity is deleted' },
+          { status: 409 },
+        )
+      }
+    }
+
     // Dispatch to Inngest only — no direct execution to prevent race conditions
     const a = audit as any
     const auditType = a.audit_type || (a.brand_identity_id && !a.product_url ? 'brand_identity' : 'website')

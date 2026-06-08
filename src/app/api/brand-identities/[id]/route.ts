@@ -83,10 +83,10 @@ export async function PUT(
         ? brand_promise.trim().slice(0, 600) || null
         : null
     }
-    // Backfill workspace_id if provided (fixes orphaned records with NULL workspace_id)
-    if ('workspace_id' in (body || {}) && body.workspace_id) {
-      update.workspace_id = body.workspace_id
-    }
+    // SECURITY: workspace_id is immutable via public API.
+    // Orphaned records must be repaired via migration or admin tooling,
+    // never by client-driven backfill. Silently ignore any workspace_id
+    // in the request body to prevent cross-workspace reassignment.
 
     const { data, error } = await db
       .from('brand_identities')
@@ -138,12 +138,14 @@ export async function DELETE(
 
     if (error) throw error
 
-    // Also soft-delete all audits linked to this brand
+    // Also soft-delete all LIVE audits linked to this brand
+    // Scoped by user_id and filtered to exclude already-deleted audits
     await db
       .from('audits')
       .update({ deleted_at: now } as any)
       .eq('brand_identity_id', id)
       .eq('user_id', user.id)
+      .is('deleted_at', null)
 
     return NextResponse.json({ success: true })
   } catch (err) {
