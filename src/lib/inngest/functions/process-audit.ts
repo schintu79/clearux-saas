@@ -61,6 +61,7 @@ import type { AuditFinding } from '@/types/database'
 import { resolveCapability, inferDeployableType } from '@/lib/fix-action-model'
 import { reconcileFindings, type ReconciliationResult } from '@/lib/audit-engine/pipeline/reconciliation'
 import { PIPELINE_VERSION, stageProgress, getStage } from '@/lib/audit-engine/pipeline-spec'
+import { refundCredit } from '@/lib/audit-engine/refund-credit'
 import {
   logPipelineStarted,
   logPipelineCompleted,
@@ -184,46 +185,9 @@ async function auditLog(
   }
 }
 
-/* ── Refund credit helper ── */
-async function refundCredit(auditId: string) {
-  try {
-    const db = getDb()
-    // Find the payment record for this audit
-    const { data: payment } = await db
-      .from('payments')
-      .select('user_id, stripe_payment_intent_id')
-      .eq('audit_id', auditId)
-      .single()
-
-    if (!payment) return // No payment to refund (e.g., free first audit)
-
-    const paymentId = (payment as any).stripe_payment_intent_id as string
-    const userId = (payment as any).user_id as string
-
-    // Only refund credit-based or free-first payments (not Stripe payments)
-    if (paymentId.startsWith('credit_') || paymentId.startsWith('free_first_')) {
-      if (paymentId.startsWith('credit_')) {
-        // Add credit back
-        const { data: profile } = await db
-          .from('profiles')
-          .select('credits')
-          .eq('id', userId)
-          .single()
-
-        const currentCredits = (profile as any)?.credits ?? 0
-        await db
-          .from('profiles')
-          .update({ credits: currentCredits + 1, updated_at: new Date().toISOString() } as any)
-          .eq('id', userId)
-      }
-
-      await auditLog(auditId, 'credit_refunded', 'success',
-        paymentId.startsWith('free_first_') ? 'Free first audit — no credit to refund' : '1 credit refunded to user')
-    }
-  } catch (err) {
-    console.error('[inngest] Refund error (non-fatal):', err)
-  }
-}
+/* ── Refund credit — imported from shared module ── */
+// refundCredit() is imported from '@/lib/audit-engine/refund-credit'
+// Used by: onFailure handler, outer catch, finally safety net
 
 /* ── UX Categories — sourced from analyzer.ts (single source of truth) ── */
 
@@ -274,9 +238,11 @@ export const processAuditFn = inngest.createFunction(
         await db.from('audits').update({
           status: forcedStatus,
           progress_percent: hasReport ? 100 : progress,
-          audit_stage: hasReport ? 'complete' : 'failed',
-          completed_at: hasReport ? new Date().toISOString() : undefined,
-          crawl_error: hasReport ? undefined : 'Pipeline timed out during enrichment. Your audit results are still available.',
+          // Leave audit_stage as-is for failed audits so we can see WHERE it stalled;
+          // only set to 'complete' when the audit resolved with a report.
+          audit_stage: hasReport ? 'complete' : undefined,
+          completed_at: new Date().toISOString(),
+          crawl_error: hasReport ? undefined : 'Pipeline timed out during processing. Your partial results may still be available.',
           updated_at: new Date().toISOString(),
         } as any).eq('id', auditId)
 
@@ -4388,7 +4354,12 @@ RULES FOR RE-AUDIT:
               await logPipelineCompleted(auditId, Date.now() - pipelineStartTime)
               await logActivity(auditId, 'Audit completed with some enrichment steps skipped.')
             } else {
+              // CRITICAL: Refund credit when safety net forces audit to failed.
+              // Without this, users lose their credit on pipeline exits that
+              // bypass the outer catch (e.g., process killed between Inngest steps).
+              await refundCredit(auditId)
               await logPipelineFailed(auditId, `Pipeline exited with non-terminal status: ${status}`)
+              await logActivity(auditId, 'Audit failed — pipeline exited without producing a report. Credit refunded.')
             }
           }
         }
