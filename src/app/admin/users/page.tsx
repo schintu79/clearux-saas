@@ -427,7 +427,7 @@ export default function AdminUsersPage() {
                   <option value="starter">Starter (1 workspace, 4 re-audits/mo)</option>
                   <option value="pro">Pro (3 workspaces, 12 re-audits/mo)</option>
                   <option value="team">Team (10 workspaces, 40 re-audits/mo)</option>
-                  <option value="enterprise">Enterprise (25 workspaces, 100 re-audits/mo)</option>
+                  <option value="enterprise">Enterprise (25+ workspaces, 100+ re-audits/mo)</option>
                 </select>
               </div>
 
@@ -520,7 +520,7 @@ export default function AdminUsersPage() {
                   className="w-full px-3 py-2 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--signal)]/30"
                   style={{ background: 'var(--paper)', border: '1px solid var(--rule)', color: 'var(--ink)' }}
                 />
-                <p className="text-[11px] mt-1" style={{ color: 'var(--m-muted)' }}>Starter: 10 · Pro: 30 · Team: 100 · Enterprise: 500</p>
+                <p className="text-[11px] mt-1" style={{ color: 'var(--m-muted)' }}>Starter: 10 · Pro: 30 · Team: 100 · Enterprise: 500+</p>
               </div>
 
               {/* Free membership toggle */}

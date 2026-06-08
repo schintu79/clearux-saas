@@ -238,19 +238,19 @@ export default function PricingContent() {
                         className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[13px] font-sans font-medium"
                         style={{ background: 'color-mix(in srgb, var(--ink) 6%, transparent)', color: 'var(--ink)' }}
                       >
-                        {ENTERPRISE_PLAN.maxActiveWorkspaces} workspaces
+                        {ENTERPRISE_PLAN.maxActiveWorkspaces}+ workspaces
                       </span>
                       <span
                         className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[13px] font-sans font-medium"
                         style={{ background: 'color-mix(in srgb, var(--ink) 6%, transparent)', color: 'var(--ink)' }}
                       >
-                        {ENTERPRISE_PLAN.reAuditsPerMonth} re-audits / mo
+                        {ENTERPRISE_PLAN.reAuditsPerMonth}+ re-audits / mo
                       </span>
                       <span
                         className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[13px] font-sans font-medium"
                         style={{ background: 'color-mix(in srgb, var(--ink) 6%, transparent)', color: 'var(--ink)' }}
                       >
-                        {ENTERPRISE_PLAN.deepAuditsPerMonth} deep audits / mo
+                        {ENTERPRISE_PLAN.deepAuditsPerMonth}+ deep audits / mo
                       </span>
                       <span
                         className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[13px] font-sans font-medium"
@@ -399,7 +399,7 @@ export default function PricingContent() {
                   { plan: 'Starter', bestFor: 'One active site', workspaces: '1', reAudits: '4', access: 'Full product' },
                   { plan: 'Pro', bestFor: 'Multiple brands', workspaces: '3', reAudits: '12', access: 'Full product' },
                   { plan: 'Team', bestFor: 'Agencies and teams', workspaces: '10', reAudits: '40', access: 'Full product' },
-                  { plan: 'Enterprise', bestFor: 'Large organisations', workspaces: '25', reAudits: '100', access: 'Full product + SLA' },
+                  { plan: 'Enterprise', bestFor: 'Large organisations', workspaces: '25+', reAudits: '100+', access: 'Full product + SLA' },
                 ] as const).map((row, i) => (
                   <tr
                     key={row.plan}
