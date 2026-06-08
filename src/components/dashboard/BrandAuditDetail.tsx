@@ -932,6 +932,52 @@ export default function BrandAuditDetail({
               <a href={`/api/reports/${auditId}/docx`} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 border border-ink/20 text-ink text-[11px] font-mono tracking-[0.06em] uppercase px-4 py-2 rounded-lg hover:bg-paper-2 transition-colors">
                 <Download size={13} /> Word
               </a>
+              {findings.length > 0 && (
+                <button
+                  onClick={() => {
+                    // Build structured markdown from brand audit findings
+                    const dateStr = new Date().toISOString().slice(0, 10);
+                    const name = brandName || 'Brand';
+                    const lines: string[] = [
+                      `# ${name} — Brand DNA Audit Findings`,
+                      ``,
+                      `**Date:** ${audit.completed_at ? new Date(audit.completed_at).toLocaleDateString() : dateStr}`,
+                      `**Score:** ${report.overall_score ?? '—'}/100`,
+                      `**Findings:** ${findings.length}`,
+                      ``,
+                    ];
+
+                    // Group findings by their brand category slug
+                    for (const cat of categoryScores) {
+                      const catFindings = findingsByCategory[cat.slug] || [];
+                      if (catFindings.length === 0) continue;
+                      lines.push(`## ${cat.name} — ${cat.score}/100`);
+                      lines.push(``);
+                      for (const f of catFindings) {
+                        const sev = (f.severity || 'medium').toUpperCase();
+                        lines.push(`### [${sev}] ${f.title}`);
+                        if (f.description) lines.push(``, f.description);
+                        if (f.recommendation) lines.push(``, `**Recommendation:** ${f.recommendation}`);
+                        lines.push(``);
+                      }
+                    }
+
+                    const md = lines.join('\n');
+                    const blob = new Blob([md], { type: 'text/markdown;charset=utf-8' });
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = `fixpath-brand-findings-${(brandName || 'brand').toLowerCase().replace(/\s+/g, '-')}-${dateStr}.md`;
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                    URL.revokeObjectURL(url);
+                  }}
+                  className="flex items-center gap-2 border border-ink/20 text-ink text-[11px] font-mono tracking-[0.06em] uppercase px-4 py-2 rounded-lg hover:bg-paper-2 transition-colors"
+                >
+                  <Download size={13} /> Download all findings
+                </button>
+              )}
               {audit.brand_identity_id && (
                 <Link
                   href={`${dashPrefix}/brand-dna`}
