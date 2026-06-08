@@ -27,6 +27,8 @@ const PHASE1_MODULES = [
  * Severity deductions — MUST match analyzer.ts generateReport() exactly.
  * Using different penalties here caused interim scores to be 10-15 points
  * higher than the final report, making the score appear to "drop" on completion.
+ *
+ * BASE_SCORE = 97 must match analyzer.ts and latest-audit.ts.
  */
 const SEVERITY_DEDUCTION: Record<string, number> = {
   critical: 18,
@@ -34,7 +36,7 @@ const SEVERITY_DEDUCTION: Record<string, number> = {
   medium: 6,
   low: 2,
 }
-const BASE_SCORE = 92
+const BASE_SCORE = 97
 
 export async function GET(
   req: NextRequest,

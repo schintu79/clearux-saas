@@ -18,6 +18,33 @@
 
 import type { AuditFinding } from '@/types/database';
 
+// ── Score state metadata ──────────────────────────────────────
+// Every score in the system must belong to one of these states.
+// The UI uses this to decide what messaging to show alongside the number.
+
+export type ScoreState =
+  | 'scored'           // Findings exist, score computed from penalty deductions
+  | 'clean'            // 0 findings in this category after full analysis — genuinely good
+  | 'evidence_limited' // Clean but crawl coverage was limited or data is sparse
+  | 'baseline_derived' // Score inherited from a previous audit (re-audit baseline)
+  | 'unanalyzed'       // Category not included in this audit (-1 sentinel)
+
+/** Human-readable label for the overall health state, driven by score + finding count. */
+export function healthLabel(score: number, totalFindings: number): { label: string; tier: 'excellent' | 'healthy' | 'needs_work' | 'at_risk' } {
+  if (score >= 90 && totalFindings === 0) return { label: 'Excellent', tier: 'excellent' }
+  if (score >= 90) return { label: 'Excellent', tier: 'excellent' }
+  if (score >= 70) return { label: 'Healthy', tier: 'healthy' }
+  if (score >= 40) return { label: 'Needs work', tier: 'needs_work' }
+  return { label: 'At risk', tier: 'at_risk' }
+}
+
+/** Returns true when all analyzed category scores come from zero-finding categories. */
+export function isCleanAudit(categoryScores: Array<{ score: number; score_state?: ScoreState }>): boolean {
+  const analyzed = categoryScores.filter(c => c.score >= 0)
+  if (analyzed.length === 0) return false
+  return analyzed.every(c => c.score_state === 'clean' || c.score_state === undefined)
+}
+
 export interface GroupedFinding {
   /** The primary record — status / dismiss actions operate ONLY on this id. */
   primary: AuditFinding;

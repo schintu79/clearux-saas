@@ -73,6 +73,7 @@ import {
   isInProgressAuditStatus,
   type LatestAuditBundle,
 } from '@/lib/dashboard/latest-audit';
+import { healthLabel } from '@/lib/audit-findings-presentation';
 import { useWorkspace } from '@/context/WorkspaceContext';
 import { useAuditProgress } from '@/hooks/useAuditProgress';
 import EmptyAudit from '@/components/dashboard/v2/EmptyAudit';
@@ -884,6 +885,7 @@ function OverviewInner() {
         overallScore={overallScore}
         latestAuditId={audit.id}
         completedAt={audit.completed_at || audit.created_at}
+        totalFindings={openFindings.length}
       />
 
       {/* ── Re-audit reconciliation delta summary ────────── */}
@@ -959,7 +961,7 @@ function OverviewInner() {
                 background: `color-mix(in srgb, ${scoreColorVar(overallScore)} 10%, transparent)`,
               }}
             >
-              {overallScore >= 70 ? 'Healthy' : overallScore >= 40 ? 'Needs work' : 'At risk'}
+              {healthLabel(overallScore, openFindings.length).label}
             </span>
           </div>
           {pillarScores.length > 0 && (
@@ -1251,7 +1253,8 @@ function IssuesByImportance({
           >
             <CheckCircle2 size={18} />
           </span>
-          <p className="text-[11px]" style={{ color: 'var(--m-muted)' }}>All clear at the moment.</p>
+          <p className="text-[11px] font-medium" style={{ color: 'var(--ok)' }}>No issues found across all audited categories.</p>
+          <p className="text-[10px] mt-0.5" style={{ color: 'var(--m-muted)' }}>Your site scored well — keep monitoring with regular audits.</p>
         </div>
       ) : (
         <div className="grid grid-cols-2 gap-2.5">
@@ -1848,15 +1851,42 @@ function AlertOrSummary({
   overallScore,
   latestAuditId,
   completedAt,
+  totalFindings = 0,
 }: {
   critical: number;
   execSummary: string;
   overallScore: number;
   latestAuditId: string;
   completedAt: string;
+  totalFindings?: number;
 }) {
   const { workspaceSlug: _ws } = useWorkspace();
   const _dp = _ws ? `/dashboard/${_ws}` : '/dashboard';
+
+  // Clean audit — no findings at all → success banner
+  if (totalFindings === 0 && overallScore >= 90) {
+    const { label } = healthLabel(overallScore, 0);
+    return (
+      <div
+        className="mb-4 px-4 py-3 rounded-xl flex items-start gap-3"
+        style={{
+          background: 'color-mix(in srgb, var(--ok) 7%, transparent)',
+          border: '1px solid color-mix(in srgb, var(--ok) 22%, transparent)',
+        }}
+      >
+        <CheckCircle2 size={16} style={{ color: 'var(--ok)' }} className="flex-shrink-0 mt-0.5" />
+        <div className="flex-1 min-w-0">
+          <p className="text-[13px] font-semibold leading-tight" style={{ color: 'var(--ok)' }}>
+            {label} — no issues found
+          </p>
+          <p className="text-[11px] mt-1" style={{ color: 'var(--m-muted)' }}>
+            Your site scored {overallScore}/100 with zero findings across all audited categories. Keep monitoring with regular audits.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
   if (critical > 0) {
     return (
       <div

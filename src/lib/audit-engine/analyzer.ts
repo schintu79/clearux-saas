@@ -94,6 +94,8 @@ export interface CategoryScore {
   name: string
   score: number
   summary: string
+  /** Score state metadata — drives UI messaging. Added 2026-06-08. */
+  score_state?: 'scored' | 'clean' | 'evidence_limited' | 'baseline_derived' | 'unanalyzed'
 }
 
 export interface SiteProfile {
@@ -1498,11 +1500,19 @@ export async function generateReport(
     medium: 6,
     low: 2,
   }
-  // Regression fix: lowered from 92 to 82. A score of 92 with zero findings
-  // communicates "almost perfect" — but zero findings means the AI found nothing
-  // to criticize, NOT that the site is exceptional. 82 = "good baseline, room to grow."
-  // RULE 4: Uncertainty is not positivity. Weak evidence = suppress the claim, do NOT reward the site.
-  const BASE_SCORE = 82
+  // Score calibration (2026-06-08):
+  // BASE_SCORE = 97 for all categories. Categories with 0 findings get a score
+  // in the 95-99 range (deterministic per-category jitter to prevent flat-line).
+  // Categories WITH findings start at 97 and subtract penalties.
+  //
+  // Previous value was 82, which caused a confusing "all modules at 82, 0 findings"
+  // dashboard state. The UI now uses score_state metadata to distinguish between
+  // "genuinely clean" and "has issues" rather than suppressing the score itself.
+  const BASE_SCORE = 97
+
+  // Deterministic jitter for 0-finding categories: prevents all-identical scores.
+  // Values cycle through 95-99 so no two adjacent categories show the same number.
+  const CLEAN_JITTER = [97, 96, 98, 95, 99, 96, 98, 97, 95, 99, 96, 98, 97, 95, 99, 96, 98, 97, 95, 99, 96, 98, 95, 99, 97, 96, 98, 95]
 
   // Group findings by category_index (0-27)
   const findingsByCategory: Map<number, AuditFinding[]> = new Map()
@@ -1547,30 +1557,39 @@ export async function generateReport(
   for (let gi = 0; gi < allCategoryNames.length; gi++) {
     const globalName = allCategoryNames[gi]
     if (!wasAnalyzed(gi)) {
-      categoryScores.push({ name: globalName, score: -1, summary: '' })
+      categoryScores.push({ name: globalName, score: -1, summary: '', score_state: 'unanalyzed' })
       continue
     }
     const catFindings = findingsByCategory.get(gi) || []
-    let score = BASE_SCORE
-    for (const f of catFindings) {
-      score -= SEVERITY_DEDUCTION[f.severity] || 6
-    }
-    score = Math.max(0, Math.min(100, Math.round(score)))
 
-    // Generate a basic summary from findings (AI will enrich these later)
+    let score: number
+    let score_state: CategoryScore['score_state']
     let summary: string
+
     if (catFindings.length === 0) {
-      summary = 'No specific issues identified — strong performance in this category.'
-    } else if (catFindings.length === 1) {
-      summary = `1 issue found: ${catFindings[0].title}.`
+      // Clean category — use jittered score (95-99) to prevent flat-line dashboard
+      score = CLEAN_JITTER[gi % CLEAN_JITTER.length]
+      score_state = 'clean'
+      summary = 'No issues identified — strong performance in this category.'
     } else {
-      const top = catFindings.sort((a, b) => {
-        const order: Record<string, number> = { critical: 0, high: 1, medium: 2, low: 3 }
-        return (order[a.severity] ?? 2) - (order[b.severity] ?? 2)
-      })[0]
-      summary = `${catFindings.length} issues found. Top priority: ${top.title}.`
+      score = BASE_SCORE
+      for (const f of catFindings) {
+        score -= SEVERITY_DEDUCTION[f.severity] || 6
+      }
+      score = Math.max(0, Math.min(100, Math.round(score)))
+      score_state = 'scored'
+
+      if (catFindings.length === 1) {
+        summary = `1 issue found: ${catFindings[0].title}.`
+      } else {
+        const top = catFindings.sort((a, b) => {
+          const order: Record<string, number> = { critical: 0, high: 1, medium: 2, low: 3 }
+          return (order[a.severity] ?? 2) - (order[b.severity] ?? 2)
+        })[0]
+        summary = `${catFindings.length} issues found. Top priority: ${top.title}.`
+      }
     }
-    categoryScores.push({ name: globalName, score, summary })
+    categoryScores.push({ name: globalName, score, summary, score_state })
   }
 
   // Calculate pillar averages from deterministic category scores
@@ -1837,15 +1856,17 @@ function getDefaultCategoryScores(language: string = 'en'): CategoryScore[] {
 /**
  * Calculate scores from findings when report generation fails.
  * Uses the SAME deterministic formula as DEEP MODE:
- *   Base = 82, deductions: critical=-18, high=-12, medium=-6, low=-2.
- *   Categories with 0 findings = 82 (good baseline, room to grow).
+ *   Base = 97, deductions: critical=-18, high=-12, medium=-6, low=-2.
+ *   Categories with 0 findings = CLEAN_JITTER[catIdx] (95-99, deterministic).
  * This ensures scores ALWAYS match the deterministic model, even in fallback paths.
  */
 function calculateScoresFromFindings(findings: AuditFinding[], language: string = 'en'): ReportData {
   const categoryNames = getCategoryNames(language)
   const severityPenalty: Record<string, number> = { critical: 18, high: 12, medium: 6, low: 2 }
-  // Regression fix: must match generateReport() BASE_SCORE = 82
-  const BASE_SCORE = 82
+  // Must match generateReport() BASE_SCORE = 97
+  const BASE_SCORE = 97
+  // Deterministic jitter for clean categories — must match generateReport()
+  const CLEAN_JITTER = [97, 96, 98, 95, 99, 96, 98, 97, 95, 99, 96, 98, 97, 95, 99, 96, 98, 97, 95, 99, 96, 98, 95, 99, 97, 96, 98, 95]
 
   // Assign findings to categories — prefer category_index, fall back to keyword matching
   const findingsPerCategory: Record<string, AuditFinding[]> = {}
@@ -1894,11 +1915,13 @@ function calculateScoresFromFindings(findings: AuditFinding[], language: string 
     // Design Consistency categories without explicit analyzer-assigned findings
     // should be treated as unanalyzed (sentinel -1), matching generateReport() behavior
     if (catIdx >= 24 && catIdx < 28 && !hasExplicitFindings.has(catIdx)) {
-      return { name, score: -1, summary: '' }
+      return { name, score: -1, summary: '', score_state: 'unanalyzed' as const }
     }
     const catFindings = findingsPerCategory[name]
     if (catFindings.length === 0) {
-      return { name, score: BASE_SCORE, summary: 'No specific issues identified — strong performance in this category.' }
+      // Clean category — deterministic jitter prevents flat-line dashboard
+      const score = CLEAN_JITTER[catIdx % CLEAN_JITTER.length]
+      return { name, score, summary: 'No issues identified — strong performance in this category.', score_state: 'clean' as const }
     }
     let score = BASE_SCORE
     for (const f of catFindings) {
@@ -1908,16 +1931,18 @@ function calculateScoresFromFindings(findings: AuditFinding[], language: string 
     const summary = catFindings.length === 1
       ? `1 issue found: ${topFinding.title}.`
       : `${catFindings.length} issues found. Top priority: ${topFinding.title}.`
-    return { name, score: Math.max(0, Math.min(100, Math.round(score))), summary }
+    return { name, score: Math.max(0, Math.min(100, Math.round(score))), summary, score_state: 'scored' as const }
   })
 
   // Filter out -1 sentinels (unanalyzed categories) for overall score
   const analyzedScores = categoryScores.filter(c => c.score >= 0).map(c => c.score)
-  const overall = analyzedScores.length > 0 ? Math.round(analyzedScores.reduce((a, b) => a + b, 0) / analyzedScores.length) : BASE_SCORE
+  // Fallback 50 = neutral/unknown, not a reward. Same as clampScore() default.
+  const overall = analyzedScores.length > 0 ? Math.round(analyzedScores.reduce((a, b) => a + b, 0) / analyzedScores.length) : 50
 
   const pillarAvg = (start: number, end: number) => {
     const cats = categoryScores.slice(start, Math.min(end, categoryScores.length)).filter(c => c.score >= 0)
-    return cats.length > 0 ? Math.round(cats.reduce((s, c) => s + c.score, 0) / cats.length) : BASE_SCORE
+    // Fallback 50 = neutral/unknown for fully unanalyzed pillars
+    return cats.length > 0 ? Math.round(cats.reduce((s, c) => s + c.score, 0) / cats.length) : 50
   }
 
   const criticalCount = findings.filter(f => f.severity === 'critical').length

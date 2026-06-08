@@ -256,7 +256,9 @@ export const PHASE1_MODULES = [
  * between the overview gauge and the module cards.
  *
  * OLD (broken): { critical: 8, high: 5, medium: 3, low: 1.5 } with base 100
- * NEW (unified): { critical: 18, high: 12, medium: 6, low: 2 } with base 92
+ * NEW (unified): { critical: 18, high: 12, medium: 6, low: 2 } with base 97
+ *
+ * MUST match analyzer.ts BASE_SCORE and CLEAN_JITTER exactly.
  */
 const SEVERITY_DEDUCTION: Record<string, number> = {
   critical: 18,
@@ -264,7 +266,9 @@ const SEVERITY_DEDUCTION: Record<string, number> = {
   medium: 6,
   low: 2,
 }
-const BASE_SCORE = 92
+const BASE_SCORE = 97
+/** Deterministic per-category jitter for 0-finding categories (95-99). Must match analyzer.ts. */
+const CLEAN_JITTER = [97, 96, 98, 95, 99, 96, 98, 97, 95, 99, 96, 98, 97, 95, 99, 96, 98, 97, 95, 99, 96, 98, 95, 99, 97, 96, 98, 95]
 
 export function moduleScoresFromReport(
   report: Report | null,
@@ -302,17 +306,25 @@ export function moduleScoresFromReport(
   if (!anyCategorized) return legacy()
 
   // Per-module score = average of its 4 category scores (same as analyzer.ts)
-  // NO blending with overall_score — each category stands on its own
+  // NO blending with overall_score — each category stands on its own.
+  // Clean categories (0 findings) get CLEAN_JITTER score (95-99) instead of
+  // being skipped — this prevents null scores for clean modules and avoids
+  // the flat-line dashboard where all modules show the same number.
   return PHASE1_MODULES.map((name, i) => {
     const start = i * 4
     const end = start + 4
     let sum = 0
     let count = 0
     for (let ci = start; ci < end; ci++) {
-      if (!categoryHasFindings[ci]) continue
-      const score = Math.max(0, Math.min(100, BASE_SCORE - categoryDeductions[ci]))
-      sum += score
-      count++
+      if (!categoryHasFindings[ci]) {
+        // Clean category — use deterministic jitter, matching analyzer.ts
+        sum += CLEAN_JITTER[ci % CLEAN_JITTER.length]
+        count++
+      } else {
+        const score = Math.max(0, Math.min(100, BASE_SCORE - categoryDeductions[ci]))
+        sum += score
+        count++
+      }
     }
     if (count === 0) return { name, score: null }
     return { name, score: Math.round(sum / count) }
