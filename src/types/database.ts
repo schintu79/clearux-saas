@@ -178,6 +178,8 @@ export interface Audit {
   coverage_summary_json:    Record<string, unknown> | null
   score_version:            string | null
   reconciliation_summary:   Record<string, unknown> | null
+  // Soft-delete timestamp (workspace isolation — migration 048)
+  deleted_at:               string | null
 }
 
 /** Pipeline stage for progressive frontend loading */
