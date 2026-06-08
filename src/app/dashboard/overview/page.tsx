@@ -73,7 +73,7 @@ import {
   isInProgressAuditStatus,
   type LatestAuditBundle,
 } from '@/lib/dashboard/latest-audit';
-import { healthLabel } from '@/lib/audit-findings-presentation';
+import { healthLabel, type HealthContext } from '@/lib/audit-findings-presentation';
 import { useWorkspace } from '@/context/WorkspaceContext';
 import { useAuditProgress } from '@/hooks/useAuditProgress';
 import EmptyAudit from '@/components/dashboard/v2/EmptyAudit';
@@ -636,7 +636,8 @@ function OverviewInner() {
     }).filter(p => p.score >= 0);
   } else {
     // Fallback: use findings-based scoring (same formula as analyzer)
-    const moduleResults = moduleScoresFromReport(report, findings);
+    const pagesAnalyzed = (audit as any)?.crawl_summary?.pages_analyzed ?? 0;
+    const moduleResults = moduleScoresFromReport(report, findings, pagesAnalyzed);
     pillarScores = moduleResults
       .filter((m): m is { name: string; score: number } => m.score != null);
     // Derive overall from the module scores — never read report.overall_score
@@ -886,6 +887,11 @@ function OverviewInner() {
         latestAuditId={audit.id}
         completedAt={audit.completed_at || audit.created_at}
         totalFindings={openFindings.length}
+        healthCtx={{
+          pagesAnalyzed: (audit as any)?.crawl_summary?.pages_analyzed ?? 0,
+          findings: openFindings.map(f => ({ severity: f.severity, confidence_level: (f as any).confidence_level, category_index: f.category_index })),
+          categoryScores: categoryScores.map(c => ({ score_state: (c as any).score_state })),
+        }}
       />
 
       {/* ── Re-audit reconciliation delta summary ────────── */}
@@ -961,7 +967,11 @@ function OverviewInner() {
                 background: `color-mix(in srgb, ${scoreColorVar(overallScore)} 10%, transparent)`,
               }}
             >
-              {healthLabel(overallScore, openFindings.length).label}
+              {healthLabel(overallScore, openFindings.length, {
+                pagesAnalyzed: (audit as any)?.crawl_summary?.pages_analyzed ?? 0,
+                findings: openFindings.map(f => ({ severity: f.severity, confidence_level: (f as any).confidence_level, category_index: f.category_index })),
+                categoryScores: categoryScores.map(c => ({ score_state: (c as any).score_state })),
+              }).label}
             </span>
           </div>
           {pillarScores.length > 0 && (
@@ -1852,6 +1862,7 @@ function AlertOrSummary({
   latestAuditId,
   completedAt,
   totalFindings = 0,
+  healthCtx,
 }: {
   critical: number;
   execSummary: string;
@@ -1859,28 +1870,32 @@ function AlertOrSummary({
   latestAuditId: string;
   completedAt: string;
   totalFindings?: number;
+  healthCtx?: HealthContext;
 }) {
   const { workspaceSlug: _ws } = useWorkspace();
   const _dp = _ws ? `/dashboard/${_ws}` : '/dashboard';
 
-  // Clean audit — no findings at all → success banner
+  // Clean audit — no findings at all → success banner (gated by 4 conditions)
   if (totalFindings === 0 && overallScore >= 90) {
-    const { label } = healthLabel(overallScore, 0);
+    const { label, tier } = healthLabel(overallScore, 0, healthCtx);
+    const isExcellent = tier === 'excellent';
     return (
       <div
         className="mb-4 px-4 py-3 rounded-xl flex items-start gap-3"
         style={{
-          background: 'color-mix(in srgb, var(--ok) 7%, transparent)',
-          border: '1px solid color-mix(in srgb, var(--ok) 22%, transparent)',
+          background: `color-mix(in srgb, var(--ok) ${isExcellent ? '7' : '5'}%, transparent)`,
+          border: `1px solid color-mix(in srgb, var(--ok) ${isExcellent ? '22' : '15'}%, transparent)`,
         }}
       >
         <CheckCircle2 size={16} style={{ color: 'var(--ok)' }} className="flex-shrink-0 mt-0.5" />
         <div className="flex-1 min-w-0">
           <p className="text-[13px] font-semibold leading-tight" style={{ color: 'var(--ok)' }}>
-            {label} — no issues found
+            {isExcellent ? 'Excellent — no issues found' : 'Healthy — no issues found'}
           </p>
           <p className="text-[11px] mt-1" style={{ color: 'var(--m-muted)' }}>
-            Your site scored {overallScore}/100 with zero findings across all audited categories. Keep monitoring with regular audits.
+            {isExcellent
+              ? `Your site scored ${overallScore}/100 with zero findings across all audited categories. Keep monitoring with regular audits.`
+              : `Your site scored ${overallScore}/100 with zero findings. Coverage or confidence may be limited — a deeper audit could reveal more.`}
           </p>
         </div>
       </div>

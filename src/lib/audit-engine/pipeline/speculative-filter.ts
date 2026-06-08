@@ -34,6 +34,18 @@ export interface FindingForFilter {
   description: string
   /** Page URL the finding refers to — used to check if head tags are available */
   pageUrl?: string | null
+  /** Evidence grounding — findings with evidence should be demoted, not deleted */
+  page_url?: string | null
+  target_element?: string | null
+  evidence?: string | null
+  confidence_level?: string | null
+}
+
+export interface SpeculativeFilterResult {
+  /** IDs to fully remove — no evidence grounding at all */
+  removeIds: string[]
+  /** IDs to demote (lower severity + mark as heuristic) — has speculative language but also has evidence */
+  demoteIds: string[]
 }
 
 // ── Speculative language patterns ────────────────────────────
@@ -166,8 +178,28 @@ const HEAD_TAG_VERIFIABLE: RegExp[] = [
 ]
 
 /**
+ * Check if a finding has evidence grounding (page URL, target element, or evidence text).
+ * Findings with grounding should be demoted, not deleted.
+ */
+function hasEvidenceGrounding(finding: FindingForFilter): boolean {
+  const url = finding.page_url || finding.pageUrl
+  if (url && url.startsWith('http')) return true
+  if (finding.target_element && finding.target_element.trim().length > 0) return true
+  if (finding.evidence && finding.evidence.trim().length > 20) return true
+  // Deterministic or interpretive findings are considered grounded
+  if (finding.confidence_level === 'deterministic' || finding.confidence_level === 'interpretive') return true
+  return false
+}
+
+/**
  * Identify findings that are speculative or about unverifiable topics.
  * Returns the IDs of findings that should be removed.
+ *
+ * DEMOTE-NOT-DELETE STRATEGY:
+ * If a finding has speculative language but ALSO has evidence grounding
+ * (page URL, target element, evidence text, or deterministic/interpretive confidence),
+ * it is demoted (severity lowered, confidence set to heuristic) instead of deleted.
+ * Only findings with NO evidence grounding are fully removed.
  *
  * @param hasHeadTags - When true, head tag data was extracted from the page,
  *   so findings about OG tags, canonical URLs, lang attributes, etc. are now
@@ -177,7 +209,21 @@ export function identifySpeculativeFindings(
   findings: FindingForFilter[],
   hasHeadTags: boolean = false,
 ): string[] {
-  const speculativeIds: string[] = []
+  const result = classifySpeculativeFindings(findings, hasHeadTags)
+  // Legacy API: return only the IDs to remove (not demote)
+  return result.removeIds
+}
+
+/**
+ * Enhanced version that returns both remove and demote lists.
+ * Quality gates should use this to demote grounded findings instead of deleting.
+ */
+export function classifySpeculativeFindings(
+  findings: FindingForFilter[],
+  hasHeadTags: boolean = false,
+): SpeculativeFilterResult {
+  const removeIds: string[] = []
+  const demoteIds: string[] = []
 
   for (const finding of findings) {
     const combined = `${finding.title} ${finding.description}`
@@ -197,9 +243,15 @@ export function identifySpeculativeFindings(
     }
 
     if (hasSpeculativeLanguage || hasUnverifiableTopic) {
-      speculativeIds.push(finding.id)
+      // Demote-not-delete: if the finding has evidence grounding, demote it
+      // Only remove findings that are purely speculative with no evidence
+      if (hasEvidenceGrounding(finding)) {
+        demoteIds.push(finding.id)
+      } else {
+        removeIds.push(finding.id)
+      }
     }
   }
 
-  return speculativeIds
+  return { removeIds, demoteIds }
 }

@@ -269,10 +269,14 @@ const SEVERITY_DEDUCTION: Record<string, number> = {
 const BASE_SCORE = 97
 /** Deterministic per-category jitter for 0-finding categories (95-99). Must match analyzer.ts. */
 const CLEAN_JITTER = [97, 96, 98, 95, 99, 96, 98, 97, 95, 99, 96, 98, 97, 95, 99, 96, 98, 97, 95, 99, 96, 98, 95, 99, 97, 96, 98, 95]
+/** Coverage-adjusted jitter — must match analyzer.ts */
+const LOW_COV_JITTER =    [87, 86, 88, 85, 89, 86, 88, 87, 85, 89, 86, 88, 87, 85, 89, 86, 88, 87, 85, 89, 86, 88, 85, 89, 87, 86, 88, 85]
+const MEDIUM_COV_JITTER = [92, 91, 93, 90, 93, 91, 93, 92, 90, 93, 91, 93, 92, 90, 93, 91, 93, 92, 90, 93, 91, 93, 90, 93, 92, 91, 93, 90]
 
 export function moduleScoresFromReport(
   report: Report | null,
   findings?: AuditFinding[],
+  pagesAnalyzed?: number,
 ): Array<{ name: string; score: number | null }> {
   if (!report) return PHASE1_MODULES.map((n) => ({ name: n, score: null }))
 
@@ -305,9 +309,14 @@ export function moduleScoresFromReport(
 
   if (!anyCategorized) return legacy()
 
+  // Coverage-adjusted jitter — mirrors analyzer.ts logic.
+  // Low coverage (1 page) = 85-89, medium (2-3) = 90-93, high (4+) = 95-99.
+  const pages = pagesAnalyzed ?? 0
+  const covJitter = pages <= 1 ? LOW_COV_JITTER : pages <= 3 ? MEDIUM_COV_JITTER : CLEAN_JITTER
+
   // Per-module score = average of its 4 category scores (same as analyzer.ts)
   // NO blending with overall_score — each category stands on its own.
-  // Clean categories (0 findings) get CLEAN_JITTER score (95-99) instead of
+  // Clean categories (0 findings) get coverage-adjusted jitter instead of
   // being skipped — this prevents null scores for clean modules and avoids
   // the flat-line dashboard where all modules show the same number.
   return PHASE1_MODULES.map((name, i) => {
@@ -317,8 +326,8 @@ export function moduleScoresFromReport(
     let count = 0
     for (let ci = start; ci < end; ci++) {
       if (!categoryHasFindings[ci]) {
-        // Clean category — use deterministic jitter, matching analyzer.ts
-        sum += CLEAN_JITTER[ci % CLEAN_JITTER.length]
+        // Clean category — use coverage-adjusted jitter, matching analyzer.ts
+        sum += covJitter[ci % covJitter.length]
         count++
       } else {
         const score = Math.max(0, Math.min(100, BASE_SCORE - categoryDeductions[ci]))

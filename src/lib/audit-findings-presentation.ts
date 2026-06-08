@@ -29,10 +29,64 @@ export type ScoreState =
   | 'baseline_derived' // Score inherited from a previous audit (re-audit baseline)
   | 'unanalyzed'       // Category not included in this audit (-1 sentinel)
 
-/** Human-readable label for the overall health state, driven by score + finding count. */
-export function healthLabel(score: number, totalFindings: number): { label: string; tier: 'excellent' | 'healthy' | 'needs_work' | 'at_risk' } {
-  if (score >= 90 && totalFindings === 0) return { label: 'Excellent', tier: 'excellent' }
-  if (score >= 90) return { label: 'Excellent', tier: 'excellent' }
+/**
+ * Human-readable label for the overall health state.
+ *
+ * "Excellent" is ONLY returned when ALL 4 conditions are met:
+ *   1. Full crawl coverage (pagesAnalyzed >= 4)
+ *   2. No Verified (deterministic) medium+ severity findings
+ *   3. No Observed/Heuristic medium+ impact findings in core flow categories
+ *   4. Overall confidence is High (not evidence-limited in majority of categories)
+ *
+ * When the score is ≥ 90 but conditions aren't met, we return "Healthy" instead.
+ */
+export interface HealthContext {
+  pagesAnalyzed?: number
+  findings?: Array<{ severity: string; confidence_level?: string; category_index?: number | null }>
+  categoryScores?: Array<{ score_state?: ScoreState }>
+}
+
+export function healthLabel(
+  score: number,
+  totalFindings: number,
+  ctx?: HealthContext,
+): { label: string; tier: 'excellent' | 'healthy' | 'needs_work' | 'at_risk' } {
+  if (score >= 90 && totalFindings === 0) {
+    // Gate "Excellent" by 4 conditions
+    if (ctx) {
+      const pages = ctx.pagesAnalyzed ?? 0
+      const fullCoverage = pages >= 4 // Condition 1
+      const ff = ctx.findings ?? []
+      const MEDIUM_PLUS = new Set(['critical', 'high', 'medium'])
+      // Condition 2: no verified (deterministic) medium+ findings
+      const noVerifiedMediumPlus = !ff.some(
+        f => f.confidence_level === 'deterministic' && MEDIUM_PLUS.has(f.severity),
+      )
+      // Condition 3: no observed/heuristic medium+ in core categories (0-15, modules 0-3)
+      const noObservedCoreMediumPlus = !ff.some(
+        f =>
+          (f.confidence_level === 'interpretive' || f.confidence_level === 'heuristic') &&
+          MEDIUM_PLUS.has(f.severity) &&
+          f.category_index != null &&
+          f.category_index >= 0 &&
+          f.category_index < 16,
+      )
+      // Condition 4: majority of categories not evidence-limited
+      const cats = ctx.categoryScores ?? []
+      const analyzed = cats.filter(c => (c as any).score >= 0)
+      const limitedCount = analyzed.filter(c => c.score_state === 'evidence_limited').length
+      const highConfidence = analyzed.length > 0 && limitedCount < analyzed.length / 2
+
+      if (fullCoverage && noVerifiedMediumPlus && noObservedCoreMediumPlus && highConfidence) {
+        return { label: 'Excellent', tier: 'excellent' }
+      }
+      // Conditions not met — downgrade to Healthy
+      return { label: 'Healthy', tier: 'healthy' }
+    }
+    // No context provided — legacy behavior, but conservatively return Healthy
+    return { label: 'Healthy', tier: 'healthy' }
+  }
+  if (score >= 90) return { label: 'Healthy', tier: 'healthy' }
   if (score >= 70) return { label: 'Healthy', tier: 'healthy' }
   if (score >= 40) return { label: 'Needs work', tier: 'needs_work' }
   return { label: 'At risk', tier: 'at_risk' }

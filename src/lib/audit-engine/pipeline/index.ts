@@ -66,8 +66,8 @@ export { identifyDuplicates, identifyTemplateGroups, SYNONYM_GROUPS, TOPIC_PATTE
 export type { FindingForDedup, TemplateGroup } from './dedup'
 
 // ── Step 2: Speculative Filter ──────────────────────────────
-export { identifySpeculativeFindings, SPECULATIVE_LANGUAGE, UNVERIFIABLE_TOPICS } from './speculative-filter'
-export type { FindingForFilter } from './speculative-filter'
+export { identifySpeculativeFindings, classifySpeculativeFindings, SPECULATIVE_LANGUAGE, UNVERIFIABLE_TOPICS } from './speculative-filter'
+export type { FindingForFilter, SpeculativeFilterResult } from './speculative-filter'
 
 // ── Step 2b: Contradiction Checker ──────────────────────────
 export { checkContradictions } from './contradiction-checker'

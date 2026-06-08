@@ -26,6 +26,7 @@ import {
   identifyDuplicates,
   identifyTemplateGroups,
   identifySpeculativeFindings,
+  classifySpeculativeFindings,
   checkContradictions,
   applyFixHistoryGate,
   scoreFindings,
@@ -3063,6 +3064,20 @@ RULES FOR RE-AUDIT:
       const idsToDelete = new Set<string>()
       const batchUpdates: Array<{ id: string; updates: Record<string, any> }> = []
 
+      // ── Pipeline instrumentation: snapshot raw findings before gates ───
+      const rawCount = findings.length
+      const rawBySeverity = { critical: 0, high: 0, medium: 0, low: 0 } as Record<string, number>
+      const rawBySource = {} as Record<string, number>
+      const rawByConfidence = {} as Record<string, number>
+      for (const f of findings) {
+        rawBySeverity[f.severity] = (rawBySeverity[f.severity] || 0) + 1
+        rawBySource[f.detection_source] = (rawBySource[f.detection_source] || 0) + 1
+        rawByConfidence[f.confidence_level] = (rawByConfidence[f.confidence_level] || 0) + 1
+      }
+      await auditLog(auditId, 'pipeline_snapshot_raw', 'info',
+        `Raw findings: ${rawCount} | severity: ${JSON.stringify(rawBySeverity)} | source: ${JSON.stringify(rawBySource)} | confidence: ${JSON.stringify(rawByConfidence)}`,
+      )
+
       // ── 1. Deduplicate findings (confidence-aware) ───
       if (findings.length >= 2) {
         const duplicateIds = identifyDuplicates(findings)
@@ -3162,26 +3177,49 @@ RULES FOR RE-AUDIT:
         }
       }
 
-      // ── 2. Filter speculative findings ───
+      // ── 2. Filter speculative findings (demote-not-delete) ───
       if (findings.length > 0) {
         const hasHeadTags = crawlResult.pageContent.includes('Head Tags:')
-        const speculativeIds = identifySpeculativeFindings(
-          findings.map(f => ({ id: f.id, title: f.title, description: f.description })),
+        const specResult = classifySpeculativeFindings(
+          findings.map(f => ({
+            id: f.id, title: f.title, description: f.description,
+            page_url: f.page_url, target_element: f.target_element,
+            confidence_level: f.confidence_level,
+          })),
           hasHeadTags,
         )
-        if (speculativeIds.length > 0) {
-          for (const id of speculativeIds) idsToDelete.add(id)
+
+        // Demote grounded findings: lower severity by one level, mark as heuristic
+        if (specResult.demoteIds.length > 0) {
+          const SEVERITY_DEMOTION: Record<string, string> = {
+            critical: 'high', high: 'medium', medium: 'low', low: 'low',
+          }
+          for (const f of findings) {
+            if (specResult.demoteIds.includes(f.id)) {
+              const oldSeverity = f.severity
+              f.severity = SEVERITY_DEMOTION[f.severity] || f.severity
+              f.confidence_level = 'heuristic'
+              console.log(`[inngest] Speculative filter: demoted finding "${f.title}" from ${oldSeverity} to ${f.severity}`)
+            }
+          }
+          await auditLog(auditId, 'speculative_demoted', 'info',
+            `Demoted ${specResult.demoteIds.length} speculative finding${specResult.demoteIds.length > 1 ? 's' : ''} (had evidence grounding — kept with lower severity)`)
+        }
+
+        // Remove findings with no evidence grounding at all
+        if (specResult.removeIds.length > 0) {
+          for (const id of specResult.removeIds) idsToDelete.add(id)
           const totalBefore = findings.length
           findings = findings.filter(f => !idsToDelete.has(f.id))
           await auditLog(auditId, 'speculative_filtered', 'info',
-            `Removed ${speculativeIds.length} speculative/unverifiable finding${speculativeIds.length > 1 ? 's' : ''}`)
-          console.log(`[inngest] Speculative filter: removed ${speculativeIds.length} findings`)
-          const removedRatio = totalBefore > 0 ? speculativeIds.length / totalBefore : 0
-          if (speculativeIds.length >= 3 || removedRatio > 0.3) {
+            `Removed ${specResult.removeIds.length} speculative/unverifiable finding${specResult.removeIds.length > 1 ? 's' : ''}`)
+          console.log(`[inngest] Speculative filter: removed ${specResult.removeIds.length} findings`)
+          const removedRatio = totalBefore > 0 ? specResult.removeIds.length / totalBefore : 0
+          if (specResult.removeIds.length >= 3 || removedRatio > 0.3) {
             auditLimitations.push({
               id: 'heavy_speculation_filtering',
               title: 'Quality filter applied',
-              description: `Our quality filter removed ${speculativeIds.length} finding${speculativeIds.length > 1 ? 's' : ''} that could not be fully verified from the crawled content. We only report issues we can back with evidence from your site. If important areas seem under-reported, a re-audit with more pages may help.`,
+              description: `Our quality filter removed ${specResult.removeIds.length} finding${specResult.removeIds.length > 1 ? 's' : ''} that could not be fully verified from the crawled content. We only report issues we can back with evidence from your site. If important areas seem under-reported, a re-audit with more pages may help.`,
             })
           }
         }
@@ -3407,6 +3445,20 @@ RULES FOR RE-AUDIT:
       if (updatePromises.length > 0) {
         await Promise.all(updatePromises)
       }
+
+      // ── Pipeline instrumentation: snapshot findings after all gates ───
+      const postCount = findings.length
+      const postBySeverity = { critical: 0, high: 0, medium: 0, low: 0 } as Record<string, number>
+      const postByConfidence = {} as Record<string, number>
+      for (const f of findings) {
+        postBySeverity[f.severity] = (postBySeverity[f.severity] || 0) + 1
+        postByConfidence[f.confidence_level] = (postByConfidence[f.confidence_level] || 0) + 1
+      }
+      const removedCount = idsToDelete.size
+      const updatedCount = batchUpdates.length
+      await auditLog(auditId, 'pipeline_snapshot_post', 'info',
+        `Post-gates: ${postCount} findings (${rawCount - removedCount - postCount} filtered inline, ${removedCount} deleted) | severity: ${JSON.stringify(postBySeverity)} | confidence: ${JSON.stringify(postByConfidence)} | ${updatedCount} updates applied`,
+      )
 
       // ── 7. Verify findings count ───
       if (findings.length === 0) {

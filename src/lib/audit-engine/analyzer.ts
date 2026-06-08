@@ -1048,22 +1048,33 @@ SPECIFIC RULES:
 Before adding a finding, ask yourself: "Is this the same underlying problem as something I already listed, just from a different angle?" If yes, DO NOT add it.
 
 FINAL SELF-CHECK — Before returning your findings, review each one against these gates:
-1. Does this finding quote specific evidence from the provided content? If no → DELETE.
+1. Does this finding reference specific evidence from the provided content? For deterministic findings, it must quote exact evidence. For interpretive findings, it must reference observable patterns. For heuristic findings, it must cite multiple converging signals. If the finding has NO grounding whatsoever → DELETE.
 2. Is this about something the site owner can actually control? If no → DELETE.
-3. Could I verify this claim is true from the content provided? If no → DELETE.
-4. Is this a real functional problem, or just my design preference? If preference → DELETE.
-5. Is this essentially the same issue as another finding? If yes → MERGE.
-6. Would a paying client consider this finding worth their time and money to fix? If no → DELETE.
+3. Is this a real functional problem, or just my design preference? If pure preference → DELETE. But if it's a structural, clarity, trust, or friction issue supported by evidence → KEEP even if it involves interpretation.
+4. Is this essentially the same issue as another finding? If yes → MERGE.
+5. Would a paying client consider this finding worth their time and money to fix? If no → DELETE.
+6. Have I returned at least 1 finding? If no, re-examine — the "0 findings" threshold is almost never legitimate.
+
+EVIDENCE TIER LABELING (MANDATORY):
+Every finding has a confidence_level you must assign. Use these tiers:
+- "deterministic" — issue is provably present from extracted evidence (missing elements, broken structure, measurable failures, schema issues). These MUST always be surfaced.
+- "interpretive" — issue is directly grounded in extracted page evidence (content patterns, copy clarity, layout structure, navigation flow, enrollment/conversion path) but involves some professional interpretation. These SHOULD be surfaced when clearly supported by evidence.
+- "heuristic" — higher-level UX/brand/strategy judgment based on professional reasoning about the evidence. These should be used sparingly but are valid when multiple signals converge.
+RULE: Do NOT filter out interpretive or heuristic findings just because they are not deterministic. If the evidence clearly shows trust gaps, clarity problems, structural weakness, or confusing flows, surface them with the appropriate tier label. Silence is worse than a well-labeled observation.
 
 QUANTITY GUIDELINES (HARD LIMITS):
 - Include 1-3 UNIQUE findings per category. MAXIMUM 3. NEVER more than 3.
+- MINIMUM 1 finding per category. Every website has at least one area for improvement in every category. If you truly cannot find a single issue, return 1 finding with severity "low" and confidence_level "heuristic" identifying the weakest area or a strategic improvement opportunity.
 - If the category score would be below 80, you MUST include at least 2 findings explaining what drags the score down.
 - If the category score would be below 60, you MUST include exactly 3 findings — these are the worst areas.
-- If the site truly excels in a category (score 85+), you may report 0-1 findings.
+- "0 findings" is ONLY acceptable when ALL of the following are true: (1) you have rich extracted content for this category, (2) you have verified specific elements exist and work correctly, (3) no structural, clarity, trust, or UX gaps are visible in the evidence. In practice this is extremely rare.
 - Every finding must be genuinely worth the client's attention and effort to fix.
-- If you can't find real issues, return an EMPTY array []. This is far better than inventing problems.
+- NEVER invent problems — but DO surface real observations even if they are interpretive or heuristic. A well-labeled "heuristic" finding about a genuine clarity gap is more honest than returning 0 findings on a site with obvious issues.
 - NEVER repeat the same finding with slight rewording. Each finding must address a DISTINCT issue.
 - A 25-page site with strong design should produce 15-25 total findings across all categories, not 50+.
+
+ANTI-EMPTY-AUDIT RULE:
+If technical checks are clean but the site has structural, clarity, trust, or conversion-path weaknesses, you MUST surface those as interpretive or heuristic findings. "No technical issues = no issues" is WRONG. A site can have perfect HTML and broken user experience. A site can pass every automated check and still confuse visitors about what it offers, how to take action, or whether to trust it. Surface what matters, not just what's easy to measure.
 
 Return ONLY a valid JSON array. No markdown, no explanation, no code fences.`
 
@@ -1514,6 +1525,21 @@ export async function generateReport(
   // Values cycle through 95-99 so no two adjacent categories show the same number.
   const CLEAN_JITTER = [97, 96, 98, 95, 99, 96, 98, 97, 95, 99, 96, 98, 97, 95, 99, 96, 98, 97, 95, 99, 96, 98, 95, 99, 97, 96, 98, 95]
 
+  // Coverage-adjusted jitter: when we only crawled 1-2 pages, 0-finding categories
+  // should score lower because we might simply not have seen the issues.
+  // LOW = 1 page (85-89), MEDIUM = 2-3 pages (90-93), HIGH = 4+ pages (95-99)
+  const LOW_COV_JITTER =    [87, 86, 88, 85, 89, 86, 88, 87, 85, 89, 86, 88, 87, 85, 89, 86, 88, 87, 85, 89, 86, 88, 85, 89, 87, 86, 88, 85]
+  const MEDIUM_COV_JITTER = [92, 91, 93, 90, 93, 91, 93, 92, 90, 93, 91, 93, 92, 90, 93, 91, 93, 92, 90, 93, 91, 93, 90, 93, 92, 91, 93, 90]
+
+  // Derive coverage level from crawl summary
+  const pagesAnalyzed = auditData.crawl_summary?.pages_analyzed ?? 0
+  const coverageJitter = pagesAnalyzed <= 1 ? LOW_COV_JITTER
+    : pagesAnalyzed <= 3 ? MEDIUM_COV_JITTER
+    : CLEAN_JITTER
+  const coverageState: CategoryScore['score_state'] = pagesAnalyzed <= 1 ? 'evidence_limited'
+    : pagesAnalyzed <= 3 ? 'evidence_limited'
+    : 'clean'
+
   // Group findings by category_index (0-27)
   const findingsByCategory: Map<number, AuditFinding[]> = new Map()
   for (const f of findings) {
@@ -1567,10 +1593,14 @@ export async function generateReport(
     let summary: string
 
     if (catFindings.length === 0) {
-      // Clean category — use jittered score (95-99) to prevent flat-line dashboard
-      score = CLEAN_JITTER[gi % CLEAN_JITTER.length]
-      score_state = 'clean'
-      summary = 'No issues identified — strong performance in this category.'
+      // Clean category — use coverage-adjusted jitter to reflect crawl depth.
+      // Low coverage (1 page) = 85-89, medium (2-3) = 90-93, high (4+) = 95-99.
+      // This prevents "high score + 0 findings" when we simply didn't see enough.
+      score = coverageJitter[gi % coverageJitter.length]
+      score_state = coverageState
+      summary = pagesAnalyzed <= 1
+        ? 'No issues identified — limited pages analyzed, coverage may be incomplete.'
+        : 'No issues identified — strong performance in this category.'
     } else {
       score = BASE_SCORE
       for (const f of catFindings) {
@@ -1860,13 +1890,18 @@ function getDefaultCategoryScores(language: string = 'en'): CategoryScore[] {
  *   Categories with 0 findings = CLEAN_JITTER[catIdx] (95-99, deterministic).
  * This ensures scores ALWAYS match the deterministic model, even in fallback paths.
  */
-function calculateScoresFromFindings(findings: AuditFinding[], language: string = 'en'): ReportData {
+function calculateScoresFromFindings(findings: AuditFinding[], language: string = 'en', pagesAnalyzed: number = 0): ReportData {
   const categoryNames = getCategoryNames(language)
   const severityPenalty: Record<string, number> = { critical: 18, high: 12, medium: 6, low: 2 }
   // Must match generateReport() BASE_SCORE = 97
   const BASE_SCORE = 97
   // Deterministic jitter for clean categories — must match generateReport()
   const CLEAN_JITTER = [97, 96, 98, 95, 99, 96, 98, 97, 95, 99, 96, 98, 97, 95, 99, 96, 98, 97, 95, 99, 96, 98, 95, 99, 97, 96, 98, 95]
+  // Coverage-adjusted jitter — must match generateReport()
+  const LOW_COV_JITTER =    [87, 86, 88, 85, 89, 86, 88, 87, 85, 89, 86, 88, 87, 85, 89, 86, 88, 87, 85, 89, 86, 88, 85, 89, 87, 86, 88, 85]
+  const MEDIUM_COV_JITTER = [92, 91, 93, 90, 93, 91, 93, 92, 90, 93, 91, 93, 92, 90, 93, 91, 93, 92, 90, 93, 91, 93, 90, 93, 92, 91, 93, 90]
+  const coverageJitter = pagesAnalyzed <= 1 ? LOW_COV_JITTER : pagesAnalyzed <= 3 ? MEDIUM_COV_JITTER : CLEAN_JITTER
+  const coverageState: CategoryScore['score_state'] = pagesAnalyzed <= 3 ? 'evidence_limited' : 'clean'
 
   // Assign findings to categories — prefer category_index, fall back to keyword matching
   const findingsPerCategory: Record<string, AuditFinding[]> = {}
@@ -1919,9 +1954,12 @@ function calculateScoresFromFindings(findings: AuditFinding[], language: string 
     }
     const catFindings = findingsPerCategory[name]
     if (catFindings.length === 0) {
-      // Clean category — deterministic jitter prevents flat-line dashboard
-      const score = CLEAN_JITTER[catIdx % CLEAN_JITTER.length]
-      return { name, score, summary: 'No issues identified — strong performance in this category.', score_state: 'clean' as const }
+      // Clean category — coverage-adjusted jitter prevents misleading high scores
+      const score = coverageJitter[catIdx % coverageJitter.length]
+      const summary = pagesAnalyzed <= 1
+        ? 'No issues identified — limited pages analyzed, coverage may be incomplete.'
+        : 'No issues identified — strong performance in this category.'
+      return { name, score, summary, score_state: coverageState }
     }
     let score = BASE_SCORE
     for (const f of catFindings) {
