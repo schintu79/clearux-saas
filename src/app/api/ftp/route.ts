@@ -58,11 +58,12 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
     const siteHost = request.nextUrl.searchParams.get('siteHost');
+    const workspaceId = request.nextUrl.searchParams.get('workspaceId');
 
-    // Scoping: connections are per-site (domain), never global.
-    // Without a siteHost, return an empty list so connections from
-    // one site never leak into another site's dashboard.
-    if (!siteHost) {
+    // Scoping: connections are per-workspace (and per-site), never global.
+    // Without both identifiers, return an empty list so connections from
+    // one workspace never leak into another workspace's dashboard.
+    if (!siteHost && !workspaceId) {
       return NextResponse.json({
         connections: [],
         provisioned: true,
@@ -71,11 +72,15 @@ export async function GET(request: NextRequest) {
     }
 
     const db = createServiceSupabase();
-    const { data: connections, error } = await db
+    let query = db
       .from('ftp_connections')
-      .select('id, label, protocol, host, port, username, remote_path, site_host, last_connected_at, is_active, created_at, updated_at')
-      .eq('user_id', user.id)
-      .eq('site_host', siteHost)
+      .select('id, label, protocol, host, port, username, remote_path, site_host, workspace_id, last_connected_at, is_active, created_at, updated_at')
+      .eq('user_id', user.id);
+
+    if (workspaceId) query = query.eq('workspace_id', workspaceId);
+    if (siteHost) query = query.eq('site_host', siteHost);
+
+    const { data: connections, error } = await query
       .order('created_at', { ascending: false });
 
     if (error) {
@@ -104,30 +109,30 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
     const body = await request.json();
-    const { action } = body;
+    const { action, workspaceId } = body;
 
     switch (action) {
       case 'test':
         // Test never touches the DB unless a connectionId is provided
         // to look up stored credentials — no provisioning gate required
         // for ad-hoc tests against new credentials.
-        return handleTest(body, user.id);
+        return handleTest(body, user.id, workspaceId);
       case 'save':
       case 'update': {
         const enc = !process.env.FTP_ENCRYPTION_KEY;
         if (enc) return encryptionMissingResponse();
-        return action === 'save' ? handleSave(body, user.id) : handleUpdate(body, user.id);
+        return action === 'save' ? handleSave(body, user.id) : handleUpdate(body, user.id, workspaceId);
       }
       case 'delete':
-        return handleDelete(body, user.id);
+        return handleDelete(body, user.id, workspaceId);
       case 'list':
-        return handleList(body, user.id);
+        return handleList(body, user.id, workspaceId);
       case 'read':
-        return handleRead(body, user.id);
+        return handleRead(body, user.id, workspaceId);
       case 'write':
-        return handleWrite(body, user.id);
+        return handleWrite(body, user.id, workspaceId);
       case 'restore':
-        return handleRestore(body, user.id);
+        return handleRestore(body, user.id, workspaceId);
       case 'deploy-history':
         return handleDeployHistory(body, user.id);
       default:
@@ -142,7 +147,7 @@ export async function POST(request: NextRequest) {
 
 /* ── Handlers ────────────────────────────────────────────── */
 
-async function handleTest(body: any, userId: string) {
+async function handleTest(body: any, userId: string, workspaceId?: string) {
   const { connectionId, protocol, host, port, username, password, remotePath } = body;
 
   // When testing an existing connection, fall back to the stored encrypted
@@ -151,7 +156,7 @@ async function handleTest(body: any, userId: string) {
   let creds: FtpCredentials | null = null;
 
   if (connectionId) {
-    const stored = await getCredentials(connectionId, userId);
+    const stored = await getCredentials(connectionId, userId, workspaceId);
     if (!stored) return NextResponse.json({ error: 'Connection not found' }, { status: 404 });
     creds = {
       protocol: protocol || stored.protocol,
@@ -186,27 +191,30 @@ async function handleTest(body: any, userId: string) {
 }
 
 async function handleSave(body: any, userId: string) {
-  const { label, protocol, host, port, username, password, remotePath, siteHost } = body;
+  const { label, protocol, host, port, username, password, remotePath, siteHost, workspaceId } = body;
   if (!host || !username || !password)
     return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
   if (!siteHost)
     return NextResponse.json({ error: 'Select a website before saving a connection.' }, { status: 400 });
 
   const db = createServiceSupabase();
+  const insertPayload: Record<string, any> = {
+    user_id: userId,
+    site_host: siteHost,
+    label: label || 'My server',
+    protocol: protocol || 'sftp',
+    host,
+    port: port || (protocol === 'sftp' ? 22 : 21),
+    username,
+    password_encrypted: encrypt(password),
+    remote_path: remotePath || '/',
+  };
+  if (workspaceId) insertPayload.workspace_id = workspaceId;
+
   const { data, error } = await db
     .from('ftp_connections')
-    .insert({
-      user_id: userId,
-      site_host: siteHost,
-      label: label || 'My server',
-      protocol: protocol || 'sftp',
-      host,
-      port: port || (protocol === 'sftp' ? 22 : 21),
-      username,
-      password_encrypted: encrypt(password),
-      remote_path: remotePath || '/',
-    } as any)
-    .select('id, label, protocol, host, port, username, remote_path, site_host, created_at')
+    .insert(insertPayload as any)
+    .select('id, label, protocol, host, port, username, remote_path, site_host, workspace_id, created_at')
     .single();
 
   if (error) {
@@ -216,20 +224,22 @@ async function handleSave(body: any, userId: string) {
   return NextResponse.json({ connection: data });
 }
 
-async function handleUpdate(body: any, userId: string) {
+async function handleUpdate(body: any, userId: string, workspaceId?: string) {
   const { connectionId, label, protocol, host, port, username, password, remotePath } = body;
   if (!connectionId)
     return NextResponse.json({ error: 'Missing connectionId' }, { status: 400 });
 
   const db = createServiceSupabase();
 
-  // Verify ownership
-  const { data: existing, error: lookupErr } = await db
+  // Verify ownership (scoped to workspace when available)
+  let ownershipQuery = db
     .from('ftp_connections')
     .select('id')
     .eq('id', connectionId)
-    .eq('user_id', userId)
-    .single();
+    .eq('user_id', userId);
+  if (workspaceId) ownershipQuery = ownershipQuery.eq('workspace_id', workspaceId);
+
+  const { data: existing, error: lookupErr } = await ownershipQuery.single();
 
   if (lookupErr && isMissingTable(lookupErr)) return notProvisionedResponse();
   if (!existing) return NextResponse.json({ error: 'Not found' }, { status: 404 });
@@ -255,17 +265,20 @@ async function handleUpdate(body: any, userId: string) {
   return NextResponse.json({ success: true });
 }
 
-async function handleDelete(body: any, userId: string) {
+async function handleDelete(body: any, userId: string, workspaceId?: string) {
   const { connectionId } = body;
   if (!connectionId)
     return NextResponse.json({ error: 'Missing connectionId' }, { status: 400 });
 
   const db = createServiceSupabase();
-  const { error } = await db
+  let deleteQuery = db
     .from('ftp_connections')
     .delete()
     .eq('id', connectionId)
     .eq('user_id', userId);
+  if (workspaceId) deleteQuery = deleteQuery.eq('workspace_id', workspaceId);
+
+  const { error } = await deleteQuery;
 
   if (error) {
     if (isMissingTable(error)) return notProvisionedResponse();
@@ -274,12 +287,12 @@ async function handleDelete(body: any, userId: string) {
   return NextResponse.json({ success: true });
 }
 
-async function handleList(body: any, userId: string) {
+async function handleList(body: any, userId: string, workspaceId?: string) {
   const { connectionId, dirPath } = body;
   if (!connectionId)
     return NextResponse.json({ error: 'Missing connectionId' }, { status: 400 });
 
-  const creds = await getCredentials(connectionId, userId);
+  const creds = await getCredentials(connectionId, userId, workspaceId);
   if (!creds) return NextResponse.json({ error: 'Connection not found' }, { status: 404 });
 
   const client = await createFtpClient(creds);
@@ -299,12 +312,12 @@ async function handleList(body: any, userId: string) {
   }
 }
 
-async function handleRead(body: any, userId: string) {
+async function handleRead(body: any, userId: string, workspaceId?: string) {
   const { connectionId, filePath } = body;
   if (!connectionId || !filePath)
     return NextResponse.json({ error: 'Missing connectionId or filePath' }, { status: 400 });
 
-  const creds = await getCredentials(connectionId, userId);
+  const creds = await getCredentials(connectionId, userId, workspaceId);
   if (!creds) return NextResponse.json({ error: 'Connection not found' }, { status: 404 });
 
   const client = await createFtpClient(creds);
@@ -318,12 +331,12 @@ async function handleRead(body: any, userId: string) {
   }
 }
 
-async function handleWrite(body: any, userId: string) {
+async function handleWrite(body: any, userId: string, workspaceId?: string) {
   const { connectionId, filePath, content, auditId, findingId, createBackup } = body;
   if (!connectionId || !filePath || content === undefined)
     return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
 
-  const creds = await getCredentials(connectionId, userId);
+  const creds = await getCredentials(connectionId, userId, workspaceId);
   if (!creds) return NextResponse.json({ error: 'Connection not found' }, { status: 404 });
 
   const client = await createFtpClient(creds);
@@ -379,7 +392,7 @@ async function handleWrite(body: any, userId: string) {
   }
 }
 
-async function handleRestore(body: any, userId: string) {
+async function handleRestore(body: any, userId: string, workspaceId?: string) {
   const { deployLogId, connectionId } = body;
   if (!deployLogId)
     return NextResponse.json({ error: 'Missing deployLogId' }, { status: 400 });
@@ -406,7 +419,7 @@ async function handleRestore(body: any, userId: string) {
 
   // Use either the supplied connectionId or the one from the log
   const connId = connectionId || entry.connection_id;
-  const creds = await getCredentials(connId, userId);
+  const creds = await getCredentials(connId, userId, workspaceId);
   if (!creds) return NextResponse.json({ error: 'FTP connection not found' }, { status: 404 });
 
   const client = await createFtpClient(creds);
@@ -474,14 +487,19 @@ async function handleDeployHistory(body: any, userId: string) {
 
 /* ── Helpers ─────────────────────────────────────────────── */
 
-async function getCredentials(connectionId: string, userId: string): Promise<FtpCredentials | null> {
+async function getCredentials(connectionId: string, userId: string, workspaceId?: string): Promise<FtpCredentials | null> {
   const db = createServiceSupabase();
-  const { data, error } = await db
+  let query = db
     .from('ftp_connections')
     .select('*')
     .eq('id', connectionId)
-    .eq('user_id', userId)
-    .single();
+    .eq('user_id', userId);
+
+  // When workspace_id is provided, enforce workspace scoping so a connection
+  // from one workspace can never be used in the context of another.
+  if (workspaceId) query = query.eq('workspace_id', workspaceId);
+
+  const { data, error } = await query.single();
 
   if (error || !data) return null;
 

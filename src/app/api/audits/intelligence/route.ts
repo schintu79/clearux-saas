@@ -30,6 +30,7 @@ export async function GET(req: NextRequest) {
     .from('audits')
     .select('id, user_id, detected_industry, product_url, brand_name')
     .eq('id', auditId)
+    .is('deleted_at', null)
     .single()
 
   if (!audit || (audit as any).user_id !== user.id) {
@@ -149,6 +150,7 @@ export async function GET(req: NextRequest) {
     .from('audits')
     .select('human_perception_data, sentiment_data')
     .eq('id', auditId)
+    .is('deleted_at', null)
     .single()
 
   // Aggregate probe rows by model_id — the DB may have multiple rows

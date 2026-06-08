@@ -58,6 +58,7 @@ export async function GET(
       pages_crawled, audit_stage, progress_percent
     `)
     .eq('id', auditId)
+    .is('deleted_at', null)
     .single()
 
   if (error || !audit) {

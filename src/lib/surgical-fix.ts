@@ -42,6 +42,8 @@ export type SurgicalOperation = 'replace' | 'insert' | 'create' | 'batch-replace
 export interface SurgicalFixRequest {
   /** FTP connection to read from */
   connectionId: string
+  /** Workspace the connection belongs to (for cross-workspace isolation) */
+  workspaceId?: string
   /** Remote file path on server */
   filePath: string
   /** Finding metadata */

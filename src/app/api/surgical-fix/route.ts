@@ -41,6 +41,7 @@ export async function POST(request: NextRequest) {
     const body: SurgicalFixRequest = await request.json()
     const {
       connectionId,
+      workspaceId,
       filePath,
       recommendation,
       findingTitle,
@@ -86,8 +87,8 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(result)
     }
 
-    // ── Get FTP credentials ─────────────────────────────────
-    const creds = await getCredentials(connectionId, user.id)
+    // ── Get FTP credentials (workspace-scoped when available) ─
+    const creds = await getCredentials(connectionId, user.id, workspaceId)
     if (!creds) {
       return NextResponse.json({ error: 'FTP connection not found' }, { status: 404 })
     }
@@ -248,14 +249,18 @@ export async function POST(request: NextRequest) {
 
 // ── Helpers ────────────────────────────────────────────────
 
-async function getCredentials(connectionId: string, userId: string): Promise<FtpCredentials | null> {
+async function getCredentials(connectionId: string, userId: string, workspaceId?: string): Promise<FtpCredentials | null> {
   const db = createServiceSupabase()
-  const { data, error } = await db
+  let query = db
     .from('ftp_connections')
     .select('*')
     .eq('id', connectionId)
     .eq('user_id', userId)
-    .single()
+
+  // Enforce workspace isolation when the caller provides a workspace context
+  if (workspaceId) query = query.eq('workspace_id', workspaceId)
+
+  const { data, error } = await query.single()
 
   if (error || !data) return null
 

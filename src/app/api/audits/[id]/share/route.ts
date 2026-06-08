@@ -20,7 +20,7 @@ export async function POST(
     const db = createServiceSupabase()
 
     // Verify ownership
-    const { data: audit } = await db.from('audits').select('user_id, share_token').eq('id', auditId).single()
+    const { data: audit } = await db.from('audits').select('user_id, share_token').eq('id', auditId).is('deleted_at', null).single()
     if (!audit || (audit as any).user_id !== user.id)
       return NextResponse.json({ error: 'Not authorized' }, { status: 403 })
 
@@ -56,7 +56,7 @@ export async function DELETE(
 
     const db = createServiceSupabase()
 
-    const { data: audit } = await db.from('audits').select('user_id').eq('id', auditId).single()
+    const { data: audit } = await db.from('audits').select('user_id').eq('id', auditId).is('deleted_at', null).single()
     if (!audit || (audit as any).user_id !== user.id)
       return NextResponse.json({ error: 'Not authorized' }, { status: 403 })
 

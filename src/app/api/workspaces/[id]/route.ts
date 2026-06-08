@@ -22,6 +22,7 @@ export async function GET(
     .select('*')
     .eq('id', id)
     .eq('user_id', user.id)
+    .eq('status', 'active')
     .single()
 
   if (error || !data) {

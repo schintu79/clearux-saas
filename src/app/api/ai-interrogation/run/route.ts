@@ -72,6 +72,7 @@ export async function POST(request: NextRequest) {
       .select('id, primary_domain, brand_name, category, region, language')
       .eq('id', workspaceId)
       .eq('user_id', user.id)
+      .eq('status', 'active')
       .single()
 
     if (wsError || !workspace)
@@ -90,6 +91,7 @@ export async function POST(request: NextRequest) {
       .select('detected_industry')
       .eq('workspace_id', workspaceId)
       .eq('status', 'completed')
+      .is('deleted_at', null)
       .order('created_at', { ascending: false })
       .limit(1)
       .maybeSingle()
@@ -177,6 +179,7 @@ export async function GET(request: NextRequest) {
       .select('id')
       .eq('id', workspaceId)
       .eq('user_id', user.id)
+      .eq('status', 'active')
       .single()
 
     if (wsError || !workspace)

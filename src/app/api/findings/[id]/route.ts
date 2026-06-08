@@ -219,6 +219,7 @@ export async function GET(
       .from('audits')
       .select('user_id, product_url, brand_identity_id, workspace_id')
       .eq('id', (finding as any).audit_id)
+      .is('deleted_at', null)
       .single()
 
     if (!audit || (audit as any).user_id !== user.id) {
@@ -272,6 +273,7 @@ export async function PATCH(
       .from('audits')
       .select('user_id, product_url, workspace_id')
       .eq('id', (finding as any).audit_id)
+      .is('deleted_at', null)
       .single()
 
     if (!audit || (audit as any).user_id !== user.id)
@@ -308,6 +310,7 @@ export async function PATCH(
         content: reason,
         finding_ref: (finding as any).title,
         is_active: true,
+        workspace_id: (audit as any).workspace_id || null,
       } as any)
 
       // Recalculate score after dismissal

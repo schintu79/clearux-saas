@@ -33,6 +33,7 @@ export async function GET(
       human_perception_data, sentiment_data, detected_industry
     `)
     .eq('id', auditId)
+    .is('deleted_at', null)
     .single()
 
   if (error || !audit) {
@@ -44,6 +45,7 @@ export async function GET(
     .from('audits')
     .select('user_id')
     .eq('id', auditId)
+    .is('deleted_at', null)
     .single()
 
   if ((ownerCheck as any)?.user_id !== user.id) {

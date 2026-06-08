@@ -95,12 +95,12 @@ export async function GET(
     if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
     const db = createServiceSupabase()
-    const { data: ownerCheck } = await db.from('audits').select('user_id').eq('id', auditId).single()
+    const { data: ownerCheck } = await db.from('audits').select('user_id').eq('id', auditId).is('deleted_at', null).single()
     if (!ownerCheck || ((ownerCheck as any).user_id !== user.id && user.email !== 's.schintu@gmail.com'))
       return NextResponse.json({ error: 'Not authorized to access this report' }, { status: 403 })
 
     const [auditRes, reportRes, findingsRes, pagesRes] = await Promise.all([
-      db.from('audits').select('*').eq('id', auditId).single(),
+      db.from('audits').select('*').eq('id', auditId).is('deleted_at', null).single(),
       db.from('reports').select('*').eq('audit_id', auditId).single(),
       db.from('audit_findings').select('*, screenshot_url, target_element').eq('audit_id', auditId)
         .order('severity', { ascending: true }).order('sort_order', { ascending: true }),

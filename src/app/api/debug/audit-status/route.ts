@@ -23,7 +23,7 @@ export async function GET(request: NextRequest) {
   const db = createServiceSupabase()
 
   const [auditRes, logsRes, findingsRes, pagesRes] = await Promise.all([
-    db.from('audits').select('id, status, product_url, crawl_error, pages_crawled, created_at, updated_at').eq('id', auditId).single(),
+    db.from('audits').select('id, status, product_url, crawl_error, pages_crawled, created_at, updated_at').eq('id', auditId).is('deleted_at', null).single(),
     db.from('audit_logs').select('event, status, message, created_at').eq('audit_id', auditId).order('created_at', { ascending: false }).limit(20),
     db.from('audit_findings').select('id', { count: 'exact', head: true }).eq('audit_id', auditId),
     db.from('audit_pages').select('id', { count: 'exact', head: true }).eq('audit_id', auditId),

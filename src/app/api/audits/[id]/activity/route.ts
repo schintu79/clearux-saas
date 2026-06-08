@@ -29,6 +29,7 @@ export async function GET(
     .from('audits')
     .select('user_id')
     .eq('id', auditId)
+    .is('deleted_at', null)
     .single()
 
   if (!audit || (audit as any).user_id !== user.id) {

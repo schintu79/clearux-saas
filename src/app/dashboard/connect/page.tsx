@@ -82,7 +82,11 @@ export default function ConnectPage() {
   const fetchConnections = useCallback(async () => {
     try {
       const siteHost = workspace?.primary_domain || null;
-      const url = siteHost ? `/api/ftp?siteHost=${encodeURIComponent(siteHost)}` : '/api/ftp';
+      const wsId = workspace?.id || null;
+      const params = new URLSearchParams();
+      if (siteHost) params.set('siteHost', siteHost);
+      if (wsId) params.set('workspaceId', wsId);
+      const url = params.toString() ? `/api/ftp?${params.toString()}` : '/api/ftp';
       const res = await fetch(url);
       const data = await res.json();
       if (res.status === 503) {
@@ -129,6 +133,7 @@ export default function ConnectPage() {
         port: parseInt(form.port) || (form.protocol === 'sftp' ? 22 : 21),
         username: form.username,
         remotePath: form.remotePath,
+        workspaceId: workspace?.id || null,
       };
       // Only include password if user typed one. When editing, an empty
       // password means "use the stored one" and the API will look it up.
@@ -168,6 +173,7 @@ export default function ConnectPage() {
         password: form.password,
         remotePath: form.remotePath,
         siteHost,
+        workspaceId: workspace?.id || null,
       };
       if (editingId) payload.connectionId = editingId;
 
@@ -199,7 +205,7 @@ export default function ConnectPage() {
       await fetch('/api/ftp', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'delete', connectionId: id }),
+        body: JSON.stringify({ action: 'delete', connectionId: id, workspaceId: workspace?.id || null }),
       });
       setConnections((prev) => prev.filter((c) => c.id !== id));
     } catch {

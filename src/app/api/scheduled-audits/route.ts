@@ -78,6 +78,7 @@ export async function POST(request: NextRequest) {
         language: language || 'en',
         is_active: true,
         next_run_at: getNextRunDate(frequency),
+        workspace_id: workspace_id || null,
       } as any)
       .select()
       .single()

@@ -215,6 +215,7 @@ export async function GET(
           'selected_modules, created_at, completed_at, share_enabled',
       )
       .eq('share_token', token)
+      .is('deleted_at', null)
       .single()
 
     if (auditErr || !auditRow || !(auditRow as any).share_enabled) {

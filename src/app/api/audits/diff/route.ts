@@ -24,8 +24,8 @@ export async function GET(request: NextRequest) {
 
     // Fetch both audits + reports + findings in parallel
     const [currentAudit, previousAudit, currentReport, previousReport, currentFindings, previousFindings] = await Promise.all([
-      db.from('audits').select('id, user_id, product_url, status').eq('id', currentId).single(),
-      db.from('audits').select('id, user_id, product_url, status').eq('id', previousId).single(),
+      db.from('audits').select('id, user_id, product_url, status').eq('id', currentId).is('deleted_at', null).single(),
+      db.from('audits').select('id, user_id, product_url, status').eq('id', previousId).is('deleted_at', null).single(),
       db.from('reports').select('*').eq('audit_id', currentId).single(),
       db.from('reports').select('*').eq('audit_id', previousId).single(),
       db.from('audit_findings').select('*').eq('audit_id', currentId).order('sort_order'),

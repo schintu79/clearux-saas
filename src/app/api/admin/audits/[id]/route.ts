@@ -21,6 +21,7 @@ export async function GET(
       .from('audits')
       .select('*')
       .eq('id', id)
+      .is('deleted_at', null)
       .single()
 
     if (auditErr || !audit) {

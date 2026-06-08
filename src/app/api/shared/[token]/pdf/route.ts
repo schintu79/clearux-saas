@@ -85,6 +85,7 @@ export async function GET(
       .select('*')
       .eq('share_token', token)
       .eq('share_enabled', true)
+      .is('deleted_at', null)
       .single()
 
     if (auditErr || !audit)

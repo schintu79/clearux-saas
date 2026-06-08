@@ -52,6 +52,7 @@ export async function GET(
         'id, status, product_url, is_free_preview, created_at, completed_at, depth_mode',
       )
       .eq('id', id)
+      .is('deleted_at', null)
       .single()
 
     if (auditErr || !audit) {

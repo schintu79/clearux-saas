@@ -48,9 +48,34 @@ export const stallSweeperFn = inngest.createFunction(
       return { swept: 0 }
     }
 
+    // Filter out audits whose workspace is archived or missing.
+    // We do this post-fetch because Supabase JS doesn't support JOINs.
+    const workspaceIds = [...new Set(stalledAudits.map((a: any) => a.workspace_id).filter(Boolean))]
+    const activeWorkspaceIds = new Set<string>()
+    if (workspaceIds.length > 0) {
+      const { data: activeWs } = await db
+        .from('workspaces')
+        .select('id')
+        .in('id', workspaceIds)
+        .eq('status', 'active')
+      if (activeWs) {
+        for (const ws of activeWs) activeWorkspaceIds.add((ws as any).id)
+      }
+    }
+
+    // Only sweep audits that belong to an active workspace (or have no workspace_id for legacy audits)
+    const eligibleAudits = stalledAudits.filter((a: any) =>
+      !a.workspace_id || activeWorkspaceIds.has(a.workspace_id)
+    )
+
+    if (eligibleAudits.length === 0) {
+      console.log(`[stall-sweeper] ${stalledAudits.length} stalled audit(s) found but all belong to archived/missing workspaces — skipping`)
+      return { swept: 0, skippedArchived: stalledAudits.length }
+    }
+
     let swept = 0
 
-    for (const audit of stalledAudits) {
+    for (const audit of eligibleAudits) {
       const auditId = (audit as any).id as string
       const progress = (audit as any).progress_percent as number ?? 0
       const status = (audit as any).status as string
@@ -99,6 +124,6 @@ export const stallSweeperFn = inngest.createFunction(
     }
 
     console.log(`[stall-sweeper] Swept ${swept} stalled audits`)
-    return { swept, audits: stalledAudits.map((a: any) => a.id) }
+    return { swept, audits: eligibleAudits.map((a: any) => a.id) }
   },
 )

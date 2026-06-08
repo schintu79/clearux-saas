@@ -69,11 +69,13 @@ export async function POST(request: NextRequest) {
     try {
       const host = new URL(product_url).hostname.replace(/^www\./, '')
       const db = createServiceSupabase()
-      const { data: brands } = await db
+      let brandQuery = db
         .from('brand_identities')
         .select('id, website_url')
         .eq('user_id', user.id)
         .is('deleted_at', null)
+      if (workspace_id) brandQuery = brandQuery.eq('workspace_id', workspace_id)
+      const { data: brands } = await brandQuery
       if (brands) {
         const match = brands.find((b: any) => {
           if (!b.website_url) return false

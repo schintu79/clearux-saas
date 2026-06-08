@@ -33,6 +33,7 @@ export async function POST(request: NextRequest) {
       .from('audits')
       .select('*')
       .eq('id', audit_id)
+      .is('deleted_at', null)
       .single()
 
     if (auditError || !audit) {

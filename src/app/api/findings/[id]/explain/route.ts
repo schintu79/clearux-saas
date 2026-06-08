@@ -52,6 +52,7 @@ export async function POST(
       .from('audits')
       .select('user_id')
       .eq('id', (finding as any).audit_id)
+      .is('deleted_at', null)
       .single()
     if (!audit || (audit as any).user_id !== user.id) {
       return NextResponse.json({ error: 'Not authorized' }, { status: 403 })

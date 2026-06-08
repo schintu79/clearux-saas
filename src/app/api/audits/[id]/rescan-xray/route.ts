@@ -33,6 +33,7 @@ export async function POST(
     .from('audits')
     .select('id, user_id, product_url, status')
     .eq('id', auditId)
+    .is('deleted_at', null)
     .single()
 
   if (!audit || (audit as any).user_id !== user.id) {

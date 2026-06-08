@@ -33,6 +33,7 @@ export async function GET(
       .from('audits')
       .select('*')
       .eq('id', auditId)
+      .is('deleted_at', null)
       .single()
 
     if (auditError || !audit) {
