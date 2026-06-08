@@ -83,6 +83,7 @@ export async function classifyAudit(
       .eq('user_id', a.user_id)
       .neq('id', auditId)
       .neq('status', 'pending_payment')
+      .is('deleted_at', null)
 
     if ((count ?? 0) === 0) return 'initial_normal'
   }
@@ -175,12 +176,13 @@ export async function getAuditUsage(
     .eq('user_id', userId)
     .eq('status', 'active')
 
-  // 3. Check free first audit eligibility
+  // 3. Check free first audit eligibility — exclude soft-deleted audits
   const { count: totalAuditCount } = await db
     .from('audits')
     .select('id', { count: 'exact', head: true })
     .eq('user_id', userId)
     .in('status', ['completed', 'failed', 'analysing', 'crawling', 'generating_report', 'payment_received'])
+    .is('deleted_at', null)
 
   const firstAuditFree = (totalAuditCount ?? 0) === 0
 
@@ -203,6 +205,7 @@ export async function getAuditUsage(
       .eq('user_id', userId)
       .eq('depth_mode', 'deep')
       .neq('status', 'pending_payment')
+      .is('deleted_at', null)
     deepQ = periodFilter(deepQ)
     const { count: deepCount } = await deepQ
 
@@ -217,6 +220,7 @@ export async function getAuditUsage(
       .eq('user_id', userId)
       .neq('depth_mode', 'deep')
       .neq('status', 'pending_payment')
+      .is('deleted_at', null)
     normalQ = periodFilter(normalQ)
     const { count: normalInPeriod } = await normalQ
 
@@ -228,6 +232,7 @@ export async function getAuditUsage(
       .eq('user_id', userId)
       .neq('depth_mode', 'deep')
       .neq('status', 'pending_payment')
+      .is('deleted_at', null)
       .order('created_at', { ascending: true })
     periodAuditsQ = periodFilter(periodAuditsQ)
     const { data: auditsInPeriod } = await periodAuditsQ
@@ -248,6 +253,7 @@ export async function getAuditUsage(
           .eq('workspace_id', wsId)
           .eq('user_id', userId)
           .neq('status', 'pending_payment')
+          .is('deleted_at', null)
           .lt('created_at', periodStart)
 
         if ((priorCount ?? 0) === 0) {

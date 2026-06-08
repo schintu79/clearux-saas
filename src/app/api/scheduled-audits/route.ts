@@ -24,11 +24,14 @@ export async function GET(request: NextRequest) {
     if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
     const db = createServiceSupabase()
-    const { data, error } = await db
+    const workspaceId = request.nextUrl.searchParams.get('workspace_id')
+    let q = db
       .from('scheduled_audits')
       .select('*')
       .eq('user_id', user.id)
-      .order('created_at', { ascending: false })
+      .eq('is_active', true)
+    if (workspaceId) q = q.eq('workspace_id', workspaceId)
+    const { data, error } = await q.order('created_at', { ascending: false })
 
     if (error) throw error
     return NextResponse.json({ schedules: data || [] })

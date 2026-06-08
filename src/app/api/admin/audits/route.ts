@@ -20,14 +20,17 @@ export async function GET(request: NextRequest) {
     const limit = parseInt(searchParams.get('limit') || '20', 10)
     const offset = (page - 1) * limit
 
+    const showDeleted = searchParams.get('show_deleted') === 'true'
+
     let query = db
       .from('audits')
       .select(`
         id, user_id, status, product_url, product_type, audit_type, plan, pages_crawled,
-        created_at, completed_at,
+        created_at, completed_at, deleted_at,
         reports ( overall_score, total_issues, critical_count )
       `, { count: 'exact' })
 
+    if (!showDeleted) query = query.is('deleted_at', null)
     if (userId) query = query.eq('user_id', userId)
     if (status) query = query.eq('status', status)
     if (search) query = query.ilike('product_url', `%${search}%`)

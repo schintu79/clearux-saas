@@ -310,7 +310,8 @@ const NewAuditInner: React.FC = () => {
     try {
       const host = new URL(productUrl).hostname.replace(/^www\./, '');
       // Fetch all brands to check if one already exists for this domain
-      const brandsRes = await fetch('/api/brand-identities').then(r => r.ok ? r.json() : { identities: [] }).catch(() => ({ identities: [] }));
+      const wsParam = workspace?.id ? `?workspace_id=${workspace.id}` : '';
+      const brandsRes = await fetch(`/api/brand-identities${wsParam}`).then(r => r.ok ? r.json() : { identities: [] }).catch(() => ({ identities: [] }));
       const allBrands = (brandsRes?.identities || []) as any[];
       // Match by website_url containing the same hostname
       const existing = allBrands.find((b: any) => {

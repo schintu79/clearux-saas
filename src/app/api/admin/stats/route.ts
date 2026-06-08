@@ -12,19 +12,19 @@ export async function GET() {
     if ('error' in auth && auth.error) return auth.error
     const { db } = auth
 
-    // Run queries in parallel
+    // Run queries in parallel — exclude soft-deleted audits from all counts
     const [usersRes, auditsRes, creditsRes, recentUsersRes, recentAuditsRes] = await Promise.all([
       db.from('profiles').select('id', { count: 'exact', head: true }),
-      db.from('audits').select('id', { count: 'exact', head: true }),
+      db.from('audits').select('id', { count: 'exact', head: true }).is('deleted_at', null),
       db.from('profiles').select('credits'),
       db.from('profiles').select('id, email, full_name, created_at, credits, role').order('created_at', { ascending: false }).limit(5),
-      db.from('audits').select('id, product_url, status, created_at, user_id').order('created_at', { ascending: false }).limit(5),
+      db.from('audits').select('id, product_url, status, created_at, user_id').is('deleted_at', null).order('created_at', { ascending: false }).limit(5),
     ])
 
     const totalCredits = (creditsRes.data || []).reduce((sum: number, p: any) => sum + (p.credits || 0), 0)
 
-    // Count audits by status
-    const statusRes = await db.from('audits').select('status')
+    // Count audits by status — exclude soft-deleted
+    const statusRes = await db.from('audits').select('status').is('deleted_at', null)
     const statusCounts: Record<string, number> = {}
     for (const a of statusRes.data || []) {
       statusCounts[a.status] = (statusCounts[a.status] || 0) + 1
