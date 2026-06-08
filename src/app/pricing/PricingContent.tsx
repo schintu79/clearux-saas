@@ -12,6 +12,10 @@ import type { BillingInterval } from '@/lib/pricing'
 
 type PricingMode = 'subscribe' | 'credits'
 
+// Separate enterprise from the standard plans — it gets a distinct card
+const STANDARD_PLANS = SUBSCRIPTION_PLANS.filter(p => p.id !== 'enterprise')
+const ENTERPRISE_PLAN = SUBSCRIPTION_PLANS.find(p => p.id === 'enterprise')
+
 function CheckIcon() {
   return (
     <svg width="14" height="14" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg" className="shrink-0 mt-0.5">
@@ -23,6 +27,41 @@ function CheckIcon() {
 export default function PricingContent() {
   const [mode, setMode] = useState<PricingMode>('subscribe')
   const [interval, setInterval] = useState<BillingInterval>('monthly')
+
+  // Enterprise contact modal state
+  const [showEnterpriseModal, setShowEnterpriseModal] = useState(false)
+  const [entForm, setEntForm] = useState({ name: '', email: '', company: '', note: '' })
+  const [entSubmitting, setEntSubmitting] = useState(false)
+  const [entStatus, setEntStatus] = useState<'idle' | 'success' | 'error'>('idle')
+  const [entError, setEntError] = useState('')
+
+  const handleEnterpriseSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!entForm.name || !entForm.email || !entForm.company) return
+    setEntSubmitting(true)
+    setEntStatus('idle')
+    setEntError('')
+    try {
+      const res = await fetch('/api/contact/enterprise', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(entForm),
+      })
+      if (res.ok) {
+        setEntStatus('success')
+        setEntForm({ name: '', email: '', company: '', note: '' })
+      } else {
+        const data = await res.json().catch(() => ({}))
+        setEntError(data.error || 'Something went wrong. Please try again.')
+        setEntStatus('error')
+      }
+    } catch {
+      setEntError('Network error. Please try again.')
+      setEntStatus('error')
+    } finally {
+      setEntSubmitting(false)
+    }
+  }
 
   return (
     <main>
@@ -90,95 +129,162 @@ export default function PricingContent() {
         <div className="max-w-mkt mx-auto px-8 max-sm:px-5">
           {/* Subscription cards */}
           {mode === 'subscribe' && (
-            <div className="grid lg:grid-cols-3 gap-4 max-lg:grid-cols-1">
-              {SUBSCRIPTION_PLANS.map((plan) => {
-                const price = interval === 'monthly' ? plan.monthlyPrice : plan.yearlyPrice
-                return (
-                  <div
-                    key={plan.id}
-                    className={`relative rounded-xl px-8 py-10 flex flex-col ${
-                      plan.popular ? 'bg-ink text-paper' : ''
-                    }`}
-                    style={plan.popular ? undefined : { background: 'var(--card)', border: '1px solid var(--rule)' }}
-                  >
-                    {plan.popular && (
-                      <span className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-signal text-paper text-[10px] font-mono tracking-[0.1em] uppercase px-4 py-1 rounded-full">
-                        Most popular
-                      </span>
-                    )}
-                    <h3 className="font-mono text-[11px] tracking-[0.1em] uppercase mb-2" style={{ color: plan.popular ? 'color-mix(in srgb, var(--paper) 60%, transparent)' : 'var(--m-muted)' }}>
-                      {plan.name}
-                    </h3>
-                    <p className="text-[14px] font-sans mb-6" style={{ color: plan.popular ? 'color-mix(in srgb, var(--paper) 75%, transparent)' : 'var(--ink-2)' }}>
-                      {plan.bestFor}
-                    </p>
-                    <div className="mb-1">
-                      <span className="font-serif text-[48px] font-normal tracking-[-0.03em]" style={{ lineHeight: 1 }}>
-                        {formatPrice(price)}
-                      </span>
-                      <span className="text-[14px] font-sans ml-1" style={{ color: plan.popular ? 'color-mix(in srgb, var(--paper) 55%, transparent)' : 'var(--m-muted)' }}>
-                        / mo
-                      </span>
-                    </div>
-                    {interval === 'yearly' && (
-                      <p className="text-[12px] font-sans mb-5" style={{ color: plan.popular ? 'color-mix(in srgb, var(--paper) 50%, transparent)' : 'var(--m-muted)' }}>
-                        Billed yearly at {formatPrice(price * 12)}
+            <>
+              <div className="grid lg:grid-cols-3 gap-4 max-lg:grid-cols-1">
+                {STANDARD_PLANS.map((plan) => {
+                  const price = interval === 'monthly' ? plan.monthlyPrice : plan.yearlyPrice
+                  return (
+                    <div
+                      key={plan.id}
+                      className={`relative rounded-xl px-8 py-10 flex flex-col ${
+                        plan.popular ? 'bg-ink text-paper' : ''
+                      }`}
+                      style={plan.popular ? undefined : { background: 'var(--card)', border: '1px solid var(--rule)' }}
+                    >
+                      {plan.popular && (
+                        <span className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-signal text-paper text-[10px] font-mono tracking-[0.1em] uppercase px-4 py-1 rounded-full">
+                          Most popular
+                        </span>
+                      )}
+                      <h3 className="font-mono text-[11px] tracking-[0.1em] uppercase mb-2" style={{ color: plan.popular ? 'color-mix(in srgb, var(--paper) 60%, transparent)' : 'var(--m-muted)' }}>
+                        {plan.name}
+                      </h3>
+                      <p className="text-[14px] font-sans mb-6" style={{ color: plan.popular ? 'color-mix(in srgb, var(--paper) 75%, transparent)' : 'var(--ink-2)' }}>
+                        {plan.bestFor}
                       </p>
-                    )}
-                    {interval === 'monthly' && <div className="mb-5" />}
+                      <div className="mb-1">
+                        <span className="font-serif text-[48px] font-normal tracking-[-0.03em]" style={{ lineHeight: 1 }}>
+                          {formatPrice(price)}
+                        </span>
+                        <span className="text-[14px] font-sans ml-1" style={{ color: plan.popular ? 'color-mix(in srgb, var(--paper) 55%, transparent)' : 'var(--m-muted)' }}>
+                          / mo
+                        </span>
+                      </div>
+                      {interval === 'yearly' && (
+                        <p className="text-[12px] font-sans mb-5" style={{ color: plan.popular ? 'color-mix(in srgb, var(--paper) 50%, transparent)' : 'var(--m-muted)' }}>
+                          Billed yearly at {formatPrice(price * 12)}
+                        </p>
+                      )}
+                      {interval === 'monthly' && <div className="mb-5" />}
 
-                    {/* Key metrics */}
-                    <div className="flex gap-2 mb-7">
+                      {/* Key metrics */}
+                      <div className="flex gap-2 mb-7">
+                        <span
+                          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[13px] font-sans font-medium"
+                          style={{
+                            background: plan.popular ? 'color-mix(in srgb, var(--paper) 14%, transparent)' : 'color-mix(in srgb, var(--ink) 6%, transparent)',
+                            color: plan.popular ? 'var(--paper)' : 'var(--ink)',
+                          }}
+                        >
+                          {plan.workspaces} {plan.workspaces === 1 ? 'workspace' : 'workspaces'}
+                        </span>
+                        <span
+                          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[13px] font-sans font-medium"
+                          style={{
+                            background: plan.popular ? 'color-mix(in srgb, var(--paper) 14%, transparent)' : 'color-mix(in srgb, var(--ink) 6%, transparent)',
+                            color: plan.popular ? 'var(--paper)' : 'var(--ink)',
+                          }}
+                        >
+                          {plan.reAuditsPerMonth} re-audits / mo
+                        </span>
+                      </div>
+
+                      <ul className="list-none space-y-3 mb-9 flex-1">
+                        {plan.features.map((f) => (
+                          <li key={f} className="flex items-start gap-2.5 text-[14px] font-sans" style={{ color: plan.popular ? 'color-mix(in srgb, var(--paper) 78%, transparent)' : 'var(--ink-2)' }}>
+                            <CheckIcon />
+                            {f}
+                          </li>
+                        ))}
+                      </ul>
+                      {plan.popular ? (
+                        <Link
+                          href="/register"
+                          className="inline-flex items-center justify-center gap-2 w-full font-sans font-medium text-[14px] border rounded-full px-[22px] py-[11px] no-underline cursor-pointer transition-all bg-signal text-white border-signal hover:opacity-90"
+                        >
+                          Start free audit
+                          <ArrowRightIcon size={14} />
+                        </Link>
+                      ) : (
+                        <Button
+                          href="/register"
+                          variant="primary"
+                          className="w-full justify-center"
+                        >
+                          Start free audit
+                          <ArrowRightIcon size={14} />
+                        </Button>
+                      )}
+                    </div>
+                  )
+                })}
+              </div>
+
+              {/* Enterprise card — full width below the grid */}
+              {ENTERPRISE_PLAN && (
+                <div
+                  className="mt-4 rounded-xl px-8 py-10 flex flex-col lg:flex-row lg:items-center gap-8"
+                  style={{ background: 'var(--card)', border: '1px solid var(--rule)' }}
+                >
+                  <div className="flex-1">
+                    <h3 className="font-mono text-[11px] tracking-[0.1em] uppercase mb-2" style={{ color: 'var(--m-muted)' }}>
+                      {ENTERPRISE_PLAN.name}
+                    </h3>
+                    <p className="text-[14px] font-sans mb-4" style={{ color: 'var(--ink-2)' }}>
+                      {ENTERPRISE_PLAN.bestFor}
+                    </p>
+                    <div className="flex flex-wrap gap-2 mb-4">
                       <span
                         className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[13px] font-sans font-medium"
-                        style={{
-                          background: plan.popular ? 'color-mix(in srgb, var(--paper) 14%, transparent)' : 'color-mix(in srgb, var(--ink) 6%, transparent)',
-                          color: plan.popular ? 'var(--paper)' : 'var(--ink)',
-                        }}
+                        style={{ background: 'color-mix(in srgb, var(--ink) 6%, transparent)', color: 'var(--ink)' }}
                       >
-                        {plan.workspaces} {plan.workspaces === 1 ? 'workspace' : 'workspaces'}
+                        {ENTERPRISE_PLAN.maxActiveWorkspaces} workspaces
                       </span>
                       <span
                         className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[13px] font-sans font-medium"
-                        style={{
-                          background: plan.popular ? 'color-mix(in srgb, var(--paper) 14%, transparent)' : 'color-mix(in srgb, var(--ink) 6%, transparent)',
-                          color: plan.popular ? 'var(--paper)' : 'var(--ink)',
-                        }}
+                        style={{ background: 'color-mix(in srgb, var(--ink) 6%, transparent)', color: 'var(--ink)' }}
                       >
-                        {plan.reAuditsPerMonth} re-audits / mo
+                        {ENTERPRISE_PLAN.reAuditsPerMonth} re-audits / mo
+                      </span>
+                      <span
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[13px] font-sans font-medium"
+                        style={{ background: 'color-mix(in srgb, var(--ink) 6%, transparent)', color: 'var(--ink)' }}
+                      >
+                        {ENTERPRISE_PLAN.deepAuditsPerMonth} deep audits / mo
+                      </span>
+                      <span
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[13px] font-sans font-medium"
+                        style={{ background: 'color-mix(in srgb, var(--ink) 6%, transparent)', color: 'var(--ink)' }}
+                      >
+                        SLA guarantee
                       </span>
                     </div>
-
-                    <ul className="list-none space-y-3 mb-9 flex-1">
-                      {plan.features.map((f) => (
-                        <li key={f} className="flex items-start gap-2.5 text-[14px] font-sans" style={{ color: plan.popular ? 'color-mix(in srgb, var(--paper) 78%, transparent)' : 'var(--ink-2)' }}>
+                    <ul className="list-none space-y-2 max-lg:mb-2">
+                      {ENTERPRISE_PLAN.features.slice(0, 5).map((f) => (
+                        <li key={f} className="flex items-start gap-2.5 text-[14px] font-sans" style={{ color: 'var(--ink-2)' }}>
                           <CheckIcon />
                           {f}
                         </li>
                       ))}
                     </ul>
-                    {plan.popular ? (
-                      <Link
-                        href="/register"
-                        className="inline-flex items-center justify-center gap-2 w-full font-sans font-medium text-[14px] border rounded-full px-[22px] py-[11px] no-underline cursor-pointer transition-all bg-signal text-white border-signal hover:opacity-90"
-                      >
-                        Start free audit
-                        <ArrowRightIcon size={14} />
-                      </Link>
-                    ) : (
-                      <Button
-                        href="/register"
-                        variant="primary"
-                        className="w-full justify-center"
-                      >
-                        Start free audit
-                        <ArrowRightIcon size={14} />
-                      </Button>
-                    )}
                   </div>
-                )
-              })}
-            </div>
+                  <div className="shrink-0 flex flex-col items-center gap-3 lg:min-w-[220px]">
+                    <p className="font-serif text-[32px] font-normal tracking-[-0.03em] text-ink" style={{ lineHeight: 1 }}>
+                      Custom pricing
+                    </p>
+                    <p className="text-[13px] font-sans text-m-muted mb-2">Tailored to your organisation</p>
+                    <button
+                      onClick={() => { setShowEnterpriseModal(true); setEntStatus('idle') }}
+                      className="inline-flex items-center justify-center gap-2 w-full font-sans font-medium text-[14px] border rounded-full px-[22px] py-[11px] cursor-pointer transition-all hover:opacity-80"
+                      style={{ background: 'var(--ink)', color: 'var(--paper)', borderColor: 'var(--ink)' }}
+                    >
+                      Contact us
+                      <ArrowRightIcon size={14} />
+                    </button>
+                  </div>
+                </div>
+              )}
+            </>
           )}
 
           {/* Credit packs */}
@@ -293,6 +399,7 @@ export default function PricingContent() {
                   { plan: 'Starter', bestFor: 'One active site', workspaces: '1', reAudits: '4', access: 'Full product' },
                   { plan: 'Pro', bestFor: 'Multiple brands', workspaces: '3', reAudits: '12', access: 'Full product' },
                   { plan: 'Team', bestFor: 'Agencies and teams', workspaces: '10', reAudits: '40', access: 'Full product' },
+                  { plan: 'Enterprise', bestFor: 'Large organisations', workspaces: '25', reAudits: '100', access: 'Full product + SLA' },
                 ] as const).map((row, i) => (
                   <tr
                     key={row.plan}
@@ -401,6 +508,130 @@ export default function PricingContent() {
 
       {/* CTA */}
       <HomeCta />
+
+      {/* Enterprise contact modal */}
+      {showEnterpriseModal && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center px-4"
+          style={{ background: 'color-mix(in srgb, var(--ink) 50%, transparent)', backdropFilter: 'blur(4px)' }}
+          onClick={(e) => { if (e.target === e.currentTarget) setShowEnterpriseModal(false) }}
+        >
+          <div
+            className="relative w-full max-w-[480px] rounded-xl px-8 py-10 max-sm:px-6 max-sm:py-8"
+            style={{ background: 'var(--paper)', border: '1px solid var(--rule)' }}
+          >
+            <button
+              onClick={() => setShowEnterpriseModal(false)}
+              className="absolute top-4 right-4 w-8 h-8 flex items-center justify-center rounded-full transition-colors cursor-pointer"
+              style={{ color: 'var(--m-muted)' }}
+              aria-label="Close"
+            >
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M4 4l8 8M12 4l-8 8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" /></svg>
+            </button>
+
+            {entStatus === 'success' ? (
+              <div className="text-center py-6">
+                <div
+                  className="w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-4"
+                  style={{ background: 'color-mix(in srgb, var(--signal) 12%, transparent)' }}
+                >
+                  <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M5 10.5L8.5 14L15 6" stroke="var(--signal)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /></svg>
+                </div>
+                <h3 className="font-serif text-[24px] font-normal tracking-[-0.02em] text-ink mb-2">Message sent</h3>
+                <p className="text-[14px] font-sans text-ink-2 mb-6">
+                  We&apos;ll get back to you within one business day.
+                </p>
+                <button
+                  onClick={() => setShowEnterpriseModal(false)}
+                  className="inline-flex items-center justify-center font-sans font-medium text-[14px] border rounded-full px-[22px] py-[11px] cursor-pointer transition-all hover:opacity-80"
+                  style={{ background: 'var(--ink)', color: 'var(--paper)', borderColor: 'var(--ink)' }}
+                >
+                  Close
+                </button>
+              </div>
+            ) : (
+              <>
+                <h3 className="font-serif text-[24px] font-normal tracking-[-0.02em] text-ink mb-1">Enterprise inquiry</h3>
+                <p className="text-[14px] font-sans text-ink-2 mb-6">
+                  Tell us about your organisation and we&apos;ll put together a tailored plan.
+                </p>
+
+                <form onSubmit={handleEnterpriseSubmit} className="space-y-4">
+                  <div>
+                    <label className="block font-mono text-[10px] tracking-[0.1em] uppercase mb-1.5" style={{ color: 'var(--m-muted)' }}>
+                      Name <span className="text-signal">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      required
+                      value={entForm.name}
+                      onChange={(e) => setEntForm({ ...entForm, name: e.target.value })}
+                      className="w-full rounded-lg px-4 py-3 text-[14px] font-sans outline-none transition-colors"
+                      style={{ background: 'color-mix(in srgb, var(--ink) 4%, transparent)', border: '1px solid var(--rule)', color: 'var(--ink)' }}
+                      placeholder="Your name"
+                    />
+                  </div>
+                  <div>
+                    <label className="block font-mono text-[10px] tracking-[0.1em] uppercase mb-1.5" style={{ color: 'var(--m-muted)' }}>
+                      Email <span className="text-signal">*</span>
+                    </label>
+                    <input
+                      type="email"
+                      required
+                      value={entForm.email}
+                      onChange={(e) => setEntForm({ ...entForm, email: e.target.value })}
+                      className="w-full rounded-lg px-4 py-3 text-[14px] font-sans outline-none transition-colors"
+                      style={{ background: 'color-mix(in srgb, var(--ink) 4%, transparent)', border: '1px solid var(--rule)', color: 'var(--ink)' }}
+                      placeholder="you@company.com"
+                    />
+                  </div>
+                  <div>
+                    <label className="block font-mono text-[10px] tracking-[0.1em] uppercase mb-1.5" style={{ color: 'var(--m-muted)' }}>
+                      Company <span className="text-signal">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      required
+                      value={entForm.company}
+                      onChange={(e) => setEntForm({ ...entForm, company: e.target.value })}
+                      className="w-full rounded-lg px-4 py-3 text-[14px] font-sans outline-none transition-colors"
+                      style={{ background: 'color-mix(in srgb, var(--ink) 4%, transparent)', border: '1px solid var(--rule)', color: 'var(--ink)' }}
+                      placeholder="Company name"
+                    />
+                  </div>
+                  <div>
+                    <label className="block font-mono text-[10px] tracking-[0.1em] uppercase mb-1.5" style={{ color: 'var(--m-muted)' }}>
+                      Additional note
+                    </label>
+                    <textarea
+                      value={entForm.note}
+                      onChange={(e) => setEntForm({ ...entForm, note: e.target.value })}
+                      rows={3}
+                      className="w-full rounded-lg px-4 py-3 text-[14px] font-sans outline-none transition-colors resize-none"
+                      style={{ background: 'color-mix(in srgb, var(--ink) 4%, transparent)', border: '1px solid var(--rule)', color: 'var(--ink)' }}
+                      placeholder="Tell us about your needs, team size, timeline..."
+                    />
+                  </div>
+
+                  {entStatus === 'error' && (
+                    <p className="text-[13px] font-sans" style={{ color: '#dc2626' }}>{entError}</p>
+                  )}
+
+                  <button
+                    type="submit"
+                    disabled={entSubmitting}
+                    className="inline-flex items-center justify-center gap-2 w-full font-sans font-medium text-[14px] border rounded-full px-[22px] py-[11px] cursor-pointer transition-all hover:opacity-80 disabled:opacity-50 disabled:cursor-not-allowed"
+                    style={{ background: 'var(--ink)', color: 'var(--paper)', borderColor: 'var(--ink)' }}
+                  >
+                    {entSubmitting ? 'Sending...' : 'Send inquiry'}
+                    {!entSubmitting && <ArrowRightIcon size={14} />}
+                  </button>
+                </form>
+              </>
+            )}
+          </div>
+        </div>
+      )}
     </main>
   )
 }
