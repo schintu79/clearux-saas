@@ -251,23 +251,25 @@ async function gradeModelAnswers(
 
   const gradingPrompt = `Grade how accurately "${modelLabel}" answered questions about ${domain}.
 
-WEBSITE CONTENT (scraped from the actual site — this is NOT the only source of truth):
+WEBSITE CONTENT (scraped from the actual site — use as reference, not as the ONLY truth):
 ${truthParts.join('\n')}
 
 ANSWERS:
 ${answers.map((a, i) => `Q${i + 1}: ${a.question}\nA${i + 1}: ${a.answer}`).join('\n\n')}
 
-GRADING RULES:
-- "accurate": Answer is factually correct. It matches the website content, OR it provides plausible, specific details that are consistent with what the site describes.
-- "partial": Some correct info but incomplete or slightly off.
-- "inaccurate": Clearly wrong information that contradicts the website content, OR the AI refused/hedged when the website clearly has the answer.
-- "hallucinated": Made up specific details that CONTRADICT the website (e.g., wrong pricing, wrong product names, invented features that don't exist). Only use this if the answer is demonstrably false.
-- "no_data": The website itself has no relevant info AND the AI correctly acknowledged uncertainty.
+GRADING RULES (apply in order — use the FIRST one that fits):
+1. "accurate": Answer is factually correct and substantive. It matches the website content, OR it provides plausible, specific details consistent with what the site describes. If the answer correctly conveys what the company does, its products/services, or its value proposition — even with different wording — grade as accurate.
+2. "partial": Some correct info but incomplete, vague, or slightly off. The AI knows the brand exists and provides SOME real details, but is missing key aspects or includes minor inaccuracies.
+3. "no_data": The AI honestly admitted it doesn't know or doesn't have information about this brand/company. This includes phrases like "I'm not familiar with", "I don't have information about", "I cannot find", or similar hedging/refusals. Also use this when the website itself has no relevant info for the question.
+4. "inaccurate": The AI gave specific information that is WRONG — it claimed the company does something it doesn't, described wrong products, or stated incorrect facts. Only use this when the answer contains concrete claims that contradict the website content.
+5. "hallucinated": The AI invented specific details that are PROVABLY FALSE (e.g., wrong pricing, fabricated product names, invented features that don't exist on the site). This is worse than inaccurate — it requires demonstrably fabricated specifics.
 
-IMPORTANT DISTINCTIONS:
-- If the AI provides extra details beyond what's on the site but those details are plausible and consistent, grade as "accurate" or "partial" — NOT "hallucinated."
-- "hallucinated" means PROVABLY WRONG, not merely "not on the website."
-- If the AI refused to answer but the website clearly has the answer, grade as "inaccurate."
+CRITICAL DISTINCTIONS:
+- An AI saying "I don't know about this brand" is "no_data", NOT "inaccurate". Honest uncertainty is neutral.
+- An AI giving a generic/vague answer that's mostly consistent with the site is "partial", NOT "inaccurate".
+- Extra details beyond what's on the site that are plausible and consistent = "accurate" or "partial", NOT "hallucinated".
+- "hallucinated" means PROVABLY WRONG with fabricated specifics, not merely "not on the website".
+- Grade generously when the answer captures the spirit of what the brand does, even if the exact wording differs.
 
 Respond with a JSON array:
 [{"accuracy": "accurate|partial|inaccurate|hallucinated|no_data", "note": "1 sentence why"}]`

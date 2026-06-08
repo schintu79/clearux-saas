@@ -216,10 +216,14 @@ function accuracyColor(accuracy: string | null | undefined): { bg: string; color
   return { bg: 'rgba(239,68,68,0.1)', color: 'var(--severe)' };
 }
 
-function accuracyBadge(score: number): { label: string; bg: string; color: string } {
+function accuracyBadge(score: number, status?: 'measured' | 'skipped' | 'error' | null): { label: string; bg: string; color: string } {
+  // Non-measured models get neutral badges instead of misleading "Inaccurate"
+  if (status === 'skipped') return { label: 'Not configured', bg: 'rgba(148,163,184,0.1)', color: 'var(--m-muted)' };
+  if (status === 'error') return { label: 'Error', bg: 'rgba(239,68,68,0.1)', color: 'var(--severe)' };
   if (score >= 80) return { label: 'Accurate', bg: 'rgba(34,197,94,0.1)', color: 'var(--ok)' };
   if (score >= 50) return { label: 'Partial', bg: 'rgba(234,179,8,0.1)', color: 'var(--warn)' };
-  return { label: 'Inaccurate', bg: 'rgba(239,68,68,0.1)', color: 'var(--severe)' };
+  if (score >= 15) return { label: 'Low', bg: 'rgba(239,68,68,0.1)', color: 'var(--severe)' };
+  return { label: 'Not known', bg: 'rgba(148,163,184,0.12)', color: 'var(--m-muted)' };
 }
 
 function perceptionSentimentLabel(s: number | null | undefined): string {
@@ -857,15 +861,19 @@ function IntelligencePage() {
       sentimentScores: number[];
       placementScores: number[];
       themes: Array<{ theme: string; polarity: string; count: number }>;
+      status: 'measured' | 'skipped' | 'error' | null;
     }>();
 
     // Source 1: audit-time probes (from multi_model_probes table)
     for (const probe of modelProbes) {
       const key = probe.model_id;
       if (!modelRecords.has(key)) {
-        modelRecords.set(key, { label: probe.model_label, records: [], sentimentScores: [], placementScores: [], themes: [] });
+        modelRecords.set(key, { label: probe.model_label, records: [], sentimentScores: [], placementScores: [], themes: [], status: probe.status ?? null });
       }
       const entry = modelRecords.get(key)!;
+      // Promote status: measured > error > skipped (best status wins across multiple probe rows)
+      if (probe.status === 'measured') entry.status = 'measured';
+      else if (probe.status === 'error' && entry.status !== 'measured') entry.status = 'error';
       if (probe.results_json) {
         for (const r of probe.results_json) {
           entry.records.push({ accuracy: r.accuracy });
@@ -882,7 +890,7 @@ function IntelligencePage() {
         if (r.status !== 'completed' || !r.accuracy) continue;
         const key = r.modelShortId;
         if (!modelRecords.has(key)) {
-          modelRecords.set(key, { label: r.modelDisplayName, records: [], sentimentScores: [], placementScores: [], themes: [] });
+          modelRecords.set(key, { label: r.modelDisplayName, records: [], sentimentScores: [], placementScores: [], themes: [], status: null });
         }
         modelRecords.get(key)!.records.push({ accuracy: r.accuracy });
       }
@@ -930,6 +938,7 @@ function IntelligencePage() {
           placement_score: avgPlac,
           sentiment_themes: [...themeMap.entries()].map(([theme, v]) => ({ theme, polarity: v.polarity, count: v.count })),
           total_questions: total,
+          status: data.status,
         };
       })
       .sort((a, b) => b.accuracy_score - a.accuracy_score);
@@ -2301,9 +2310,8 @@ function IntelligencePage() {
 
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
                 {mergedModelBreakdown.map(probe => {
-                  const badge = accuracyBadge(probe.accuracy_score);
+                  const badge = accuracyBadge(probe.accuracy_score, probe.status);
                   const hasSent = probe.sentiment_score != null;
-                  const hasPlace = probe.placement_score != null;
                   return (
                     <div key={probe.model_id} className="rounded-lg px-4 py-4" style={{ background: 'var(--paper-2)', border: '1px solid var(--rule)' }}>
                       <div className="flex items-center gap-2.5 mb-3">
@@ -2314,7 +2322,11 @@ function IntelligencePage() {
                         <div className="flex items-center justify-between">
                           <span className="text-[11px]" style={{ color: 'var(--m-muted)' }}>Accuracy</span>
                           <div className="flex items-center gap-1.5">
-                            <span className="text-[12px] font-semibold tabular-nums" style={{ color: 'var(--ink)' }}>{probe.accuracy_score}%</span>
+                            {probe.status === 'measured' || !probe.status ? (
+                              <span className="text-[12px] font-semibold tabular-nums" style={{ color: 'var(--ink)' }}>{probe.accuracy_score}%</span>
+                            ) : (
+                              <span className="text-[12px] font-semibold" style={{ color: 'var(--m-muted)' }}>—</span>
+                            )}
                             <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded" style={{ background: badge.bg, color: badge.color }}>{badge.label}</span>
                           </div>
                         </div>
@@ -2324,13 +2336,7 @@ function IntelligencePage() {
                             {hasSent ? `${probe.sentiment_score}/100` : '--'}
                           </span>
                         </div>
-                        <div className="flex items-center justify-between">
-                          <span className="text-[11px]" style={{ color: 'var(--m-muted)' }}>Placement</span>
-                          <span className="text-[12px] font-semibold tabular-nums" style={{ color: hasPlace ? 'var(--ink)' : 'var(--m-muted)' }}>
-                            {hasPlace ? `#${probe.placement_score}` : '--'}
-                          </span>
-                        </div>
-                        {probe.total_questions > 0 && (
+                        {probe.status === 'measured' && probe.total_questions > 0 && (
                           <div className="flex items-center justify-between pt-1" style={{ borderTop: '1px solid var(--rule)' }}>
                             <span className="text-[10px]" style={{ color: 'var(--m-muted)', opacity: 0.7 }}>Based on</span>
                             <span className="text-[10px] tabular-nums" style={{ color: 'var(--m-muted)', opacity: 0.7 }}>
