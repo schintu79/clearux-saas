@@ -168,7 +168,33 @@ export async function getAuditUsage(
 
   const p = profile as any ?? {}
   const plan = SUBSCRIPTION_PLANS.find(pl => pl.id === p.subscription_plan)
-  const hasActiveSub = p.subscription_status === 'active'
+
+  // ── Free membership check with expiry enforcement ────────
+  // Precedence: explicit admin override → free membership → plan defaults → free tier fallback
+  let isFreeMember = Boolean(p.free_membership)
+  if (isFreeMember && p.free_membership_expiry) {
+    const expiryDate = new Date(p.free_membership_expiry)
+    if (expiryDate < new Date()) {
+      // Free membership has expired — auto-revoke
+      isFreeMember = false
+      // Persist the revocation so we don't re-check every time
+      await db
+        .from('profiles')
+        .update({
+          free_membership: false,
+          subscription_status: p.stripe_subscription_id ? 'active' : null,
+          updated_at: new Date().toISOString(),
+        } as any)
+        .eq('id', userId)
+      // Update local state for the rest of this function
+      if (!p.stripe_subscription_id) {
+        p.subscription_status = null
+      }
+    }
+  }
+
+  // Active subscription = Stripe sub active OR valid free membership
+  const hasActiveSub = p.subscription_status === 'active' || isFreeMember
   let periodStart = p.billing_period_start as string | null
   let periodEnd = p.billing_period_end as string | null
 

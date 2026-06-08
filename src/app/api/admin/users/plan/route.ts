@@ -38,7 +38,7 @@ export async function PATCH(request: NextRequest) {
       brand_ai_requests_per_cycle,
     } = body as {
       user_id: string
-      subscription_plan?: 'starter' | 'pro' | 'team' | null
+      subscription_plan?: 'starter' | 'pro' | 'team' | 'enterprise' | null
       credits?: number
       ai_checks_per_month?: number
       free_membership?: boolean
@@ -123,24 +123,35 @@ export async function PATCH(request: NextRequest) {
     }
 
     if (free_membership !== undefined) {
-      // free_membership is a virtual concept — grant pro plan with no Stripe sub
+      // Persist the free_membership flag and expiry on the profile
+      updates.free_membership = free_membership
+      updates.free_membership_expiry = expiry_date ?? null
+
       if (free_membership) {
+        // Grant active subscription status for free members
         updates.subscription_status = 'active'
         if (!updates.subscription_plan && !p.subscription_plan) {
           updates.subscription_plan = 'pro'
         }
-        // Set generous audits for free members
+        // Set plan-based audits for free members if not already set by plan selection
         if (!updates.audits_per_month) {
-          const freePlan = SUBSCRIPTION_PLANS.find((pl) => pl.id === 'pro')
+          const effectivePlanId = updates.subscription_plan ?? p.subscription_plan ?? 'pro'
+          const freePlan = SUBSCRIPTION_PLANS.find((pl) => pl.id === effectivePlanId)
           updates.audits_per_month = freePlan?.reAuditsPerMonth ?? 10
           updates.audits_remaining = updates.audits_per_month
           updates.deep_audits_per_month = freePlan?.deepAuditsPerMonth ?? 4
+          updates.ai_checks_per_month = freePlan?.aiChecksPerMonth ?? 30
         }
         // Initialize billing period if not set
         if (!p.billing_period_start) {
           const now = new Date()
           updates.billing_period_start = now.toISOString()
           updates.billing_period_end = addOneMonth(now).toISOString()
+        }
+      } else {
+        // Revoking free membership — only deactivate if no Stripe subscription
+        if (!p.stripe_subscription_id && !updates.subscription_plan) {
+          updates.subscription_status = null
         }
       }
     }

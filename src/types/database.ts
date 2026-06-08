@@ -94,7 +94,7 @@ export interface Profile {
   white_label:   boolean
   package_tier:  string
   // Subscription
-  subscription_plan:     string | null  // 'starter' | 'pro' | 'agency' | null
+  subscription_plan:     string | null  // 'starter' | 'pro' | 'team' | 'enterprise' | null
   subscription_status:   string | null  // 'active' | 'cancelled' | 'past_due' | null
   subscription_interval: string | null  // 'monthly' | 'yearly' | null
   stripe_customer_id:    string | null
@@ -113,6 +113,9 @@ export interface Profile {
   reaudits_per_cycle: number | null
   deep_audits_per_cycle: number | null
   brand_ai_requests_per_cycle: number | null
+  // Free membership (admin-granted access without Stripe subscription)
+  free_membership: boolean
+  free_membership_expiry: string | null  // ISO timestamp — null = no expiry
   // Admin role
   role:          'user' | 'admin' | 'super_admin'
   // Email preferences

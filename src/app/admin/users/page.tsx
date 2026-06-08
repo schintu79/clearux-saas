@@ -18,6 +18,12 @@ interface User {
   workspace_count: number
   free_membership: boolean
   free_membership_expiry: string | null
+  // Admin quota overrides (null = use plan default)
+  max_active_workspaces: number | null
+  workspace_creations_per_cycle: number | null
+  reaudits_per_cycle: number | null
+  deep_audits_per_cycle: number | null
+  brand_ai_requests_per_cycle: number | null
   role: string
   created_at: string
   updated_at: string
@@ -37,6 +43,11 @@ interface PlanModal {
   aiChecksPerMonth: string
   freeMembership: boolean
   expiryDate: string
+  // Quota overrides — empty string = use plan default, number = override
+  maxActiveWorkspaces: string
+  workspaceCreationsPerCycle: string
+  reauditsPerCycle: string
+  deepAuditsPerCycle: string
 }
 
 export default function AdminUsersPage() {
@@ -120,6 +131,12 @@ export default function AdminUsersPage() {
       body.free_membership = planModal.freeMembership
       if (planModal.expiryDate) body.expiry_date = planModal.expiryDate
       else body.expiry_date = null
+
+      // Quota overrides — empty string = clear override (null), number = set override
+      body.max_active_workspaces = planModal.maxActiveWorkspaces ? parseInt(planModal.maxActiveWorkspaces, 10) : null
+      body.workspace_creations_per_cycle = planModal.workspaceCreationsPerCycle ? parseInt(planModal.workspaceCreationsPerCycle, 10) : null
+      body.reaudits_per_cycle = planModal.reauditsPerCycle ? parseInt(planModal.reauditsPerCycle, 10) : null
+      body.deep_audits_per_cycle = planModal.deepAuditsPerCycle ? parseInt(planModal.deepAuditsPerCycle, 10) : null
 
       const res = await fetch('/api/admin/users/plan', {
         method: 'PATCH',
@@ -261,6 +278,10 @@ export default function AdminUsersPage() {
                             aiChecksPerMonth: '',
                             freeMembership: u.free_membership || false,
                             expiryDate: u.free_membership_expiry || '',
+                            maxActiveWorkspaces: u.max_active_workspaces != null ? String(u.max_active_workspaces) : '',
+                            workspaceCreationsPerCycle: u.workspace_creations_per_cycle != null ? String(u.workspace_creations_per_cycle) : '',
+                            reauditsPerCycle: u.reaudits_per_cycle != null ? String(u.reaudits_per_cycle) : '',
+                            deepAuditsPerCycle: u.deep_audits_per_cycle != null ? String(u.deep_audits_per_cycle) : '',
                           })}
                           className="p-1.5 rounded-lg transition-colors hover:bg-black/[0.04]"
                           style={{ color: 'var(--m-muted)' }}
@@ -406,6 +427,7 @@ export default function AdminUsersPage() {
                   <option value="starter">Starter (1 workspace, 4 re-audits/mo)</option>
                   <option value="pro">Pro (3 workspaces, 12 re-audits/mo)</option>
                   <option value="team">Team (10 workspaces, 40 re-audits/mo)</option>
+                  <option value="enterprise">Enterprise (25 workspaces, 100 re-audits/mo)</option>
                 </select>
               </div>
 
@@ -422,6 +444,70 @@ export default function AdminUsersPage() {
                 />
               </div>
 
+              {/* ── Quota overrides section ── */}
+              <div className="pt-2 pb-1">
+                <p className="text-[11px] font-medium uppercase tracking-wider" style={{ color: 'var(--m-muted)' }}>Quota overrides</p>
+                <p className="text-[10px] mt-0.5" style={{ color: 'var(--m-muted)' }}>Leave empty to use plan defaults</p>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                {/* Max active workspaces */}
+                <div>
+                  <label className="text-[12px] font-medium block mb-1.5" style={{ color: 'var(--ink)' }}>Max workspaces</label>
+                  <input
+                    type="number"
+                    min="0"
+                    value={planModal.maxActiveWorkspaces}
+                    onChange={(e) => setPlanModal({ ...planModal, maxActiveWorkspaces: e.target.value })}
+                    placeholder="Plan default"
+                    className="w-full px-3 py-2 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--signal)]/30"
+                    style={{ background: 'var(--paper)', border: '1px solid var(--rule)', color: 'var(--ink)' }}
+                  />
+                </div>
+
+                {/* Workspace creations per cycle */}
+                <div>
+                  <label className="text-[12px] font-medium block mb-1.5" style={{ color: 'var(--ink)' }}>Creations / cycle</label>
+                  <input
+                    type="number"
+                    min="0"
+                    value={planModal.workspaceCreationsPerCycle}
+                    onChange={(e) => setPlanModal({ ...planModal, workspaceCreationsPerCycle: e.target.value })}
+                    placeholder="Plan default"
+                    className="w-full px-3 py-2 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--signal)]/30"
+                    style={{ background: 'var(--paper)', border: '1px solid var(--rule)', color: 'var(--ink)' }}
+                  />
+                </div>
+
+                {/* Re-audits per cycle */}
+                <div>
+                  <label className="text-[12px] font-medium block mb-1.5" style={{ color: 'var(--ink)' }}>Re-audits / month</label>
+                  <input
+                    type="number"
+                    min="0"
+                    value={planModal.reauditsPerCycle}
+                    onChange={(e) => setPlanModal({ ...planModal, reauditsPerCycle: e.target.value })}
+                    placeholder="Plan default"
+                    className="w-full px-3 py-2 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--signal)]/30"
+                    style={{ background: 'var(--paper)', border: '1px solid var(--rule)', color: 'var(--ink)' }}
+                  />
+                </div>
+
+                {/* Deep audits per cycle */}
+                <div>
+                  <label className="text-[12px] font-medium block mb-1.5" style={{ color: 'var(--ink)' }}>Deep audits / month</label>
+                  <input
+                    type="number"
+                    min="0"
+                    value={planModal.deepAuditsPerCycle}
+                    onChange={(e) => setPlanModal({ ...planModal, deepAuditsPerCycle: e.target.value })}
+                    placeholder="Plan default"
+                    className="w-full px-3 py-2 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--signal)]/30"
+                    style={{ background: 'var(--paper)', border: '1px solid var(--rule)', color: 'var(--ink)' }}
+                  />
+                </div>
+              </div>
+
               {/* AI checks per month */}
               <div>
                 <label className="text-[12px] font-medium block mb-1.5" style={{ color: 'var(--ink)' }}>AI checks / month</label>
@@ -434,11 +520,11 @@ export default function AdminUsersPage() {
                   className="w-full px-3 py-2 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--signal)]/30"
                   style={{ background: 'var(--paper)', border: '1px solid var(--rule)', color: 'var(--ink)' }}
                 />
-                <p className="text-[11px] mt-1" style={{ color: 'var(--m-muted)' }}>Starter: 10 · Pro: 30 · Team: 100</p>
+                <p className="text-[11px] mt-1" style={{ color: 'var(--m-muted)' }}>Starter: 10 · Pro: 30 · Team: 100 · Enterprise: 500</p>
               </div>
 
               {/* Free membership toggle */}
-              <div className="flex items-center justify-between py-2">
+              <div className="flex items-center justify-between py-2" style={{ borderTop: '1px solid var(--rule)' }}>
                 <div>
                   <label className="text-[12px] font-medium block" style={{ color: 'var(--ink)' }}>Free membership</label>
                   <p className="text-[11px] mt-0.5" style={{ color: 'var(--m-muted)' }}>Grant free access without payment</p>

@@ -93,6 +93,31 @@ export const SUBSCRIPTION_PLANS: SubscriptionPlan[] = [
       'Dedicated support',
     ],
   },
+  {
+    id: 'enterprise',
+    name: 'Enterprise',
+    maxActiveWorkspaces: 25,
+    workspaceCreationsPerCycle: 50,
+    workspaces: 25, // deprecated — kept for backward compat
+    reAuditsPerMonth: 100,
+    deepAuditsPerMonth: 50,
+    aiChecksPerMonth: 500,
+    monthlyPrice: 0,   // custom pricing — contact sales
+    yearlyPrice: 0,    // custom pricing — contact sales
+    bestFor: 'Large organisations with custom needs',
+    features: [
+      '25 workspaces',
+      '100 re-audits per month',
+      '50 deep audits per month',
+      '500 AI checks per month',
+      'Full product access',
+      'PDF + DOCX reports',
+      'Priority processing',
+      'Dedicated support',
+      'Custom onboarding',
+      'SLA guarantee',
+    ],
+  },
 ]
 
 // ── Credit packs ────────────────────────────────────────────

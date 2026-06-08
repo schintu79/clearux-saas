@@ -45,6 +45,7 @@ import {
   CircleDot,
   Zap,
   Check,
+  TrendingUp,
 } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { createBrowserSupabase } from '@/lib/supabase-ssr';
@@ -336,6 +337,11 @@ function BrandDnaPage() {
   const [findings, setFindings] = useState<FindingRecord[]>([]);
   const [auditLoading, setAuditLoading] = useState(false);
   const [triggeringAudit, setTriggeringAudit] = useState(false);
+
+  /* ── Findings visibility state ── */
+  const [showAllFindings, setShowAllFindings] = useState(false);
+  const [findingStatusMap, setFindingStatusMap] = useState<Record<string, string>>({});
+  const [findingDismissMap, setFindingDismissMap] = useState<Record<string, boolean>>({});
 
   /* ── Share / delete / menu state ── */
   const [shareUrl, setShareUrl] = useState<string | null>(null);
@@ -1457,34 +1463,80 @@ function BrandDnaPage() {
                   </div>
                 )}
 
-                {findings.length > 0 && (
-                  <div>
-                    <p className="text-[11px] font-semibold mb-2" style={{ color: 'var(--m-muted)' }}>
-                      Top findings ({findings.filter(f => !f.dismissed).length})
-                    </p>
-                    <div className="space-y-1">
-                      {findings.filter(f => !f.dismissed).slice(0, 5).map(f => (
-                        <div key={f.id} className="flex items-start gap-2 px-3 py-2 rounded-lg" style={{ background: 'var(--paper-2)', border: '1px solid var(--rule)' }}>
-                          <span className="flex-shrink-0 mt-0.5 w-1.5 h-1.5 rounded-full" style={{ background: sevColor(f.severity) }} />
-                          <div className="flex-1 min-w-0">
-                            <p className="text-[12px] font-medium leading-snug" style={{ color: 'var(--ink)' }}>{f.title}</p>
-                            {f.recommendation && (
-                              <p className="text-[10px] leading-relaxed mt-0.5 line-clamp-1" style={{ color: 'var(--m-muted)' }}>{f.recommendation}</p>
-                            )}
-                          </div>
-                          <span className="text-[9px] font-semibold flex-shrink-0 px-1.5 py-0.5 rounded" style={{ background: `color-mix(in srgb, ${sevColor(f.severity)} 10%, transparent)`, color: sevColor(f.severity) }}>
-                            {sevLabel(f.severity)}
+                {findings.length > 0 && (() => {
+                  const openFindings = findings.filter(f => !f.dismissed && !findingDismissMap[f.id]);
+                  const visibleFindings = showAllFindings ? openFindings : openFindings.slice(0, 5);
+                  const hiddenCount = openFindings.length - 5;
+
+                  return (
+                    <div>
+                      <div className="flex items-center justify-between mb-3">
+                        <p className="text-[13px] font-semibold" style={{ color: 'var(--ink)' }}>
+                          Findings
+                          <span className="ml-1.5 text-[11px] font-normal" style={{ color: 'var(--m-muted)' }}>
+                            ({openFindings.length})
                           </span>
-                        </div>
-                      ))}
-                      {findings.filter(f => !f.dismissed).length > 5 && (
-                        <p className="text-[10px] pl-3 pt-1" style={{ color: 'var(--m-muted)' }}>
-                          + {findings.filter(f => !f.dismissed).length - 5} more findings
                         </p>
+                        {audit && (
+                          <Link
+                            href={`${dashPrefix}/audits/brand/${encodeURIComponent(identity?.name || '')}`}
+                            className="text-[11px] font-medium flex items-center gap-1 transition-colors hover:opacity-80"
+                            style={{ color: 'var(--signal)' }}
+                          >
+                            View full report <ArrowRight size={10} />
+                          </Link>
+                        )}
+                      </div>
+                      <div className="space-y-2">
+                        {visibleFindings.map(f => (
+                          <BrandDnaFindingCard
+                            key={f.id}
+                            finding={f}
+                            status={findingStatusMap[f.id] || f.status}
+                            onStatusChange={async (newStatus) => {
+                              try {
+                                const res = await fetch(`/api/findings/${f.id}`, {
+                                  method: 'PATCH',
+                                  headers: { 'Content-Type': 'application/json' },
+                                  body: JSON.stringify({ status: newStatus }),
+                                });
+                                if (res.ok) setFindingStatusMap(prev => ({ ...prev, [f.id]: newStatus }));
+                              } catch {}
+                            }}
+                            onDismiss={async (reason) => {
+                              try {
+                                const res = await fetch(`/api/findings/${f.id}`, {
+                                  method: 'PATCH',
+                                  headers: { 'Content-Type': 'application/json' },
+                                  body: JSON.stringify({ dismiss: true, dismissal_reason: reason }),
+                                });
+                                if (res.ok) setFindingDismissMap(prev => ({ ...prev, [f.id]: true }));
+                              } catch {}
+                            }}
+                          />
+                        ))}
+                      </div>
+
+                      {/* Show more / Show less toggle */}
+                      {hiddenCount > 0 && (
+                        <button
+                          onClick={() => setShowAllFindings(prev => !prev)}
+                          className="mt-3 w-full py-2 rounded-lg text-[12px] font-semibold transition-all hover:opacity-80"
+                          style={{
+                            background: 'var(--paper-2)',
+                            color: 'var(--ink)',
+                            border: '1px solid var(--rule)',
+                          }}
+                        >
+                          {showAllFindings
+                            ? 'Show less'
+                            : `Show ${hiddenCount} more finding${hiddenCount === 1 ? '' : 's'}`
+                          }
+                        </button>
                       )}
                     </div>
-                  </div>
-                )}
+                  );
+                })()}
               </div>
             )}
 
@@ -1500,6 +1552,222 @@ function BrandDnaPage() {
         </section>
 
       </div>
+    </div>
+  );
+}
+
+/* ══════════════════════════════════════════════════════════
+   Brand DNA Finding Card — expandable with 3-panel detail
+   Matches BrandAuditDetail.tsx interaction pattern.
+   ══════════════════════════════════════════════════════════ */
+
+function BrandDnaFindingCard({
+  finding,
+  status,
+  onStatusChange,
+  onDismiss,
+}: {
+  finding: FindingRecord;
+  status: string;
+  onStatusChange: (newStatus: string) => Promise<void>;
+  onDismiss: (reason: string) => Promise<void>;
+}) {
+  const [open, setOpen] = useState(false);
+  const [statusUpdating, setStatusUpdating] = useState(false);
+  const [showDismissForm, setShowDismissForm] = useState(false);
+  const [dismissReason, setDismissReason] = useState('');
+
+  const handleStatusChange = async (s: string) => {
+    setStatusUpdating(true);
+    await onStatusChange(s);
+    setStatusUpdating(false);
+  };
+
+  const handleDismiss = async () => {
+    if (!dismissReason.trim()) return;
+    setStatusUpdating(true);
+    await onDismiss(dismissReason);
+    setStatusUpdating(false);
+    setShowDismissForm(false);
+  };
+
+  return (
+    <div
+      className="rounded-xl overflow-hidden transition-all"
+      style={{
+        background: 'var(--paper)',
+        border: `1px solid ${open ? `color-mix(in srgb, ${sevColor(finding.severity)} 30%, var(--rule))` : 'var(--rule)'}`,
+      }}
+    >
+      {/* Header — always visible, clickable */}
+      <button
+        onClick={() => setOpen(!open)}
+        className="w-full flex items-start gap-3 px-4 py-3 text-left transition-colors"
+        style={{ background: open ? 'color-mix(in srgb, var(--paper-2) 50%, transparent)' : 'transparent' }}
+        aria-expanded={open}
+      >
+        <span
+          className="flex-shrink-0 mt-1.5 w-2 h-2 rounded-full"
+          style={{ background: sevColor(finding.severity) }}
+        />
+        <div className="flex-1 min-w-0">
+          <h4 className="font-medium text-[14px] leading-snug" style={{ color: 'var(--ink)' }}>
+            {finding.title}
+          </h4>
+          {!open && finding.description && (
+            <p className="text-[12px] leading-relaxed mt-1 line-clamp-2" style={{ color: 'var(--m-muted)' }}>
+              {finding.description}
+            </p>
+          )}
+        </div>
+        <div className="flex items-center gap-2 flex-shrink-0 mt-0.5">
+          <span
+            className="text-[10px] font-semibold uppercase tracking-[0.04em] px-2 py-0.5 rounded-full"
+            style={{
+              background: `color-mix(in srgb, ${sevColor(finding.severity)} 10%, transparent)`,
+              color: sevColor(finding.severity),
+            }}
+          >
+            {sevLabel(finding.severity)}
+          </span>
+          {status === 'fixed' && (
+            <span
+              className="text-[10px] font-semibold px-2 py-0.5 rounded-full"
+              style={{ background: 'color-mix(in srgb, var(--ok) 10%, transparent)', color: 'var(--ok)' }}
+            >
+              Fixed
+            </span>
+          )}
+          <ChevronDown
+            size={14}
+            className={clsx('transition-transform duration-200', open && 'rotate-180')}
+            style={{ color: 'var(--m-muted)' }}
+          />
+        </div>
+      </button>
+
+      {/* Expanded detail — 3-panel layout: Issue / Fix / Impact */}
+      {open && (
+        <div className="px-4 pb-4 space-y-3">
+          <div
+            className="grid grid-cols-1 md:grid-cols-3 gap-0 rounded-lg overflow-hidden"
+            style={{ border: '1px solid var(--rule)' }}
+          >
+            {/* Panel 1: Issue */}
+            <div className="p-4 border-b md:border-b-0 md:border-r" style={{ borderColor: 'var(--rule)' }}>
+              <div className="flex items-center gap-2 mb-2">
+                <AlertTriangle size={13} style={{ color: sevColor(finding.severity) }} />
+                <p className="text-[11px] font-semibold tracking-[0.04em] uppercase" style={{ color: 'var(--ink)' }}>
+                  Issue
+                </p>
+              </div>
+              <p className="text-[13px] leading-[1.65]" style={{ color: 'var(--m-muted)' }}>
+                {finding.description || 'No description provided.'}
+              </p>
+              {finding.page_url && (
+                <p className="text-[11px] mt-2 truncate" style={{ color: 'var(--m-muted)' }}>
+                  Source: {finding.page_url}
+                </p>
+              )}
+            </div>
+
+            {/* Panel 2: How to fix */}
+            <div className="p-4 border-b md:border-b-0 md:border-r" style={{ background: 'color-mix(in srgb, var(--signal) 3%, transparent)', borderColor: 'var(--rule)' }}>
+              <div className="flex items-center gap-2 mb-2">
+                <Lightbulb size={13} style={{ color: 'var(--signal)' }} />
+                <p className="text-[11px] font-semibold tracking-[0.04em] uppercase" style={{ color: 'var(--ink)' }}>
+                  How to fix
+                </p>
+              </div>
+              <p className="text-[13px] leading-[1.65]" style={{ color: 'var(--m-muted)' }}>
+                {finding.recommendation || 'No specific recommendation provided.'}
+              </p>
+            </div>
+
+            {/* Panel 3: Impact */}
+            <div className="p-4" style={{ background: 'color-mix(in srgb, var(--ok) 3%, transparent)' }}>
+              <div className="flex items-center gap-2 mb-2">
+                <TrendingUp size={13} style={{ color: 'var(--ok)' }} />
+                <p className="text-[11px] font-semibold tracking-[0.04em] uppercase" style={{ color: 'var(--ink)' }}>
+                  Impact
+                </p>
+              </div>
+              <p className="text-[13px] leading-[1.65]" style={{ color: 'color-mix(in srgb, var(--ok) 80%, var(--ink))' }}>
+                {finding.estimated_impact || 'Fixing this will improve brand consistency and professional perception.'}
+              </p>
+            </div>
+          </div>
+
+          {/* Status + Dismiss controls */}
+          <div className="flex items-center gap-2 pt-1" style={{ borderTop: '1px solid var(--rule)' }}>
+            <span className="text-[11px] mr-1" style={{ color: 'var(--m-muted)' }}>Status:</span>
+            {(['open', 'in_progress', 'fixed'] as const).map((s) => (
+              <button
+                key={s}
+                onClick={() => handleStatusChange(s)}
+                disabled={statusUpdating}
+                className="text-[11px] font-medium px-2.5 py-1 rounded-md transition-colors capitalize"
+                style={{
+                  background: status === s
+                    ? s === 'fixed'
+                      ? 'color-mix(in srgb, var(--ok) 12%, transparent)'
+                      : s === 'in_progress'
+                        ? 'color-mix(in srgb, var(--signal) 12%, transparent)'
+                        : 'var(--paper-2)'
+                    : 'transparent',
+                  color: status === s
+                    ? s === 'fixed'
+                      ? 'var(--ok)'
+                      : s === 'in_progress'
+                        ? 'var(--signal)'
+                        : 'var(--ink)'
+                    : 'var(--m-muted)',
+                  border: status === s ? `1px solid ${
+                    s === 'fixed' ? 'color-mix(in srgb, var(--ok) 20%, transparent)'
+                    : s === 'in_progress' ? 'color-mix(in srgb, var(--signal) 20%, transparent)'
+                    : 'var(--rule)'
+                  }` : '1px solid transparent',
+                }}
+              >
+                {s === 'in_progress' ? 'In Progress' : s === 'fixed' ? 'Fixed' : 'Open'}
+              </button>
+            ))}
+            <div className="flex-1" />
+            {!showDismissForm ? (
+              <button
+                onClick={() => setShowDismissForm(true)}
+                className="text-[11px] transition-colors"
+                style={{ color: 'var(--m-muted)' }}
+              >
+                Dismiss
+              </button>
+            ) : (
+              <div className="flex items-center gap-1.5">
+                <input
+                  type="text"
+                  value={dismissReason}
+                  onChange={(e) => setDismissReason(e.target.value)}
+                  placeholder="Reason..."
+                  className="text-[11px] px-2 py-1 rounded-md outline-none w-36"
+                  style={{ background: 'var(--paper-2)', border: '1px solid var(--rule)', color: 'var(--ink)' }}
+                  onKeyDown={(e) => e.key === 'Enter' && handleDismiss()}
+                />
+                <button
+                  onClick={handleDismiss}
+                  disabled={!dismissReason.trim() || statusUpdating}
+                  className="text-[11px] font-medium disabled:opacity-40"
+                  style={{ color: 'var(--severe)' }}
+                >
+                  Confirm
+                </button>
+                <button onClick={() => setShowDismissForm(false)} style={{ color: 'var(--m-muted)' }}>
+                  <X size={12} />
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
