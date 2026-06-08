@@ -152,7 +152,7 @@ export async function generatePredictiveRecommendations(
     .from('audits')
     .select('id', { count: 'exact', head: true })
     .not('previous_audit_id', 'is', null)
-    .eq('status', 'completed')
+    .in('status', ['completed', 'completed_with_warnings'])
 
   const totalDataPoints = reauditCount || 0
 

@@ -389,7 +389,7 @@ export async function getWorkspaceContext(
     .from('audits')
     .select('id, detected_industry')
     .eq('workspace_id', workspaceId)
-    .eq('status', 'completed')
+    .in('status', ['completed', 'completed_with_warnings'])
     .order('created_at', { ascending: false })
     .limit(1)
     .maybeSingle()

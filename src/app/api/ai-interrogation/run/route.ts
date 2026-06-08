@@ -90,7 +90,7 @@ export async function POST(request: NextRequest) {
       .from('audits')
       .select('detected_industry')
       .eq('workspace_id', workspaceId)
-      .eq('status', 'completed')
+      .in('status', ['completed', 'completed_with_warnings'])
       .is('deleted_at', null)
       .order('created_at', { ascending: false })
       .limit(1)

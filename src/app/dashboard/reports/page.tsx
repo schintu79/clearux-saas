@@ -46,7 +46,7 @@ export default function ReportsPage() {
         .from('audits')
         .select('id, product_url, completed_at, share_enabled, share_token')
         .eq('user_id', user.id)
-        .eq('status', 'completed')
+        .in('status', ['completed', 'completed_with_warnings'])
         .is('deleted_at', null);
       if (workspaceId) {
         query = query.eq('workspace_id', workspaceId);

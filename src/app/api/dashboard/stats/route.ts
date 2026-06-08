@@ -30,12 +30,12 @@ export async function GET(request: NextRequest) {
 
     // Build workspace-aware queries
     let totalAuditsQuery = db.from('audits').select('id', { count: 'exact', head: true }).eq('user_id', user.id).is('deleted_at', null)
-    let completedAuditsQuery = db.from('audits').select('id', { count: 'exact', head: true }).eq('user_id', user.id).eq('status', 'completed').is('deleted_at', null)
+    let completedAuditsQuery = db.from('audits').select('id', { count: 'exact', head: true }).eq('user_id', user.id).in('status', ['completed', 'completed_with_warnings']).is('deleted_at', null)
     let avgScoreQuery = db.from('reports').select('overall_score').eq('user_id', user.id).not('overall_score', 'is', null)
     let recentScoresQuery = db.from('audits')
       .select('id, product_url, completed_at')
       .eq('user_id', user.id)
-      .eq('status', 'completed')
+      .in('status', ['completed', 'completed_with_warnings'])
       .is('deleted_at', null)
       .order('completed_at', { ascending: false })
       .limit(5)

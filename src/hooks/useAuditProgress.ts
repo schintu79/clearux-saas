@@ -100,9 +100,9 @@ export function useAuditProgress(
     }
   }, [auditId, enabled, interval, fetchProgress])
 
-  // Stop polling once complete or failed
+  // Stop polling once terminal (completed, completed_with_warnings, failed, stalled)
   useEffect(() => {
-    if (data && (data.status === 'completed' || data.status === 'failed')) {
+    if (data && ['completed', 'completed_with_warnings', 'failed', 'stalled'].includes(data.status)) {
       if (intervalRef.current) {
         clearInterval(intervalRef.current)
         intervalRef.current = null

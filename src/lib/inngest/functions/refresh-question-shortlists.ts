@@ -27,7 +27,7 @@ export const refreshQuestionShortlistsFn = inngest.createFunction(
     const { data: auditRows } = await db
       .from('audits')
       .select('workspace_id')
-      .eq('status', 'completed')
+      .in('status', ['completed', 'completed_with_warnings'])
 
     const eligibleIds = [...new Set((auditRows || []).map((r: any) => r.workspace_id).filter(Boolean))]
 

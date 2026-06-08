@@ -91,7 +91,7 @@ export async function loadLatestAuditBundle(
     .select('*')
     .eq('user_id', userId)
     .eq('workspace_id', workspaceId)
-    .eq('status', 'completed')
+    .in('status', ['completed', 'completed_with_warnings'])
     .is('deleted_at', null)
     .or('audit_type.is.null,audit_type.eq.website')
     .order('completed_at', { ascending: false })
@@ -102,7 +102,7 @@ export async function loadLatestAuditBundle(
   // Fetch in-progress and failed audits in parallel.
   const [inProgressAudit, failedAudit] = await Promise.all([
     fetchLatestAuditByStatus(supabase, userId, workspaceId, [...IN_PROGRESS_AUDIT_STATUSES]),
-    fetchLatestAuditByStatus(supabase, userId, workspaceId, ['failed']),
+    fetchLatestAuditByStatus(supabase, userId, workspaceId, ['failed', 'stalled']),
   ])
 
   if (auditRows.length === 0) {

@@ -161,7 +161,7 @@ export async function runWeeklyIntelligenceRerun(): Promise<{ processed: number;
     .from('audits')
     .select('id, user_id, product_url, brand_name, sentiment_data')
     .gte('created_at', thirtyDaysAgo.toISOString())
-    .eq('status', 'completed')
+    .in('status', ['completed', 'completed_with_warnings'])
     .not('product_url', 'is', null)
 
   if (!recentAudits || recentAudits.length === 0) {

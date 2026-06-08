@@ -187,7 +187,7 @@ export async function loadSiteMemory(
         .from('audits')
         .select('id, completed_at')
         .eq('user_id', userId)
-        .eq('status', 'completed')
+        .in('status', ['completed', 'completed_with_warnings'])
         .ilike('product_url', `%${domain}%`)
         .is('deleted_at', null)
       if (workspaceId) q = q.eq('workspace_id', workspaceId)

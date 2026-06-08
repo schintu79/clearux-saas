@@ -2116,7 +2116,7 @@ The content below is from the ENTIRE site, not just one page. Before flagging so
           (() => {
             let q = noteDb.from('audits')
               .select('id, product_url').eq('user_id', userId).neq('id', auditId)
-              .eq('status', 'completed').ilike('product_url', `%${domain}%`)
+              .in('status', ['completed', 'completed_with_warnings']).ilike('product_url', `%${domain}%`)
               .is('deleted_at', null)
             if (wsId) q = q.eq('workspace_id', wsId)
             return q.order('completed_at', { ascending: false }).limit(1)

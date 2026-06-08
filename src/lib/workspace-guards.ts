@@ -175,7 +175,7 @@ export async function latestLiveAudit(
     .select('*')
     .eq('user_id', userId)
     .eq('workspace_id', workspaceId)
-    .eq('status', 'completed')
+    .in('status', ['completed', 'completed_with_warnings'])
     .is('deleted_at', null)
     .order('completed_at', { ascending: false })
     .limit(1)

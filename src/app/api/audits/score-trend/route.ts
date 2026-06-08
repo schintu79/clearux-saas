@@ -29,7 +29,7 @@ export async function GET(request: NextRequest) {
       .from('audits')
       .select('id, product_url, status, completed_at, created_at, audit_type, deleted_at')
       .eq('user_id', user.id)
-      .eq('status', 'completed')
+      .in('status', ['completed', 'completed_with_warnings'])
       .is('deleted_at', null)
       .order('completed_at', { ascending: true })
 

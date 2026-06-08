@@ -29,7 +29,7 @@ export async function POST(request: NextRequest) {
         .from('audits')
         .select('id')
         .eq('user_id', user.id)
-        .eq('status', 'completed')
+        .in('status', ['completed', 'completed_with_warnings'])
         .is('deleted_at', null)
 
       if (workspace_id) {

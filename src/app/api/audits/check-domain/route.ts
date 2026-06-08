@@ -28,7 +28,7 @@ export async function GET(request: NextRequest) {
       .from('audits')
       .select('id', { count: 'exact', head: true })
       .eq('user_id', user.id)
-      .eq('status', 'completed')
+      .in('status', ['completed', 'completed_with_warnings'])
       .eq('audit_type', 'website')
       .ilike('product_url', `%${domain}%`)
       .is('deleted_at', null)

@@ -43,7 +43,7 @@ export async function GET() {
       .from('audits')
       .select('workspace_id')
       .in('workspace_id', workspaceIds)
-      .eq('status', 'completed')
+      .in('status', ['completed', 'completed_with_warnings'])
       .is('deleted_at', null)
       .or('audit_type.is.null,audit_type.eq.website')
 
@@ -56,7 +56,7 @@ export async function GET() {
       .from('audits')
       .select('workspace_id')
       .in('workspace_id', workspaceIds)
-      .eq('status', 'completed')
+      .in('status', ['completed', 'completed_with_warnings'])
       .is('deleted_at', null)
       .eq('audit_type', 'brand_identity')
 
