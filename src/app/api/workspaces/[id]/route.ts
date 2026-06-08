@@ -6,7 +6,7 @@
 // ============================================================
 
 import { NextRequest, NextResponse } from 'next/server'
-import { createServerSupabase } from '@/lib/supabase-server'
+import { createServerSupabase, createServiceSupabase } from '@/lib/supabase-server'
 
 export async function GET(
   _request: NextRequest,
@@ -75,24 +75,71 @@ export async function DELETE(
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-  // Soft delete: archive the workspace and release the slug so it can be reused.
-  // Append _archived_<timestamp> to the slug to free the original clean name.
-  const { data: ws } = await supabase
+  // Use service client for cascade operations (RLS bypass needed for child tables)
+  const db = createServiceSupabase()
+
+  // Verify ownership first
+  const { data: ws } = await db
     .from('workspaces')
     .select('slug')
     .eq('id', id)
     .eq('user_id', user.id)
     .single()
 
-  const releasedSlug = ws?.slug
+  if (!ws) return NextResponse.json({ error: 'Workspace not found' }, { status: 404 })
+
+  const now = new Date().toISOString()
+  const releasedSlug = ws.slug
     ? `${ws.slug}_archived_${Date.now()}`
     : `archived_${Date.now()}`
 
-  const { error } = await supabase
+  // ── CASCADE DELETE all child records ─────────────────────────
+  // This ensures no orphaned data can leak into future workspaces.
+  // Order: children first, then workspace.
+  //
+  // SECURITY: FTP connections are HARD-DELETED (contain encrypted passwords).
+  // Other records are soft-deleted (set deleted_at) or deactivated.
+
+  await Promise.all([
+    // 1. HARD-DELETE FTP connections — encrypted credentials must not persist
+    db.from('ftp_connections')
+      .delete()
+      .eq('workspace_id', id),
+
+    // 2. Soft-delete all audits belonging to this workspace
+    db.from('audits')
+      .update({ deleted_at: now } as any)
+      .eq('workspace_id', id)
+      .is('deleted_at', null),
+
+    // 3. Soft-delete brand identities
+    db.from('brand_identities')
+      .update({ deleted_at: now } as any)
+      .eq('workspace_id', id)
+      .is('deleted_at', null),
+
+    // 4. Deactivate scheduled audits
+    db.from('scheduled_audits')
+      .update({ is_active: false } as any)
+      .eq('workspace_id', id),
+
+    // 5. Deactivate site notes
+    db.from('site_notes')
+      .update({ is_active: false } as any)
+      .eq('workspace_id', id),
+
+    // 6. Delete competitor benchmarks (no sensitive data, hard delete OK)
+    db.from('competitor_benchmarks')
+      .delete()
+      .eq('workspace_id', id),
+  ])
+
+  // ── Archive the workspace itself ─────────────────────────────
+  const { error } = await db
     .from('workspaces')
     .update({
       status: 'archived',
-      archived_at: new Date().toISOString(),
+      archived_at: now,
       slug: releasedSlug,
     })
     .eq('id', id)

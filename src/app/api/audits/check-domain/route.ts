@@ -19,18 +19,22 @@ export async function GET(request: NextRequest) {
     }
 
     const domain = request.nextUrl.searchParams.get('domain')?.trim()
+    const workspaceId = request.nextUrl.searchParams.get('workspace_id')?.trim()
     if (!domain || domain.length < 3) {
       return NextResponse.json({ hasExisting: false })
     }
 
-    const { count } = await supabase
+    let q = supabase
       .from('audits')
       .select('id', { count: 'exact', head: true })
       .eq('user_id', user.id)
       .eq('status', 'completed')
       .eq('audit_type', 'website')
       .ilike('product_url', `%${domain}%`)
+      .is('deleted_at', null)
+    if (workspaceId) q = q.eq('workspace_id', workspaceId)
 
+    const { count } = await q
     return NextResponse.json({ hasExisting: (count ?? 0) > 0 })
   } catch {
     return NextResponse.json({ hasExisting: false })

@@ -44,21 +44,23 @@ export async function POST(request: NextRequest) {
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-    const { product_url, frequency, language } = await request.json()
+    const body = await request.json()
+    const { product_url, frequency, language, workspace_id } = body
     if (!product_url) return NextResponse.json({ error: 'URL is required' }, { status: 400 })
     if (!['weekly', 'monthly', 'quarterly'].includes(frequency))
       return NextResponse.json({ error: 'Invalid frequency' }, { status: 400 })
 
     const db = createServiceSupabase()
 
-    // Check if user already has a schedule for this URL
-    const { data: existing } = await db
+    // Check if user already has a schedule for this URL (scoped to workspace)
+    let existQ = db
       .from('scheduled_audits')
       .select('id')
       .eq('user_id', user.id)
       .eq('product_url', product_url)
       .eq('is_active', true)
-      .single()
+    if (workspace_id) existQ = existQ.eq('workspace_id', workspace_id)
+    const { data: existing } = await existQ.single()
 
     if (existing) {
       return NextResponse.json({ error: 'You already have an active schedule for this URL' }, { status: 409 })

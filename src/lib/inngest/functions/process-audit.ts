@@ -383,6 +383,7 @@ export const processAuditFn = inngest.createFunction(
         selectedModules, // null = complete audit, ['foundation', 'seo_structure'] = partial
         selectedPillars, // legacy fallback
         brandIdentityId, // for Design Consistency Brand DNA enrichment
+        workspaceId: ((audit as any).workspace_id as string) || null,
       }
     })
 
@@ -2048,15 +2049,25 @@ The content below is from the ENTIRE site, not just one page. Before flagging so
       let prevAuditId: string | null = null
       if (domain && userId) {
         // Fetch site notes + previous audit ID in parallel (with timeout to prevent stalls)
+        // CRITICAL: Scope by workspace_id and exclude soft-deleted records to prevent
+        // data leaking from deleted workspaces into new workspace audits.
+        const wsId = auditDetails.workspaceId
         const contextResult = await withTimeout(Promise.all([
-          noteDb.from('site_notes')
-            .select('note_type, title, content, category, finding_ref')
-            .eq('user_id', userId).eq('domain', domain).eq('is_active', true)
-            .order('created_at', { ascending: false }).limit(20),
-          noteDb.from('audits')
-            .select('id, product_url').eq('user_id', userId).neq('id', auditId)
-            .eq('status', 'completed').ilike('product_url', `%${domain}%`)
-            .order('completed_at', { ascending: false }).limit(1),
+          (() => {
+            let q = noteDb.from('site_notes')
+              .select('note_type, title, content, category, finding_ref')
+              .eq('user_id', userId).eq('domain', domain).eq('is_active', true)
+            if (wsId) q = q.eq('workspace_id', wsId)
+            return q.order('created_at', { ascending: false }).limit(20)
+          })(),
+          (() => {
+            let q = noteDb.from('audits')
+              .select('id, product_url').eq('user_id', userId).neq('id', auditId)
+              .eq('status', 'completed').ilike('product_url', `%${domain}%`)
+              .is('deleted_at', null)
+            if (wsId) q = q.eq('workspace_id', wsId)
+            return q.order('completed_at', { ascending: false }).limit(1)
+          })(),
         ]), CONTEXT_DB_TIMEOUT, 'site-context-db')
         const [siteNotesRes, prevAuditsRes] = contextResult || [{ data: null }, { data: null }]
 

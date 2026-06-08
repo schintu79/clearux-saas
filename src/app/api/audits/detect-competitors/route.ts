@@ -253,6 +253,7 @@ export async function GET(request: NextRequest) {
     if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
     const url = request.nextUrl.searchParams.get('url')
+    const workspaceId = request.nextUrl.searchParams.get('workspace_id')
     if (!url) return NextResponse.json({ error: 'url required' }, { status: 400 })
 
     let domain: string
@@ -261,12 +262,13 @@ export async function GET(request: NextRequest) {
     }
 
     const db = createServiceSupabase()
-    const { data: rows } = await db
+    let q = db
       .from('competitor_benchmarks')
       .select('*')
       .eq('user_id', user.id)
       .eq('domain', domain)
-      .order('created_at', { ascending: true })
+    if (workspaceId) q = q.eq('workspace_id', workspaceId)
+    const { data: rows } = await q.order('created_at', { ascending: true })
 
     if (!rows || rows.length === 0) {
       return NextResponse.json({ domain, competitors: [] })
@@ -350,20 +352,25 @@ export async function POST(request: NextRequest) {
       }).slice(0, 5)
 
       // Pull existing rows so we keep their scores for unchanged domains
-      const { data: existing } = await db
+      const workspaceId = (body as any).workspace_id || null
+      let existingQ = db
         .from('competitor_benchmarks')
         .select('*')
         .eq('user_id', user.id)
         .eq('domain', domain)
+      if (workspaceId) existingQ = existingQ.eq('workspace_id', workspaceId)
+      const { data: existing } = await existingQ
       const prior = new Map<string, any>()
       ;(existing || []).forEach((r: any) => prior.set(r.competitor_domain, r))
       const industryFromExisting = existing?.[0]?.industry || ''
 
-      await db
+      let delQ = db
         .from('competitor_benchmarks')
         .delete()
         .eq('user_id', user.id)
         .eq('domain', domain)
+      if (workspaceId) delQ = delQ.eq('workspace_id', workspaceId)
+      await delQ
 
       const inserts = unique.map(c => {
         const before = prior.get(c.domain)

@@ -416,11 +416,13 @@ export async function getWorkspaceContext(
         .replace(/^(https?:\/\/)?(www\.)?/, '')
         .replace(/\/$/, '')
 
-      const { data: competitors } = await db
+      let compQ = db
         .from('competitor_benchmarks')
         .select('competitor_domain')
         .eq('user_id', wsOwner.user_id)
         .eq('domain', normalizedDomain)
+      if (workspaceId) compQ = compQ.eq('workspace_id', workspaceId)
+      const { data: competitors } = await compQ
 
       if (competitors && competitors.length > 0) {
         competitorDomains = competitors

@@ -28,10 +28,14 @@ export const stallSweeperFn = inngest.createFunction(
     // Sweeping these causes false failures on audits that haven't started yet.
     const cutoff = new Date(Date.now() - STALL_THRESHOLD_MINUTES * 60 * 1000).toISOString()
 
+    // CRITICAL: Only sweep audits that are NOT soft-deleted and whose workspace
+    // is still active. Stalled audits from archived workspaces should not be
+    // force-completed — they are orphaned and should be left alone.
     const { data: stalledAudits, error } = await db
       .from('audits')
-      .select('id, status, progress_percent, updated_at')
+      .select('id, status, progress_percent, updated_at, workspace_id')
       .in('status', ['crawling', 'analysing', 'generating_report'])
+      .is('deleted_at', null)
       .lt('updated_at', cutoff)
       .limit(20) // Process max 20 per sweep to avoid timeouts
 

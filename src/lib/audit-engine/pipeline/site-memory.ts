@@ -163,28 +163,36 @@ export async function loadSiteMemory(
   db: SupabaseClient,
   domain: string,
   userId: string,
+  workspaceId?: string | null,
 ): Promise<SiteMemory> {
   // Parallel fetch all data sources
+  // CRITICAL: Scope by workspace_id and exclude soft-deleted records to prevent
+  // data from deleted workspaces contaminating new workspace audits.
   const [siteNotesRes, pastAuditsRes] = await Promise.all([
     // 1. Site notes (dismissals, context, discussions)
-    db
-      .from('site_notes')
-      .select('note_type, title, content, category, finding_ref, created_at')
-      .eq('user_id', userId)
-      .eq('domain', domain)
-      .eq('is_active', true)
-      .order('created_at', { ascending: false })
-      .limit(30),
+    (() => {
+      let q = db
+        .from('site_notes')
+        .select('note_type, title, content, category, finding_ref, created_at')
+        .eq('user_id', userId)
+        .eq('domain', domain)
+        .eq('is_active', true)
+      if (workspaceId) q = q.eq('workspace_id', workspaceId)
+      return q.order('created_at', { ascending: false }).limit(30)
+    })(),
 
-    // 2. Past audits for this domain
-    db
-      .from('audits')
-      .select('id, completed_at')
-      .eq('user_id', userId)
-      .eq('status', 'completed')
-      .ilike('product_url', `%${domain}%`)
-      .order('completed_at', { ascending: false })
-      .limit(SITE_MEMORY_CONFIG.PAST_AUDIT_LOOKBACK),
+    // 2. Past audits for this domain — exclude soft-deleted records
+    (() => {
+      let q = db
+        .from('audits')
+        .select('id, completed_at')
+        .eq('user_id', userId)
+        .eq('status', 'completed')
+        .ilike('product_url', `%${domain}%`)
+        .is('deleted_at', null)
+      if (workspaceId) q = q.eq('workspace_id', workspaceId)
+      return q.order('completed_at', { ascending: false }).limit(SITE_MEMORY_CONFIG.PAST_AUDIT_LOOKBACK)
+    })(),
   ])
 
   // Parse site notes into structured memory
@@ -328,13 +336,16 @@ export async function hasSiteMemory(
   db: SupabaseClient,
   domain: string,
   userId: string,
+  workspaceId?: string | null,
 ): Promise<boolean> {
-  const { count } = await db
+  let q = db
     .from('site_notes')
     .select('id', { count: 'exact', head: true })
     .eq('user_id', userId)
     .eq('domain', domain)
     .eq('is_active', true)
+  if (workspaceId) q = q.eq('workspace_id', workspaceId)
 
+  const { count } = await q
   return (count || 0) > 0
 }

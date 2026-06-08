@@ -23,16 +23,18 @@ export async function GET(request: NextRequest) {
     if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
     const domain = request.nextUrl.searchParams.get('domain')
+    const workspaceId = request.nextUrl.searchParams.get('workspace_id')
     if (!domain) return NextResponse.json({ error: 'domain required' }, { status: 400 })
 
     const db = createServiceSupabase()
-    const { data, error } = await db
+    let q = db
       .from('site_notes')
       .select('*')
       .eq('user_id', user.id)
       .eq('domain', normalizeDomain(domain))
       .eq('is_active', true)
-      .order('created_at', { ascending: false })
+    if (workspaceId) q = q.eq('workspace_id', workspaceId)
+    const { data, error } = await q.order('created_at', { ascending: false })
 
     if (error) throw error
     return NextResponse.json({ notes: data || [] })
@@ -49,7 +51,7 @@ export async function POST(request: NextRequest) {
     if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
     const body = await request.json()
-    const { domain, note_type, title, content, category, finding_ref } = body
+    const { domain, note_type, title, content, category, finding_ref, workspace_id } = body
 
     if (!domain || !title || !content) {
       return NextResponse.json({ error: 'domain, title, and content are required' }, { status: 400 })
@@ -70,6 +72,7 @@ export async function POST(request: NextRequest) {
         content,
         category: category || null,
         finding_ref: finding_ref || null,
+        workspace_id: workspace_id || null,
         is_active: true,
       } as any)
       .select()
