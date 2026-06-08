@@ -671,8 +671,8 @@ export function HomeHero() {
             <em className="italic text-signal">Fix what matters.</em>
           </h1>
           <p className="text-[19px] max-sm:text-[15px] leading-[1.55] text-ink-2 max-w-[640px] mx-auto font-sans mb-10 max-sm:mb-5">
-            Fixpath finds the issues affecting trust, clarity, and conversion
-            — then helps your team fix them and track progress over time.
+            Audits built on verified checks, real page evidence, and structured
+            review — so your team knows what to trust and what to fix first.
           </p>
           <div className="flex gap-3.5 justify-center max-sm:flex-col max-sm:items-stretch">
             <Button href="/register" size="large">
@@ -683,6 +683,9 @@ export function HomeHero() {
               See the product
             </Button>
           </div>
+          <p className="font-sans text-[13px] text-m-muted mt-5 max-sm:mt-3 text-center">
+            See what was verified, what was observed, and where confidence is lower — before you act.
+          </p>
         </div>
         <AuditAnimation />
       </div>

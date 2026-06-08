@@ -20,13 +20,13 @@ import type { LucideIcon } from 'lucide-react'
 
 const NOISE_PROBLEMS: { title: string; desc: string; Icon: LucideIcon }[] = [
   {
-    title: 'Reports feel noisy',
-    desc: 'Too many findings, not enough signal. Teams cannot see what actually needs attention first.',
+    title: 'Everything sounds equally certain',
+    desc: 'Most AI audits flatten every result into one output. No distinction between verified checks and vague interpretation.',
     Icon: AlertTriangle,
   },
   {
-    title: 'Scores lose meaning',
-    desc: 'If the score keeps moving without a clear reason, people stop trusting it.',
+    title: 'Coverage is invisible',
+    desc: 'Tools hide how much of the site they actually reviewed. Scores feel confident even when evidence is thin.',
     Icon: ShieldOff,
   },
   {
@@ -36,33 +36,33 @@ const NOISE_PROBLEMS: { title: string; desc: string; Icon: LucideIcon }[] = [
   },
   {
     title: 'Advice stays vague',
-    desc: 'Most tools tell you something is wrong, but not what to do next or how to verify the fix.',
+    desc: 'Most tools tell you something is wrong, but not what was checked, how certain they are, or what to do next.',
     Icon: HelpCircle,
   },
 ]
 
 const TEAM_NEEDS: { label: string; desc: string; Icon: LucideIcon }[] = [
-  { label: 'Clear priority', desc: 'What is actually hurting the site now.', Icon: Crosshair },
-  { label: 'Concrete fixes', desc: 'What to change, where it lives, and how to verify it.', Icon: Code2 },
-  { label: 'Progress evidence', desc: 'Proof that changes improved something real.', Icon: TrendingUp },
-  { label: 'Honest scoring', desc: 'No inflated urgency, no manufactured movement.', Icon: Scale },
-  { label: 'Useful categories', desc: 'Trust, clarity, accessibility, AI readiness, brand, and SEO.', Icon: Tags },
+  { label: 'Clear priority', desc: 'Findings ranked by evidence strength and impact — verified issues first.', Icon: Crosshair },
+  { label: 'Concrete fixes', desc: 'What to change, where it lives, and how confident the recommendation is.', Icon: Code2 },
+  { label: 'Visible coverage', desc: 'How much of the site was actually reviewed, not just a score with no context.', Icon: TrendingUp },
+  { label: 'Honest scoring', desc: 'Confidence and coverage visible on every finding. No inflated urgency.', Icon: Scale },
+  { label: 'Useful categories', desc: 'Trust, clarity, accessibility, AI readiness, design consistency, and SEO.', Icon: Tags },
 ]
 
 const PHILOSOPHY_PILLARS: { title: string; desc: string; Icon: LucideIcon }[] = [
   {
     title: 'Truth',
-    desc: 'We do not invent issues to fill a report. If something is strong, we say so.',
+    desc: 'Every finding is tagged as verified, observed, or heuristic. We do not invent issues to fill a report.',
     Icon: Eye,
   },
   {
     title: 'Trust',
-    desc: 'Every finding includes evidence. Every recommendation is specific. Every score should be explainable.',
+    desc: 'Confidence and coverage are visible on every finding. Every score should be explainable from the evidence behind it.',
     Icon: Shield,
   },
   {
     title: 'Usefulness',
-    desc: 'Every issue should lead to a next step: fix it, send it, or track the result.',
+    desc: 'Every issue leads to a next step: fix it, send it, or track the result. High-confidence problems first.',
     Icon: Wrench,
   },
 ]
@@ -83,7 +83,7 @@ export function WhyFixpathContent() {
           </h1>
           <p className="text-[18px] leading-[1.6] text-ink-2 max-w-[560px] mx-auto font-sans">
             Most audit tools generate more findings, more repetition, and less confidence.
-            Fixpath is built to show what matters, explain why, and help teams act on it.
+            Fixpath separates verified checks from interpretation — so teams see what to trust and what to fix first.
           </p>
           <div className="flex gap-3.5 justify-center mt-10 max-sm:flex-col max-sm:items-stretch">
             <Button href="/register" size="large">

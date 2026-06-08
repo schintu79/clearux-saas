@@ -41,9 +41,9 @@ export function HomeSignals() {
         </h2>
 
         <p className="text-[18px] max-sm:text-[15px] leading-[1.6] text-ink-2 max-w-[560px] mx-auto mb-14 max-sm:mb-8 font-sans text-center">
-          A site can look expensive and still confuse users. Fixpath evaluates
-          design and first impression through hierarchy, layout, messaging
-          clarity, consistency, and trust signals — not aesthetic bias.
+          Design feedback is based on structural clarity, consistency, readability,
+          and trust signals — not personal taste. First impressions are analyzed
+          through what helps or hurts communication, not whether it looks trendy.
         </p>
 
         {/* 4 signal pills in a single row */}

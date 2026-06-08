@@ -9,7 +9,7 @@ import { Bot, Database, FileCode, Quote, FileSearch, Eye, Server, ShieldCheck, U
 
 /* ── FAQ data ── */
 const PRODUCT_FAQS = [
-  { q: 'How does Fixpath work?', a: 'Fixpath crawls your website, analyses every page against 112 checkpoints across seven modules, and surfaces only the issues that matter. Findings are ranked by severity with real evidence — no noise, no inflated findings.' },
+  { q: 'How does Fixpath work?', a: 'Fixpath crawls your website, analyses every page against 112 checkpoints across seven modules, and surfaces only the issues that matter. Findings are ranked by severity and confidence — verified checks, observed evidence, and heuristic interpretation are clearly separated so teams know what to trust first.' },
   { q: 'Can I fix issues directly through Fixpath?', a: 'Yes. Every finding includes a concrete fix. For code-level issues, Fixpath generates a surgical fix you can preview, edit, and deploy directly to your server via FTP or SFTP. For content and strategy issues, you get clear recommendations to share with your team.' },
   { q: 'What is the Website Health Score?', a: 'Your Website Health Score is a composite metric across all seven audit modules. It gives your team a single number to track over time. Re-audit after making fixes and see exactly how your score improves.' },
   { q: 'Does Fixpath check AI visibility?', a: 'Yes. The Future Readiness module checks how LLMs interpret your pages, validates structured data for AI consumption, probes multiple AI models for accuracy, and audits your llms.txt and AI discovery files.' },

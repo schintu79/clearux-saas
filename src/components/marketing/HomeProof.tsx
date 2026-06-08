@@ -12,22 +12,22 @@ const PROOF_ITEMS = [
   {
     Icon: ListChecks,
     title: 'Severity-ranked findings',
-    desc: 'Prioritized by impact so teams fix what matters first.',
+    desc: 'Prioritized by impact and confidence so teams fix verified issues first.',
   },
   {
     Icon: FileText,
-    title: 'Evidence on every issue',
-    desc: 'Every finding tied to real content on the site.',
+    title: 'Source-backed evidence',
+    desc: 'Every finding tied to real content, with confidence level visible.',
   },
   {
     Icon: Wrench,
     title: 'Deploy-ready fixes',
-    desc: 'Code diffs, copy changes, or actions ready to implement.',
+    desc: 'Code diffs, copy changes, or actions — not just generic suggestions.',
   },
   {
     Icon: RefreshCw,
     title: 'Re-audit tracking',
-    desc: 'Re-check changes. See what improved.',
+    desc: 'See what improved, what persists, and where coverage grew.',
   },
 ]
 
@@ -44,7 +44,7 @@ export function HomeProof() {
           <em className="italic text-signal">Fixpath.</em>
         </h2>
         <p className="text-[18px] max-sm:text-[15px] leading-[1.6] text-ink-2 max-w-[520px] mx-auto mb-14 max-sm:mb-8 font-sans text-center">
-          Not just findings. A system to prioritize, fix, and track.
+          Not just findings. Confidence-aware results you can trust enough to act on.
         </p>
 
         {/* Horizontal 4-column row */}

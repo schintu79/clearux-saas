@@ -1,6 +1,6 @@
 'use client'
 
-import { Crosshair, Layers, Zap, RotateCcw } from 'lucide-react'
+import { ShieldCheck, Layers, ScanSearch, BarChart3 } from 'lucide-react'
 
 /**
  * HomeTrustStrip — 4 proof points in a clean horizontal row.
@@ -11,10 +11,10 @@ import { Crosshair, Layers, Zap, RotateCcw } from 'lucide-react'
  */
 
 const TRUST_ITEMS = [
-  { Icon: Crosshair, value: '112', label: 'checkpoints per audit' },
-  { Icon: Layers, value: '7', label: 'audit categories' },
-  { Icon: Zap, value: 'Deploy', label: 'fixes directly to your site' },
-  { Icon: RotateCcw, value: 'Re-audit', label: 'track what actually improved' },
+  { Icon: ShieldCheck, value: '112', label: 'verified checks per audit' },
+  { Icon: Layers, value: '7', label: 'evidence-scored categories' },
+  { Icon: ScanSearch, value: '3-tier', label: 'confidence on every finding' },
+  { Icon: BarChart3, value: 'Full', label: 'coverage and confidence visible' },
 ]
 
 export function HomeTrustStrip() {
@@ -83,6 +83,11 @@ export function HomeTrustStrip() {
             </div>
           ))}
         </div>
+
+        {/* Trust support line */}
+        <p className="font-sans text-[13px] leading-[1.5] text-center mt-6 max-sm:mt-4" style={{ color: 'var(--m-muted)' }}>
+          Every audit separates what was verified, what was observed, and what still relies on judgment.
+        </p>
       </div>
     </section>
   )

@@ -1,42 +1,45 @@
 import { SectionMarker } from './SectionMarker'
-import { FileCheck, Calculator, Rocket, GitCompareArrows, Accessibility, Globe } from 'lucide-react'
+import { ShieldCheck, Eye, Lightbulb, Rocket, GitCompareArrows, BarChart3 } from 'lucide-react'
 
 /**
  * HomeDifferentiator — "Built around truth, not noise."
  * 6 proof blocks in a 3×2 grid with soft internal dividers.
  * Each block: icon → strong title → one tight sentence.
+ *
+ * Top row introduces the 3-tier trust model (Verified, Observed, Heuristic).
+ * Bottom row reinforces product mechanics that support trust.
  */
 
 const BLOCKS = [
   {
-    Icon: FileCheck,
-    title: 'Evidence-based findings',
-    desc: 'Every issue is proven from your actual content — nothing speculative.',
+    Icon: ShieldCheck,
+    title: 'Verified',
+    desc: 'Direct checks for issues that can be tested: missing metadata, broken links, accessibility violations.',
   },
   {
-    Icon: Calculator,
-    title: 'Deterministic scoring',
-    desc: 'Fixed formula, fixed weights. Same inputs, same score.',
+    Icon: Eye,
+    title: 'Observed',
+    desc: 'Page evidence extracted from the real site — layout consistency, messaging clarity, structural weaknesses.',
+  },
+  {
+    Icon: Lightbulb,
+    title: 'Heuristic',
+    desc: 'Applied where human judgment matters: perception, differentiation, and clarity of positioning.',
+  },
+  {
+    Icon: BarChart3,
+    title: 'Confidence and coverage visible',
+    desc: 'Every audit shows how much of the site was analyzed and how strong the evidence is behind each result.',
   },
   {
     Icon: Rocket,
     title: 'Deploy-ready fixes',
-    desc: 'Code diffs built from your source. Preview, edit, deploy.',
+    desc: 'Code diffs built from your source. Preview, edit, deploy — not just a list of recommendations.',
   },
   {
     Icon: GitCompareArrows,
     title: 'Lifecycle tracking',
-    desc: 'New, improved, fixed, or regressed. Progress is provable.',
-  },
-  {
-    Icon: Accessibility,
-    title: 'Accessibility built in',
-    desc: 'WCAG 2.1 AA checks in every audit, automatically.',
-  },
-  {
-    Icon: Globe,
-    title: 'Website and brand in one audit',
-    desc: 'Technical quality and brand perception. One run, full picture.',
+    desc: 'New, improved, fixed, or regressed. Progress is provable, not assumed.',
   },
 ]
 
@@ -53,8 +56,8 @@ export function HomeDifferentiator() {
           <em className="italic text-signal">not noise.</em>
         </h2>
         <p className="text-[18px] max-sm:text-[15px] leading-[1.6] text-ink-2 max-w-[560px] mx-auto mb-16 max-sm:mb-10 font-sans text-center">
-          Every design decision serves one goal: give teams useful truth they can
-          act on, and proof that acting on it worked.
+          Some issues can be verified directly. Some need interpretation.
+          Fixpath shows the difference — so teams act with clarity, not guesswork.
         </p>
 
         {/* 3×2 grid with soft internal dividers */}

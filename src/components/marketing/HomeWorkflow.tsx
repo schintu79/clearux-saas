@@ -187,8 +187,8 @@ export function HomeWorkflow() {
           <em className="italic text-signal">Track.</em>
         </h2>
         <p className="text-[18px] max-sm:text-[15px] leading-[1.6] text-ink-2 max-w-[560px] mx-auto mb-20 max-sm:mb-10 font-sans text-center">
-          Enter your URL. Get severity-ranked findings in minutes. Fix issues with
-          concrete guidance. Re-audit to confirm improvement.
+          Enter your URL. Get severity-ranked, evidence-backed findings in minutes.
+          Fix what is verified first. Re-audit to confirm improvement.
         </p>
 
         <div className="grid lg:grid-cols-3 gap-6 max-sm:gap-4">
@@ -200,7 +200,7 @@ export function HomeWorkflow() {
             <div className="mb-5 max-sm:mb-4">
               <h3 className="font-sans text-[20px] max-sm:text-[17px] font-semibold text-ink mb-2">Find</h3>
               <p className="font-sans text-[14px] text-ink-2 leading-[1.6]">
-                See what is actually hurting trust, clarity, accessibility, and technical quality.
+                Direct checks, page evidence, and structured analysis surface what is actually hurting trust, clarity, and performance.
               </p>
             </div>
             <FindVisual />
@@ -214,7 +214,7 @@ export function HomeWorkflow() {
             <div className="mb-5 max-sm:mb-4">
               <h3 className="font-sans text-[20px] max-sm:text-[17px] font-semibold text-ink mb-2">Fix</h3>
               <p className="font-sans text-[14px] text-ink-2 leading-[1.6]">
-                Get prioritized actions, practical guidance, and implementation-ready recommendations.
+                Every issue includes what was verified, what was observed, and why it matters. Fix high-confidence problems first.
               </p>
             </div>
             <FixVisual />
@@ -228,7 +228,7 @@ export function HomeWorkflow() {
             <div className="mb-5 max-sm:mb-4">
               <h3 className="font-sans text-[20px] max-sm:text-[17px] font-semibold text-ink mb-2">Track</h3>
               <p className="font-sans text-[14px] text-ink-2 leading-[1.6]">
-                Re-audit, compare progress, and confirm whether the fixes improved the result.
+                Track what improved, what remains, and where confidence grows as coverage deepens over time.
               </p>
             </div>
             <TrackVisual />

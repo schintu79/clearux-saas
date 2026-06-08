@@ -18,7 +18,7 @@ import { HomeJsonLd } from '@/components/seo/JsonLd'
 export const metadata: Metadata = {
   title: 'Fixpath — See what is hurting trust. Fix what matters.',
   description:
-    'Fixpath is a decision engine for real website and brand issues. It finds problems across clarity, trust, accessibility, and technical quality — prioritizes by impact, gives fix guidance, and tracks improvement. First audit free.',
+    'Fixpath is a decision engine for real website and brand issues. Audits combine verified checks, page evidence, and structured review — with confidence and coverage visible on every finding. First audit free.',
 }
 
 /**
