@@ -27,11 +27,19 @@ function withTimeout<T>(promise: Promise<T>, ms: number, label: string): Promise
   ])
 }
 
-/** Retry an async function with exponential backoff (for rate limit resilience) */
+/**
+ * Retry an async function with exponential backoff (rate limit resilience ONLY).
+ *
+ * IMPORTANT: Does NOT retry on timeouts. Timeout errors are terminal — the API
+ * took too long, and retrying burns rate-limit quota while orphaned promises
+ * from the timed-out call continue running in the background. This was the root
+ * cause of batch 4/4 stalls: 3 × 45s retries = 142s worst case per category,
+ * with orphaned HTTP requests causing cascading rate limits on parallel categories.
+ */
 async function withRetry<T>(
   fn: () => Promise<T>,
   label: string,
-  maxRetries: number = 2,
+  maxRetries: number = 1,
   baseDelayMs: number = 2000,
 ): Promise<T> {
   let lastError: unknown
@@ -46,10 +54,11 @@ async function withRetry<T>(
         err.message.includes('overloaded') ||
         err.message.includes('529')
       )
-      const isTimeout = err instanceof Error && err.message.includes('Timeout')
-      if (attempt < maxRetries && (isRateLimit || isTimeout)) {
+      // Timeouts are NOT retried — they are terminal failures.
+      // The outer withTimeout in process-audit.ts handles graceful degradation.
+      if (attempt < maxRetries && isRateLimit) {
         const delay = baseDelayMs * Math.pow(2, attempt) + Math.random() * 1000
-        console.warn(`[${label}] Attempt ${attempt + 1} failed (${isRateLimit ? 'rate limit' : 'timeout'}), retrying in ${Math.round(delay)}ms...`)
+        console.warn(`[${label}] Attempt ${attempt + 1} failed (rate limit), retrying in ${Math.round(delay)}ms...`)
         await new Promise(resolve => setTimeout(resolve, delay))
       }
     }
@@ -1140,9 +1149,9 @@ Analyze this category and return the JSON array now.`
     // that prefix.  The variable user message (category + page content) is
     // never cached since it changes every call.
     //
-    // withRetry: retries up to 2 times on rate limits or timeouts with
-    // exponential backoff, preventing silent empty results from transient
-    // API pressure.
+    // withRetry: retries once on rate limits only (NOT timeouts).
+    // Inner timeout is 35s — fires before the outer 45s timeout in
+    // process-audit.ts, giving clean error propagation.
     const message = await withRetry(
       () => withTimeout(
         anthropic.beta.promptCaching.messages.create({
@@ -1152,7 +1161,7 @@ Analyze this category and return the JSON array now.`
           system: [{ type: 'text', text: systemInstructions, cache_control: { type: 'ephemeral' } }],
           messages: [{ role: 'user', content: userPrompt }],
         }),
-        45_000,
+        35_000,
         `analyzeCategory(${category})`,
       ),
       `analyzeCategory(${category})`,

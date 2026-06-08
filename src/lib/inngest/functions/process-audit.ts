@@ -2627,25 +2627,40 @@ RULES FOR RE-AUDIT:
           let sortOrder = existingFindingsCount
           let findingsInGap = 0
 
-          const gapResults = await Promise.all(
-            gapCategories.map(async (categoryName) => {
-              const isDesignConsistencyCategory = designConsistencyCategoryNamesBl.has(categoryName)
-              const content = isDesignConsistencyCategory ? designConsistencyContentBl : contentWithContextBl
-              try {
-                const result = await withTimeout(
-                  analyzeCategory(
-                    content, categoryName, [], auditDetails.userFocus, auditDetails.language, 'deep', siteProfile,
-                  ),
-                  45_000,
-                  `gap-fill-${categoryName}`,
-                )
-                return result || []
-              } catch (gapErr) {
-                console.error(`[inngest] Gap-fill category "${categoryName}" timed out/failed:`, (gapErr as Error)?.message)
-                return []
-              }
-            }),
+          // Gap-fill has the same timeout structure as main analysis:
+          // per-category 45s timeout + batch-level 90s timeout.
+          const gapStartTs = Date.now()
+          console.log(`[inngest] ── Gap-fill START ──`, { auditId, categories: gapCategories, count: gapCategories.length })
+          const gapResultsRaw = await withStepTimeout(
+            () => Promise.all(
+              gapCategories.map(async (categoryName) => {
+                const catStartTs = Date.now()
+                const isDesignConsistencyCategory = designConsistencyCategoryNamesBl.has(categoryName)
+                const content = isDesignConsistencyCategory ? designConsistencyContentBl : contentWithContextBl
+                try {
+                  const result = await withTimeout(
+                    analyzeCategory(
+                      content, categoryName, [], auditDetails.userFocus, auditDetails.language, 'deep', siteProfile,
+                    ),
+                    45_000,
+                    `gap-fill-${categoryName}`,
+                  )
+                  const dur = Date.now() - catStartTs
+                  console.log(`[inngest]   ├─ gap-fill ${categoryName}: ${result === null ? 'timeout' : 'ok'} (${dur}ms, ${(result || []).length} findings)`)
+                  return result || []
+                } catch (gapErr) {
+                  const dur = Date.now() - catStartTs
+                  console.error(`[inngest]   ├─ gap-fill ${categoryName}: ERROR (${dur}ms)`, (gapErr as Error)?.message)
+                  return []
+                }
+              }),
+            ),
+            90_000,
+            'gap-fill-batch-timeout',
+            null as any,
           )
+          const gapResults = gapResultsRaw ?? gapCategories.map(() => [] as any[])
+          console.log(`[inngest] ── Gap-fill END (${Date.now() - gapStartTs}ms${gapResultsRaw === null ? ' TIMED OUT' : ''}) ──`)
 
           for (let catIdx = 0; catIdx < gapResults.length; catIdx++) {
             const findings = gapResults[catIdx]
@@ -2963,15 +2978,29 @@ RULES FOR RE-AUDIT:
           await logActivity(auditId, `Analysing batch ${batchIdx + 1}/${batches.length}: ${batch.slice(0, 3).join(', ')}${batch.length > 3 ? '...' : ''}`)
           await setProgress(auditId, batchStartProgress, 'analysing')
 
-          console.log(`[inngest] Batch ${batchIdx + 1}: ${batch.join(', ')}`)
+          const batchStartTs = Date.now()
+          console.log(`[inngest] ── Batch ${batchIdx + 1}/${batches.length} START ──`, {
+            auditId,
+            categories: batch,
+            categoryCount: batch.length,
+            hasDesignConsistency: batch.some(c => designConsistencyCategoryNames.has(c)),
+            brandDnaEnriched: designConsistencyContent !== contentWithContext,
+            contentSize: contentWithContext.length,
+            designContentSize: designConsistencyContent.length,
+          })
           const CATEGORY_TIMEOUT_MS = 45_000 // 45s hard budget per category
+          const categoryTimings: Array<{ name: string; durationMs: number; status: 'ok' | 'timeout' | 'error' | 'empty'; findingCount: number }> = []
+
           // withStepTimeout wraps the entire Promise.all so the batch can't
           // hang indefinitely if AI APIs stall beyond individual timeouts.
-          // 120s = generous ceiling for 8 parallel 45s calls + DB writes.
+          // 90s ceiling (down from 120s) — 4-8 parallel 45s calls + DB writes.
+          let batchTimedOut = false
           const batchResults = await withStepTimeout(
             () => Promise.all(
               batch.map(async (categoryName) => {
-                const content = designConsistencyCategoryNames.has(categoryName)
+                const catStartTs = Date.now()
+                const isDesignConsistency = designConsistencyCategoryNames.has(categoryName)
+                const content = isDesignConsistency
                   ? designConsistencyContent
                   : contentWithContext
                 try {
@@ -2980,24 +3009,53 @@ RULES FOR RE-AUDIT:
                     CATEGORY_TIMEOUT_MS,
                     `analyze-${categoryName}`,
                   )
-                  return result || [] // withTimeout returns null on timeout
+                  const durationMs = Date.now() - catStartTs
+                  const findings = result || []
+                  const status = result === null ? 'timeout' : (findings.length === 0 ? 'empty' : 'ok')
+                  categoryTimings.push({ name: categoryName, durationMs, status, findingCount: findings.length })
+                  console.log(`[inngest]   ├─ ${categoryName}: ${status} (${durationMs}ms, ${findings.length} findings)${isDesignConsistency ? ' [Design Consistency]' : ''}`)
+                  return findings
                 } catch (err) {
-                  console.error(`[inngest] Category ${categoryName} failed:`, err)
+                  const durationMs = Date.now() - catStartTs
+                  categoryTimings.push({ name: categoryName, durationMs, status: 'error', findingCount: 0 })
+                  console.error(`[inngest]   ├─ ${categoryName}: ERROR (${durationMs}ms)${isDesignConsistency ? ' [Design Consistency]' : ''}`, (err as Error)?.message)
                   return []
                 }
               }),
             ),
-            120_000,
+            90_000,
             `analyze-batch-${batchIdx + 1}-timeout`,
-            [] as any[], // fallback: empty results if entire batch times out
+            null as any, // null fallback so we can detect batch-level timeout
           )
+
+          // Detect batch-level timeout: withStepTimeout returns null fallback
+          let effectiveBatchResults: any[][]
+          if (batchResults === null) {
+            batchTimedOut = true
+            effectiveBatchResults = []
+            console.error(`[inngest] ── Batch ${batchIdx + 1} TIMED OUT after 90s ──`, {
+              auditId,
+              categoryTimings,
+              batchDurationMs: Date.now() - batchStartTs,
+            })
+          } else {
+            effectiveBatchResults = batchResults
+          }
+
+          const batchDurationMs = Date.now() - batchStartTs
+          console.log(`[inngest] ── Batch ${batchIdx + 1}/${batches.length} END (${batchDurationMs}ms${batchTimedOut ? ' TIMED OUT' : ''}) ──`, {
+            auditId,
+            categoryTimings,
+            totalFindings: effectiveBatchResults.reduce((sum, r) => sum + (r?.length || 0), 0),
+          })
 
           // Batch all findings for this analysis batch into a single insert
           const batchInserts: any[] = []
-          let emptyCategoriesInBatch = 0
+          // When batch times out (effectiveBatchResults=[]), count ALL categories as empty
+          let emptyCategoriesInBatch = batchTimedOut ? batch.length : 0
 
-          for (let catIdx = 0; catIdx < batchResults.length; catIdx++) {
-            const findings = batchResults[catIdx]
+          for (let catIdx = 0; catIdx < effectiveBatchResults.length; catIdx++) {
+            const findings = effectiveBatchResults[catIdx]
             const categoryName = batch[catIdx]
             const absoluteCatIdx = UX_CATEGORY_NAMES.indexOf(categoryName)
 
@@ -3081,12 +3139,34 @@ RULES FOR RE-AUDIT:
           const batchProgress = Math.round(30 + ((batchIdx + 1) / batches.length) * 35)
           await setProgress(auditId, batchProgress)
 
-          return { findingsInBatch, newSortOrder: sortOrder, emptyCategoriesInBatch, categoriesInBatch: batch.length }
+          return { findingsInBatch, newSortOrder: sortOrder, emptyCategoriesInBatch, categoriesInBatch: batch.length, batchTimedOut, batchDurationMs, categoryTimings }
         })
 
         totalFindingsCount = batchResult.newSortOrder
         totalEmptyCategories += batchResult.emptyCategoriesInBatch
         totalAnalyzedCategories += batchResult.categoriesInBatch
+        if (batchResult.batchTimedOut) {
+          console.error(`[inngest] ALERT: Batch ${batchIdx + 1} fully timed out for audit ${auditId}`)
+          // Contradiction check: batch-level timeout → flag degraded confidence
+          const timedOutCategories = batch.join(', ')
+          auditLimitations.push({
+            id: `batch_${batchIdx + 1}_timeout`,
+            title: `Analysis batch ${batchIdx + 1} timed out`,
+            description: `Batch ${batchIdx + 1}/${batches.length} (${timedOutCategories}) exceeded the 90-second time budget and was terminated. Findings and scores for these categories are incomplete or missing. The overall audit score may not reflect the full state of the site.`,
+          })
+        }
+        // Per-category timeout tracking: if individual categories in a completed batch timed out
+        if (!batchResult.batchTimedOut && batchResult.categoryTimings) {
+          const timedOutCats = batchResult.categoryTimings.filter((t: any) => t.status === 'timeout' || t.status === 'error')
+          if (timedOutCats.length > 0) {
+            const catNames = timedOutCats.map((t: any) => t.name).join(', ')
+            auditLimitations.push({
+              id: `batch_${batchIdx + 1}_partial_timeout`,
+              title: `${timedOutCats.length} categor${timedOutCats.length === 1 ? 'y' : 'ies'} timed out`,
+              description: `The following categories in batch ${batchIdx + 1} could not complete analysis: ${catNames}. Scores for these categories are based on limited evidence.`,
+            })
+          }
+        }
       }
 
       // ── Detect silent analysis failures ──────────────────────────────
