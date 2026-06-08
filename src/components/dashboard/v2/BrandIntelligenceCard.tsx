@@ -174,7 +174,7 @@ export default function BrandIntelligenceCard({
 
       {/* Body */}
       {!hasData ? (
-        <div className="flex-1 flex flex-col items-center justify-center py-4 gap-2">
+        <div className="flex-1 flex flex-col items-center justify-center py-4 gap-2" style={{ minHeight: 140 }}>
           <Radio size={20} style={{ color: 'var(--m-muted)', opacity: 0.5 }} />
           <p className="text-[11px] text-center" style={{ color: 'var(--m-muted)' }}>
             {hasProbeData
@@ -185,14 +185,14 @@ export default function BrandIntelligenceCard({
       ) : (
         <>
           {/* Score circle left + metrics right */}
-          <div className="flex gap-5 flex-1 items-center">
+          <div className="flex gap-6 flex-1 items-center" style={{ minHeight: 140 }}>
             {/* Left: ScoreCircle — pushed left, thicker stroke */}
             <div className="flex-shrink-0">
               <ScoreCircle score={primaryScore} size="medium" />
             </div>
 
             {/* Right: Metric legend with icons */}
-            <div className="flex flex-col gap-2.5 flex-1 min-w-0">
+            <div className="flex flex-col gap-3 flex-1 min-w-0">
               {metrics.map(({ label, Icon, value, color }) => (
                 <div key={label} className="flex items-center gap-2">
                   <span

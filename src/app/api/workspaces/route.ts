@@ -23,18 +23,53 @@ export async function GET() {
 
   const { data, error } = await supabase
     .from('workspaces')
-    .select('*, audits(count)')
+    .select('*')
     .eq('user_id', user.id)
     .eq('status', 'active')
     .order('created_at', { ascending: false })
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
 
-  // Flatten the audit count from Supabase's nested aggregate format
+  // Fetch per-workspace audit counts split by type and status
+  // Only count completed audits (status = 'completed') for accurate display.
+  // Separate website audits (audit_type is null or 'website') from brand audits ('brand_identity').
+  const workspaceIds = (data || []).map((ws: any) => ws.id)
+  let websiteCounts: Record<string, number> = {}
+  let brandCounts: Record<string, number> = {}
+
+  if (workspaceIds.length > 0) {
+    // Website audits (completed, non-brand)
+    const { data: waRows } = await supabase
+      .from('audits')
+      .select('workspace_id')
+      .in('workspace_id', workspaceIds)
+      .eq('status', 'completed')
+      .is('deleted_at', null)
+      .or('audit_type.is.null,audit_type.eq.website')
+
+    for (const r of waRows || []) {
+      websiteCounts[r.workspace_id] = (websiteCounts[r.workspace_id] || 0) + 1
+    }
+
+    // Brand audits (completed)
+    const { data: baRows } = await supabase
+      .from('audits')
+      .select('workspace_id')
+      .in('workspace_id', workspaceIds)
+      .eq('status', 'completed')
+      .is('deleted_at', null)
+      .eq('audit_type', 'brand_identity')
+
+    for (const r of baRows || []) {
+      brandCounts[r.workspace_id] = (brandCounts[r.workspace_id] || 0) + 1
+    }
+  }
+
   const workspaces = (data || []).map((ws: any) => ({
     ...ws,
-    audit_count: ws.audits?.[0]?.count ?? 0,
-    audits: undefined,
+    audit_count: (websiteCounts[ws.id] || 0) + (brandCounts[ws.id] || 0),
+    website_audit_count: websiteCounts[ws.id] || 0,
+    brand_audit_count: brandCounts[ws.id] || 0,
   }))
 
   return NextResponse.json({ workspaces })

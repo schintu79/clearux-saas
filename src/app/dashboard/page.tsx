@@ -232,7 +232,8 @@ function WorkspaceSwitcherInner() {
       {workspaces.length > 0 ? (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {workspaces.map((ws) => {
-            const auditCount = (ws as any).audit_count ?? 0;
+            const websiteAudits = (ws as any).website_audit_count ?? 0;
+            const brandAudits = (ws as any).brand_audit_count ?? 0;
             return (
               <div key={ws.id} className="relative group">
                 <Link
@@ -271,12 +272,30 @@ function WorkspaceSwitcherInner() {
                         {ws.workspace_type === 'brand' ? 'Brand' : ws.workspace_type === 'website_and_brand' ? 'Website + brand' : 'Website'}
                       </span>
                     </div>
-                    <div className="flex items-center gap-1.5">
-                      <FileSearch size={12} strokeWidth={1.75} style={{ color: 'var(--m-muted)' }} />
-                      <span className="text-[11px] font-medium" style={{ color: 'var(--ink-2)' }}>
-                        {auditCount} {auditCount === 1 ? 'audit' : 'audits'}
-                      </span>
-                    </div>
+                    {websiteAudits > 0 && (
+                      <div className="flex items-center gap-1.5">
+                        <FileSearch size={12} strokeWidth={1.75} style={{ color: 'var(--m-muted)' }} />
+                        <span className="text-[11px] font-medium" style={{ color: 'var(--ink-2)' }}>
+                          {websiteAudits} {websiteAudits === 1 ? 'website audit' : 'website audits'}
+                        </span>
+                      </div>
+                    )}
+                    {brandAudits > 0 && (
+                      <div className="flex items-center gap-1.5">
+                        <FileSearch size={12} strokeWidth={1.75} style={{ color: 'var(--m-muted)' }} />
+                        <span className="text-[11px] font-medium" style={{ color: 'var(--ink-2)' }}>
+                          {brandAudits} {brandAudits === 1 ? 'brand audit' : 'brand audits'}
+                        </span>
+                      </div>
+                    )}
+                    {websiteAudits === 0 && brandAudits === 0 && (
+                      <div className="flex items-center gap-1.5">
+                        <FileSearch size={12} strokeWidth={1.75} style={{ color: 'var(--m-muted)' }} />
+                        <span className="text-[11px] font-medium" style={{ color: 'var(--ink-2)' }}>
+                          No audits yet
+                        </span>
+                      </div>
+                    )}
                   </div>
 
                   {/* Open arrow */}

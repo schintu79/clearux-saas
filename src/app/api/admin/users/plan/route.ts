@@ -163,7 +163,10 @@ export async function PATCH(request: NextRequest) {
 
     if (updateErr) {
       console.error('Admin plan override error:', updateErr)
-      return NextResponse.json({ error: 'Failed to update user plan' }, { status: 500 })
+      return NextResponse.json(
+        { error: `Failed to update user plan: ${updateErr.message || 'unknown error'}` },
+        { status: 500 },
+      )
     }
 
     // Log the action (non-critical — don't block the response if logging fails)

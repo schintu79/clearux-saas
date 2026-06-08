@@ -1477,16 +1477,7 @@ function BrandDnaPage() {
                             ({openFindings.length})
                           </span>
                         </p>
-                        {audit && (
-                          <Link
-                            href={`${dashPrefix}/audits/brand/${encodeURIComponent(identity?.name || '')}`}
-                            className="text-[11px] font-medium flex items-center gap-1 transition-colors hover:opacity-80"
-                            style={{ color: 'var(--signal)' }}
-                          >
-                            View full report <ArrowRight size={10} />
-                          </Link>
-                        )}
-                      </div>
+                        </div>
                       <div className="space-y-2">
                         {visibleFindings.map(f => (
                           <BrandDnaFindingCard
