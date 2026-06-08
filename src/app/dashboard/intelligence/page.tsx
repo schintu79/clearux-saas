@@ -840,11 +840,111 @@ function IntelligencePage() {
   const scoredDrafts = drafts.filter(d => typeof d.score === 'number' && d.score > 0);
   const humanSentimentScore = hp?.socialSentiment ?? (hp?.reviewScore != null ? Math.round(hp.reviewScore * 20) : null);
 
-  // Computed metrics
+  /* ── Merged model breakdown ──────────────────────────────
+   * RULE 2: Question-level cards and model-by-model breakdown must come
+   * from the SAME saved evaluated records.
+   * This merges audit-time probes (multi_model_probes) with interactive
+   * interrogation results (workspace_ai_interrogation_results) so the
+   * breakdown reflects ALL evaluated records, not just one source.
+   * Accuracy is recomputed using the canonical formula:
+   *   (accurate*100 + partial*50 + noData*25) / (total*100) * 100
+   */
+  const mergedModelBreakdown = useMemo(() => {
+    type MergedRecord = { accuracy: string | null };
+    const modelRecords = new Map<string, {
+      label: string;
+      records: MergedRecord[];
+      sentimentScores: number[];
+      placementScores: number[];
+      themes: Array<{ theme: string; polarity: string; count: number }>;
+    }>();
+
+    // Source 1: audit-time probes (from multi_model_probes table)
+    for (const probe of modelProbes) {
+      const key = probe.model_id;
+      if (!modelRecords.has(key)) {
+        modelRecords.set(key, { label: probe.model_label, records: [], sentimentScores: [], placementScores: [], themes: [] });
+      }
+      const entry = modelRecords.get(key)!;
+      if (probe.results_json) {
+        for (const r of probe.results_json) {
+          entry.records.push({ accuracy: r.accuracy });
+        }
+      }
+      if (probe.sentiment_score != null) entry.sentimentScores.push(probe.sentiment_score);
+      if (probe.placement_score != null) entry.placementScores.push(probe.placement_score);
+      if (probe.sentiment_themes) entry.themes.push(...probe.sentiment_themes);
+    }
+
+    // Source 2: interactive interrogation results (from workspace_ai_interrogation_results)
+    for (const [, results] of iqPastResults) {
+      for (const r of results) {
+        if (r.status !== 'completed' || !r.accuracy) continue;
+        const key = r.modelShortId;
+        if (!modelRecords.has(key)) {
+          modelRecords.set(key, { label: r.modelDisplayName, records: [], sentimentScores: [], placementScores: [], themes: [] });
+        }
+        modelRecords.get(key)!.records.push({ accuracy: r.accuracy });
+      }
+    }
+
+    // Compute accuracy per model using canonical formula
+    return Array.from(modelRecords.entries())
+      .filter(([, data]) => data.records.length > 0)
+      .map(([modelId, data]) => {
+        const counts = { accurate: 0, partial: 0, inaccurate: 0, hallucinated: 0, noData: 0 };
+        for (const r of data.records) {
+          const norm = normalizeAccuracy(r.accuracy)?.toLowerCase().trim() ?? 'no data';
+          if (norm === 'accurate') counts.accurate++;
+          else if (norm === 'partial') counts.partial++;
+          else if (norm === 'inaccurate') counts.inaccurate++;
+          else if (norm === 'hallucinated') counts.hallucinated++;
+          else counts.noData++;
+        }
+        const total = data.records.length;
+        const accuracyScore = total > 0
+          ? Math.round(((counts.accurate * 100 + counts.partial * 50 + counts.noData * 25) / (total * 100)) * 100)
+          : 0;
+
+        const avgSentiment = data.sentimentScores.length > 0
+          ? Math.round(data.sentimentScores.reduce((a, b) => a + b, 0) / data.sentimentScores.length)
+          : null;
+        const avgPlac = data.placementScores.length > 0
+          ? Math.round(data.placementScores.reduce((a, b) => a + b, 0) / data.placementScores.length)
+          : null;
+
+        // Deduplicate themes
+        const themeMap = new Map<string, { polarity: string; count: number }>();
+        for (const t of data.themes) {
+          const k = t.theme.toLowerCase();
+          const ex = themeMap.get(k);
+          if (ex) ex.count += t.count;
+          else themeMap.set(k, { polarity: t.polarity, count: t.count });
+        }
+
+        return {
+          model_id: modelId,
+          model_label: data.label,
+          accuracy_score: accuracyScore,
+          sentiment_score: avgSentiment,
+          placement_score: avgPlac,
+          sentiment_themes: [...themeMap.entries()].map(([theme, v]) => ({ theme, polarity: v.polarity, count: v.count })),
+          total_questions: total,
+        };
+      })
+      .sort((a, b) => b.accuracy_score - a.accuracy_score);
+  }, [modelProbes, iqPastResults]);
+
+  const hasModelBreakdown = mergedModelBreakdown.length > 0;
+
+  // Computed metrics — use merged breakdown when available for truthful numbers
   const avgAccuracy = useMemo(() => {
+    if (mergedModelBreakdown.length > 0) {
+      return Math.round(mergedModelBreakdown.reduce((a, p) => a + p.accuracy_score, 0) / mergedModelBreakdown.length);
+    }
     if (modelProbes.length === 0) return 0;
     return Math.round(modelProbes.reduce((a, p) => a + p.accuracy_score, 0) / modelProbes.length);
-  }, [modelProbes]);
+  }, [modelProbes, mergedModelBreakdown]);
 
   const avgPlacement = useMemo(() => {
     const placements = modelProbes.map(p => p.placement_score).filter((p): p is number => p != null);
@@ -895,10 +995,14 @@ function IntelligencePage() {
 
   const perceptionMeasured = useMemo(() => modelProbes.filter(p => p.status === 'measured' && p.accuracy_score != null), [modelProbes]);
 
+  // Use merged breakdown accuracy when available (includes interactive results)
   const perceptionAccuracy = useMemo(() => {
+    if (mergedModelBreakdown.length > 0) {
+      return Math.round(mergedModelBreakdown.reduce((s, p) => s + p.accuracy_score, 0) / mergedModelBreakdown.length);
+    }
     if (perceptionMeasured.length === 0) return null;
     return Math.round(perceptionMeasured.reduce((s, p) => s + p.accuracy_score, 0) / perceptionMeasured.length);
-  }, [perceptionMeasured]);
+  }, [perceptionMeasured, mergedModelBreakdown]);
 
   const perceptionSentiment = useMemo(() => {
     const valid = modelProbes.filter(p => p.sentiment_score != null);
@@ -2184,19 +2288,19 @@ function IntelligencePage() {
             </div>
           </DashCard>
 
-          {/* ── Per-model breakdown ── */}
-          {hasProbes && (
+          {/* ── Per-model breakdown (merged from all evaluated records) ── */}
+          {hasModelBreakdown && (
             <DashCard>
               <div className="flex items-center gap-2 mb-1">
                 <BarChart3 size={15} strokeWidth={1.75} style={{ color: 'var(--ink)' }} />
                 <h2 className="text-[15px] font-semibold" style={{ color: 'var(--ink)' }}>Model-by-model breakdown</h2>
               </div>
               <p className="text-[13px] mb-4" style={{ color: 'var(--m-muted)' }}>
-                How each AI model performs when asked about your brand. Accuracy, sentiment, and placement vary by model.
+                How each AI model performs when asked about your brand. Accuracy computed from all evaluated questions.
               </p>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-                {modelProbes.map(probe => {
+                {mergedModelBreakdown.map(probe => {
                   const badge = accuracyBadge(probe.accuracy_score);
                   const hasSent = probe.sentiment_score != null;
                   const hasPlace = probe.placement_score != null;
@@ -2226,6 +2330,14 @@ function IntelligencePage() {
                             {hasPlace ? `#${probe.placement_score}` : '--'}
                           </span>
                         </div>
+                        {probe.total_questions > 0 && (
+                          <div className="flex items-center justify-between pt-1" style={{ borderTop: '1px solid var(--rule)' }}>
+                            <span className="text-[10px]" style={{ color: 'var(--m-muted)', opacity: 0.7 }}>Based on</span>
+                            <span className="text-[10px] tabular-nums" style={{ color: 'var(--m-muted)', opacity: 0.7 }}>
+                              {probe.total_questions} question{probe.total_questions !== 1 ? 's' : ''}
+                            </span>
+                          </div>
+                        )}
                       </div>
                       {probe.sentiment_themes && probe.sentiment_themes.length > 0 && (
                         <div className="flex flex-wrap gap-1 mt-3 pt-2" style={{ borderTop: '1px solid var(--rule)' }}>

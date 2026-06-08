@@ -215,7 +215,7 @@ export async function GET(request: NextRequest) {
       .eq('user_id', user.id)
       .in('status', ['completed', 'partial', 'failed'])
       .order('created_at', { ascending: false })
-      .limit(20)
+      .limit(200)
 
     if (listError) {
       console.error('Failed to fetch interrogations:', listError.message)
