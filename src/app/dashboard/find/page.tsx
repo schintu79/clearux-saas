@@ -62,6 +62,16 @@ import {
   getFixTechnical,
   hasCommunication,
 } from '@/lib/finding-communication-helpers';
+import {
+  AuditConfidenceStrip,
+  CategoryTrustMeta as CategoryTrustMetaComponent,
+  FindingEvidenceBadge,
+  FindingSourceLabel,
+  FindingSurfaceScope,
+  FindingEvidencePanel,
+} from '@/components/dashboard/v2/AuditTrustLayer';
+import { computeCoverageLabel } from '@/lib/audit-engine/pipeline/trust-summary';
+import type { CrawlSummary } from '@/types/database';
 
 const SEVERITY_RANK: Record<string, number> = { critical: 4, high: 3, medium: 2, low: 1 };
 const SEVERITIES: Array<'all' | 'critical' | 'high' | 'medium' | 'low'> = ['all', 'critical', 'high', 'medium', 'low'];
@@ -252,6 +262,11 @@ function FindPageInner() {
 
   const totalAll = useMemo(() => buckets.reduce((s, b) => s + b.groups.length, 0), [buckets]);
 
+  const crawlCoverageLabel = useMemo(() => {
+    const cs = (bundle?.audit as any)?.crawl_summary as CrawlSummary | null | undefined;
+    return computeCoverageLabel(cs ?? null).label;
+  }, [bundle]);
+
   const openFindings = useMemo(
     () => (bundle?.findings ?? []).filter((f) => f.status !== 'fixed' && !f.dismissed && (f as any).verification_status !== 'verified_fixed'),
     [bundle],
@@ -303,6 +318,13 @@ function FindPageInner() {
         icon={<SearchIcon size={18} style={{ color: 'var(--ink)' }} />}
         title="Find"
         subtitle="What is hurting your site right now, ranked by impact."
+      />
+
+      {/* Trust layer — page-level confidence strip */}
+      <AuditConfidenceStrip
+        findings={bundle.findings}
+        crawlSummary={(bundle.audit as any)?.crawl_summary as CrawlSummary | null ?? null}
+        className="mb-4"
       />
 
       {/* Tab navigation */}
@@ -456,6 +478,10 @@ function FindPageInner() {
                       <span className="text-[11px]" style={{ color: 'var(--m-muted)' }}>
                         · {b.groups.length} {b.groups.length === 1 ? 'finding' : 'findings'}
                       </span>
+                      <CategoryTrustMetaComponent
+                        findings={b.groups.map(g => g.primary)}
+                        coverageLabel={crawlCoverageLabel}
+                      />
                     </div>
                     <div className="flex items-center gap-1.5 flex-wrap mt-1">
                       {(['critical', 'high', 'medium', 'low'] as const).map((sev) => {
@@ -514,6 +540,10 @@ function FindPageInner() {
                                 <span className="font-semibold" style={{ color: severityColor(f.severity) }}>
                                   {severityLabel(f.severity)}
                                 </span>
+                                <span aria-hidden>·</span>
+                                <FindingEvidenceBadge finding={f} />
+                                <FindingSourceLabel finding={f} />
+                                <FindingSurfaceScope finding={f} />
                                 {multiModule && (
                                   <>
                                     <span aria-hidden>·</span>
@@ -606,6 +636,10 @@ function FindPageInner() {
                                 <div className="text-[12.5px] leading-relaxed" style={{ color: 'var(--ink)' }}>
                                   <FindingText text={getFixPlain(f)} />
                                 </div>
+                              </div>
+                              {/* Evidence panel — expandable proof section */}
+                              <div className="col-span-full">
+                                <FindingEvidencePanel finding={f} />
                               </div>
                               {hasCommunication(f) && (getTechnicalNote(f) || getFixTechnical(f)) && (
                                 <div className="col-span-full">

@@ -45,7 +45,14 @@ import FindingText from '@/components/dashboard/v2/FindingText';
 import { getDisplayTitle, getWhatFound, getWhyMatters, getFixPlain } from '@/lib/finding-communication-helpers';
 import CustomSelect from '@/components/ui/CustomSelect';
 import { groupFindingsForDisplay, reconciliationAwareSort, type GroupedFinding } from '@/lib/audit-findings-presentation';
-import type { AuditFinding, FindingStatus } from '@/types/database';
+import type { AuditFinding, FindingStatus, CrawlSummary } from '@/types/database';
+import {
+  AuditConfidenceStrip,
+  FindingEvidenceBadge,
+  FindingSourceLabel,
+  FindingSurfaceScope,
+  FindingEvidencePanel,
+} from '@/components/dashboard/v2/AuditTrustLayer';
 
 const STATUS_META: Record<string, { label: string; color: string; bg: string; dot: string }> = {
   open:        { label: 'Open',        color: 'var(--m-muted)', bg: 'var(--paper-2)',                                       dot: 'var(--m-muted)' },
@@ -211,6 +218,7 @@ function SidebarItem({
             >
               {badgeLabel}
             </span>
+            <FindingEvidenceBadge finding={finding} />
             {(finding as any).viewport && (finding as any).viewport !== 'all' && (
               <ViewportChip viewport={(finding as any).viewport} />
             )}
@@ -336,6 +344,10 @@ function ActiveFindingDetail({
                   <ViewportChip viewport={finding.viewport} />
                 </>
               )}
+              <span style={{ color: 'var(--m-muted)' }} aria-hidden>·</span>
+              <FindingEvidenceBadge finding={finding} />
+              <FindingSourceLabel finding={finding} />
+              <FindingSurfaceScope finding={finding} />
               {finding.page_url && (
                 <>
                   <span style={{ color: 'var(--m-muted)' }} aria-hidden>·</span>
@@ -473,6 +485,11 @@ function ActiveFindingDetail({
                 )}
               </div>
             </div>
+          </div>
+
+          {/* Evidence panel — trust metadata for this finding */}
+          <div className="mt-3">
+            <FindingEvidencePanel finding={finding} />
           </div>
         </div>
 
@@ -846,6 +863,13 @@ function FixPageInner() {
         icon={<Wrench size={18} strokeWidth={1.75} style={{ color: 'var(--ink)' }} />}
         title="Fix"
         subtitle="Your action queue. Select a finding to resolve, deploy, or hand off to your team."
+      />
+
+      {/* Trust layer — page-level confidence strip */}
+      <AuditConfidenceStrip
+        findings={bundle.findings}
+        crawlSummary={(bundle.audit as any)?.crawl_summary as CrawlSummary | null ?? null}
+        className="mb-4"
       />
 
       {groups.length > 0 && (
