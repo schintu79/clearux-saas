@@ -107,6 +107,12 @@ export interface Profile {
   billing_period_end:    string | null  // ISO timestamp — end of current billing period
   // AI interrogation entitlement
   ai_checks_per_month: number
+  // ── Admin quota overrides (null = use plan default) ──────
+  max_active_workspaces: number | null
+  workspace_creations_per_cycle: number | null
+  reaudits_per_cycle: number | null
+  deep_audits_per_cycle: number | null
+  brand_ai_requests_per_cycle: number | null
   // Admin role
   role:          'user' | 'admin' | 'super_admin'
   // Email preferences

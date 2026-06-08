@@ -29,28 +29,48 @@ export async function GET(request: NextRequest) {
       // Credits (for initial audits — from credit packs)
       credits: usage.credits,
       first_audit_free: usage.first_audit_free,
+
       // Subscription info
       subscription_plan: usage.subscription_plan,
       subscription_status: usage.subscription_status,
       subscription_interval: usage.subscription_interval,
-      // Re-audit usage (query-derived, not counter)
-      reaudits_remaining: Math.max(0, usage.re_audits_limit - usage.re_audits_used),
-      reaudits_per_month: usage.re_audits_limit,
+
+      // ── Active inventory (can decrease on delete) ────────
+      active_workspaces: usage.active_workspaces,
+      max_active_workspaces: usage.max_active_workspaces,
+
+      // ── Monthly usage (never decreases within a cycle) ───
+      workspace_creations_used: usage.workspace_creations_used,
+      workspace_creations_limit: usage.workspace_creations_limit,
+
       reaudits_used: usage.re_audits_used,
-      // Deep audit usage (query-derived)
-      deep_audits_remaining: Math.max(0, usage.deep_audits_limit - usage.deep_audits_used),
-      deep_audits_per_month: usage.deep_audits_limit,
+      reaudits_limit: usage.re_audits_limit,
+      reaudits_remaining: Math.max(0, usage.re_audits_limit - usage.re_audits_used),
+
       deep_audits_used: usage.deep_audits_used,
-      // Workspace usage
-      workspace_count: usage.workspaces_used,
-      workspace_limit: usage.workspaces_limit,
-      // Billing period
+      deep_audits_limit: usage.deep_audits_limit,
+      deep_audits_remaining: Math.max(0, usage.deep_audits_limit - usage.deep_audits_used),
+
+      ai_checks_used: usage.ai_checks_used,
+      ai_checks_limit: usage.ai_checks_limit,
+      ai_checks_remaining: Math.max(0, usage.ai_checks_limit - usage.ai_checks_used),
+
+      // Billing period & reset
       billing_period_start: usage.billing_period_start,
       billing_period_end: usage.billing_period_end,
+      next_reset_date: usage.next_reset_date,
+
       // Permission flags
       can_audit: usage.can_initial_audit || usage.can_reaudit,
       can_reaudit: usage.can_reaudit,
       can_deep_audit: usage.can_deep_audit,
+      can_create_workspace: usage.can_create_workspace,
+      can_interrogate: usage.can_interrogate,
+
+      // ── Deprecated aliases (backward compat) ─────────────
+      workspace_count: usage.active_workspaces,
+      workspace_limit: usage.max_active_workspaces,
+      reaudits_per_month: usage.re_audits_limit,
     })
   } catch (err) {
     console.error('GET /api/credits error:', err)

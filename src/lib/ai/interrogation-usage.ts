@@ -67,10 +67,13 @@ export async function getInterrogationUsage(
   const periodStart = (p.billing_period_start as string) ?? null
   const periodEnd = (p.billing_period_end as string) ?? null
 
-  // Derive limit: plan config is the source of truth, with profile fallback
+  // Derive limit: admin override → plan config → profile legacy fallback
+  const adminOverride = p.brand_ai_requests_per_cycle as number | null | undefined
   const planLimit = plan ? (AI_CHECKS_PER_PLAN[plan] ?? 0) : 0
-  const profileOverride = (p.ai_checks_per_month as number) ?? 0
-  const checksLimit = planLimit > 0 ? planLimit : profileOverride
+  const profileLegacy = (p.ai_checks_per_month as number) ?? 0
+  const checksLimit = (adminOverride !== null && adminOverride !== undefined)
+    ? adminOverride
+    : planLimit > 0 ? planLimit : profileLegacy
 
   // 2. Count completed/partial interrogations for this workspace in period
   let checksUsed = 0

@@ -5,8 +5,8 @@
 // ============================================================
 
 import { NextRequest, NextResponse } from 'next/server'
-import { createServerSupabase } from '@/lib/supabase-server'
-import { SUBSCRIPTION_PLANS } from '@/lib/pricing'
+import { createServerSupabase, createServiceSupabase } from '@/lib/supabase-server'
+import { getAuditUsage } from '@/lib/audit-usage'
 
 function slugify(text: string): string {
   return text
@@ -53,31 +53,27 @@ export async function POST(request: NextRequest) {
   }
 
   // ── Workspace limit enforcement ────────────────────────────
-  // Look up the user's subscription plan and derive workspace limit
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('subscription_plan, subscription_status')
-    .eq('id', user.id)
-    .single()
+  // Two independent checks must BOTH pass:
+  //   1. Active inventory: active workspaces < max_active_workspaces
+  //   2. Monthly usage: workspace creations this cycle < workspace_creations_per_cycle
+  // Deleting a workspace frees an active slot but does NOT refund a creation slot.
+  const db = createServiceSupabase()
+  const usage = await getAuditUsage(user.id, db)
 
-  const p = profile as any
-  const planConfig = SUBSCRIPTION_PLANS.find((pl) => pl.id === p?.subscription_plan)
-  // Active subscribers get their plan's limit; free/credit-only users get 1
-  const workspaceLimit = (p?.subscription_status === 'active' && planConfig)
-    ? planConfig.workspaces
-    : 1
-
-  // Count existing active workspaces
-  const { count: activeWorkspaces } = await supabase
-    .from('workspaces')
-    .select('id', { count: 'exact', head: true })
-    .eq('user_id', user.id)
-    .eq('status', 'active')
-
-  if ((activeWorkspaces ?? 0) >= workspaceLimit) {
-    const planName = planConfig?.name ?? 'Free'
+  // Check 1: Active workspace inventory cap
+  if (usage.active_workspaces >= usage.max_active_workspaces) {
     return NextResponse.json({
-      error: `Workspace limit reached. Your ${planName} plan allows ${workspaceLimit} workspace${workspaceLimit > 1 ? 's' : ''}. Upgrade to add more.`,
+      error: `Active workspace limit reached (${usage.active_workspaces}/${usage.max_active_workspaces}). Archive or delete an existing workspace, or upgrade to add more.`,
+    }, { status: 403 })
+  }
+
+  // Check 2: Monthly workspace creation cap
+  if (usage.workspace_creations_used >= usage.workspace_creations_limit) {
+    const resetMsg = usage.next_reset_date
+      ? ` Resets on ${new Date(usage.next_reset_date).toLocaleDateString()}.`
+      : ' Resets on your next billing cycle.'
+    return NextResponse.json({
+      error: `Workspace creation limit reached for this billing cycle (${usage.workspace_creations_used}/${usage.workspace_creations_limit}).${resetMsg} Upgrade for more.`,
     }, { status: 403 })
   }
 

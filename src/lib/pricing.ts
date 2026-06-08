@@ -9,7 +9,10 @@ export type BillingInterval = 'monthly' | 'yearly'
 export interface SubscriptionPlan {
   id: string
   name: string
-  workspaces: number
+  /** Max active workspaces at any given time */
+  maxActiveWorkspaces: number
+  /** Max workspace creations per billing cycle (deletion does NOT refund) */
+  workspaceCreationsPerCycle: number
   reAuditsPerMonth: number
   deepAuditsPerMonth: number
   aiChecksPerMonth: number
@@ -18,13 +21,17 @@ export interface SubscriptionPlan {
   bestFor: string
   features: string[]
   popular?: boolean
+  /** @deprecated Use maxActiveWorkspaces instead */
+  workspaces: number
 }
 
 export const SUBSCRIPTION_PLANS: SubscriptionPlan[] = [
   {
     id: 'starter',
     name: 'Starter',
-    workspaces: 1,
+    maxActiveWorkspaces: 1,
+    workspaceCreationsPerCycle: 2,
+    workspaces: 1, // deprecated — kept for backward compat
     reAuditsPerMonth: 4,
     deepAuditsPerMonth: 1,
     aiChecksPerMonth: 10,
@@ -43,7 +50,9 @@ export const SUBSCRIPTION_PLANS: SubscriptionPlan[] = [
   {
     id: 'pro',
     name: 'Pro',
-    workspaces: 3,
+    maxActiveWorkspaces: 3,
+    workspaceCreationsPerCycle: 6,
+    workspaces: 3, // deprecated — kept for backward compat
     reAuditsPerMonth: 12,
     deepAuditsPerMonth: 4,
     aiChecksPerMonth: 30,
@@ -64,7 +73,9 @@ export const SUBSCRIPTION_PLANS: SubscriptionPlan[] = [
   {
     id: 'team',
     name: 'Team',
-    workspaces: 10,
+    maxActiveWorkspaces: 10,
+    workspaceCreationsPerCycle: 20,
+    workspaces: 10, // deprecated — kept for backward compat
     reAuditsPerMonth: 40,
     deepAuditsPerMonth: 15,
     aiChecksPerMonth: 100,

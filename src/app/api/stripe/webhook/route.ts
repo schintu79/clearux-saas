@@ -280,9 +280,12 @@ export async function POST(request: NextRequest) {
       }
 
       // Reset billing period on renewal.
-      // Re-audit and deep audit usage are query-derived from audit records
-      // scoped to the billing period, so resetting the period window is
-      // all that's needed — no counter to touch.
+      // Re-audit, deep audit, and workspace creation usage are all
+      // query-derived from records scoped to the billing period, so
+      // resetting the period window effectively resets all monthly usage
+      // counters. No counter columns to touch.
+      // Active inventory (active_workspaces) is NOT affected — it's a
+      // live count that changes only when workspaces are created/deleted.
       const { data: profiles } = await supabase
         .from('profiles')
         .select('id, subscription_plan, audits_per_month')
@@ -349,6 +352,12 @@ export async function POST(request: NextRequest) {
             ai_checks_per_month: 0,
             billing_period_start: null,
             billing_period_end: null,
+            // Clear admin quota overrides — they were tied to the subscription
+            max_active_workspaces: null,
+            workspace_creations_per_cycle: null,
+            reaudits_per_cycle: null,
+            deep_audits_per_cycle: null,
+            brand_ai_requests_per_cycle: null,
             updated_at: new Date().toISOString(),
           } as any)
           .eq('id', userId)

@@ -30,6 +30,12 @@ export async function PATCH(request: NextRequest) {
       ai_checks_per_month,
       free_membership,
       expiry_date,
+      // ── Quota overrides (null = use plan default, number = override) ──
+      max_active_workspaces,
+      workspace_creations_per_cycle,
+      reaudits_per_cycle,
+      deep_audits_per_cycle,
+      brand_ai_requests_per_cycle,
     } = body as {
       user_id: string
       subscription_plan?: 'starter' | 'pro' | 'team' | null
@@ -37,6 +43,11 @@ export async function PATCH(request: NextRequest) {
       ai_checks_per_month?: number
       free_membership?: boolean
       expiry_date?: string | null
+      max_active_workspaces?: number | null
+      workspace_creations_per_cycle?: number | null
+      reaudits_per_cycle?: number | null
+      deep_audits_per_cycle?: number | null
+      brand_ai_requests_per_cycle?: number | null
     }
 
     if (!user_id) {
@@ -89,6 +100,26 @@ export async function PATCH(request: NextRequest) {
 
     if (ai_checks_per_month !== undefined && typeof ai_checks_per_month === 'number') {
       updates.ai_checks_per_month = Math.max(0, ai_checks_per_month)
+    }
+
+    // ── Quota overrides ────────────────────────────────────────
+    // null = clear override (revert to plan default)
+    // number = set explicit per-user limit
+    // undefined = not sent in request body (leave unchanged)
+    if (max_active_workspaces !== undefined) {
+      updates.max_active_workspaces = max_active_workspaces
+    }
+    if (workspace_creations_per_cycle !== undefined) {
+      updates.workspace_creations_per_cycle = workspace_creations_per_cycle
+    }
+    if (reaudits_per_cycle !== undefined) {
+      updates.reaudits_per_cycle = reaudits_per_cycle
+    }
+    if (deep_audits_per_cycle !== undefined) {
+      updates.deep_audits_per_cycle = deep_audits_per_cycle
+    }
+    if (brand_ai_requests_per_cycle !== undefined) {
+      updates.brand_ai_requests_per_cycle = brand_ai_requests_per_cycle
     }
 
     if (free_membership !== undefined) {
