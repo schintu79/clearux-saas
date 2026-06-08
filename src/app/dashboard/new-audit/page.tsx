@@ -55,6 +55,9 @@ const NewAuditInner: React.FC = () => {
   const [reauditsPerMonth, setReauditsPerMonth] = useState(0);
   const [deepAuditsRemaining, setDeepAuditsRemaining] = useState(0);
   const [deepAuditsPerMonth, setDeepAuditsPerMonth] = useState(0);
+  // Entitlement state: true only after /api/credits resolves.
+  // CRITICAL: CTA must NOT show pricing until this is true.
+  const [entitlementLoaded, setEntitlementLoaded] = useState(false);
 
   // Module selection (slug-based) — website audits only
   const [selectedModules, setSelectedModules] = useState<string[]>([...COMPLETE_AUDIT_SLUGS]);
@@ -101,8 +104,12 @@ const NewAuditInner: React.FC = () => {
         setReauditsPerMonth(d.reaudits_per_month ?? 0);
         setDeepAuditsRemaining(d.deep_audits_remaining ?? 0);
         setDeepAuditsPerMonth(d.deep_audits_per_month ?? 0);
+        setEntitlementLoaded(true);
       })
-      .catch(() => setCredits(0));
+      .catch(() => {
+        setCredits(0);
+        setEntitlementLoaded(true);
+      });
   }, [user]);
 
   // Check if current workspace has Brand DNA with files
@@ -344,6 +351,11 @@ const NewAuditInner: React.FC = () => {
   };
 
   const handleSubmit = async () => {
+    // TRUST GUARD: Never allow submit while entitlements are unresolved.
+    // Without this, a click during the loading window would route to
+    // Stripe checkout even if the user has credits or a subscription.
+    if (!entitlementLoaded) return;
+
     // Validation per audit type
     if (auditType === 'website') {
       if (!validateUrl(url)) return;
@@ -867,10 +879,12 @@ const NewAuditInner: React.FC = () => {
         </div>
       )}
 
-      {/* CTA */}
+      {/* CTA — TRUST RULE: Never show paid pricing while entitlements are loading.
+           The button uses an explicit entitlementLoaded guard so users with
+           subscriptions or credits never see a "$13" flash. */}
       <button
         onClick={handleSubmit}
-        disabled={loading}
+        disabled={loading || !entitlementLoaded}
         className="w-full flex items-center justify-center gap-2.5 font-sans font-medium text-[15px] py-3 px-6 rounded-lg active:scale-[0.98] transition-all min-h-[48px] disabled:opacity-60 disabled:cursor-not-allowed"
         style={{ background: 'var(--ink)', color: 'var(--paper)' }}
       >
@@ -881,6 +895,14 @@ const NewAuditInner: React.FC = () => {
               <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
             </svg>
             {hasCredits ? 'Starting audit...' : 'Creating checkout...'}
+          </>
+        ) : !entitlementLoaded ? (
+          <>
+            <svg className="animate-spin h-5 w-5" viewBox="0 0 24 24" fill="none">
+              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+            </svg>
+            Checking your plan...
           </>
         ) : firstAuditFree ? (
           <>
@@ -907,7 +929,9 @@ const NewAuditInner: React.FC = () => {
       </button>
 
       <p className="text-center text-xs text-muted mt-4">
-        {firstAuditFree
+        {!entitlementLoaded
+          ? ' ' /* Non-breaking space — invisible placeholder while loading */
+          : firstAuditFree
           ? 'Your first audit is on us. No credits will be deducted.'
           : isDeepAudit && canDeepAudit
           ? `1 deep audit will be used. ${deepAuditsRemaining - 1} of ${deepAuditsPerMonth} remaining this month.`
