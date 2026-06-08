@@ -244,6 +244,7 @@ function buildStatusMeta(L: UILabels): Record<
     analysing: { label: L.statusAnalysing, color: 'active', icon: Sparkles, description: L.descAnalysing },
     generating_report: { label: L.statusGeneratingReport, color: 'active', icon: FileSearch, description: L.descGeneratingReport },
     completed: { label: L.statusCompleted, color: 'completed', icon: CheckCircle2, description: L.descCompleted },
+    completed_with_warnings: { label: L.statusCompleted, color: 'completed', icon: CheckCircle2, description: L.descCompleted },
     failed: { label: L.statusFailed, color: 'failed', icon: AlertTriangle, description: L.descFailed },
   };
 }
@@ -1246,7 +1247,7 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
         if (!auditData) throw new Error('Audit not found');
 
         let reportData = null;
-        if (auditData.status === 'completed') {
+        if (auditData.status === 'completed' || auditData.status === 'completed_with_warnings') {
           const { data: r } = await supabase
             .from('reports')
             .select('*')
@@ -1270,6 +1271,7 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
           analysing: 3,
           generating_report: 4,
           completed: 5,
+          completed_with_warnings: 5,
           failed: 5,
         };
         const newLevel = STATUS_ORDER[auditData.status] ?? 0;
@@ -1278,7 +1280,7 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
           return Object.entries(STATUS_ORDER).find(([, v]) => v === highestStatusRef.current)?.[0] || auditData.status;
         }
         highestStatusRef.current = newLevel;
-        if (auditData.status === 'completed') {
+        if (auditData.status === 'completed' || auditData.status === 'completed_with_warnings') {
           completedRef.current = true;
         }
 
@@ -1298,7 +1300,7 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
         // persisted selection already matches the resolved identity.
         // Workspace context is URL-driven, no selection sync needed
 
-        if (auditData.status === 'completed') {
+        if (auditData.status === 'completed' || auditData.status === 'completed_with_warnings') {
           const [findingsRes, pagesRes] = await Promise.all([
             supabase
               .from('audit_findings')
@@ -1402,9 +1404,9 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
         pollRef.current = setInterval(async () => {
           if (!active || completedRef.current) return;
           const s = await fetchAuditDetail(true);
-          if (s === 'completed' || s === 'failed') {
+          if (s === 'completed' || s === 'completed_with_warnings' || s === 'failed') {
             if (pollRef.current) clearInterval(pollRef.current);
-            if (s === 'completed' && wasWaitingRef.current) {
+            if ((s === 'completed' || s === 'completed_with_warnings') && wasWaitingRef.current) {
               router.push(`${dashPrefix}/overview`);
             }
           }
@@ -1444,10 +1446,10 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
         return;
       }
       const s = await fetchAuditDetail(true);
-      if (s === 'completed' || s === 'failed') {
+      if (s === 'completed' || s === 'completed_with_warnings' || s === 'failed') {
         if (pollRef.current) { clearInterval(pollRef.current); pollRef.current = null; }
         // Auto-redirect to Overview when audit completes while user was waiting
-        if (s === 'completed' && wasWaitingRef.current) {
+        if ((s === 'completed' || s === 'completed_with_warnings') && wasWaitingRef.current) {
           router.push(`${dashPrefix}/overview`);
         }
       }
@@ -1499,7 +1501,7 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
   }, [audit?.status, audit?.report]);
 
   // ── Handlers
-  const isPaidAudit = audit?.status === 'failed' || audit?.status === 'completed' ||
+  const isPaidAudit = audit?.status === 'failed' || audit?.status === 'completed' || audit?.status === 'completed_with_warnings' ||
     ['payment_received', 'crawling', 'analysing', 'generating_report'].includes(audit?.status || '');
 
   const handleDelete = async () => {
@@ -1533,7 +1535,7 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
       await fetchAuditDetail();
       pollRef.current = setInterval(async () => {
         const s = await fetchAuditDetail(true);
-        if (s === 'completed' || s === 'failed') {
+        if (s === 'completed' || s === 'completed_with_warnings' || s === 'failed') {
           if (pollRef.current) clearInterval(pollRef.current);
         }
       }, 5000);
@@ -1630,7 +1632,7 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
       await fetchAuditDetail();
       pollRef.current = setInterval(async () => {
         const s = await fetchAuditDetail(true);
-        if (s === 'completed' || s === 'failed') {
+        if (s === 'completed' || s === 'completed_with_warnings' || s === 'failed') {
           if (pollRef.current) clearInterval(pollRef.current);
         }
       }, 5000);
@@ -1698,7 +1700,7 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
 
   const meta = statusMeta[audit.status] || statusMeta.pending_payment;
   const StatusIcon = meta.icon;
-  const isCompleted = audit.status === 'completed';
+  const isCompleted = audit.status === 'completed' || audit.status === 'completed_with_warnings';
   const isInProgress = ['crawling', 'analysing', 'generating_report', 'payment_received'].includes(audit.status);
 
   // Parse category scores from report

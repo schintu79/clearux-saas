@@ -471,7 +471,6 @@ export async function runMultiModelBenchmark(
     })),
   )
 
-  const GRADING_TIMEOUT = 30_000
   const gradingSettled = await Promise.allSettled([
     wrapWithTimeout(claudeGradesPromise, 'grade-Claude'),
     ...openRouterGradePromises.map((p, i) =>
@@ -491,7 +490,11 @@ export async function runMultiModelBenchmark(
 
   const openRouterGraded = gradingSettled.slice(1).map((r, i) => {
     const { modelDef, run } = openRouterResults[i]
-    if (r.status === 'fulfilled') return { modelDef, run, grades: r.value as ModelProbeResult[] }
+    if (r.status === 'fulfilled') {
+      // r.value is { modelDef, run, grades } from the .then() mapper — extract grades
+      const fulfilled = r.value as { modelDef: AIModelDef; run: ProbeRun; grades: ModelProbeResult[] }
+      return { modelDef, run, grades: fulfilled.grades }
+    }
     console.warn(`[multi-model] Grading ${modelDef.displayName} timed out`)
     return { modelDef, run, grades: emptyGrades(modelDef.shortId, modelDef.displayName, questions) }
   })

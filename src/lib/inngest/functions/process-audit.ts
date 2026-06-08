@@ -628,7 +628,7 @@ Return 2-6 findings. Be specific and evidence-based. Reference specific files/co
           auditDetails.language,
           'deep',
           undefined,
-          siteProfile,
+          null, // siteProfile not available in brand-fast path (declared later in website path)
         )
 
         // ── Heartbeat: brand report narrative complete → 85% ──
@@ -1927,24 +1927,29 @@ Return 2-6 findings. Be specific and evidence-based. Reference specific files/co
         ? probeSettled[5].value
         : { comparison: null, industry: null }
 
-      // Log which probes timed out and emit per-probe heartbeats
+      // Log which probes timed out/failed and emit per-probe heartbeats
+      // NOTE: withTimeout() catches all errors and returns null, so Promise.allSettled
+      // always sees 'fulfilled'. We detect failures by checking for null values instead.
       const probeLabels = ['ai-discovery', 'structured-data', 'readability', 'llm-probe', 'citation', 'multi-model']
-      let completedCount = 0
+      const probeValues = [aiDisc, sdResult, null /* readability has no return */, llmProbe, citation, multiModel]
+      let timedOutCount = 0
       const totalProbes = probeSettled.length
-      probeSettled.forEach((r, i) => {
-        if (r.status === 'rejected') {
-          console.warn(`[inngest] Probe "${probeLabels[i]}" failed/timed out: ${r.reason?.message || r.reason}`)
+      probeValues.forEach((val, i) => {
+        if (i === 2) return // readability has no return value — skip
+        if (val === null) {
+          console.warn(`[inngest] Probe "${probeLabels[i]}" failed/timed out (returned null)`)
+          timedOutCount++
         }
-        completedCount++
       })
       // Heartbeat: show probe completion progress (interpolate between probing start and end)
+      const completedCount = totalProbes
       const probeProgress = stageProgress('probing', 0) + Math.round(
         (stageProgress('probing', 1) - stageProgress('probing', 0)) * (completedCount / totalProbes) * 0.8
       )
       await setProgress(auditId, probeProgress)
       await logActivity(auditId, `${completedCount}/${totalProbes} AI probes completed${
-        probeSettled.filter(r => r.status === 'rejected').length > 0
-          ? ` (${probeSettled.filter(r => r.status === 'rejected').length} timed out)`
+        timedOutCount > 0
+          ? ` (${timedOutCount} timed out)`
           : ''
       }`)
 
@@ -2257,7 +2262,7 @@ RULES FOR RE-AUDIT:
         : ''
 
       // Append LLM probe context so analyzer can reference AI perception gaps
-      const llmProbeContext = llmProbeResult.summary
+      const llmProbeContext = llmProbeResult?.summary
         ? `\n\n${llmProbeResult.summary}`
         : ''
 
@@ -2569,7 +2574,7 @@ RULES FOR RE-AUDIT:
         UX_CATEGORY_NAMES.forEach((_, idx) => { if (gapIndices.has(idx)) gapCategoryIndices.push(idx) })
         const aiDiscoveryBlockBl = aiDiscovery.summary ? `\n\n${aiDiscovery.summary}` : ''
         const structuredDataBlockBl = structuredDataResult.summary ? `\n\n${structuredDataResult.summary}` : ''
-        const llmProbeBlockBl = llmProbeResult.summary ? `\n\n${llmProbeResult.summary}` : ''
+        const llmProbeBlockBl = llmProbeResult?.summary ? `\n\n${llmProbeResult.summary}` : ''
         const contentWithContextBl = `${siteContext.context}\n\n${crawlResult.pageContent}${aiDiscoveryBlockBl}${structuredDataBlockBl}${llmProbeBlockBl}`
 
         // Design Consistency gap fill — uses standard content by default.
@@ -2911,7 +2916,7 @@ RULES FOR RE-AUDIT:
         // Build content strings
         const aiDiscoveryBlock = aiDiscovery.summary ? `\n\n${aiDiscovery.summary}` : ''
         const structuredDataBlock = structuredDataResult.summary ? `\n\n${structuredDataResult.summary}` : ''
-        const llmProbeBlock = llmProbeResult.summary ? `\n\n${llmProbeResult.summary}` : ''
+        const llmProbeBlock = llmProbeResult?.summary ? `\n\n${llmProbeResult.summary}` : ''
         const contentWithContext = `${patchedContext}\n\n${crawlResult.pageContent}${aiDiscoveryBlock}${structuredDataBlock}${llmProbeBlock}`
         const designConsistencyContent = brandContext
           ? `=== BRAND IDENTITY GUIDELINES (PRIMARY REFERENCE) ===\n${brandContext}\n\n=== MANDATORY COMPARISON INSTRUCTION ===\nYour PRIMARY task for this category is to compare the website's actual implementation against the brand guidelines above. For EACH aspect of the brand guidelines (colors, typography, voice, tone, visual style, messaging patterns), check whether the website follows or deviates from them.\n\nYou MUST flag:\n- Any mismatch between documented brand colors/fonts and what the site actually uses\n- Voice/tone deviations from the brand personality\n- Visual style inconsistencies with brand guidelines\n- Messaging that contradicts the brand positioning\n\nDo NOT smooth over discrepancies. If the brand says "professional and authoritative" but the site uses casual slang, that is a HIGH severity finding. If the brand specifies specific colors but the site uses different ones, flag it.\n\n=== WEBSITE CONTENT (TO COMPARE AGAINST BRAND) ===\n${contentWithContext}`
@@ -3899,7 +3904,7 @@ RULES FOR RE-AUDIT:
         structuredData: structuredDataResult.typesFound?.length > 0
           ? { typesFound: structuredDataResult.typesFound, findings: [], totalBlocks: structuredDataResult.typesFound.length, validBlocks: structuredDataResult.typesFound.length, invalidBlocks: 0 }
           : null,
-        llmProbe: llmProbeResult.session || null,
+        llmProbe: llmProbeResult?.session || null,
         aiDiscovery: aiDiscovery.result || null,
         headTags: crawlResult.headTags || [],
       })

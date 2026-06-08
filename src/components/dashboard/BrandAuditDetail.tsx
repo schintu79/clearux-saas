@@ -140,6 +140,7 @@ const statusMeta: Record<string, { label: string; description: string; icon: Rea
   analysing:         { label: 'Analyzing brand...',      description: 'AI is evaluating your brand across 6 categories.', icon: Sparkles },
   generating_report: { label: 'Generating report...',    description: 'Building your comprehensive brand report.',       icon: BarChart3 },
   completed:         { label: 'Completed',               description: 'Your brand audit is complete.',                   icon: CheckCircle2 },
+  completed_with_warnings: { label: 'Completed',        description: 'Your brand audit is complete (with warnings).',   icon: CheckCircle2 },
   failed:            { label: 'Failed',                  description: 'Something went wrong during processing.',         icon: AlertTriangle },
 };
 
@@ -478,7 +479,7 @@ export default function BrandAuditDetail({
         }
 
         let reportData = null;
-        if (auditData.status === 'completed') {
+        if (auditData.status === 'completed' || auditData.status === 'completed_with_warnings') {
           const { data: r } = await supabase
             .from('reports')
             .select('*')
@@ -495,7 +496,7 @@ export default function BrandAuditDetail({
 
         setAudit(combined);
 
-        if (auditData.status === 'completed') {
+        if (auditData.status === 'completed' || auditData.status === 'completed_with_warnings') {
           const { data: findingsData } = await supabase
             .from('audit_findings')
             .select('*')
@@ -528,7 +529,7 @@ export default function BrandAuditDetail({
     if (!inProgress) return;
     const iv = setInterval(async () => {
       const s = await fetchAuditDetail(true);
-      if (s === 'completed' || s === 'failed') clearInterval(iv);
+      if (s === 'completed' || s === 'completed_with_warnings' || s === 'failed') clearInterval(iv);
     }, 5000);
     return () => clearInterval(iv);
   }, [audit?.status, fetchAuditDetail]);
@@ -693,7 +694,7 @@ export default function BrandAuditDetail({
     );
   }
 
-  const isCompleted = audit.status === 'completed';
+  const isCompleted = audit.status === 'completed' || audit.status === 'completed_with_warnings';
   const isFailed = audit.status === 'failed';
   const isInProgress = ['payment_received', 'crawling', 'analysing', 'generating_report'].includes(audit.status);
   // Show retry if stuck for more than 5 minutes in a processing state

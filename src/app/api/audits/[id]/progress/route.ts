@@ -85,7 +85,7 @@ export async function GET(
 
   return NextResponse.json({
     status: a.status,
-    stage: a.audit_stage || (a.status === 'completed' ? 'complete' : 'preflight'),
+    stage: a.audit_stage || (a.status === 'completed' || a.status === 'completed_with_warnings' ? 'complete' : 'preflight'),
     progress: a.progress_percent ?? 0,
     updatedAt: a.updated_at,
     // Available data indicators

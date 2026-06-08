@@ -38,6 +38,7 @@ const websiteStatusMeta: Record<string, { label: string; color: string; icon: Re
   analysing:         { label: 'Analysing...',      color: 'active',    icon: Sparkles },
   generating_report: { label: 'Generating...',     color: 'active',    icon: FileSearch },
   completed:         { label: 'Completed',         color: 'completed', icon: CheckCircle2 },
+  completed_with_warnings: { label: 'Completed', color: 'completed', icon: CheckCircle2 },
   failed:            { label: 'Failed',            color: 'failed',    icon: AlertTriangle },
 };
 
@@ -48,6 +49,7 @@ const brandStatusMeta: Record<string, { label: string; color: string; icon: Reac
   analysing:         { label: 'Analyzing...',        color: 'active',    icon: Sparkles },
   generating_report: { label: 'Generating report...', color: 'active',  icon: FileSearch },
   completed:         { label: 'Completed',           color: 'completed', icon: CheckCircle2 },
+  completed_with_warnings: { label: 'Completed',    color: 'completed', icon: CheckCircle2 },
   failed:            { label: 'Failed',              color: 'failed',    icon: AlertTriangle },
 };
 
@@ -99,11 +101,11 @@ function WebsiteAuditGroup({ domain, audits }: {
   const latest = audits[0];
   const latestMeta = getStatusMeta(latest.status, 'website');
   const LatestIcon = latestMeta.icon;
-  const latestDone = latest.status === 'completed';
+  const latestDone = latest.status === 'completed' || latest.status === 'completed_with_warnings';
   const latestScore = latestDone ? (latest.report?.overall_score ?? null) : null;
 
   const scores = audits
-    .filter(a => a.status === 'completed' && a.report?.overall_score != null)
+    .filter(a => (a.status === 'completed' || a.status === 'completed_with_warnings') && a.report?.overall_score != null)
     .map(a => ({ score: a.report!.overall_score!, date: a.completed_at || a.created_at }))
     .reverse();
   const improvement = scores.length >= 2 ? scores[scores.length - 1].score - scores[scores.length - 2].score : 0;
@@ -201,11 +203,11 @@ function BrandAuditGroup({ brandName, audits }: {
   const latest = audits[0];
   const latestMeta = getStatusMeta(latest.status, 'brand_identity');
   const LatestIcon = latestMeta.icon;
-  const latestDone = latest.status === 'completed';
+  const latestDone = latest.status === 'completed' || latest.status === 'completed_with_warnings';
   const latestScore = latestDone ? (latest.report?.overall_score ?? null) : null;
 
   const scores = audits
-    .filter(a => a.status === 'completed' && a.report?.overall_score != null)
+    .filter(a => (a.status === 'completed' || a.status === 'completed_with_warnings') && a.report?.overall_score != null)
     .map(a => ({ score: a.report!.overall_score!, date: a.completed_at || a.created_at }))
     .reverse();
   const improvement = scores.length >= 2 ? scores[scores.length - 1].score - scores[scores.length - 2].score : 0;
@@ -333,7 +335,7 @@ function AuditsPageInner() {
 
       if (fetchError) throw fetchError;
 
-      const completedIds = (rows || []).filter((a: any) => a.status === 'completed').map((a: any) => a.id);
+      const completedIds = (rows || []).filter((a: any) => a.status === 'completed' || a.status === 'completed_with_warnings').map((a: any) => a.id);
       let reportsMap: Record<string, Report> = {};
       if (completedIds.length > 0) {
         const { data: reports, error: repErr } = await supabase.from('reports').select('*').in('audit_id', completedIds);
