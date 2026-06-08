@@ -3598,8 +3598,11 @@ RULES FOR RE-AUDIT:
 
     // ──────────────────────────────────────────────────────────
     // STEP 8: Generate report (screenshots moved to enrichment)
+    // Hard 180s timeout — prevents the step from consuming the
+    // full 300s Vercel budget and leaving no time for recovery.
     // ──────────────────────────────────────────────────────────
     await step.run('generate-report', async () => {
+      await withStepTimeout(async () => {
       const db = getDb()
 
       try {
@@ -3651,6 +3654,9 @@ RULES FOR RE-AUDIT:
         siteProfile,
       )
 
+      // ── Heartbeat: report narrative complete → 85% ──
+      await setProgress(auditId, stageProgress('reporting', 0.4))
+
       const severityCount = {
         critical: findings.filter((f) => f.severity === 'critical').length,
         high: findings.filter((f) => f.severity === 'high').length,
@@ -3699,6 +3705,9 @@ RULES FOR RE-AUDIT:
         console.error('[inngest] PDF generation error (non-fatal):', pdfErr)
         await auditLog(auditId, 'pdf_error', 'warning', 'PDF generation failed — report is still available in dashboard')
       }
+
+      // ── Heartbeat: PDF generation done → 87% ──
+      await setProgress(auditId, stageProgress('reporting', 0.6))
 
       // Calculate AI Visibility Score from all Phase 1 + 2 data
       const aiVisibility = calculateAIVisibilityScore({
@@ -3759,6 +3768,9 @@ RULES FOR RE-AUDIT:
         } : null,
       } as any)
 
+      // ── Heartbeat: report inserted into DB → 89% ──
+      await setProgress(auditId, stageProgress('reporting', 0.9))
+
       await logStageCompleted(auditId, 'reporting', 'Report generated', {
         total_issues: findings.length,
         ...severityCount,
@@ -3781,6 +3793,7 @@ RULES FOR RE-AUDIT:
         await auditLog(auditId, 'report_failed', 'error', `Report generation failed: ${errMsg.slice(0, 200)}`)
         throw reportErr // Let outer catch handle refund + status
       }
+      }, 180_000, 'generate-report')
     })
 
     // ──────────────────────────────────────────────────────────

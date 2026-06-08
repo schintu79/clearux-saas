@@ -222,7 +222,7 @@ const AuditActivityFeed: React.FC<AuditActivityFeedProps> = ({
               }}
             >
               <p className="text-[12px] font-medium mb-2" style={{ color: 'var(--ink)' }}>
-                This audit appears to be stuck. No progress in the last 3 minutes.
+                This audit appears to be stuck. No progress in the last 6 minutes.
               </p>
               <button
                 onClick={onRestart}

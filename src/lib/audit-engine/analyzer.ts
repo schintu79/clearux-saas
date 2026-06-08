@@ -1731,11 +1731,11 @@ ${language !== 'en' ? `\nFINAL REMINDER — LANGUAGE: The executiveSummary, topR
           system: [{ type: 'text', text: 'You are a senior UX strategist writing an executive summary for a human-centered digital audit. Scores have been pre-calculated — your job is narrative only. Apply the Fixpath signal model: measure signals (structural, clarity, trust, friction, market-fit, consistency, technical, actionability), not taste. Frame findings by real-world impact. Be surgically true — not generous, not harsh.', cache_control: { type: 'ephemeral' } }],
           messages: [{ role: 'user', content: narrativePrompt }],
         }),
-        60_000,
+        45_000,
         'generateReport-narrative',
       ),
       'generateReport-narrative',
-      2,
+      1,
       3000,
     )
 
