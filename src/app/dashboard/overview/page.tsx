@@ -2097,6 +2097,12 @@ function InProgressOverview({
     }
   };
 
+  // Stall detection: only show Restart when audit appears stuck (no progress for >5 min)
+  const stuckMinutes = audit.updated_at
+    ? (Date.now() - new Date(audit.updated_at).getTime()) / 60_000
+    : 0;
+  const isStuck = stuckMinutes > 5 || audit.status === 'stalled' || audit.status === 'failed';
+
   // Progressive loading state
   const { data: progress } = useAuditProgress(audit.id)
   const [partial, setPartial] = useState<PartialAuditData | null>(null)
@@ -2191,19 +2197,21 @@ function InProgressOverview({
           )}
         </div>
         <div className="flex items-center gap-2 flex-shrink-0">
-          <button
-            type="button"
-            onClick={handleRestart}
-            disabled={restartState === 'pending'}
-            className="inline-flex items-center gap-1 text-[12px] font-semibold px-3 py-1.5 rounded-lg border border-border text-text hover:bg-surface-alt transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-            title="Restart this audit"
-          >
-            {restartState === 'pending' ? (
-              <><Loader2 size={12} className="animate-spin" /> Restarting...</>
-            ) : (
-              <><RefreshCw size={12} /> Restart</>
-            )}
-          </button>
+          {isStuck && (
+            <button
+              type="button"
+              onClick={handleRestart}
+              disabled={restartState === 'pending'}
+              className="inline-flex items-center gap-1 text-[12px] font-semibold px-3 py-1.5 rounded-lg border border-border text-text hover:bg-surface-alt transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              title="Restart this audit"
+            >
+              {restartState === 'pending' ? (
+                <><Loader2 size={12} className="animate-spin" /> Restarting...</>
+              ) : (
+                <><RefreshCw size={12} /> Restart</>
+              )}
+            </button>
+          )}
           <Link
             href={`${_dp}/audits/${audit.id}`}
             className="inline-flex items-center gap-1 text-[12px] font-semibold px-3 py-1.5 rounded-lg border border-border text-text hover:bg-surface-alt transition-colors"
