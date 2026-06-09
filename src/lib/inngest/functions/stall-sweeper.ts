@@ -10,7 +10,7 @@
 //     → stalled if updated_at > 10 min ago
 //  2. QUEUED audits (payment_received)
 //     → stalled if updated_at > 30 min ago
-//  3. HARD CEILING: ANY non-terminal audit older than 45 min from created_at
+//  3. HARD CEILING: ANY non-terminal audit older than 20 min from created_at
 //     → swept regardless of updated_at (catches Inngest replay heartbeats)
 //
 // CRITICAL: The sweeper does NOT filter by workspace status.
@@ -23,6 +23,7 @@ import { inngest } from '../client'
 import { createServiceSupabase } from '@/lib/supabase-server'
 import { logActivity } from '@/lib/audit-engine/activity-logger'
 import { refundCredit } from '@/lib/audit-engine/refund-credit'
+import { sendAuditTimedOut } from '@/lib/audit-engine/email'
 
 /** Active processing states — 10 minute stall threshold (updated_at) */
 const ACTIVE_STALL_THRESHOLD_MINUTES = 10
@@ -34,9 +35,9 @@ const QUEUED_STALL_THRESHOLD_MINUTES = 30
  * HARD CEILING — absolute maximum runtime from created_at.
  * Any non-terminal audit older than this is swept unconditionally,
  * regardless of updated_at refreshes from Inngest step replays.
- * This prevents audits from running for 16+ hours.
+ * A legitimate audit completes in under 15 minutes; 20 is generous.
  */
-const HARD_CEILING_MINUTES = 45
+const HARD_CEILING_MINUTES = 20
 
 export const stallSweeperFn = inngest.createFunction(
   {
@@ -54,7 +55,7 @@ export const stallSweeperFn = inngest.createFunction(
     // ── Tier 1: Active processing audits stalled for >10 minutes (by updated_at) ──
     const { data: activeStalledAudits, error: activeError } = await db
       .from('audits')
-      .select('id, status, progress_percent, updated_at, created_at, workspace_id')
+      .select('id, status, progress_percent, updated_at, created_at, workspace_id, user_id, product_url, audit_type')
       .in('status', ['crawling', 'analysing', 'generating_report'])
       .is('deleted_at', null)
       .lt('updated_at', activeCutoff)
@@ -63,19 +64,19 @@ export const stallSweeperFn = inngest.createFunction(
     // ── Tier 2: Queued audits stuck for >30 minutes (Inngest never picked them up) ──
     const { data: queuedStalledAudits, error: queuedError } = await db
       .from('audits')
-      .select('id, status, progress_percent, updated_at, created_at, workspace_id')
+      .select('id, status, progress_percent, updated_at, created_at, workspace_id, user_id, product_url, audit_type')
       .eq('status', 'payment_received')
       .is('deleted_at', null)
       .lt('updated_at', queuedCutoff)
       .limit(50)
 
-    // ── Tier 3: HARD CEILING — any non-terminal audit older than 45 min ──
+    // ── Tier 3: HARD CEILING — any non-terminal audit older than 20 min ──
     // This catches audits where updated_at keeps getting refreshed by
     // Inngest step replays, preventing Tier 1/2 from catching them.
     const terminalStatuses = ['completed', 'failed', 'completed_with_warnings', 'stalled']
     const { data: hardCeilingAudits, error: ceilingError } = await db
       .from('audits')
-      .select('id, status, progress_percent, updated_at, created_at, workspace_id')
+      .select('id, status, progress_percent, updated_at, created_at, workspace_id, user_id, product_url, audit_type')
       .not('status', 'in', `(${terminalStatuses.join(',')})`)
       .is('deleted_at', null)
       .lt('created_at', hardCeilingCutoff)
@@ -166,6 +167,37 @@ export const stallSweeperFn = inngest.createFunction(
         } catch (refundErr) {
           console.error(`[stall-sweeper] Refund error for ${auditId} (non-fatal):`, refundErr)
         }
+      }
+
+      // ── Send timeout notification email to user ──
+      // Non-critical: if the email fails, the audit is still swept correctly.
+      try {
+        const userId = (audit as any).user_id as string | undefined
+        const productUrl = (audit as any).product_url as string | undefined
+        const auditType = ((audit as any).audit_type as string) || 'website'
+
+        if (userId) {
+          const { data: profile } = await db
+            .from('profiles')
+            .select('email')
+            .eq('id', userId)
+            .single()
+
+          const userEmail = (profile as any)?.email as string | undefined
+          if (userEmail) {
+            await sendAuditTimedOut(
+              userEmail,
+              auditId,
+              productUrl || 'Unknown site',
+              ageMinutes,
+              !hasReport, // wasRefunded — only refund if no report
+              auditType as 'website' | 'brand_identity' | 'design',
+            )
+            console.log(`[stall-sweeper] Timeout email sent to ${userEmail} for audit ${auditId}`)
+          }
+        }
+      } catch (emailErr) {
+        console.error(`[stall-sweeper] Email error for ${auditId} (non-fatal):`, emailErr)
       }
 
       try {

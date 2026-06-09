@@ -360,6 +360,73 @@ export async function sendAccountDeleted(
    5. FREE AUDIT READY — specific variant for first free audit
    ═══════════════════════════════════════════════════════════════ */
 
+/* ═══════════════════════════════════════════════════════════════
+   5a. AUDIT TIMED OUT — sent when the stall sweeper kills a stuck audit
+   ═══════════════════════════════════════════════════════════════ */
+
+export async function sendAuditTimedOut(
+  email: string,
+  auditId: string,
+  productUrl: string,
+  ageMinutes: number,
+  wasRefunded: boolean,
+  auditType: 'website' | 'brand_identity' | 'design' = 'website',
+): Promise<{ success: boolean; error?: string }> {
+  const dashboardUrl = `${APP_URL}/dashboard`
+
+  const isBrand = auditType === 'brand_identity'
+  const isDesign = auditType === 'design'
+
+  let displayName = productUrl || 'your site'
+  if (!isBrand && !isDesign && productUrl) {
+    try { displayName = new URL(productUrl).hostname.replace(/^www\./, '') } catch {}
+  }
+
+  const typeLabel = isBrand ? 'brand identity audit' : isDesign ? 'design audit' : 'UX audit'
+  const fieldLabel = isBrand ? 'Brand' : isDesign ? 'Design' : 'Website'
+
+  const refundLine = wasRefunded
+    ? '<tr><td style="padding:8px 0;color:#71717a;border-top:1px solid #f0f0f0">Credit</td><td style="padding:8px 0;text-align:right;font-weight:600;color:#22c55e;border-top:1px solid #f0f0f0">Refunded</td></tr>'
+    : ''
+
+  const content = `
+    <h1>Audit timed out</h1>
+    <!--HEADER-->
+    <p>We are sorry -- your ${typeLabel} for <strong>${displayName}</strong> did not complete within our ${ageMinutes}-minute time limit and was automatically stopped.</p>
+
+    <div class="info-box">
+      <table width="100%" cellspacing="0" cellpadding="0" style="font-size:14px">
+        <tr>
+          <td style="padding:8px 0;color:#71717a">${fieldLabel}</td>
+          <td style="padding:8px 0;text-align:right;font-weight:600;color:#111">${displayName}</td>
+        </tr>
+        <tr>
+          <td style="padding:8px 0;color:#71717a;border-top:1px solid #f0f0f0">Status</td>
+          <td style="padding:8px 0;text-align:right;border-top:1px solid #f0f0f0"><span class="pill" style="background:rgba(239,68,68,0.1);color:#dc2626">Timed out</span></td>
+        </tr>
+        ${refundLine}
+      </table>
+    </div>
+
+    ${wasRefunded ? '<p><strong>Your audit credit has been fully refunded</strong> and is available in your account right now. Nothing was charged.</p>' : ''}
+
+    <p>This can happen when a website takes unusually long to crawl or has complex protections. Please try again -- most audits complete in under 10 minutes.</p>
+
+    <a href="${dashboardUrl}" class="btn">Go to dashboard and try again</a>
+
+    <div class="divider"></div>
+    <p style="font-size:13px;color:#71717a">If this keeps happening, please <a href="${APP_URL}/contact" style="color:#111;font-weight:600">contact us</a> and we will look into it. We want every audit to succeed.</p>
+    <!--FOOTER-->
+  `
+
+  return send(
+    'Fixpath <audits@fixpath.ai>',
+    email,
+    `Your ${typeLabel} for ${displayName} timed out -- credit refunded`,
+    emailLayout(content, `Your ${typeLabel} for ${displayName} timed out. Your credit has been refunded.`),
+  )
+}
+
 export async function sendFreeAuditReady(
   email: string,
   auditId: string,
