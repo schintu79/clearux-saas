@@ -1007,33 +1007,18 @@ Analyze this category and return the JSON array now.`
 
   try {
     const anthropic = getAnthropicClient()
-    // Haiku 4.5 — excellent at structured analysis tasks (issue identification,
-    // severity classification, actionable recommendations). Sonnet is reserved
-    // for the final report generation where writing quality matters more.
-    //
-    // Prompt caching: the static system instructions (~4 000 words) are cached
-    // with cache_control.  Within one audit's 28 parallel category calls, calls
-    // 2-28 will hit the 5-minute cache and pay only 10% of the input cost for
-    // that prefix.  The variable user message (category + page content) is
-    // never cached since it changes every call.
-    //
-    // withRetry: retries once on rate limits only (NOT timeouts).
-    // Inner timeout is 35s — fires before the outer 45s timeout in
-    // process-audit.ts, giving clean error propagation.
-    const message = await withRetry(
-      () => withTimeout(
-        anthropic.beta.promptCaching.messages.create({
-          model: 'claude-haiku-4-5-20251001',
-          max_tokens: 3000,
-          temperature: 0,
-          system: [{ type: 'text', text: systemInstructions, cache_control: { type: 'ephemeral' } }],
-          messages: [{ role: 'user', content: userPrompt }],
-        }),
-        35_000,
-        `analyzeCategory(${category})`,
-      ),
-      `analyzeCategory(${category})`,
-    )
+    // Haiku 4.5 — excellent at structured analysis tasks.
+    // Prompt caching: static system instructions cached with cache_control.
+    // Single attempt only — NO retries. Retries were the root cause of batch 4/4
+    // stalls: orphaned HTTP requests from timed-out calls cause cascading rate
+    // limits on parallel categories. One clean attempt per category is enough.
+    const message = await anthropic.beta.promptCaching.messages.create({
+      model: 'claude-haiku-4-5-20251001',
+      max_tokens: 3000,
+      temperature: 0,
+      system: [{ type: 'text', text: systemInstructions, cache_control: { type: 'ephemeral' } }],
+      messages: [{ role: 'user', content: userPrompt }],
+    })
 
     const responseText = message.content
       .filter((block): block is Anthropic.TextBlock => block.type === 'text')
@@ -1629,22 +1614,15 @@ ${language !== 'en' ? `\nFINAL REMINDER — LANGUAGE: The executiveSummary, topR
 
   try {
     const anthropic = getAnthropicClient()
-    const message = await withRetry(
-      () => withTimeout(
-        anthropic.beta.promptCaching.messages.create({
-          model: 'claude-haiku-4-5-20251001',
-          max_tokens: 4096,
-          temperature: 0,
-          system: [{ type: 'text', text: 'You are a senior UX strategist writing an executive summary for a human-centered digital audit. Scores have been pre-calculated — your job is narrative only. Apply the Fixpath signal model: measure signals (structural, clarity, trust, friction, market-fit, consistency, technical, actionability), not taste. Frame findings by real-world impact. Be surgically true — not generous, not harsh.', cache_control: { type: 'ephemeral' } }],
-          messages: [{ role: 'user', content: narrativePrompt }],
-        }),
-        45_000,
-        'generateReport-narrative',
-      ),
-      'generateReport-narrative',
-      1,
-      3000,
-    )
+    // Single attempt — no retries. Report generation is a single call; retrying
+    // wastes tokens and time. The SDK's 45s timeout handles hangs.
+    const message = await anthropic.beta.promptCaching.messages.create({
+      model: 'claude-haiku-4-5-20251001',
+      max_tokens: 4096,
+      temperature: 0,
+      system: [{ type: 'text', text: 'You are a senior UX strategist writing an executive summary for a human-centered digital audit. Scores have been pre-calculated — your job is narrative only. Apply the Fixpath signal model: measure signals (structural, clarity, trust, friction, market-fit, consistency, technical, actionability), not taste. Frame findings by real-world impact. Be surgically true — not generous, not harsh.', cache_control: { type: 'ephemeral' } }],
+      messages: [{ role: 'user', content: narrativePrompt }],
+    })
 
     const responseText = message.content
       .filter((block): block is Anthropic.TextBlock => block.type === 'text')

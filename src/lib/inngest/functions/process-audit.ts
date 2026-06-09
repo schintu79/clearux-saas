@@ -2655,7 +2655,7 @@ RULES FOR RE-AUDIT:
                 }
               }),
             ),
-            90_000,
+            60_000,
             'gap-fill-batch-timeout',
             null as any,
           )
@@ -2992,12 +2992,12 @@ RULES FOR RE-AUDIT:
             contentSize: contentWithContext.length,
             designContentSize: designConsistencyContent.length,
           })
-          const CATEGORY_TIMEOUT_MS = 45_000 // 45s hard budget per category
+          const CATEGORY_TIMEOUT_MS = 50_000 // 50s safety net (SDK has its own 45s)
           const categoryTimings: Array<{ name: string; durationMs: number; status: 'ok' | 'timeout' | 'error' | 'empty'; findingCount: number }> = []
 
-          // withStepTimeout wraps the entire Promise.all so the batch can't
-          // hang indefinitely if AI APIs stall beyond individual timeouts.
-          // 90s ceiling (down from 120s) — 4-8 parallel 45s calls + DB writes.
+          // 60s batch ceiling — categories run in parallel so wall time ≈ slowest
+          // single call (~50s max). Reduced from 90s to leave headroom for post-
+          // analysis DB writes within Vercel's 300s step budget.
           let batchTimedOut = false
           const batchResults = await withStepTimeout(
             () => Promise.all(
@@ -3027,7 +3027,7 @@ RULES FOR RE-AUDIT:
                 }
               }),
             ),
-            90_000,
+            60_000,
             `analyze-batch-${batchIdx + 1}-timeout`,
             null as any, // null fallback so we can detect batch-level timeout
           )
@@ -3129,19 +3129,27 @@ RULES FOR RE-AUDIT:
             }
 
             findingsInBatch += findings.length
-            await auditLog(auditId, 'category_analysed', 'success', `Analyzed: ${categoryName}`, {
-              findings_count: findings.length,
-            })
           }
 
-          // Single batch insert for all findings in this analysis batch
-          if (batchInserts.length > 0) {
-            await db.from('audit_findings').insert(batchInserts as any)
+          // ── DB writes in try-catch — a failed insert must NOT kill the step ──
+          try {
+            if (batchInserts.length > 0) {
+              await db.from('audit_findings').insert(batchInserts as any)
+            }
+            // Granular progress: 30% → 65% spread across batches
+            const batchProgress = Math.round(30 + ((batchIdx + 1) / batches.length) * 35)
+            await setProgress(auditId, batchProgress)
+            // Log per-category results (non-critical — fire and forget)
+            for (let catIdx = 0; catIdx < effectiveBatchResults.length; catIdx++) {
+              const findings = effectiveBatchResults[catIdx]
+              await auditLog(auditId, 'category_analysed', 'success', `Analyzed: ${batch[catIdx]}`, {
+                findings_count: (findings || []).length,
+              })
+            }
+          } catch (dbErr) {
+            console.error(`[inngest] Batch ${batchIdx + 1} DB write failed — continuing:`, (dbErr as Error)?.message)
+            // Don't rethrow — we have findings in memory, the step should still return
           }
-
-          // Granular progress: 30% → 65% spread across batches (inline to avoid extra step cold-starts)
-          const batchProgress = Math.round(30 + ((batchIdx + 1) / batches.length) * 35)
-          await setProgress(auditId, batchProgress)
 
           return { findingsInBatch, newSortOrder: sortOrder, emptyCategoriesInBatch, categoriesInBatch: batch.length, batchTimedOut, batchDurationMs, categoryTimings }
         })
