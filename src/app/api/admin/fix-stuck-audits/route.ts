@@ -53,18 +53,26 @@ export async function POST() {
 
   if (orphaned && orphaned.length > 0) {
     for (const audit of orphaned as any[]) {
-      // For brand audits with no URL, find the user's first active workspace
-      const { data: userWorkspaces } = await db
+      // For brand audits with no URL, find the user's active workspace.
+      // Query active workspaces first (most likely correct match).
+      // No limit — a single user won't have hundreds of workspaces.
+      const { data: activeWs } = await db
         .from('workspaces')
         .select('id, name, slug, status, archived_at')
         .eq('user_id', audit.user_id)
-        .order('created_at', { ascending: true })
-        .limit(5)
+        .eq('status', 'active')
+        .order('created_at', { ascending: false })
 
-      // Try active first, then any non-deleted
-      const ws = (userWorkspaces || []).find((w: any) => w.status === 'active' && !w.archived_at)
-        || (userWorkspaces || []).find((w: any) => !w.archived_at)
-        || (userWorkspaces || [])[0]
+      // Fallback: if no active workspace, try any non-archived
+      let ws = (activeWs || [])[0]
+      if (!ws) {
+        const { data: anyWs } = await db
+          .from('workspaces')
+          .select('id, name, slug, status, archived_at')
+          .eq('user_id', audit.user_id)
+          .order('created_at', { ascending: false })
+        ws = (anyWs || []).find((w: any) => !w.archived_at) || (anyWs || [])[0]
+      }
 
       if (ws) {
         const { error } = await db
@@ -125,16 +133,23 @@ export async function GET() {
     .is('deleted_at', null)
 
   for (const audit of (orphaned || []) as any[]) {
-    const { data: userWorkspaces } = await db
+    // Query active workspaces first (most likely correct match)
+    const { data: activeWs } = await db
       .from('workspaces')
       .select('id, name, slug, status, archived_at')
       .eq('user_id', audit.user_id)
-      .order('created_at', { ascending: true })
-      .limit(5)
+      .eq('status', 'active')
+      .order('created_at', { ascending: false })
 
-    const ws = (userWorkspaces || []).find((w: any) => w.status === 'active' && !w.archived_at)
-      || (userWorkspaces || []).find((w: any) => !w.archived_at)
-      || (userWorkspaces || [])[0]
+    let ws = (activeWs || [])[0]
+    if (!ws) {
+      const { data: anyWs } = await db
+        .from('workspaces')
+        .select('id, name, slug, status, archived_at')
+        .eq('user_id', audit.user_id)
+        .order('created_at', { ascending: false })
+      ws = (anyWs || []).find((w: any) => !w.archived_at) || (anyWs || [])[0]
+    }
 
     if (ws) {
       results.push(`WOULD ASSIGN: ${audit.id} (${audit.audit_type}) → workspace "${(ws as any).name}" (${(ws as any).id}, status: ${(ws as any).status})`)
