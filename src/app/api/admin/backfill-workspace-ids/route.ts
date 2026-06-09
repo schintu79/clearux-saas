@@ -27,7 +27,6 @@ async function runBackfill(dryRun: boolean) {
     .from('workspaces')
     .select('id, user_id, primary_domain, name, slug, status')
     .eq('status', 'active')
-    .is('deleted_at', null)
 
   if (!workspaces || workspaces.length === 0) {
     return { message: 'No active workspaces found', updated: 0, results: [] }

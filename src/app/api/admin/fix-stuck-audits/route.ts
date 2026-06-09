@@ -56,14 +56,14 @@ export async function POST() {
       // For brand audits with no URL, find the user's first active workspace
       const { data: userWorkspaces } = await db
         .from('workspaces')
-        .select('id, name, slug, status, deleted_at')
+        .select('id, name, slug, status, archived_at')
         .eq('user_id', audit.user_id)
         .order('created_at', { ascending: true })
         .limit(5)
 
       // Try active first, then any non-deleted
-      const ws = (userWorkspaces || []).find((w: any) => w.status === 'active' && !w.deleted_at)
-        || (userWorkspaces || []).find((w: any) => !w.deleted_at)
+      const ws = (userWorkspaces || []).find((w: any) => w.status === 'active' && !w.archived_at)
+        || (userWorkspaces || []).find((w: any) => !w.archived_at)
         || (userWorkspaces || [])[0]
 
       if (ws) {
@@ -83,7 +83,7 @@ export async function POST() {
         // Dump all workspaces for this user to help debug
         const { data: allUserWs } = await db
           .from('workspaces')
-          .select('id, name, status, deleted_at')
+          .select('id, name, status, archived_at')
           .eq('user_id', audit.user_id)
 
         results.push(`  → User's workspaces: ${JSON.stringify(allUserWs)}`)
@@ -127,13 +127,13 @@ export async function GET() {
   for (const audit of (orphaned || []) as any[]) {
     const { data: userWorkspaces } = await db
       .from('workspaces')
-      .select('id, name, slug, status, deleted_at')
+      .select('id, name, slug, status, archived_at')
       .eq('user_id', audit.user_id)
       .order('created_at', { ascending: true })
       .limit(5)
 
-    const ws = (userWorkspaces || []).find((w: any) => w.status === 'active' && !w.deleted_at)
-      || (userWorkspaces || []).find((w: any) => !w.deleted_at)
+    const ws = (userWorkspaces || []).find((w: any) => w.status === 'active' && !w.archived_at)
+      || (userWorkspaces || []).find((w: any) => !w.archived_at)
       || (userWorkspaces || [])[0]
 
     if (ws) {
@@ -142,7 +142,7 @@ export async function GET() {
       results.push(`CANNOT ASSIGN: ${audit.id} (${audit.audit_type}) — no workspace for user ${audit.user_id}`)
       const { data: allUserWs } = await db
         .from('workspaces')
-        .select('id, name, status, deleted_at')
+        .select('id, name, status, archived_at')
         .eq('user_id', audit.user_id)
       results.push(`  → User's workspaces: ${JSON.stringify(allUserWs)}`)
     }

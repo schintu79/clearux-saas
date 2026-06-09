@@ -23,7 +23,8 @@ export async function GET() {
   }
 
   // 3. Try each column individually to find which one breaks
-  const cols = ['id', 'name', 'slug', 'primary_domain', 'user_id', 'status', 'deleted_at', 'created_at', 'updated_at']
+  // NOTE: workspaces table has NO deleted_at column — uses archived_at + status instead
+  const cols = ['id', 'name', 'slug', 'primary_domain', 'user_id', 'status', 'archived_at', 'created_at', 'updated_at']
   const colResults: Record<string, any> = {}
   for (const col of cols) {
     const q = await db.from('workspaces').select(col).limit(1)

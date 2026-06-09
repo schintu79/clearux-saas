@@ -38,13 +38,14 @@ export async function GET() {
   })
 
   // 4. Get ALL workspaces (no status filter) to diagnose workspace table state
+  // NOTE: workspaces table has NO deleted_at column — uses archived_at + status instead
   const { data: allWorkspaces } = await db
     .from('workspaces')
-    .select('id, name, slug, primary_domain, user_id, status, deleted_at, created_at')
+    .select('id, name, slug, primary_domain, user_id, status, archived_at, created_at')
     .order('created_at', { ascending: false })
     .limit(50)
 
-  const workspaces = (allWorkspaces || []).filter((w: any) => w.status === 'active' && !w.deleted_at)
+  const workspaces = (allWorkspaces || []).filter((w: any) => w.status === 'active')
 
   // 5. For orphaned audits (NULL workspace_id), try to match to workspaces
   const orphanedAudits = audits.filter(a => !a.workspace_id)
@@ -101,7 +102,7 @@ export async function GET() {
     primaryDomain: w.primary_domain,
     userId: w.user_id,
     status: w.status,
-    deletedAt: w.deleted_at || 'NULL',
+    archivedAt: w.archived_at || 'NULL',
     created: w.created_at,
   }))
 
