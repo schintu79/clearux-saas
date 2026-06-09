@@ -37,12 +37,14 @@ export async function GET() {
     return age > 10 * 60 * 1000 // older than 10 min
   })
 
-  // 4. Get workspaces for mapping context
-  const { data: workspaces } = await db
+  // 4. Get ALL workspaces (no status filter) to diagnose workspace table state
+  const { data: allWorkspaces } = await db
     .from('workspaces')
-    .select('id, name, slug, primary_domain, user_id, status')
-    .eq('status', 'active')
-    .is('deleted_at', null)
+    .select('id, name, slug, primary_domain, user_id, status, deleted_at, created_at')
+    .order('created_at', { ascending: false })
+    .limit(50)
+
+  const workspaces = (allWorkspaces || []).filter((w: any) => w.status === 'active' && !w.deleted_at)
 
   // 5. For orphaned audits (NULL workspace_id), try to match to workspaces
   const orphanedAudits = audits.filter(a => !a.workspace_id)
@@ -91,6 +93,18 @@ export async function GET() {
     completed: a.completed_at || 'NULL',
   }))
 
+  // 7. Full workspace dump (all statuses, including deleted)
+  const allWsDetails = (allWorkspaces || []).map((w: any) => ({
+    id: w.id,
+    name: w.name,
+    slug: w.slug,
+    primaryDomain: w.primary_domain,
+    userId: w.user_id,
+    status: w.status,
+    deletedAt: w.deleted_at || 'NULL',
+    created: w.created_at,
+  }))
+
   return NextResponse.json({
     summary: {
       totalAudits: audits.length,
@@ -98,8 +112,10 @@ export async function GET() {
       hasWorkspaceId: hasWorkspaceCount,
       statusCounts,
       stuckCount: stuckAudits.length,
-      workspaceCount: (workspaces || []).length,
+      totalWorkspaces: (allWorkspaces || []).length,
+      activeWorkspaces: workspaces.length,
     },
+    allWorkspaces: allWsDetails,
     matchableOrphans,
     stuckAudits: stuckAudits.map(a => ({
       id: a.id,
