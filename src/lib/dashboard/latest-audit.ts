@@ -308,12 +308,36 @@ export function moduleScoresFromReport(
     categoryHasFindings[f.category_index] = true
   }
 
-  if (!anyCategorized) return legacy()
+  if (!anyCategorized) {
+    // Zero-findings safety net — must match analyzer.ts pipelineFilteredAll logic.
+    // If we have pages but no categorized findings, use LOW_COV_JITTER (85-89)
+    // to prevent inflated scores when quality gates removed everything.
+    const pages = pagesAnalyzed ?? 0
+    const pipelineFilteredAll = pages > 0
+    if (pipelineFilteredAll) {
+      return PHASE1_MODULES.map((name, i) => {
+        const start = i * 4
+        let sum = 0
+        for (let ci = start; ci < start + 4; ci++) {
+          sum += LOW_COV_JITTER[ci % LOW_COV_JITTER.length]
+        }
+        return { name, score: Math.round(sum / 4) }
+      })
+    }
+    return legacy()
+  }
 
   // Coverage-adjusted jitter — mirrors analyzer.ts logic.
   // Low coverage (1 page) = 85-89, medium (2-3) = 90-93, high (4+) = 95-99.
   const pages = pagesAnalyzed ?? 0
-  const covJitter = pages <= 1 ? LOW_COV_JITTER : pages <= 3 ? MEDIUM_COV_JITTER : CLEAN_JITTER
+
+  // Zero-findings safety net — must match analyzer.ts pipelineFilteredAll logic.
+  const pipelineFilteredAll = findings.length === 0 && pages > 0
+
+  const covJitter = pipelineFilteredAll ? LOW_COV_JITTER
+    : pages <= 1 ? LOW_COV_JITTER
+    : pages <= 3 ? MEDIUM_COV_JITTER
+    : CLEAN_JITTER
 
   // Per-module score = average of its 4 category scores (same as analyzer.ts)
   // NO blending with overall_score — each category stands on its own.

@@ -3704,6 +3704,61 @@ RULES FOR RE-AUDIT:
       }
 
       // ══════════════════════════════════════════════════════════
+      // FILTER RATIO GUARD: Rescue highest-severity findings when
+      // quality gates would remove an excessive proportion (≥80%).
+      // This prevents the 0-findings → CLEAN_JITTER → 97/100 cascade
+      // that makes every site look "Healthy — no issues found."
+      // ══════════════════════════════════════════════════════════
+      if (rawCount >= 5 && idsToDelete.size >= Math.ceil(rawCount * 0.8)) {
+        // Sort deleted findings by severity (highest first) for rescue
+        const SEVERITY_RANK: Record<string, number> = { critical: 4, high: 3, medium: 2, low: 1 }
+        const SEVERITY_DEMOTION: Record<string, string> = { critical: 'high', high: 'medium', medium: 'low', low: 'low' }
+        const deletedFindings = allQGFindings
+          .filter((f: any) => idsToDelete.has(f.id))
+          .sort((a: any, b: any) => (SEVERITY_RANK[b.severity] || 0) - (SEVERITY_RANK[a.severity] || 0))
+
+        const rescueCount = Math.max(3, Math.ceil(rawCount * 0.15))
+        const rescued = deletedFindings.slice(0, rescueCount)
+
+        for (const rf of rescued) {
+          // Remove from delete set — this finding survives
+          idsToDelete.delete(rf.id)
+
+          // Demote severity by one level and mark as heuristic
+          const demotedSeverity = SEVERITY_DEMOTION[rf.severity] || rf.severity
+          batchUpdates.push({ id: rf.id, updates: { severity: demotedSeverity, confidence_level: 'heuristic' } })
+
+          // Re-add to in-memory findings array with same shape
+          findings.push({
+            id: rf.id as string,
+            title: (rf.title || '') as string,
+            description: (rf.description || '') as string,
+            recommendation: (rf.recommendation || '') as string,
+            severity: demotedSeverity as string,
+            page_url: (rf.page_url || null) as string | null,
+            sort_order: (rf.sort_order ?? 0) as number,
+            confidence_level: 'heuristic' as ConfidenceLevel,
+            detection_source: (rf.detection_source || 'analyzer') as DetectionSource,
+            finding_type: (rf.finding_type || 'fixable') as string,
+            fix_type: (rf.fix_type || null) as string | null,
+            fix_payload: rf.fix_payload,
+            target_element: (rf.target_element || null) as string | null,
+          })
+        }
+
+        const rescuedSeverities = rescued.map((r: any) => r.severity).join(', ')
+        console.warn(`[inngest] PIPELINE RESCUE: quality gates would delete ${idsToDelete.size + rescued.length}/${rawCount} findings (${Math.round((idsToDelete.size + rescued.length) / rawCount * 100)}%). Rescued ${rescued.length} highest-severity findings (${rescuedSeverities}), demoted by one level.`)
+        await auditLog(auditId, 'pipeline_rescue', 'warning',
+          `Quality gates would remove ${Math.round((idsToDelete.size + rescued.length) / rawCount * 100)}% of findings. Rescued ${rescued.length} findings (demoted severity) to preserve scoring accuracy.`)
+
+        auditLimitations.push({
+          id: 'excessive_quality_filtering',
+          title: 'Quality filtering was aggressive',
+          description: `Our quality pipeline flagged ${Math.round((idsToDelete.size + rescued.length) / rawCount * 100)}% of findings for removal. We rescued the ${rescued.length} most significant ones at reduced severity to ensure the score reflects real conditions. A re-audit with more pages may produce more confident results.`,
+        })
+      }
+
+      // ══════════════════════════════════════════════════════════
       // BATCH WRITE: Apply all accumulated deletes + updates in bulk
       // ══════════════════════════════════════════════════════════
       const deleteIds = [...idsToDelete]
