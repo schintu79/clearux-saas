@@ -14,6 +14,17 @@ export interface FeatureFlags {
   acquisitionDiagnostics: boolean
   /** Enable polite crawler behavior (rate limiting, backoff) */
   politeCrawler: boolean
+  /**
+   * Lean pipeline mode — disables expensive optional stages:
+   *   - WCAG heuristic AI (automated checks still run)
+   *   - Multi-model benchmark (Benchmark tab shows "not available")
+   *   - Brand intelligence sentiment analysis
+   *   - Human perception external API calls
+   *
+   * ON by default. Set FEATURE_LEAN_PIPELINE=false to re-enable all stages.
+   * See docs/pipeline-v1.5-analysis.md for the full design rationale.
+   */
+  leanPipeline: boolean
 }
 
 /**
@@ -25,5 +36,6 @@ export function getFeatureFlags(): FeatureFlags {
     protectedSiteMode: process.env.FEATURE_PROTECTED_SITE_MODE === 'true',
     acquisitionDiagnostics: process.env.FEATURE_ACQUISITION_DIAGNOSTICS === 'true',
     politeCrawler: process.env.FEATURE_POLITE_CRAWLER === 'true',
+    leanPipeline: process.env.FEATURE_LEAN_PIPELINE !== 'false', // ON by default
   }
 }

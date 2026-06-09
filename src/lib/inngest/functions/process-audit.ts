@@ -325,6 +325,7 @@ export const processAuditFn = inngest.createFunction(
     // STEP 1: Fetch audit details
     // ──────────────────────────────────────────────────────────
     const auditDetails = await step.run('fetch-audit', async () => {
+      return withStepTimeout(async () => {
       const db = getDb()
 
       const { data: audit, error } = await db
@@ -393,10 +394,12 @@ export const processAuditFn = inngest.createFunction(
         workspaceId: ((audit as any).workspace_id as string) || null,
         createdAt: (audit as any).created_at as string,
       }
+      }, 30_000, 'fetch-audit')
     })
 
     // ── Pipeline v1: stamp audit row and log start ──
     await step.run('pipeline-init', async () => {
+      return withStepTimeout(async () => {
       const db = getDb()
       await db.from('audits').update({
         pipeline_version: PIPELINE_VERSION,
@@ -406,6 +409,7 @@ export const processAuditFn = inngest.createFunction(
       } as any).eq('id', auditId)
       await logPipelineStarted(auditId, PIPELINE_VERSION)
       await logActivity(auditId, `Audit pipeline ${PIPELINE_VERSION} started for ${auditDetails.productUrl}`)
+      }, 15_000, 'pipeline-init')
     })
 
     // ══════════════════════════════════════════════════════════
@@ -772,6 +776,7 @@ Return 2-6 findings. Be specific and evidence-based. Reference specific files/co
     // Detects blocked/unreachable domains BEFORE the full crawl starts.
     // ──────────────────────────────────────────────────────────
     await step.run('crawl-preflight', async () => {
+      return withStepTimeout(async () => {
       await logStageStarted(auditId, 'preflight', 'Running preflight checks...')
       await logActivity(auditId, `Validating site accessibility for ${auditDetails.productUrl}`)
       await setStatus(auditId, 'crawling', stageProgress('preflight', 0))
@@ -818,11 +823,13 @@ Return 2-6 findings. Be specific and evidence-based. Reference specific files/co
       // so the UI doesn't stay stuck on "Preflight" during Inngest step overhead
       await logStageCompleted(auditId, 'preflight', 'Preflight checks passed')
       await setProgress(auditId, stageProgress('preflight', 1), 'crawling')
+      }, 30_000, 'crawl-preflight')
     })
 
     // STEP 2: Crawl pages
     // ──────────────────────────────────────────────────────────
     const crawlResult = await step.run('crawl-pages', async () => {
+      return withStepTimeout(async () => {
       await logStageStarted(auditId, 'crawling', 'Discovering site pages...')
       await setStatus(auditId, 'crawling', stageProgress('crawling', 0))
       await setProgress(auditId, stageProgress('crawling', 0), 'crawling')
@@ -1292,6 +1299,7 @@ Return 2-6 findings. Be specific and evidence-based. Reference specific files/co
         headTags: allHeadTags,
         crawlQuality, // Used by downstream steps to adjust scope
       }
+      }, 180_000, 'crawl-pages')
     })
 
     // ── Transparency: limited pages crawled ──
@@ -1316,6 +1324,7 @@ Return 2-6 findings. Be specific and evidence-based. Reference specific files/co
     // ~25-60s of sequential execution + 2 cold starts.
     // ──────────────────────────────────────────────────────────
     const parallelChecks = await step.run('parallel-site-checks', async () => {
+      return withStepTimeout(async () => {
       await logStageStarted(auditId, 'checking', 'Running site checks...')
       await logActivity(auditId, 'Testing page speed, responsive design, and accessibility...')
       await setProgress(auditId, stageProgress('checking', 0), 'checking')
@@ -1473,28 +1482,35 @@ Return 2-6 findings. Be specific and evidence-based. Reference specific files/co
           const { automatedResults, heuristicPrompts } = await checkWcagAutomated(crawlResult.crawledUrls, maxUrls)
 
           const heuristicResults = new Map<string, WcagCheckResult[]>()
-          const Anthropic = (await import('@anthropic-ai/sdk')).default
-          const anthropic = new Anthropic({ timeout: 25_000 })
-          const WCAG_PER_URL_TIMEOUT = 20_000
-          await Promise.allSettled(Array.from(heuristicPrompts.entries()).map(async ([url, prompt]) => {
-            try {
-              const msg = await Promise.race([
-                anthropic.messages.create({
-                  model: 'claude-sonnet-4-20250514',
-                  max_tokens: 2000,
-                  messages: [{ role: 'user', content: prompt }],
-                }),
-                new Promise<never>((_, reject) =>
-                  setTimeout(() => reject(new Error(`WCAG heuristic for ${url} timed out`)), WCAG_PER_URL_TIMEOUT),
-                ),
-              ])
-              const text = msg.content.find(b => b.type === 'text')?.text || ''
-              if (text) heuristicResults.set(url, parseHeuristicResponse(text))
-            } catch (wcagErr) {
-              console.warn(`[inngest] WCAG heuristic for ${url} failed:`, (wcagErr as Error)?.message)
-              // Heuristic analysis failed — automated results still valid
-            }
-          }))
+          // LEAN PIPELINE: Skip WCAG heuristic AI calls — automated checks still run.
+          // When enabled: uses Haiku instead of Sonnet (5× cheaper, same quality for checklist tasks).
+          const leanFlags = getFeatureFlags()
+          if (!leanFlags.leanPipeline) {
+            const Anthropic = (await import('@anthropic-ai/sdk')).default
+            const anthropic = new Anthropic({ timeout: 25_000 })
+            const WCAG_PER_URL_TIMEOUT = 20_000
+            await Promise.allSettled(Array.from(heuristicPrompts.entries()).map(async ([url, prompt]) => {
+              try {
+                const msg = await Promise.race([
+                  anthropic.messages.create({
+                    model: 'claude-haiku-4-5-20251001',
+                    max_tokens: 2000,
+                    messages: [{ role: 'user', content: prompt }],
+                  }),
+                  new Promise<never>((_, reject) =>
+                    setTimeout(() => reject(new Error(`WCAG heuristic for ${url} timed out`)), WCAG_PER_URL_TIMEOUT),
+                  ),
+                ])
+                const text = msg.content.find(b => b.type === 'text')?.text || ''
+                if (text) heuristicResults.set(url, parseHeuristicResponse(text))
+              } catch (wcagErr) {
+                console.warn(`[inngest] WCAG heuristic for ${url} failed:`, (wcagErr as Error)?.message)
+                // Heuristic analysis failed — automated results still valid
+              }
+            }))
+          } else {
+            console.log('[inngest] LEAN PIPELINE: Skipping WCAG heuristic AI calls (automated checks still active)')
+          }
 
           const wcagResult = buildWcagResults(automatedResults, heuristicResults)
 
@@ -1625,6 +1641,7 @@ Return 2-6 findings. Be specific and evidence-based. Reference specific files/co
 
       await logStageCompleted(auditId, 'checking', 'Site checks complete')
       return { responsive, wcag }
+      }, 150_000, 'parallel-site-checks', { responsive: null as any, wcag: null as any })
     })
 
     const responsiveCheck = parallelChecks.responsive
@@ -1837,7 +1854,13 @@ Return 2-6 findings. Be specific and evidence-based. Reference specific files/co
       }
 
       // ── Multi-Model Benchmark ──
+      // LEAN PIPELINE: Skip entirely — saves 4–11 Haiku + 18–60 OpenRouter calls
       const runMultiModelStep = async () => {
+        const leanFlags = getFeatureFlags()
+        if (leanFlags.leanPipeline) {
+          console.log('[inngest] LEAN PIPELINE: Skipping multi-model benchmark')
+          return { comparison: null, industry: null }
+        }
         try {
           const db = getDb()
           let domain = ''
@@ -2024,6 +2047,7 @@ Return 2-6 findings. Be specific and evidence-based. Reference specific files/co
     // STEP 2j: Fix Playbooks (fast, depends on probe results)
     // ──────────────────────────────────────────────────────────
     const playbooks = await step.run('fix-playbooks', async () => {
+      return withStepTimeout(async () => {
       try {
         const db = getDb()
 
@@ -2118,6 +2142,7 @@ Return 2-6 findings. Be specific and evidence-based. Reference specific files/co
           `Fix playbooks failed: ${err instanceof Error ? err.message : String(err)}`)
         return []
       }
+      }, 30_000, 'fix-playbooks', [] as any)
     })
 
     // ──────────────────────────────────────────────────────────
@@ -2127,6 +2152,7 @@ Return 2-6 findings. Be specific and evidence-based. Reference specific files/co
     // on /about" prevents false positive on homepage)
     // ──────────────────────────────────────────────────────────
     const siteContext = await step.run('build-site-context', async () => {
+      return withStepTimeout(async () => {
       await logStageStarted(auditId, 'analysing', 'Analysing content...')
       await logActivity(auditId, 'Building site context map for cross-page awareness...')
       await setStatus(auditId, 'analysing', stageProgress('analysing', 0))
@@ -2332,6 +2358,7 @@ RULES FOR RE-AUDIT:
         previousReportJson,
         previousAuditId: prevAuditId || null,
       }
+      }, 30_000, 'build-site-context')
     })
 
     const effectiveDepthMode = siteContext.effectiveDepthMode
@@ -2343,6 +2370,7 @@ RULES FOR RE-AUDIT:
     // Feeds into analyzeCategory() so findings are context-aware.
     // ──────────────────────────────────────────────────────────
     const siteProfile: SiteProfile | null = await step.run('detect-site-profile', async () => {
+      return withStepTimeout(async () => {
       try {
         await logActivity(auditId, 'Detecting site industry and audience profile...')
         const profile = await withTimeout(
@@ -2360,6 +2388,7 @@ RULES FOR RE-AUDIT:
         console.warn('[inngest] Site profile detection failed, using defaults:', err instanceof Error ? err.message : err)
         return null
       }
+      }, 60_000, 'detect-site-profile', null)
     })
 
     let verificationData: { verified: number; likelyFixed: number; poorlyFixed: number; results: Array<{ findingId: string; status: string; note: string }> } | null = null
@@ -2403,6 +2432,7 @@ RULES FOR RE-AUDIT:
       // Same site + no status changes = EXACT same findings + EXACT same score.
       // ════════════════════════════════════════════════════════════
       await step.run('baseline-copy-findings', async () => {
+        return withStepTimeout(async () => {
         const db = getDb()
         const prevFindings = siteContext.previousRawFindings
         let sortOrder = 0
@@ -2453,6 +2483,7 @@ RULES FOR RE-AUDIT:
           })
 
         return { copiedCount, droppedFixed, droppedDismissed }
+        }, 30_000, 'baseline-copy-findings')
       })
 
       // ════════════════════════════════════════════════════════════
@@ -2463,6 +2494,7 @@ RULES FOR RE-AUDIT:
       // directly so the report step doesn't depend on DB columns.
       // ════════════════════════════════════════════════════════════
       verificationData = await step.run('ai-verify-findings', async () => {
+        return withStepTimeout(async () => {
         const db = getDb()
 
         // Fetch the findings we just copied
@@ -2544,6 +2576,7 @@ RULES FOR RE-AUDIT:
           poorlyFixed: poorlyFixedCount,
           results: verificationResults.map(r => ({ findingId: r.findingId, status: r.status, note: r.note })),
         }
+        }, 150_000, 'ai-verify-findings')
       })
 
       // ════════════════════════════════════════════════════════════
@@ -2880,6 +2913,7 @@ RULES FOR RE-AUDIT:
       // re-runs on EVERY invocation, eating into the 300s Vercel budget and
       // causing stalls at 56%.
       const analysisPrepResult = await step.run('analysis-prep', async () => {
+        return withStepTimeout(async () => {
         await logActivity(auditId, 'Preparing analysis modules...')
         await setProgress(auditId, stageProgress('analysing', 0) + 1, 'analysing')
 
@@ -2990,6 +3024,7 @@ RULES FOR RE-AUDIT:
           : contentWithContext
 
         return { categoriesToAnalyze, contentWithContext, designConsistencyContent }
+        }, 60_000, 'analysis-prep')
       })
 
       // Destructure memoized prep result — these never re-execute on replay
@@ -3262,6 +3297,7 @@ RULES FOR RE-AUDIT:
     // Combined into one step to eliminate Inngest cold-start overhead
     // ──────────────────────────────────────────────────────────
     await step.run('quality-gates', async () => {
+      return withStepTimeout(async () => {
       await logStageStarted(auditId, 'quality_gates', 'Running quality checks on findings...')
       await setProgress(auditId, stageProgress('quality_gates', 0))
       const db = getDb()
@@ -3718,6 +3754,7 @@ RULES FOR RE-AUDIT:
       }
       await setProgress(auditId, stageProgress('quality_gates', 1))
       await logStageCompleted(auditId, 'quality_gates', 'Quality gates passed')
+      }, 60_000, 'quality-gates')
     })
 
     // ──────────────────────────────────────────────────────────
@@ -3726,6 +3763,7 @@ RULES FOR RE-AUDIT:
     let reconciliationData: ReconciliationResult | null = null
     if (siteContext.previousRawFindings.length > 0) {
       reconciliationData = await step.run('reconcile-findings', async () => {
+        return withStepTimeout(async () => {
         await logStageStarted(auditId, 'reconciliation', 'Deduplicating and reconciling findings...')
         const db = getDb()
 
@@ -3802,6 +3840,7 @@ RULES FOR RE-AUDIT:
           })
 
         return result
+        }, 60_000, 'reconcile-findings')
       })
     }
 
@@ -3828,6 +3867,7 @@ RULES FOR RE-AUDIT:
     } | null = null
 
     canonicalScoring = await step.run('canonical-reconciliation', async () => {
+      return withStepTimeout(async () => {
       try {
         const db = getDb()
 
@@ -3921,6 +3961,7 @@ RULES FOR RE-AUDIT:
           `Canonical reconciliation failed: ${err instanceof Error ? err.message : String(err)}. Audit continues with legacy scoring.`)
         return null
       }
+      }, 30_000, 'canonical-reconciliation')
     })
 
     // ──────────────────────────────────────────────────────────
@@ -4150,6 +4191,7 @@ RULES FOR RE-AUDIT:
     // This is the ROOT FIX for audits stalling at 90%.
     // ──────────────────────────────────────────────────────────
     await step.run('complete', async () => {
+      return withStepTimeout(async () => {
       const db = getDb()
 
       await setStatus(auditId, 'completed', 100)
@@ -4176,6 +4218,7 @@ RULES FOR RE-AUDIT:
 
       await auditLog(auditId, 'audit_completed', 'success', 'Audit completed')
       console.log(`[inngest] Audit ${auditId} completed`)
+      }, 30_000, 'complete')
     })
 
     // ──────────────────────────────────────────────────────────
@@ -4233,11 +4276,17 @@ RULES FOR RE-AUDIT:
       }
 
       // ── 2. Brand Intelligence (LAZY — started in Wave 2 only) ──
+      // LEAN PIPELINE: Skip — saves 7 Haiku calls (1 per model for sentiment extraction)
       // CRITICAL: Do NOT use IIFE here. These must be lazy functions, not
       // immediately-invoked promises. If they start at t=0 with the fast
       // Wave 1 tasks, they run in the background consuming Vercel time,
       // and withTimeout can only abandon the await — not stop the work.
       const brandIntelFn = async () => {
+        const leanFlags = getFeatureFlags()
+        if (leanFlags.leanPipeline) {
+          console.log('[inngest] LEAN PIPELINE: Skipping brand intelligence sentiment analysis')
+          return
+        }
         try {
           const db = getDb()
           const { data: probes } = await db
@@ -4302,7 +4351,13 @@ RULES FOR RE-AUDIT:
       }
 
       // ── 3. Human Perception (LAZY — started in Wave 2 only) ──
+      // LEAN PIPELINE: Skip — saves external API calls and fragile dependencies
       const humanPerceptionFn = async () => {
+        const leanFlags = getFeatureFlags()
+        if (leanFlags.leanPipeline) {
+          console.log('[inngest] LEAN PIPELINE: Skipping human perception analysis')
+          return
+        }
         try {
           const { runHumanPerceptionPipeline } = await import('@/lib/human-perception')
           const db = getDb()
