@@ -86,6 +86,8 @@ export async function loadLatestAuditBundle(
   }
 
   // All queries scope by workspace_id — simple, no hostname tricks needed.
+  // Return ALL audit types (website, brand_identity, null) so the overview
+  // isn't empty when a workspace only has brand audits.
   const { data: audits } = await supabase
     .from('audits')
     .select('*')
@@ -93,7 +95,6 @@ export async function loadLatestAuditBundle(
     .eq('workspace_id', workspaceId)
     .in('status', ['completed', 'completed_with_warnings'])
     .is('deleted_at', null)
-    .or('audit_type.is.null,audit_type.eq.website')
     .order('completed_at', { ascending: false })
     .limit(25)
 
