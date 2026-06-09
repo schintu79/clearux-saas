@@ -658,9 +658,14 @@ function BrandDnaPage() {
     setDeletingFileId(fileId);
     try {
       const res = await fetch(`/api/brand-identities/${identity.id}/files?fileId=${fileId}`, { method: 'DELETE' });
-      if (!res.ok) throw new Error();
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        throw new Error(body.error || 'Failed to delete file');
+      }
       setIdentity(prev => prev ? { ...prev, brand_identity_files: prev.brand_identity_files.filter(f => f.id !== fileId) } : prev);
-    } catch { setUploadMsg('Failed to delete file'); }
+    } catch (err) {
+      setUploadMsg(err instanceof Error ? err.message : 'Failed to delete file');
+    }
     setDeletingFileId(null);
   };
 

@@ -78,36 +78,94 @@ export async function DELETE(
     if (!identity || identity.user_id !== user.id)
       return NextResponse.json({ error: 'Not found' }, { status: 404 })
 
-    // Best-effort storage cleanup — fetch file_url to locate the blob
+    // ── 1. Fetch the file record (need file_url for storage cleanup) ──
+    const { data: file, error: fetchErr } = await db
+      .from('brand_identity_files')
+      .select('id, file_url')
+      .eq('id', fileId)
+      .eq('brand_identity_id', brandIdentityId)
+      .single()
+
+    if (fetchErr || !file) {
+      console.error('File not found for deletion:', fetchErr?.message ?? 'no match')
+      return NextResponse.json({ error: 'File not found' }, { status: 404 })
+    }
+
+    // ── 2. Remove dependent rows that may block deletion via FK ──
+    // brand_audit_file_snapshots.brand_file_id → brand_identity_files(id)
+    // Migration says ON DELETE CASCADE but live DB may differ.
     try {
-      const { data: file } = await db
+      await db
+        .from('brand_audit_file_snapshots')
+        .delete()
+        .eq('brand_file_id', fileId)
+    } catch { /* table may not exist — continue */ }
+
+    // Self-referencing: brand_identity_files.replaces_file_id → brand_identity_files(id)
+    // Migration says ON DELETE SET NULL but clear it explicitly to be safe.
+    try {
+      await db
         .from('brand_identity_files')
-        .select('file_url')
-        .eq('id', fileId)
-        .eq('brand_identity_id', brandIdentityId)
+        .update({ replaces_file_id: null } as any)
+        .eq('replaces_file_id', fileId)
+    } catch { /* column may not exist — continue */ }
+
+    // ── 3. Clear brand_identities fields that reference this file ──
+    try {
+      const updates: Record<string, unknown> = {}
+      const { data: parent } = await db
+        .from('brand_identities')
+        .select('logo_file_id, brand_guide_file_id, logo_url')
+        .eq('id', brandIdentityId)
         .single()
 
-      if (file?.file_url) {
-        try {
-          const url = new URL((file as any).file_url)
-          const match = url.pathname.match(/\/storage\/v1\/object\/public\/brand-assets\/(.+)/)
-          if (match?.[1]) {
-            await db.storage.from('brand-assets').remove([match[1]])
-          }
-        } catch { /* storage path parsing failed — continue with record delete */ }
-      }
-    } catch { /* file_url lookup failed — still delete the record below */ }
+      if (parent?.logo_file_id === fileId) updates.logo_file_id = null
+      if (parent?.brand_guide_file_id === fileId) updates.brand_guide_file_id = null
+      // If logo_url matches the file being deleted, clear it too
+      if (parent?.logo_url && file.file_url && parent.logo_url === file.file_url) updates.logo_url = null
 
-    // Always delete the DB record regardless of storage cleanup result
-    const { error: deleteError } = await db
+      if (Object.keys(updates).length > 0) {
+        await db
+          .from('brand_identities')
+          .update({ ...updates, updated_at: new Date().toISOString() } as any)
+          .eq('id', brandIdentityId)
+      }
+    } catch { /* columns may not exist — continue */ }
+
+    // ── 4. Delete the DB record — use .select() to verify something was deleted ──
+    const { data: deleted, error: deleteError } = await db
       .from('brand_identity_files')
       .delete()
       .eq('id', fileId)
       .eq('brand_identity_id', brandIdentityId)
+      .select('id')
 
     if (deleteError) {
-      console.error('Failed to delete brand file record:', deleteError)
-      return NextResponse.json({ error: 'Failed to delete file record' }, { status: 500 })
+      console.error('Failed to delete brand file record:', deleteError.message, deleteError.code)
+      return NextResponse.json(
+        { error: `Delete failed: ${deleteError.message}` },
+        { status: 500 },
+      )
+    }
+
+    if (!deleted || deleted.length === 0) {
+      console.error('Delete matched 0 rows — file may already be deleted or filter mismatch',
+        { fileId, brandIdentityId })
+      return NextResponse.json({ error: 'File not found or already deleted' }, { status: 404 })
+    }
+
+    // ── 5. Best-effort storage cleanup ──
+    if (file.file_url) {
+      try {
+        const url = new URL(file.file_url)
+        const match = url.pathname.match(/\/storage\/v1\/object\/public\/brand-assets\/(.+)/)
+        if (match?.[1]) {
+          const { error: storageErr } = await db.storage.from('brand-assets').remove([match[1]])
+          if (storageErr) console.warn('Storage cleanup failed (non-blocking):', storageErr.message)
+        }
+      } catch (e) {
+        console.warn('Storage path parsing failed (non-blocking):', e)
+      }
     }
 
     return NextResponse.json({ success: true })

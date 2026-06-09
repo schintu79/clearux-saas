@@ -207,14 +207,17 @@ const BrandIdentityDetailPage: React.FC = () => {
       const res = await fetch(`/api/brand-identities/${id}/files?fileId=${fileId}`, {
         method: 'DELETE',
       });
-      if (!res.ok) throw new Error();
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        throw new Error(body.error || 'Failed to delete file');
+      }
       setIdentity((prev) =>
         prev
           ? { ...prev, brand_identity_files: prev.brand_identity_files.filter((f) => f.id !== fileId) }
           : prev
       );
-    } catch {
-      setErrorMsg('Failed to delete file');
+    } catch (err) {
+      setErrorMsg(err instanceof Error ? err.message : 'Failed to delete file');
     } finally {
       setDeletingFileId(null);
     }
