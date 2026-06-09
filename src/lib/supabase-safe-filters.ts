@@ -17,11 +17,11 @@ import { SupabaseClient, PostgrestFilterBuilder } from '@supabase/supabase-js'
 export async function safeFetchBrandOwner(
   db: SupabaseClient,
   brandIdentityId: string,
-): Promise<{ user_id: string } | null> {
+): Promise<{ user_id: string; workspace_id: string | null } | null> {
   // Attempt with soft-delete filter
   const { data, error } = await db
     .from('brand_identities')
-    .select('user_id')
+    .select('user_id, workspace_id')
     .eq('id', brandIdentityId)
     .is('deleted_at', null)
     .single()
@@ -32,7 +32,7 @@ export async function safeFetchBrandOwner(
   if (error.message?.includes('deleted_at') || error.code === '42703' || error.code === 'PGRST204') {
     const { data: fallback } = await db
       .from('brand_identities')
-      .select('user_id')
+      .select('user_id, workspace_id')
       .eq('id', brandIdentityId)
       .single()
     return fallback as any

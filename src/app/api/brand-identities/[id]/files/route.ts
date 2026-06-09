@@ -78,29 +78,36 @@ export async function DELETE(
     if (!identity || identity.user_id !== user.id)
       return NextResponse.json({ error: 'Not found' }, { status: 404 })
 
-    // Get file URL for storage cleanup
-    const { data: file } = await db
+    // Best-effort storage cleanup — fetch file_url to locate the blob
+    try {
+      const { data: file } = await db
+        .from('brand_identity_files')
+        .select('file_url')
+        .eq('id', fileId)
+        .eq('brand_identity_id', brandIdentityId)
+        .single()
+
+      if (file?.file_url) {
+        try {
+          const url = new URL((file as any).file_url)
+          const match = url.pathname.match(/\/storage\/v1\/object\/public\/brand-assets\/(.+)/)
+          if (match?.[1]) {
+            await db.storage.from('brand-assets').remove([match[1]])
+          }
+        } catch { /* storage path parsing failed — continue with record delete */ }
+      }
+    } catch { /* file_url lookup failed — still delete the record below */ }
+
+    // Always delete the DB record regardless of storage cleanup result
+    const { error: deleteError } = await db
       .from('brand_identity_files')
-      .select('file_url')
+      .delete()
       .eq('id', fileId)
       .eq('brand_identity_id', brandIdentityId)
-      .single()
 
-    if (file) {
-      // Try to remove from storage
-      try {
-        const url = new URL((file as any).file_url)
-        const match = url.pathname.match(/\/storage\/v1\/object\/public\/brand-assets\/(.+)/)
-        if (match?.[1]) {
-          await db.storage.from('brand-assets').remove([match[1]])
-        }
-      } catch { /* storage cleanup is best-effort */ }
-
-      // Delete the record
-      await db
-        .from('brand_identity_files')
-        .delete()
-        .eq('id', fileId)
+    if (deleteError) {
+      console.error('Failed to delete brand file record:', deleteError)
+      return NextResponse.json({ error: 'Failed to delete file record' }, { status: 500 })
     }
 
     return NextResponse.json({ success: true })
