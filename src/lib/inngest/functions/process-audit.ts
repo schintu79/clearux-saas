@@ -112,11 +112,14 @@ async function setStatus(auditId: string, status: string, progressPercent?: numb
   const db = getDb()
   const update: Record<string, unknown> = { status, updated_at: new Date().toISOString() }
   if (typeof progressPercent === 'number') update.progress_percent = progressPercent
-  const { error } = await db
-    .from('audits')
-    .update(update as any)
-    .eq('id', auditId)
-  if (error) throw new Error(`Failed to update status: ${error.message}`)
+  // 10s timeout — prevent Supabase connection pool stalls from hanging the pipeline
+  const result = await Promise.race([
+    db.from('audits').update(update as any).eq('id', auditId),
+    new Promise<{ error: { message: string } }>((resolve) =>
+      setTimeout(() => resolve({ error: { message: 'setStatus timed out after 10s' } }), 10_000)
+    ),
+  ])
+  if (result.error) throw new Error(`Failed to update status: ${result.error.message}`)
 }
 
 /**
@@ -159,11 +162,14 @@ async function setProgress(auditId: string, progressPercent: number, stage?: str
     updated_at: new Date().toISOString(),
   }
   if (stage) update.audit_stage = stage
-  const { error } = await db
-    .from('audits')
-    .update(update as any)
-    .eq('id', auditId)
-  if (error) console.error(`[inngest] progress update error:`, error.message)
+  // 10s timeout — prevent Supabase connection pool stalls from hanging the pipeline
+  const result = await Promise.race([
+    db.from('audits').update(update as any).eq('id', auditId),
+    new Promise<{ error: { message: string } }>((resolve) =>
+      setTimeout(() => resolve({ error: { message: 'setProgress timed out after 10s' } }), 10_000)
+    ),
+  ])
+  if (result.error) console.error(`[inngest] progress update error:`, result.error.message)
 }
 
 async function auditLog(
@@ -175,13 +181,17 @@ async function auditLog(
 ) {
   try {
     const db = getDb()
-    await db.from('audit_logs').insert({
-      audit_id: auditId,
-      event,
-      status,
-      message: message || null,
-      metadata: metadata || {},
-    } as any)
+    // 10s timeout — audit logging is non-critical, must never block the pipeline
+    await Promise.race([
+      db.from('audit_logs').insert({
+        audit_id: auditId,
+        event,
+        status,
+        message: message || null,
+        metadata: metadata || {},
+      } as any),
+      new Promise<void>((resolve) => setTimeout(resolve, 10_000)),
+    ])
   } catch (err) {
     console.error('[inngest] log error:', err)
   }
@@ -1628,6 +1638,10 @@ Return 2-6 findings. Be specific and evidence-based. Reference specific files/co
     // ~40-60s vs sequential execution.
     // ──────────────────────────────────────────────────────────
     const probeResults = await step.run('parallel-probes', async () => {
+      // Master 120s timeout — individual probes have 30-60s timeouts, but this
+      // catches any setup/teardown hangs and guarantees the step doesn't consume
+      // the full Vercel 300s budget. Falls back to safe defaults on timeout.
+      return await withStepTimeout(async () => {
       await logStageStarted(auditId, 'probing', 'Probing AI models for brand knowledge...')
       await logActivity(auditId, 'Testing search visibility and AI perception...')
       await setProgress(auditId, stageProgress('probing', 0), 'probing')
@@ -1990,6 +2004,13 @@ Return 2-6 findings. Be specific and evidence-based. Reference specific files/co
         citation: citation,
         multiModel: multiModel,
       }
+      }, 120_000, 'parallel-probes', {
+        aiDiscovery: { summary: '', result: null },
+        structuredData: { summary: '', findingsCount: 0, typesFound: [] as string[] },
+        llmProbe: null,
+        citation: null,
+        multiModel: { comparison: null, industry: null },
+      })
     })
 
     // Unpack parallel probe results for downstream use
@@ -2469,7 +2490,7 @@ RULES FOR RE-AUDIT:
             auditDetails.language,
           ),
           new Promise<never>((_, reject) =>
-            setTimeout(() => reject(new Error('verifyFindings exceeded 240s aggregate timeout')), 240_000)
+            setTimeout(() => reject(new Error('verifyFindings exceeded 120s aggregate timeout')), 120_000)
           ),
         ]).catch((err) => {
           console.error('[inngest] ai-verify-findings timeout:', err?.message)

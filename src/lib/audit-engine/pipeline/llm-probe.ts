@@ -120,10 +120,12 @@ async function withRetry<T>(
         err.message.includes('overloaded') ||
         err.message.includes('529')
       )
-      const isTimeout = err instanceof Error && err.message.includes('Timeout')
-      if (attempt < maxRetries && (isRateLimit || isTimeout)) {
+      // Do NOT retry on timeouts — retrying a timed-out API call wastes 3x more
+      // time and API quota on a request that's already proven to be slow.
+      // Only retry on rate limits, which are transient and resolve with backoff.
+      if (attempt < maxRetries && isRateLimit) {
         const delay = baseDelayMs * Math.pow(2, attempt) + Math.random() * 1000
-        console.warn(`[${label}] Attempt ${attempt + 1} failed (${isRateLimit ? 'rate limit' : 'timeout'}), retrying in ${Math.round(delay)}ms...`)
+        console.warn(`[${label}] Attempt ${attempt + 1} failed (rate limit), retrying in ${Math.round(delay)}ms...`)
         await new Promise(resolve => setTimeout(resolve, delay))
       }
     }
