@@ -275,6 +275,15 @@ export const processAuditFn = inngest.createFunction(
   async ({ event, step }: { event: { data: { auditId: string } }; step: any }) => {
     const auditId = event.data.auditId
     const pipelineStartTime = Date.now()
+    // MASTER PIPELINE DEADLINE — 12 minutes absolute maximum.
+    // If the pipeline exceeds this, remaining steps are skipped.
+    // This catches the scenario where Vercel kills the process at 300s,
+    // Inngest retries (ignoring retries:0 for infra failures), and
+    // individual step timeouts never fire because the event loop is starved.
+    const PIPELINE_DEADLINE_MS = 12 * 60 * 1000
+    function isPastDeadline(): boolean {
+      return (Date.now() - pipelineStartTime) > PIPELINE_DEADLINE_MS
+    }
 
     try {
     // ── Step-level timeout helper — wraps entire step body ──
@@ -3277,8 +3286,13 @@ RULES FOR RE-AUDIT:
     // QUALITY GATES: Dedup + speculative filter + relevance scoring
     // Combined into one step to eliminate Inngest cold-start overhead
     // ──────────────────────────────────────────────────────────
+    if (isPastDeadline()) {
+      console.warn(`[inngest] PIPELINE DEADLINE: Skipping quality-gates (${Math.round((Date.now() - pipelineStartTime) / 1000)}s elapsed)`)
+      await auditLog(auditId, 'deadline_skip', 'warning', 'Quality gates skipped — pipeline deadline reached. Findings used as-is from analysis.')
+    } else {
     await step.run('quality-gates', async () => {
       return withStepTimeout(async () => {
+      const qgStart = Date.now()
       await logStageStarted(auditId, 'quality_gates', 'Running quality checks on findings...')
       await setProgress(auditId, stageProgress('quality_gates', 0))
       const db = getDb()
@@ -3704,12 +3718,19 @@ RULES FOR RE-AUDIT:
         const existing = mergedUpdates.get(id) || {}
         mergedUpdates.set(id, { ...existing, ...updates })
       }
-      // Execute updates in parallel (Supabase handles individual rows)
-      const updatePromises = [...mergedUpdates.entries()].map(([id, updates]) =>
-        db.from('audit_findings').update(updates as any).eq('id', id)
-      )
-      if (updatePromises.length > 0) {
-        await Promise.all(updatePromises)
+      // Execute updates in CHUNKED batches — firing 100+ concurrent DB
+      // requests exhausts the Supabase connection pool and can stall the
+      // Node.js event loop, preventing setTimeout from firing (which breaks
+      // withStepTimeout and causes the 45-minute stall bug).
+      const updateEntries = [...mergedUpdates.entries()]
+      const CHUNK_SIZE = 10
+      for (let i = 0; i < updateEntries.length; i += CHUNK_SIZE) {
+        const chunk = updateEntries.slice(i, i + CHUNK_SIZE)
+        await Promise.all(
+          chunk.map(([id, updates]) =>
+            db.from('audit_findings').update(updates as any).eq('id', id)
+          )
+        )
       }
 
       // ── Pipeline instrumentation: snapshot findings after all gates ───
@@ -3734,15 +3755,24 @@ RULES FOR RE-AUDIT:
         await auditLog(auditId, 'findings_verified', 'success', `${findings.length} findings verified`)
       }
       await setProgress(auditId, stageProgress('quality_gates', 1))
-      await logStageCompleted(auditId, 'quality_gates', 'Quality gates passed')
-      }, 60_000, 'quality-gates')
+      await logStageCompleted(auditId, 'quality_gates', `Quality gates passed in ${Math.round((Date.now() - qgStart) / 1000)}s`)
+      }, 60_000, 'quality-gates', null as any)
+      // FALLBACK = null → withStepTimeout returns null on timeout instead
+      // of throwing. The pipeline continues without quality gates.
+      // Findings remain as-is from the analysis step — no dedup, no scoring,
+      // no speculative filter. This is safe: those are polish operations.
     })
+    } // end isPastDeadline else
 
     // ──────────────────────────────────────────────────────────
     // STEP 7b: Re-audit reconciliation
     // ──────────────────────────────────────────────────────────
     let reconciliationData: ReconciliationResult | null = null
     if (siteContext.previousRawFindings.length > 0) {
+      if (isPastDeadline()) {
+        console.warn(`[inngest] PIPELINE DEADLINE: Skipping reconcile-findings (${Math.round((Date.now() - pipelineStartTime) / 1000)}s elapsed)`)
+        await auditLog(auditId, 'deadline_skip', 'warning', 'Reconciliation skipped — pipeline deadline reached. Re-audit findings used as-is.')
+      } else {
       reconciliationData = await step.run('reconcile-findings', async () => {
         return withStepTimeout(async () => {
         await logStageStarted(auditId, 'reconciliation', 'Deduplicating and reconciling findings...')
@@ -3823,6 +3853,7 @@ RULES FOR RE-AUDIT:
         return result
         }, 60_000, 'reconcile-findings')
       })
+      } // end isPastDeadline else for reconcile-findings
     }
 
     // ──────────────────────────────────────────────────────────
@@ -3847,6 +3878,10 @@ RULES FOR RE-AUDIT:
       }
     } | null = null
 
+    if (isPastDeadline()) {
+      console.warn(`[inngest] PIPELINE DEADLINE: Skipping canonical-reconciliation (${Math.round((Date.now() - pipelineStartTime) / 1000)}s elapsed)`)
+      await auditLog(auditId, 'deadline_skip', 'warning', 'Canonical reconciliation skipped — pipeline deadline reached.')
+    } else {
     canonicalScoring = await step.run('canonical-reconciliation', async () => {
       return withStepTimeout(async () => {
       try {
@@ -3944,6 +3979,7 @@ RULES FOR RE-AUDIT:
       }
       }, 30_000, 'canonical-reconciliation')
     })
+    } // end isPastDeadline else for canonical-reconciliation
 
     // ──────────────────────────────────────────────────────────
     // STEP 8: Generate report (screenshots moved to enrichment)
