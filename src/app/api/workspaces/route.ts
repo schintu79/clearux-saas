@@ -30,35 +30,45 @@ export async function GET() {
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
 
-  // Fetch per-workspace audit counts split by type and status
-  // Only count completed audits (status = 'completed') for accurate display.
-  // Separate website audits (audit_type is null or 'website') from brand audits ('brand_identity').
+  // Fetch per-workspace audit counts split by type and status.
+  // Uses service client to bypass RLS — the user's identity is already
+  // verified above via getUser(), and workspace_ids are scoped to the user.
+  // This avoids silent zero-row returns when the server-side cookie→RLS
+  // auth context has session/timing issues (root cause of "No audits yet"
+  // on workspaces that clearly have completed audits).
+  const db = createServiceSupabase()
   const workspaceIds = (data || []).map((ws: any) => ws.id)
   let websiteCounts: Record<string, number> = {}
   let brandCounts: Record<string, number> = {}
 
   if (workspaceIds.length > 0) {
     // Website audits (completed, non-brand)
-    const { data: waRows } = await supabase
+    const { data: waRows, error: waErr } = await db
       .from('audits')
       .select('workspace_id')
+      .eq('user_id', user.id)
       .in('workspace_id', workspaceIds)
       .in('status', ['completed', 'completed_with_warnings'])
       .is('deleted_at', null)
       .or('audit_type.is.null,audit_type.eq.website')
+
+    if (waErr) console.error('[workspaces] website audit count error:', waErr.message)
 
     for (const r of waRows || []) {
       websiteCounts[r.workspace_id] = (websiteCounts[r.workspace_id] || 0) + 1
     }
 
     // Brand audits (completed)
-    const { data: baRows } = await supabase
+    const { data: baRows, error: baErr } = await db
       .from('audits')
       .select('workspace_id')
+      .eq('user_id', user.id)
       .in('workspace_id', workspaceIds)
       .in('status', ['completed', 'completed_with_warnings'])
       .is('deleted_at', null)
       .eq('audit_type', 'brand_identity')
+
+    if (baErr) console.error('[workspaces] brand audit count error:', baErr.message)
 
     for (const r of baRows || []) {
       brandCounts[r.workspace_id] = (brandCounts[r.workspace_id] || 0) + 1
