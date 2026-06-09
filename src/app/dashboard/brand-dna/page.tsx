@@ -46,6 +46,7 @@ import {
   Zap,
   Check,
   TrendingUp,
+  Download,
 } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { createBrowserSupabase } from '@/lib/supabase-ssr';
@@ -1477,6 +1478,61 @@ function BrandDnaPage() {
                             ({openFindings.length})
                           </span>
                         </p>
+                        <button
+                          onClick={() => {
+                            const brandName = identity?.name || workspace?.name || 'brand';
+                            const dateStr = new Date().toISOString().slice(0, 10);
+                            const score = overallScore ?? 0;
+
+                            let md = `# Brand DNA Audit — ${brandName}\n`;
+                            md += `**Date:** ${dateStr}  \n`;
+                            md += `**Overall score:** ${score}/100  \n`;
+                            md += `**Findings:** ${openFindings.length}  \n\n`;
+
+                            if (categoryScores.length > 0) {
+                              md += `## Category scores\n\n`;
+                              md += `| Category | Score |\n|---|---|\n`;
+                              categoryScores.forEach(cat => { md += `| ${cat.name} | ${cat.score}/100 |\n`; });
+                              md += `\n`;
+                            }
+
+                            md += `## Findings\n\n`;
+
+                            const sevOrder: Record<string, number> = { critical: 0, high: 1, medium: 2, low: 3 };
+                            const sorted = [...openFindings].sort((a, b) => (sevOrder[a.severity] ?? 9) - (sevOrder[b.severity] ?? 9));
+
+                            sorted.forEach((f, i) => {
+                              md += `### ${i + 1}. ${f.title}\n\n`;
+                              md += `- **Severity:** ${f.severity}\n`;
+                              if (f.page_url) md += `- **Page:** ${f.page_url}\n`;
+                              if (f.estimated_impact) md += `- **Impact:** ${f.estimated_impact}\n`;
+                              md += `\n${f.description}\n\n`;
+                              if (f.recommendation) md += `**Recommendation:** ${f.recommendation}\n\n`;
+                              md += `---\n\n`;
+                            });
+
+                            const blob = new Blob([md], { type: 'text/markdown;charset=utf-8' });
+                            const url = URL.createObjectURL(blob);
+                            const a = document.createElement('a');
+                            a.href = url;
+                            a.download = `fixpath-brand-dna-${brandName.toLowerCase().replace(/\s+/g, '-')}-${dateStr}.md`;
+                            document.body.appendChild(a);
+                            a.click();
+                            document.body.removeChild(a);
+                            URL.revokeObjectURL(url);
+                          }}
+                          className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[11px] font-medium transition-colors"
+                          style={{
+                            border: '1px solid var(--rule)',
+                            color: 'var(--ink)',
+                            background: 'transparent',
+                          }}
+                          onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(0,0,0,0.04)'; }}
+                          onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; }}
+                        >
+                          <Download size={11} strokeWidth={1.75} />
+                          Download fixes
+                        </button>
                         </div>
                       <div className="space-y-2">
                         {visibleFindings.map(f => (
