@@ -471,15 +471,8 @@ export const processAuditFn = inngest.createFunction(
 
       // ── Analyze all 6 brand categories in parallel ──
       const brandAnalysisResult = await step.run('brand-fast-analyze', async () => {
-        // ── AGE GUARD: Prevent infinite Inngest replay loops (brand analysis) ──
-        if (auditDetails.createdAt) {
-          const auditAgeMs = Date.now() - new Date(auditDetails.createdAt).getTime()
-          if (auditAgeMs > 15 * 60 * 1000) {
-            const ageMins = Math.round(auditAgeMs / 60000)
-            console.error(`[inngest] Brand audit ${auditId} is ${ageMins}min old — too old for brand-fast-analyze. Bailing.`)
-            throw new Error(`Brand audit exceeded 15-minute runtime limit (${ageMins}min). Aborting to prevent replay loop.`)
-          }
-        }
+        // AGE GUARD REMOVED — withStepTimeout on every step + stall sweeper
+        // provides the same protection without false-killing queued/replayed audits.
 
         await setProgress(auditId, 30, 'analysing')
 
@@ -632,20 +625,8 @@ Return 2-6 findings. Be specific and evidence-based. Reference specific files/co
       await step.run('brand-fast-report', async () => {
         await withStepTimeout(async () => {
 
-        // ── AGE GUARD: Prevent infinite Inngest replay loops (brand path) ──
-        // Same mechanism as the website audit generate-report guard.
-        // If Vercel times out, Inngest replays the function. Memoized steps
-        // skip, but brand-fast-report re-executes. setProgress() refreshes
-        // updated_at, hiding the audit from the stall sweeper's Tier 1/2.
-        // This guard breaks the loop and lets the hard ceiling handle cleanup.
-        if (auditDetails.createdAt) {
-          const auditAgeMs = Date.now() - new Date(auditDetails.createdAt).getTime()
-          if (auditAgeMs > 15 * 60 * 1000) {
-            const ageMins = Math.round(auditAgeMs / 60000)
-            console.error(`[inngest] Brand audit ${auditId} is ${ageMins}min old — too old for brand-fast-report. Bailing to let stall sweeper handle cleanup.`)
-            throw new Error(`Brand audit exceeded 15-minute runtime limit (${ageMins}min). Aborting to prevent replay loop.`)
-          }
-        }
+        // AGE GUARD REMOVED — withStepTimeout on every step + stall sweeper
+        // provides the same protection without false-killing queued/replayed audits.
 
         await setStatus(auditId, 'generating_report', 80)
         await setProgress(auditId, 80, 'reporting')
@@ -3973,21 +3954,8 @@ RULES FOR RE-AUDIT:
       await withStepTimeout(async () => {
       const db = getDb()
 
-      // ── AGE GUARD: Prevent infinite Inngest replay loops ──
-      // If Vercel times out the function, Inngest replays it. Previously-completed
-      // steps are memoized, so generate-report re-executes. Each replay calls
-      // setProgress() which refreshes updated_at, preventing the stall sweeper's
-      // Tier 1/2 from catching it. This guard breaks the loop: if the audit is
-      // already past 15 minutes, bail immediately and let the stall sweeper's
-      // hard ceiling handle cleanup (refund + email + status update).
-      if (auditDetails.createdAt) {
-        const auditAgeMs = Date.now() - new Date(auditDetails.createdAt).getTime()
-        if (auditAgeMs > 15 * 60 * 1000) {
-          const ageMins = Math.round(auditAgeMs / 60000)
-          console.error(`[inngest] Audit ${auditId} is ${ageMins}min old — too old for generate-report. Bailing to let stall sweeper handle cleanup.`)
-          throw new Error(`Audit exceeded 15-minute runtime limit (${ageMins}min). Aborting to prevent replay loop.`)
-        }
-      }
+      // AGE GUARD REMOVED — withStepTimeout on every step + stall sweeper
+      // provides the same protection without false-killing queued/replayed audits.
 
       try {
       await logStageStarted(auditId, 'reporting', 'Generating report...')
