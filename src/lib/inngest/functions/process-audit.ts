@@ -3014,11 +3014,24 @@ RULES FOR RE-AUDIT:
           : contentWithContext
 
         return { categoriesToAnalyze, contentWithContext, designConsistencyContent }
-        }, 60_000, 'analysis-prep')
+        }, 120_000, 'analysis-prep', null as any)
+        // ↑ Increased from 60s→120s: brand file extraction alone can take 60s.
+        // Added null fallback so timeout degrades gracefully instead of killing the audit.
       })
 
       // Destructure memoized prep result — these never re-execute on replay
-      const { categoriesToAnalyze, contentWithContext, designConsistencyContent } = analysisPrepResult
+      // If analysis-prep timed out, skip deep analysis entirely (audit still completes with empty findings)
+      if (!analysisPrepResult) {
+        console.warn('[inngest] analysis-prep timed out — skipping deep AI analysis')
+        await auditLog(auditId, 'analysis_prep_timeout', 'warning',
+          'Analysis prep timed out — deep AI analysis skipped. Audit will complete with limited findings.')
+        auditLimitations.push({
+          id: 'analysis_prep_timeout',
+          title: 'Analysis prep timed out',
+          description: 'The analysis preparation step timed out. This audit may have fewer findings than expected. Re-run to get full results.',
+        })
+      }
+      const { categoriesToAnalyze, contentWithContext, designConsistencyContent } = analysisPrepResult || { categoriesToAnalyze: [] as string[], contentWithContext: '', designConsistencyContent: '' }
 
       const BATCH_SIZE = 8
       const batches: string[][] = []
@@ -3906,7 +3919,9 @@ RULES FOR RE-AUDIT:
           })
 
         return result
-        }, 60_000, 'reconcile-findings')
+        }, 90_000, 'reconcile-findings', null as any)
+        // ↑ Increased from 60s→90s: deep re-audits produce many findings to reconcile.
+        // Added null fallback so timeout degrades gracefully instead of killing the audit.
       })
       } // end isPastDeadline else for reconcile-findings
     }
@@ -4032,7 +4047,8 @@ RULES FOR RE-AUDIT:
           `Canonical reconciliation failed: ${err instanceof Error ? err.message : String(err)}. Audit continues with legacy scoring.`)
         return null
       }
-      }, 30_000, 'canonical-reconciliation')
+      }, 30_000, 'canonical-reconciliation', null as any)
+      // ↑ Added null fallback — canonical reconciliation is non-fatal.
     })
     } // end isPastDeadline else for canonical-reconciliation
 
@@ -4253,13 +4269,25 @@ RULES FOR RE-AUDIT:
       return withStepTimeout(async () => {
       const db = getDb()
 
-      await setStatus(auditId, 'completed', 100)
+      // ATOMIC: Set status + completed_at in ONE call.
+      // Previously these were two separate DB calls — if the second failed,
+      // the audit had status='completed' but completed_at=NULL, which sorts
+      // LAST in PostgREST DESC ordering, hiding re-audits behind the original.
+      const now = new Date().toISOString()
+      const { error: completeErr } = await Promise.race([
+        db.from('audits').update({
+          status: 'completed',
+          progress_percent: 100,
+          completed_at: now,
+          updated_at: now,
+        } as any).eq('id', auditId),
+        new Promise<{ error: { message: string } }>((resolve) =>
+          setTimeout(() => resolve({ error: { message: 'complete-update timed out after 10s' } }), 10_000)
+        ),
+      ])
+      if (completeErr) throw new Error(`Failed to complete audit: ${completeErr.message}`)
       await setProgress(auditId, stageProgress('complete', 1), 'complete')
       await logPipelineCompleted(auditId, Date.now() - pipelineStartTime)
-      await db
-        .from('audits')
-        .update({ completed_at: new Date().toISOString(), updated_at: new Date().toISOString() } as any)
-        .eq('id', auditId)
 
       if (auditDetails.userEmail) {
         try {

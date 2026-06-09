@@ -95,7 +95,8 @@ export async function loadLatestAuditBundle(
     .eq('workspace_id', workspaceId)
     .in('status', ['completed', 'completed_with_warnings'])
     .is('deleted_at', null)
-    .order('completed_at', { ascending: false })
+    .order('completed_at', { ascending: false, nullsFirst: false })
+    .order('created_at', { ascending: false })
     .limit(25)
 
   const auditRows = (audits || []) as Audit[]
