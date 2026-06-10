@@ -99,7 +99,9 @@ function AuditConfidenceCard({ label, value, subvalue, tone = 'neutral' }: Audit
   }
 
   return (
-    <div className={`px-3 py-2.5 rounded-lg border bg-paper dark:bg-paper ${toneColors[tone]}`}>
+    // White card background (2026-06-10): the paper/cream background made the
+    // strip blend into the page — white gives the trust data clear separation.
+    <div className={`px-3 py-2.5 rounded-lg border bg-white dark:bg-white/[0.04] ${toneColors[tone]}`}>
       <div className="text-[10px] font-medium uppercase tracking-wider text-ink/40 mb-1">
         {label}
       </div>
@@ -282,101 +284,45 @@ interface FindingEvidencePanelProps {
 }
 
 /**
- * Expandable "Evidence" section inside an expanded finding.
- * Shows compact bullet list of evidence details.
- * Only visible in expanded state — never in collapsed row.
+ * Inline evidence metadata row (2026-06-10 — was a collapsible dropdown).
+ * One clean row that COMPLETES the info already shown near the finding
+ * title: the evidence-type badge (Heuristic/Verified/Observed) is already
+ * up there, so this row only adds method, scope, surface, and result.
+ * No interaction, no hidden state — clean and simple.
  */
-export function FindingEvidencePanel({ finding, defaultOpen = false }: FindingEvidencePanelProps) {
-  const [isOpen, setIsOpen] = useState(defaultOpen)
+export function FindingEvidencePanel({ finding }: FindingEvidencePanelProps) {
   const trust = computeFindingTrust(finding)
 
+  const parts: Array<{ label: string; value: string }> = []
+  // Method — the FindingSourceLabel near the title hides "AI review",
+  // so always include the method here.
+  if (trust.source_label) parts.push({ label: 'Method', value: trust.source_label })
+  if (finding.page_url) parts.push({ label: 'Scope', value: truncateUrl(finding.page_url) })
+  if (trust.affected_surfaces && trust.affected_surfaces.length > 0) {
+    const surfaceLabel = trust.affected_surfaces.length === 2
+      ? 'Desktop and mobile'
+      : trust.affected_surfaces[0] === 'mobile' ? 'Mobile only' : 'Desktop only'
+    parts.push({ label: 'Surface', value: surfaceLabel })
+  }
+  if (trust.evidence_summary) parts.push({ label: 'Result', value: truncate(trust.evidence_summary, 90) })
+  else if (finding.proposed_value) parts.push({ label: 'Proposed fix', value: truncate(finding.proposed_value, 90) })
+
+  if (parts.length === 0) return null
+
   return (
-    <div className="border-t border-ink/5 mt-3 pt-2">
-      <button
-        onClick={() => setIsOpen(!isOpen)}
-        className="flex items-center gap-1.5 text-[11px] font-medium text-ink/50 hover:text-ink/70 transition-colors w-full text-left"
-      >
-        <svg
-          className={`w-3 h-3 transition-transform ${isOpen ? 'rotate-90' : ''}`}
-          fill="none"
-          viewBox="0 0 24 24"
-          stroke="currentColor"
-          strokeWidth={2}
-        >
-          <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
-        </svg>
-        Evidence
-      </button>
-      {isOpen && (
-        <div className="mt-2 pl-4">
-          <EvidenceBulletList
-            evidenceType={trust.evidence_type}
-            method={trust.source_label || undefined}
-            pages={finding.page_url ? [finding.page_url] : undefined}
-            surfaces={trust.affected_surfaces || undefined}
-            summary={trust.evidence_summary || undefined}
-            measuredValue={finding.proposed_value || undefined}
-          />
-        </div>
-      )}
+    <div className="border-t border-ink/5 mt-3 pt-2 flex flex-wrap items-baseline gap-x-3 gap-y-1 text-[11px] leading-relaxed">
+      <span className="font-medium text-ink/60">Evidence</span>
+      {parts.map((p) => (
+        <span key={p.label} className="text-ink/50">
+          <span className="text-ink/35">{p.label}:</span> {p.value}
+        </span>
+      ))}
     </div>
   )
 }
 
-/* ── 9. EvidenceBulletList ──────────────────────────────────── */
-
-interface EvidenceBulletListProps {
-  evidenceType: EvidenceType
-  method?: string
-  pages?: string[]
-  surfaces?: ('desktop' | 'mobile')[]
-  summary?: string
-  measuredValue?: string
-}
-
-/**
- * Renders compact evidence bullets inside the FindingEvidencePanel.
- * Shows only fields that exist. Maximum 5 bullets by default.
- */
-function EvidenceBulletList({ evidenceType, method, pages, surfaces, summary, measuredValue }: EvidenceBulletListProps) {
-  const items: Array<{ label: string; value: string }> = []
-
-  // Type
-  const typeLabel = evidenceType === 'undetermined' ? 'Not enough evidence' : evidenceType.charAt(0).toUpperCase() + evidenceType.slice(1)
-  items.push({ label: 'Type', value: typeLabel })
-
-  // Method
-  if (method) items.push({ label: 'Method', value: method })
-
-  // Scope (pages)
-  if (pages && pages.length > 0) {
-    const pageLabel = pages.length === 1
-      ? truncateUrl(pages[0])
-      : `${pages.length} pages`
-    items.push({ label: 'Scope', value: pageLabel })
-  }
-
-  // Surface
-  if (surfaces && surfaces.length > 0) {
-    const surfaceLabel = surfaces.length === 2 ? 'Desktop and mobile' : surfaces[0] === 'mobile' ? 'Mobile only' : 'Desktop only'
-    items.push({ label: 'Surface', value: surfaceLabel })
-  }
-
-  // Result / summary
-  if (summary) items.push({ label: 'Result', value: summary })
-  else if (measuredValue) items.push({ label: 'Proposed fix', value: truncate(measuredValue, 100) })
-
-  return (
-    <ul className="space-y-1">
-      {items.slice(0, 5).map(item => (
-        <li key={item.label} className="text-[11px] text-ink/50 leading-relaxed">
-          <span className="font-medium text-ink/60">{item.label}:</span>{' '}
-          {item.value}
-        </li>
-      ))}
-    </ul>
-  )
-}
+/* ── 9. (removed) EvidenceBulletList ─────────────────────────
+ * Folded into the inline FindingEvidencePanel row (2026-06-10). */
 
 /* ── 10. ConfidenceInfoTooltip ──────────────────────────────── */
 

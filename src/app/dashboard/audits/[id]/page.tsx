@@ -1643,6 +1643,11 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
         const s = await fetchAuditDetail(true);
         if (s === 'completed' || s === 'completed_with_warnings' || s === 'failed') {
           if (pollRef.current) { clearInterval(pollRef.current); pollRef.current = null; }
+          // Match the main poll's behavior: a successfully completed audit
+          // sends the user to Overview, not the raw audit detail page.
+          if (s === 'completed' || s === 'completed_with_warnings') {
+            router.push(`${dashPrefix}/overview`);
+          }
         }
       }, 5000);
     } catch (err) {

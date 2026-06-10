@@ -76,6 +76,47 @@ export async function POST(
       metadata: {},
     } as any)
 
+    // ── Billing: re-deduct the credit if this audit was previously refunded ──
+    // Failure paths auto-refund the credit. Restarting consumes the service
+    // again, so a previously-refunded credit-based audit must re-use exactly
+    // one credit. Net invariant: one completed audit = one credit, regardless
+    // of how many failed attempts happened in between. Idempotent across
+    // multiple restarts via refund/re-deduct event counting. Balance clamps
+    // at 0 — we never block a restart over billing (failures were our fault).
+    try {
+      const { data: payment } = await db
+        .from('payments')
+        .select('user_id, stripe_payment_intent_id')
+        .eq('audit_id', auditId)
+        .single()
+      const payId = (payment as any)?.stripe_payment_intent_id as string | undefined
+      if (payId && payId.startsWith('credit_')) {
+        const { data: billingEvents } = await db
+          .from('audit_logs')
+          .select('event')
+          .eq('audit_id', auditId)
+          .in('event', ['credit_refunded', 'credit_rededucted'])
+        const refunds = (billingEvents || []).filter((e: any) => e.event === 'credit_refunded').length
+        const rededucts = (billingEvents || []).filter((e: any) => e.event === 'credit_rededucted').length
+        if (refunds > rededucts) {
+          const userId = (payment as any).user_id as string
+          const { data: profile } = await db.from('profiles').select('credits').eq('id', userId).single()
+          const current = (profile as any)?.credits ?? 0
+          const newBalance = Math.max(0, current - 1)
+          await db.from('profiles').update({ credits: newBalance, updated_at: new Date().toISOString() } as any).eq('id', userId)
+          await db.from('audit_logs').insert({
+            audit_id: auditId,
+            event: 'credit_rededucted',
+            status: 'info',
+            message: `Restart re-used 1 credit (previously refunded after a failed attempt). Balance: ${newBalance}.`,
+            metadata: { refunds, rededucts: rededucts + 1 },
+          } as any)
+        }
+      }
+    } catch (billErr) {
+      console.error('[restart] Billing re-deduction failed (non-fatal):', billErr)
+    }
+
     // Dispatch to Inngest only — no direct execution to prevent race conditions
     const auditType = (a as any).audit_type || ((a as any).brand_identity_id && !(a as any).product_url ? 'brand_identity' : 'website')
     const eventName = auditType === 'brand_identity' ? 'brand-audit/process' : 'audit/process'
