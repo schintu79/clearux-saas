@@ -130,7 +130,8 @@ function FindPageInner() {
   const loading = authLoading || wsLoading || bundleLoading || !bundle;
   const [collapsed, setCollapsed] = useState<Record<number, boolean>>({});
   const [expanded, setExpanded] = useState<Record<string, boolean>>({});
-  const [techExpanded, setTechExpanded] = useState<Record<string, boolean>>({});
+  // techExpanded state removed 2026-06-10 — technical notes are now always
+  // visible (green block under the recommendation), no dropdown.
   const [activeTab, setActiveTab] = useState<'priority' | 'strategic'>('priority');
 
   // Module filter — chip-driven, with URL hydration on first mount so the
@@ -519,8 +520,13 @@ function FindPageInner() {
                         <li
                           key={f.id}
                           style={{
-                            borderBottom: '1px solid var(--rule)',
+                            // Expanded cards get a clear visual break from the
+                            // next card: tinted background, severity accent bar,
+                            // and a strong bottom rule (was clashing with the
+                            // card below when open).
+                            borderBottom: isExpanded ? '2px solid var(--ink-2)' : '1px solid var(--rule)',
                             borderLeft: isExpanded ? `3px solid ${severityColor(f.severity)}` : '3px solid transparent',
+                            background: isExpanded ? 'color-mix(in srgb, var(--ink) 2.5%, transparent)' : undefined,
                           }}
                         >
                           <div
@@ -620,66 +626,60 @@ function FindPageInner() {
                           {isExpanded && (
                             <div className="px-4 pb-4 pt-2 grid grid-cols-1 md:grid-cols-2 gap-3">
                               <div className="rounded-lg p-3" style={{ background: 'var(--paper-2)', border: '1px solid var(--rule)' }}>
-                                <span className="text-[10px] font-semibold uppercase tracking-[0.06em] mb-1.5 block" style={{ color: 'var(--m-muted)' }}>What we found</span>
+                                <span className="text-[10px] font-semibold uppercase tracking-[0.06em] mb-1.5 block" style={{ color: 'var(--ink-2)' }}>What we found</span>
                                 <div className="text-[12.5px] leading-relaxed" style={{ color: 'var(--ink)' }}>
                                   <FindingText text={getWhatFound(f)} />
                                 </div>
                               </div>
                               <div className="rounded-lg p-3" style={{ background: 'var(--paper-2)', border: '1px solid var(--rule)' }}>
-                                <span className="text-[10px] font-semibold uppercase tracking-[0.06em] mb-1.5 block" style={{ color: 'var(--m-muted)' }}>Why it matters</span>
+                                <span className="text-[10px] font-semibold uppercase tracking-[0.06em] mb-1.5 block" style={{ color: 'var(--ink-2)' }}>Why it matters</span>
                                 <div className="text-[12.5px] leading-relaxed" style={{ color: 'var(--ink)' }}>
                                   <FindingText text={getWhyMatters(f) || 'Resolving this issue improves your overall site quality.'} />
                                 </div>
                               </div>
                               <div className="rounded-lg p-3 col-span-full" style={{ background: 'var(--paper-2)', border: '1px solid var(--rule)' }}>
-                                <span className="text-[10px] font-semibold uppercase tracking-[0.06em] mb-1.5 block" style={{ color: 'var(--m-muted)' }}>Recommendation</span>
+                                <span className="text-[10px] font-semibold uppercase tracking-[0.06em] mb-1.5 block" style={{ color: 'var(--ink-2)' }}>Recommendation</span>
                                 <div className="text-[12.5px] leading-relaxed" style={{ color: 'var(--ink)' }}>
                                   <FindingText text={getFixPlain(f)} />
                                 </div>
                               </div>
-                              {/* Evidence panel — expandable proof section */}
+                              {/* Technical note — always visible, right under the
+                                  recommendation, green background (was a dropdown) */}
+                              {hasCommunication(f) && getTechnicalNote(f) && (
+                                <div
+                                  className="rounded-lg p-3 col-span-full"
+                                  style={{
+                                    background: 'color-mix(in srgb, var(--ok) 8%, transparent)',
+                                    border: '1px solid color-mix(in srgb, var(--ok) 30%, transparent)',
+                                  }}
+                                >
+                                  <span className="text-[10px] font-semibold uppercase tracking-[0.06em] mb-1.5 block" style={{ color: 'var(--ok)' }}>Technical note</span>
+                                  <div className="text-[12.5px] leading-relaxed" style={{ color: 'var(--ink)' }}>
+                                    <FindingText text={getTechnicalNote(f)!} />
+                                  </div>
+                                </div>
+                              )}
+                              {hasCommunication(f) && getFixTechnical(f) && (
+                                <div
+                                  className="rounded-lg p-3 col-span-full"
+                                  style={{
+                                    background: 'color-mix(in srgb, var(--ok) 8%, transparent)',
+                                    border: '1px solid color-mix(in srgb, var(--ok) 30%, transparent)',
+                                  }}
+                                >
+                                  <span className="text-[10px] font-semibold uppercase tracking-[0.06em] mb-1.5 block" style={{ color: 'var(--ok)' }}>Technical fix</span>
+                                  <div className="text-[12.5px] leading-relaxed" style={{ color: 'var(--ink)' }}>
+                                    <FindingText text={getFixTechnical(f)!} />
+                                  </div>
+                                </div>
+                              )}
+                              {/* Evidence row — pill style for visibility */}
                               <div className="col-span-full">
                                 <FindingEvidencePanel finding={f} />
                               </div>
-                              {hasCommunication(f) && (getTechnicalNote(f) || getFixTechnical(f)) && (
-                                <div className="col-span-full">
-                                  <button
-                                    type="button"
-                                    onClick={() => setTechExpanded((prev) => ({ ...prev, [f.id]: !prev[f.id] }))}
-                                    className="inline-flex items-center gap-1.5 text-[11px] font-medium mb-2"
-                                    style={{ color: 'var(--ink-2)', background: 'transparent', border: 'none', padding: 0 }}
-                                    aria-expanded={!!techExpanded[f.id]}
-                                  >
-                                    {techExpanded[f.id] ? <ChevronUp size={12} /> : <ChevronDown size={12} />}
-                                    Technical details
-                                  </button>
-                                  {techExpanded[f.id] && (
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                                      {getTechnicalNote(f) && (
-                                        <div className="rounded-lg p-3" style={{ background: 'var(--paper-2)', border: '1px solid var(--rule)' }}>
-                                          <span className="text-[10px] font-semibold uppercase tracking-[0.06em] mb-1.5 block" style={{ color: 'var(--m-muted)' }}>Technical note</span>
-                                          <div className="text-[12.5px] leading-relaxed" style={{ color: 'var(--ink)' }}>
-                                            <FindingText text={getTechnicalNote(f)!} />
-                                          </div>
-                                        </div>
-                                      )}
-                                      {getFixTechnical(f) && (
-                                        <div className="rounded-lg p-3" style={{ background: 'var(--paper-2)', border: '1px solid var(--rule)' }}>
-                                          <span className="text-[10px] font-semibold uppercase tracking-[0.06em] mb-1.5 block" style={{ color: 'var(--m-muted)' }}>Technical fix</span>
-                                          <div className="text-[12.5px] leading-relaxed" style={{ color: 'var(--ink)' }}>
-                                            <FindingText text={getFixTechnical(f)!} />
-                                          </div>
-                                        </div>
-                                      )}
-                                    </div>
-                                  )}
-                                </div>
-                              )}
-                              <div className="col-span-full flex justify-end">
-                                <ActionLink href={`${dashPrefix}/fix#finding-${f.id}`} icon={Wrench}>
-                                  Open in fix console
-                                </ActionLink>
-                              </div>
+                              {/* "Open in fix console" removed — it clashed with the
+                                  next finding's CTAs; the Fix button in the card
+                                  header is the single fix entry point. */}
                             </div>
                           )}
                         </li>
@@ -731,7 +731,8 @@ function FindPageInner() {
                         >
                           {getDisplayTitle(f)}
                         </p>
-                        <p className="text-[12.5px] mt-1 leading-relaxed" style={{ color: 'var(--m-muted)' }}>
+                        {/* WCAG AA: body text uses ink-2 (m-muted was too light for paragraph text) */}
+                        <p className="text-[12.5px] mt-1 leading-relaxed" style={{ color: 'var(--ink-2)' }}>
                           {getWhatFound(f)}
                         </p>
                         <div className="mt-1.5 flex items-center gap-2 flex-wrap text-[11px]" style={{ color: 'var(--m-muted)' }}>

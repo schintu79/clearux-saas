@@ -102,14 +102,14 @@ function AuditConfidenceCard({ label, value, subvalue, tone = 'neutral' }: Audit
     // White card background (2026-06-10): the paper/cream background made the
     // strip blend into the page — white gives the trust data clear separation.
     <div className={`px-3 py-2.5 rounded-lg border bg-white dark:bg-white/[0.04] ${toneColors[tone]}`}>
-      <div className="text-[10px] font-medium uppercase tracking-wider text-ink/40 mb-1">
+      <div className="text-[10px] font-medium uppercase tracking-wider text-ink/60 mb-1">
         {label}
       </div>
       <div className="text-[12px] font-medium text-ink/80 leading-tight">
         {value}
       </div>
       {subvalue && (
-        <div className="text-[10px] text-ink/40 mt-0.5 leading-tight">
+        <div className="text-[10px] text-ink/60 mt-0.5 leading-tight">
           {subvalue}
         </div>
       )}
@@ -145,7 +145,7 @@ export function CategoryTrustMeta({ findings, coverageLabel = 'partial', compact
 
   if (compact) {
     return (
-      <span className="text-[10px] text-ink/35 font-normal">
+      <span className="text-[10px] text-ink/60 font-normal">
         {confidenceLabelText(confidence)} · {coverageLabelText(coverageLabel)}
       </span>
     )
@@ -168,7 +168,7 @@ interface CategoryTrustBadgeProps {
 
 function CategoryTrustBadge({ label }: CategoryTrustBadgeProps) {
   return (
-    <span className="text-[10px] text-ink/40 font-normal px-1.5 py-0.5 rounded bg-ink/[0.03] dark:bg-ink/[0.06]">
+    <span className="text-[10px] text-ink/60 font-normal px-1.5 py-0.5 rounded bg-ink/[0.03] dark:bg-ink/[0.06]">
       {label}
     </span>
   )
@@ -225,7 +225,7 @@ function evidenceBadgeStyle(type: EvidenceType): { label: string; className: str
     case 'undetermined':
       return {
         label: 'Not enough evidence',
-        className: 'bg-ink/5 text-ink/40 dark:bg-ink/10 dark:text-ink/50',
+        className: 'bg-ink/5 text-ink/60 dark:bg-ink/10 dark:text-ink/60',
       }
   }
 }
@@ -247,7 +247,7 @@ export function FindingSourceLabel({ finding }: FindingSourceLabelProps) {
   if (label === 'AI review') return null
 
   return (
-    <span className="text-[10px] text-ink/35 font-normal">
+    <span className="text-[10px] text-ink/60 font-normal">
       {label}
     </span>
   )
@@ -270,7 +270,7 @@ export function FindingSurfaceScope({ finding }: FindingSurfaceScopeProps) {
   const label = surfaces.length === 2 ? 'Both' : surfaces[0] === 'mobile' ? 'Mobile' : 'Desktop'
 
   return (
-    <span className="text-[10px] text-ink/35 font-normal">
+    <span className="text-[10px] text-ink/60 font-normal">
       {label}
     </span>
   )
@@ -309,12 +309,17 @@ export function FindingEvidencePanel({ finding }: FindingEvidencePanelProps) {
 
   if (parts.length === 0) return null
 
+  // Pill style (2026-06-10): each evidence item sits in its own pill for
+  // visibility. Text at ink/70+ for WCAG AA contrast (ink/50 failed ~4:1).
   return (
-    <div className="border-t border-ink/5 mt-3 pt-2 flex flex-wrap items-baseline gap-x-3 gap-y-1 text-[11px] leading-relaxed">
-      <span className="font-medium text-ink/60">Evidence</span>
+    <div className="border-t border-ink/10 mt-3 pt-2.5 flex flex-wrap items-center gap-1.5 text-[11px] leading-relaxed">
+      <span className="font-semibold text-ink/80 mr-1">Evidence</span>
       {parts.map((p) => (
-        <span key={p.label} className="text-ink/50">
-          <span className="text-ink/35">{p.label}:</span> {p.value}
+        <span
+          key={p.label}
+          className="inline-flex items-baseline gap-1 px-2.5 py-1 rounded-full border border-ink/10 bg-ink/[0.04] text-ink/80"
+        >
+          <span className="font-medium text-ink/60">{p.label}:</span> {p.value}
         </span>
       ))}
     </div>
@@ -361,7 +366,7 @@ export function ConfidenceInfoTooltip({ label }: { label: ConfidenceLabel }) {
 
   return (
     <InfoTooltip content={text}>
-      <svg className="w-3 h-3 text-ink/25 ml-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+      <svg className="w-3 h-3 text-ink/50 ml-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
         <circle cx="12" cy="12" r="10" />
         <path d="M12 16v-4M12 8h.01" />
       </svg>
@@ -380,7 +385,7 @@ export function CoverageInfoTooltip({ label }: { label: CoverageLabel }) {
 
   return (
     <InfoTooltip content={text}>
-      <svg className="w-3 h-3 text-ink/25 ml-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+      <svg className="w-3 h-3 text-ink/50 ml-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
         <circle cx="12" cy="12" r="10" />
         <path d="M12 16v-4M12 8h.01" />
       </svg>
