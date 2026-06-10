@@ -1629,11 +1629,20 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
       const res = await fetch(`/api/audits/${auditId}/restart`, { method: 'POST' });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Restart failed');
+      // CRITICAL: reset the forward-only status guard. 'failed' is level 5 in
+      // STATUS_ORDER, so after a restart (status back to payment_received,
+      // level 1) every refetch was silently discarded as a "stale status" —
+      // the audit restarted in the background while the UI stayed frozen on
+      // the failure screen, making users hammer Try again repeatedly.
+      highestStatusRef.current = 0;
+      completedRef.current = false;
+      shouldPollRef.current = true;
       await fetchAuditDetail();
+      if (pollRef.current) clearInterval(pollRef.current);
       pollRef.current = setInterval(async () => {
         const s = await fetchAuditDetail(true);
         if (s === 'completed' || s === 'completed_with_warnings' || s === 'failed') {
-          if (pollRef.current) clearInterval(pollRef.current);
+          if (pollRef.current) { clearInterval(pollRef.current); pollRef.current = null; }
         }
       }, 5000);
     } catch (err) {

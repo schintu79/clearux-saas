@@ -9,7 +9,7 @@
   "functions": {
     "src/app/api/inngest/route.ts": {
       "maxDuration": 300,
-      "memory": 1024
+      "memory": 3009
     },
     "src/app/api/reports/*/pdf/route.ts": {
       "maxDuration": 60
