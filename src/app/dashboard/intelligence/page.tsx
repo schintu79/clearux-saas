@@ -492,7 +492,12 @@ function IntelligencePage() {
       const items = data.interrogations ?? [];
       const map = new Map<string, Array<{ modelSlug: string; modelShortId: string; modelDisplayName: string; status: string; responseText: string | null; themes: string[]; accuracy: string | null; accuracyNote: string | null; latencyMs: number | null; error: string | null }>>();
       for (const item of items) {
-        const qText = item.interrogation?.question_text;
+        // ROOT CAUSE of "interrogate again after every refresh" (2026-06-10):
+        // the API returns raw DB rows where the column is question_text_SNAPSHOT.
+        // Reading .question_text yielded undefined for every row, so the saved-
+        // results map was empty since the feature shipped — 86 paid answers sat
+        // in the DB that the UI never showed.
+        const qText = item.interrogation?.question_text_snapshot ?? item.interrogation?.question_text;
         if (!qText) continue;
         const results = (item.results ?? []).map((r: any) => {
           const slug = r.model_slug ?? '';
@@ -530,8 +535,10 @@ function IntelligencePage() {
   // Auto-load answers for the first pinned question when past results are available
   useEffect(() => {
     if (iqActiveQuestion || iqQuestions.length === 0 || iqPastResults.size === 0) return;
-    // Find the first question (pinned = first 3) that has cached results
-    for (let i = 0; i < Math.min(3, iqQuestions.length); i++) {
+    // Auto-open the first question with saved answers (any of the 10, not
+    // just the pinned 3) so a returning user immediately sees their paid
+    // results instead of an empty panel.
+    for (let i = 0; i < iqQuestions.length; i++) {
       const q = iqQuestions[i];
       const cached = iqPastResults.get(normQ(q.questionText));
       if (cached && cached.length > 0) {
