@@ -2203,6 +2203,40 @@ function IntelligencePage() {
                 )}
               </div>
             </div>
+            {hasModelBreakdown && (
+              <div className="mb-3">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                  {mergedModelBreakdown.map((probe) => {
+                    const badge = accuracyBadge(probe.accuracy_score, probe.status);
+                    const measured = probe.status === 'measured' || !probe.status;
+                    const hasSent = probe.sentiment_score != null;
+                    return (
+                      <div key={probe.model_id} className="rounded-lg px-3 py-2.5 bg-white dark:bg-white/[0.04]" style={{ border: '1px solid var(--rule)' }}>
+                        <div className="flex items-center gap-2">
+                          <AIProviderIcon provider={providerKeyToIcon(probe.model_id) ?? 'chatgpt'} size={16} />
+                          <span className="text-[12px] font-semibold truncate" style={{ color: 'var(--ink)' }}>{probe.model_label}</span>
+                          <span className="ml-auto text-[16px] font-bold tabular-nums flex-shrink-0" style={{ color: measured ? scoreColor(probe.accuracy_score) : 'var(--m-muted)' }}>
+                            {measured ? `${probe.accuracy_score}%` : '—'}
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-1.5 mt-1.5">
+                          <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded" style={{ background: badge.bg, color: badge.color }}>{badge.label}</span>
+                          {measured && probe.total_questions > 0 && (
+                            <span className="text-[10px]" style={{ color: 'var(--ink-2)' }}>{probe.total_questions} question{probe.total_questions !== 1 ? 's' : ''}</span>
+                          )}
+                          {hasSent && (
+                            <span className="ml-auto text-[10px]" style={{ color: 'var(--ink-2)' }}>Sentiment {probe.sentiment_score}/100</span>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+                <p className="text-[10px] mt-1.5" style={{ color: 'var(--m-muted)' }}>
+                  Accuracy per model across the benchmark set — graded against your actual website content. Accurate = 100% · Partial = 50% · No data = 25% · Inaccurate = 0%.
+                </p>
+              </div>
+            )}
             <p className="text-[12px] mb-2" style={{ color: 'var(--ink-2)' }}>
               These are the {iqQuestions.length || 10} questions people most often ask AI models about businesses in your industry.
               Your AI Accuracy is measured against them, so it stays comparable between audits. Saved answers load instantly at no cost.
@@ -2246,7 +2280,7 @@ function IntelligencePage() {
             {/* Split layout: left panel (models + questions) | right panel (answers) */}
             <div className="flex flex-col lg:flex-row gap-3 flex-1 min-h-0 overflow-hidden">
               {/* ── Left panel: Models + Questions ── */}
-              <div className="lg:w-1/3 lg:min-w-[300px] lg:max-w-[440px] flex-shrink-0 flex flex-col overflow-hidden">
+              <div className="lg:w-1/3 lg:flex-none flex flex-col overflow-hidden">
                 {/* Model selector — sticky at top */}
                 <div className="flex-shrink-0 pb-3 z-10" style={{ background: 'var(--card)' }}>
                   <p className="text-[11px] font-semibold uppercase tracking-[0.05em] mb-2" style={{ color: 'var(--m-muted)' }}>
@@ -2260,19 +2294,19 @@ function IntelligencePage() {
                         <button
                           key={m.slug}
                           onClick={() => toggleIqModel(m.slug)}
-                          disabled={iqRunning}
-                          className="flex items-center gap-1.5 px-2 py-1 rounded-md text-[11px] font-medium transition-all"
+                          disabled={iqRunning || iqBatch.running}
+                          className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[11.5px] font-medium transition-all"
                           style={{
                             background: selected ? 'var(--ink)' : 'var(--paper-2)',
-                            color: selected ? 'var(--paper)' : 'var(--m-muted)',
+                            color: selected ? 'var(--paper)' : 'var(--ink-2)',
                             border: `1px solid ${selected ? 'var(--ink)' : 'var(--rule)'}`,
-                            opacity: iqRunning ? 0.5 : 1,
+                            opacity: (iqRunning || iqBatch.running) ? 0.5 : 1,
                           }}
                           title={m.free ? 'Included free with every audit' : 'Uses 1 check'}
                         >
+                          {selected && <CheckCircle2 size={13} strokeWidth={2.25} style={{ color: 'var(--ok)' }} />}
                           {provider && <AIProviderIcon provider={provider} size={13} />}
                           {provider ? PROVIDER_LABEL[provider] : m.shortId}
-                          {m.free && <CheckCircle2 size={9} strokeWidth={2} className="opacity-50" />}
                         </button>
                       );
                     })}
@@ -2426,8 +2460,8 @@ function IntelligencePage() {
                 </div>
               </div>
 
-              {/* ── Right panel: Answers ── */}
-              <div className="flex-1 min-w-0 overflow-y-auto">
+              {/* ── Right panel: Answers — 2/3 width ── */}
+              <div className="flex-1 lg:w-2/3 min-w-0 overflow-y-auto">
                 {iqResults.length > 0 ? (
                   <div>
                     {iqActiveQuestion && (
@@ -2534,74 +2568,7 @@ function IntelligencePage() {
             </div>
           </DashCard>
 
-          {/* ── Per-model breakdown (merged from all evaluated records) ── */}
-          {hasModelBreakdown && (
-            <DashCard>
-              <div className="flex items-center gap-2 mb-1">
-                <BarChart3 size={15} strokeWidth={1.75} style={{ color: 'var(--ink)' }} />
-                <h2 className="text-[15px] font-semibold" style={{ color: 'var(--ink)' }}>Model-by-model breakdown</h2>
-              </div>
-              <p className="text-[13px] mb-2" style={{ color: 'var(--m-muted)' }}>
-                How each AI model performs when asked about your brand. Accuracy is computed from all evaluated questions using the category-specific Top 10 benchmark set.
-              </p>
-              <p className="text-[11px] mb-4 px-3 py-2 rounded-lg" style={{ background: 'color-mix(in srgb, var(--ink) 3%, transparent)', color: 'var(--m-muted)' }}>
-                <strong style={{ color: 'var(--ink)' }}>Methodology:</strong> We select the 10 most relevant questions for your industry and category — the kind of questions real users ask Google and AI about businesses like yours. Each model answers the same questions, and responses are graded against your actual website content. Scores: Accurate = 100%, Partial = 50%, No data = 25%, Inaccurate/Hallucinated = 0%.
-              </p>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-                {mergedModelBreakdown.map(probe => {
-                  const badge = accuracyBadge(probe.accuracy_score, probe.status);
-                  const hasSent = probe.sentiment_score != null;
-                  return (
-                    <div key={probe.model_id} className="rounded-lg px-4 py-4" style={{ background: 'var(--paper-2)', border: '1px solid var(--rule)' }}>
-                      <div className="flex items-center gap-2.5 mb-3">
-                        <AIProviderIcon provider={providerKeyToIcon(probe.model_id) ?? 'chatgpt'} size={20} />
-                        <span className="text-[13px] font-semibold" style={{ color: 'var(--ink)' }}>{probe.model_label}</span>
-                      </div>
-                      <div className="space-y-2">
-                        <div className="flex items-center justify-between">
-                          <span className="text-[11px]" style={{ color: 'var(--m-muted)' }}>Accuracy</span>
-                          <div className="flex items-center gap-1.5">
-                            {probe.status === 'measured' || !probe.status ? (
-                              <span className="text-[12px] font-semibold tabular-nums" style={{ color: 'var(--ink)' }}>{probe.accuracy_score}%</span>
-                            ) : (
-                              <span className="text-[12px] font-semibold" style={{ color: 'var(--m-muted)' }}>—</span>
-                            )}
-                            <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded" style={{ background: badge.bg, color: badge.color }}>{badge.label}</span>
-                          </div>
-                        </div>
-                        <div className="flex items-center justify-between">
-                          <span className="text-[11px]" style={{ color: 'var(--m-muted)' }}>Sentiment</span>
-                          <span className="text-[12px] font-semibold tabular-nums" style={{ color: hasSent ? scoreColor(probe.sentiment_score) : 'var(--m-muted)' }}>
-                            {hasSent ? `${probe.sentiment_score}/100` : '--'}
-                          </span>
-                        </div>
-                        {probe.status === 'measured' && probe.total_questions > 0 && (
-                          <div className="flex items-center justify-between pt-1" style={{ borderTop: '1px solid var(--rule)' }}>
-                            <span className="text-[10px]" style={{ color: 'var(--m-muted)', opacity: 0.7 }}>Based on</span>
-                            <span className="text-[10px] tabular-nums" style={{ color: 'var(--m-muted)', opacity: 0.7 }}>
-                              {probe.total_questions} question{probe.total_questions !== 1 ? 's' : ''}
-                            </span>
-                          </div>
-                        )}
-                      </div>
-                      {probe.sentiment_themes && probe.sentiment_themes.length > 0 && (
-                        <div className="flex flex-wrap gap-1 mt-3 pt-2" style={{ borderTop: '1px solid var(--rule)' }}>
-                          {probe.sentiment_themes.slice(0, 3).map(t => (
-                            <span key={t.theme} className="text-[10px] px-1.5 py-0.5 rounded" style={{
-                              background: t.polarity === 'positive' ? 'rgba(34,197,94,0.08)' : t.polarity === 'negative' ? 'rgba(239,68,68,0.08)' : 'var(--paper-2)',
-                              color: t.polarity === 'positive' ? 'var(--ok)' : t.polarity === 'negative' ? 'var(--severe)' : 'var(--m-muted)',
-                              border: '1px solid var(--rule)',
-                            }}>{t.theme}</span>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-                  );
-                })}
-              </div>
-            </DashCard>
-          )}
+          {/* Per-model breakdown moved into the console header (2026-06-10) */}
 
           {/* ── Perception themes ── */}
           {allThemes.length > 0 && (
