@@ -74,6 +74,7 @@ import {
   type LatestAuditBundle,
 } from '@/lib/dashboard/latest-audit';
 import { healthLabel, type HealthContext } from '@/lib/audit-findings-presentation';
+import { applySeverityCap } from '@/lib/scoring/severity-cap';
 import { useWorkspace } from '@/context/WorkspaceContext';
 import { useAuditProgress } from '@/hooks/useAuditProgress';
 import EmptyAudit from '@/components/dashboard/v2/EmptyAudit';
@@ -648,6 +649,15 @@ function OverviewInner() {
       : (report.overall_score ?? 0);
   }
 
+  // ── Score model v2: severity cap (2026-06-10) ──────────────────────
+  // The live recompute above keeps the score in sync with fixes/dismissals,
+  // but it MUST apply the same severity cap as the engine — without this
+  // the overview showed an uncapped 87 while the report stored the capped
+  // 65 for the same audit. Cap counts only OPEN findings, so fixing the
+  // high-severity issues lifts the cap in real time.
+  const { overall: cappedOverallScore, capInfo: scoreCapInfo } = applySeverityCap(overallScore, openFindings);
+  overallScore = cappedOverallScore;
+
   // Findings per pillar (used by Row 2 audit-style category cards).
   const findingsByPillarName: Record<string, AuditFinding[]> = {};
   for (const name of PILLAR_NAMES) findingsByPillarName[name] = [];
@@ -973,6 +983,11 @@ function OverviewInner() {
                 categoryScores: categoryScores.map(c => ({ score_state: (c as any).score_state })),
               }).label}
             </span>
+            {scoreCapInfo.applied && (
+              <p className="text-[11px] mt-2 text-center leading-snug max-w-[260px]" style={{ color: 'var(--warn)' }}>
+                Score capped by {scoreCapInfo.reason} — fixing them unlocks your full score.
+              </p>
+            )}
           </div>
           {pillarScores.length > 0 && (
             <div className="mt-3 pt-3" style={{ borderTop: '1px solid var(--rule)' }}>

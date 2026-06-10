@@ -124,49 +124,12 @@ export interface SiteProfile {
 
 /**
  * Severity cap (score model v2, 2026-06-10).
- * The overall score is the mean of 28 category scores, where zero-finding
- * categories score 95-99. That arithmetic guaranteed inflation: a site with
- * SEVEN open high-severity issues could not score below ~80 (qinacademy.com
- * scored 87 with 7 high). The cap encodes the professional judgment the
- * average can't: you cannot be an 87 site with 7 high-severity issues open.
- * Fixing the issues lifts the cap — honest score, built-in motivation loop.
+ * Moved to @/lib/scoring/severity-cap so the dashboard (client) can apply
+ * the SAME cap to its live recompute without dragging the Anthropic SDK
+ * into the client bundle. Re-exported here for engine-side callers.
  */
-export interface ScoreCapInfo {
-  applied: boolean
-  cap: number | null
-  reason: string | null
-}
-
-export function applySeverityCap(
-  overall: number,
-  findings: Array<{ severity: string }>,
-): { overall: number; capInfo: ScoreCapInfo } {
-  let critical = 0, high = 0, medium = 0
-  for (const f of findings) {
-    if (f.severity === 'critical') critical++
-    else if (f.severity === 'high') high++
-    else if (f.severity === 'medium') medium++
-  }
-
-  let cap: number | null = null
-  let reason: string | null = null
-  if (critical >= 1) { cap = 55; reason = `${critical} open critical issue${critical > 1 ? 's' : ''}` }
-  else if (high >= 6) { cap = 65; reason = `${high} open high-severity issues` }
-  else if (high >= 3) { cap = 72; reason = `${high} open high-severity issues` }
-  else if (high >= 1) { cap = 80; reason = `${high} open high-severity issue${high > 1 ? 's' : ''}` }
-  else if (medium >= 6) { cap = 85; reason = `${medium} open medium-severity issues` }
-
-  if (cap != null && overall > cap) {
-    return { overall: cap, capInfo: { applied: true, cap, reason } }
-  }
-  return { overall, capInfo: { applied: false, cap: null, reason: null } }
-}
-
-/** Deterministic, user-facing sentence explaining an applied cap. */
-export function capSummarySentence(capInfo: ScoreCapInfo): string {
-  if (!capInfo.applied || !capInfo.reason) return ''
-  return ` The overall score is currently capped at ${capInfo.cap}/100 by ${capInfo.reason} — resolving them unlocks the site's full score.`
-}
+export { applySeverityCap, capSummarySentence, type ScoreCapInfo } from '@/lib/scoring/severity-cap'
+import { applySeverityCap, capSummarySentence, type ScoreCapInfo } from '@/lib/scoring/severity-cap'
 
 export interface ReportData {
   executiveSummary: string
