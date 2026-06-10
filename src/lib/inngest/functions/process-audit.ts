@@ -17,7 +17,7 @@ import { crawlPages, formatHeadTagsForAnalysis, type HeadTagData } from '@/lib/a
 import { runCrawlPreflight } from '@/lib/audit-engine/crawl-preflight'
 import { probeAIDiscovery, formatAIDiscoveryForAnalysis } from '@/lib/audit-engine/ai-discovery-probe'
 import { validateStructuredData, formatValidationForAnalysis } from '@/lib/audit-engine/structured-data-validator'
-import { analyzeCategory, generateReport, verifyFindings, UX_CATEGORIES, detectSiteProfile } from '@/lib/audit-engine/analyzer'
+import { analyzeCategory, generateReport, verifyFindings, UX_CATEGORIES, detectSiteProfile, calculateScoresFromFindings } from '@/lib/audit-engine/analyzer'
 import type { SiteProfile } from '@/lib/audit-engine/analyzer'
 import { generatePdfReport } from '@/lib/audit-engine/pdf'
 import { sendAuditComplete, sendFreeAuditReady } from '@/lib/audit-engine/email'
@@ -243,7 +243,12 @@ const UX_CATEGORY_NAMES = UX_CATEGORIES.map((c) => c.name)
 export const processAuditFn = inngest.createFunction(
   {
     id: 'process-audit',
-    retries: 0, // Don't retry — failed audits refund credits and show error UI
+    // retries: 1 (was 0) — added 2026-06-10 after a run was killed abruptly
+    // mid report-step with 39 verified findings already in the DB. Inngest
+    // memoizes completed steps, so a retry skips all finished analysis (no
+    // duplicate AI cost) and only re-executes the step that died. One retry
+    // turns transient infra kills into completed audits instead of refunds.
+    retries: 1,
     concurrency: {
       limit: 3, // Lower concurrency to avoid API rate limits across parallel audits
     },
@@ -253,6 +258,12 @@ export const processAuditFn = inngest.createFunction(
       // that killed the main function.
       try {
         const auditId = event.data.event.data.auditId
+        // Capture the REAL failure reason for diagnostics — until 2026-06-10
+        // this handler only wrote a generic "pipeline timed out" message,
+        // which made root-causing run failures needlessly hard.
+        const failureError = (event as any)?.data?.error
+        const failureReason = (failureError?.message || failureError?.name || 'unknown error') as string
+        console.error(`[inngest/onFailure] Audit ${auditId} run failed with: ${failureReason}`)
         const db = createServiceSupabase()
         const { data } = await db
           .from('audits')
@@ -287,7 +298,7 @@ export const processAuditFn = inngest.createFunction(
           // only set to 'complete' when the audit resolved with a report.
           audit_stage: hasReport ? 'complete' : undefined,
           completed_at: new Date().toISOString(),
-          crawl_error: hasReport ? undefined : 'Pipeline timed out during processing. Your partial results may still be available.',
+          crawl_error: hasReport ? undefined : `Pipeline failed during processing (${failureReason.slice(0, 200)}). Your credit has been refunded.`,
           updated_at: new Date().toISOString(),
         } as any).eq('id', auditId)
 
@@ -4216,27 +4227,60 @@ RULES FOR RE-AUDIT:
       const droppedFixed = userConfirmedFixed + aiVerifiedFixed
       const droppedDismissed = siteContext.previousRawFindings.filter((f: any) => f.dismissed).length
 
-      const reportData = await generateReport(
-        findings,
-        audit as any,
-        reportContentWithContext,
-        auditDetails.userFocus,
-        auditDetails.language,
-        effectiveDepthMode,
-        siteContext.previousCategoryScores.length > 0 ? {
-          previousCategoryScores: siteContext.previousCategoryScores,
-          previousOverallScore: siteContext.previousOverallScore,
-          previousTotalFindings: siteContext.previousTotalFindings,
-          previousExecutiveSummary: siteContext.previousExecutiveSummary,
-          previousReportJson: siteContext.previousReportJson,
-          droppedFixed,
-          droppedDismissed,
-        } : undefined,
-        siteProfile,
-      )
+      // ── Narrative generation with deterministic fallback (2026-06-10) ──
+      // The AI narrative is garnish — the findings are the product. If the
+      // narrative call fails or hangs, fall back to calculateScoresFromFindings
+      // (same deterministic scoring formula, template summary) and SHIP the
+      // report. An audit with verified findings must never die because the
+      // essay writer hiccuped. Refunds are reserved for "we have nothing".
+      let reportData: ReturnType<typeof calculateScoresFromFindings> | null = null
+      let narrativeDegraded = false
+      try {
+        // NOTE: local withTimeout swallows errors and resolves null — both the
+        // null result and any thrown error route to the same fallback below.
+        reportData = await withTimeout(
+          generateReport(
+            findings,
+            audit as any,
+            reportContentWithContext,
+            auditDetails.userFocus,
+            auditDetails.language,
+            effectiveDepthMode,
+            siteContext.previousCategoryScores.length > 0 ? {
+              previousCategoryScores: siteContext.previousCategoryScores,
+              previousOverallScore: siteContext.previousOverallScore,
+              previousTotalFindings: siteContext.previousTotalFindings,
+              previousExecutiveSummary: siteContext.previousExecutiveSummary,
+              previousReportJson: siteContext.previousReportJson,
+              droppedFixed,
+              droppedDismissed,
+            } : undefined,
+            siteProfile,
+          ),
+          90_000,
+          'generate-report-narrative',
+        )
+      } catch (narrativeErr) {
+        console.error(`[inngest] Narrative generation threw for audit ${auditId}:`,
+          narrativeErr instanceof Error ? narrativeErr.message : narrativeErr)
+        reportData = null // fall through to deterministic fallback below
+      }
+      if (!reportData) {
+        narrativeDegraded = true
+        console.error(`[inngest] Narrative generation failed/timed out for audit ${auditId} — using deterministic fallback from ${findings.length} verified findings`)
+        await auditLog(auditId, 'report_narrative_fallback', 'warning',
+          `AI narrative failed or timed out — report built deterministically from ${findings.length} verified findings instead.`)
+        const fallbackPages = (audit as any)?.crawl_summary?.pages_analyzed ?? (audit as any)?.pages_crawled ?? 0
+        reportData = calculateScoresFromFindings(findings, auditDetails.language, fallbackPages)
+        auditLimitations.push({
+          id: 'narrative_degraded',
+          title: 'Executive summary simplified',
+          description: 'The AI-written executive summary could not be generated for this run. Scores and findings are complete and verified — only the narrative text uses a simplified format.',
+        })
+      }
 
       // ── Heartbeat: report narrative complete → 85% ──
-      console.log(`[inngest] Audit ${auditId} generateReport() returned in ${Date.now() - reportStepStart}ms`)
+      console.log(`[inngest] Audit ${auditId} generateReport() returned in ${Date.now() - reportStepStart}ms${narrativeDegraded ? ' (deterministic fallback — AI narrative failed)' : ''}`)
       await setProgress(auditId, stageProgress('reporting', 0.4))
 
       const severityCount = {

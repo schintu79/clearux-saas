@@ -1756,7 +1756,7 @@ function getDefaultCategoryScores(language: string = 'en'): CategoryScore[] {
  *   Categories with 0 findings = CLEAN_JITTER[catIdx] (95-99, deterministic).
  * This ensures scores ALWAYS match the deterministic model, even in fallback paths.
  */
-function calculateScoresFromFindings(findings: AuditFinding[], language: string = 'en', pagesAnalyzed: number = 0): ReportData {
+export function calculateScoresFromFindings(findings: AuditFinding[], language: string = 'en', pagesAnalyzed: number = 0): ReportData {
   const categoryNames = getCategoryNames(language)
   const severityPenalty: Record<string, number> = { critical: 18, high: 12, medium: 6, low: 2 }
   // Must match generateReport() BASE_SCORE = 97
