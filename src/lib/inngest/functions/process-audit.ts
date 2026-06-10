@@ -201,6 +201,39 @@ async function auditLog(
 // refundCredit() is imported from '@/lib/audit-engine/refund-credit'
 // Used by: onFailure handler, outer catch, finally safety net
 
+/**
+ * Insert findings and CHECK THE ERROR. supabase-js never throws on insert
+ * failure — it returns { error }. Ignoring it caused the June 7-10 incident:
+ * a missing `viewport` column rejected every batch insert silently and all
+ * website audits shipped with zero findings and jitter-fabricated scores.
+ * Every audit_findings insert MUST go through this helper.
+ * Returns the number of rows inserted (0 on failure).
+ */
+async function insertFindingsChecked(
+  db: ReturnType<typeof getDb>,
+  auditId: string,
+  rows: any[],
+  label: string,
+): Promise<number> {
+  if (!rows || rows.length === 0) return 0
+  const { error } = await db.from('audit_findings').insert(rows as any)
+  if (error) {
+    console.error(`[inngest] FINDINGS INSERT FAILED (${label}): ${error.message}`, {
+      auditId,
+      rowCount: rows.length,
+      code: (error as any).code,
+      details: (error as any).details,
+      hint: (error as any).hint,
+    })
+    await auditLog(auditId, 'findings_insert_failed', 'error',
+      `${label}: failed to save ${rows.length} finding(s) — ${error.message}. ` +
+      `Likely schema drift: check that every column in the insert payload exists in audit_findings.`,
+      { label, row_count: rows.length, db_error: error.message })
+    return 0
+  }
+  return rows.length
+}
+
 /* ── UX Categories — sourced from analyzer.ts (single source of truth) ── */
 
 const UX_CATEGORY_NAMES = UX_CATEGORIES.map((c) => c.name)
@@ -589,7 +622,7 @@ Return 2-6 findings. Be specific and evidence-based. Reference specific files/co
         }
 
         if (batchInserts.length > 0) {
-          await db.from('audit_findings').insert(batchInserts as any)
+          await insertFindingsChecked(db, auditId, batchInserts, 'brand-analysis')
         }
 
         await setProgress(auditId, 60, 'analysing')
@@ -1361,7 +1394,7 @@ Return 2-6 findings. Be specific and evidence-based. Reference specific files/co
                 ...computeActionModelFields({ title: finding.title, description: finding.description, recommendation: finding.recommendation, fix_type: cls.fixType, finding_type: cls.findingType }),
               }
             })
-            await db.from('audit_findings').insert(responsiveInserts as any)
+            await insertFindingsChecked(db, auditId, responsiveInserts, 'responsive-check')
           }
 
           // Update audit_pages with mobile-friendly data
@@ -1452,7 +1485,7 @@ Return 2-6 findings. Be specific and evidence-based. Reference specific files/co
               position: 900 + i,
               communication: buildCommunicationForGenericFinding({ title: f.title, description: f.description, recommendation: f.recommendation, estimatedImpact: null, severity: f.severity }, siteProfile),
             }))
-            await db.from('audit_findings').insert(findingRows)
+            await insertFindingsChecked(db, auditId, findingRows, 'pagespeed')
           }
 
           await auditLog(auditId, 'pagespeed_completed', 'success',
@@ -1550,7 +1583,7 @@ Return 2-6 findings. Be specific and evidence-based. Reference specific files/co
               }
             }
             if (wcagInserts.length > 0) {
-              await db.from('audit_findings').insert(wcagInserts)
+              await insertFindingsChecked(db, auditId, wcagInserts, 'wcag')
             }
           }
 
@@ -1711,7 +1744,7 @@ Return 2-6 findings. Be specific and evidence-based. Reference specific files/co
                 ...computeActionModelFields({ title: finding.title, description: finding.description, recommendation: finding.recommendation, fix_type: validated.fixType, finding_type: validated.findingType }),
               }
             })
-            await db.from('audit_findings').insert(sdInserts as any)
+            await insertFindingsChecked(db, auditId, sdInserts, 'structured-data')
           }
           return { summary, findingsCount: result.findings.length, typesFound: result.typesFound }
         } catch (err) {
@@ -2460,7 +2493,7 @@ RULES FOR RE-AUDIT:
         }
 
         if (batchInserts.length > 0) {
-          await db.from('audit_findings').insert(batchInserts as any)
+          await insertFindingsChecked(db, auditId, batchInserts, 'baseline-carry-forward')
         }
 
         const copiedCount = batchInserts.length
@@ -2780,7 +2813,7 @@ RULES FOR RE-AUDIT:
             }
           }
           if (gapRows.length > 0) {
-            await db.from('audit_findings').insert(gapRows)
+            await insertFindingsChecked(db, auditId, gapRows, 'gap-fill')
           }
 
           return { findingsInGap, categoriesAnalyzed: gapCategories.length }
@@ -3217,11 +3250,14 @@ RULES FOR RE-AUDIT:
             findingsInBatch += findings.length
           }
 
-          // ── DB writes in try-catch — a failed insert must NOT kill the step ──
+          // ── DB writes in try-catch — a failed insert must NOT kill the step,
+          // but it MUST be visible. insertFindingsChecked reads the supabase
+          // { error } response (supabase-js never throws on insert failure —
+          // the June 7-10 viewport schema-drift incident was invisible because
+          // this error went unread and 3 days of audits shipped 0 findings).
+          let insertedInBatch = 0
           try {
-            if (batchInserts.length > 0) {
-              await db.from('audit_findings').insert(batchInserts as any)
-            }
+            insertedInBatch = await insertFindingsChecked(db, auditId, batchInserts, `analysis-batch-${batchIdx + 1}`)
             // Granular progress: 30% → 65% spread across batches
             const batchProgress = Math.round(30 + ((batchIdx + 1) / batches.length) * 35)
             await setProgress(auditId, batchProgress)
@@ -3236,13 +3272,22 @@ RULES FOR RE-AUDIT:
             console.error(`[inngest] Batch ${batchIdx + 1} DB write failed — continuing:`, (dbErr as Error)?.message)
             // Don't rethrow — we have findings in memory, the step should still return
           }
+          const insertFailed = batchInserts.length > 0 && insertedInBatch === 0
 
-          return { findingsInBatch, newSortOrder: sortOrder, emptyCategoriesInBatch, categoriesInBatch: batch.length, batchTimedOut, batchDurationMs, categoryTimings }
+          return { findingsInBatch, newSortOrder: sortOrder, emptyCategoriesInBatch, categoriesInBatch: batch.length, batchTimedOut, batchDurationMs, categoryTimings, insertFailed, attemptedInserts: batchInserts.length }
         })
 
         totalFindingsCount = batchResult.newSortOrder
         totalEmptyCategories += batchResult.emptyCategoriesInBatch
         totalAnalyzedCategories += batchResult.categoriesInBatch
+        if ((batchResult as any).insertFailed) {
+          console.error(`[inngest] ALERT: Batch ${batchIdx + 1} findings insert FAILED for audit ${auditId} — ${(batchResult as any).attemptedInserts} findings lost`)
+          auditLimitations.push({
+            id: `batch_${batchIdx + 1}_insert_failed`,
+            title: `Findings could not be saved (batch ${batchIdx + 1})`,
+            description: `${(batchResult as any).attemptedInserts} finding(s) were produced by analysis but could not be written to the database. This is a system error (likely schema drift), not a clean result. Scores derived from missing findings are unreliable — do not trust a clean report for this batch.`,
+          })
+        }
         if (batchResult.batchTimedOut) {
           console.error(`[inngest] ALERT: Batch ${batchIdx + 1} fully timed out for audit ${auditId}`)
           // Contradiction check: batch-level timeout → flag degraded confidence
@@ -4566,7 +4611,7 @@ RULES FOR RE-AUDIT:
             }
           }
           if (minFindingInserts.length > 0) {
-            await db.from('audit_findings').insert(minFindingInserts as any)
+            await insertFindingsChecked(db, auditId, minFindingInserts, 'minimum-findings')
           }
 
           if (totalInserted > 0) {
