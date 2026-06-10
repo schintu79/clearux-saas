@@ -458,6 +458,13 @@ export const processAuditFn = inngest.createFunction(
         pipeline_version: PIPELINE_VERSION,
         audit_stage: 'preflight',
         progress_percent: 1,
+        // Processing-start marker (2026-06-10): the stall sweeper's hard
+        // ceiling measures from crawl_started_at, NOT created_at, so audits
+        // that waited in the Inngest queue (concurrency limit) are never
+        // killed for queue time. Stamped here — the moment work begins —
+        // and overwritten with the precise crawl time by the crawl step.
+        // Also covers restarts (old created_at) and brand audits (no crawl).
+        crawl_started_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
       } as any).eq('id', auditId)
       await logPipelineStarted(auditId, PIPELINE_VERSION)

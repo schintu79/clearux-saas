@@ -56,7 +56,7 @@ export async function runStallSweep() {
     // ── Tier 1: Active processing audits stalled for >10 minutes (by updated_at) ──
     const { data: activeStalledAudits, error: activeError } = await db
       .from('audits')
-      .select('id, status, progress_percent, updated_at, created_at, workspace_id, user_id, product_url, audit_type')
+      .select('id, status, progress_percent, updated_at, created_at, crawl_started_at, workspace_id, user_id, product_url, audit_type')
       .in('status', ['crawling', 'analysing', 'generating_report'])
       .is('deleted_at', null)
       .lt('updated_at', activeCutoff)
@@ -65,7 +65,7 @@ export async function runStallSweep() {
     // ── Tier 2: Queued audits stuck for >30 minutes (Inngest never picked them up) ──
     const { data: queuedStalledAudits, error: queuedError } = await db
       .from('audits')
-      .select('id, status, progress_percent, updated_at, created_at, workspace_id, user_id, product_url, audit_type')
+      .select('id, status, progress_percent, updated_at, created_at, crawl_started_at, workspace_id, user_id, product_url, audit_type')
       .eq('status', 'payment_received')
       .is('deleted_at', null)
       .lt('updated_at', queuedCutoff)
@@ -74,10 +74,16 @@ export async function runStallSweep() {
     // ── Tier 3: HARD CEILING — any non-terminal audit older than 20 min ──
     // This catches audits where updated_at keeps getting refreshed by
     // Inngest step replays, preventing Tier 1/2 from catching them.
+    // NOTE (2026-06-10): this query selects by created_at as a CANDIDATE
+    // superset only. The loop below re-verifies using PROCESSING age
+    // (crawl_started_at when available) so audits waiting in the Inngest
+    // queue under load are never killed for queue time. Without this, a
+    // burst of concurrent audits (concurrency limit 3) would have ~85% of
+    // the queue force-failed + refunded purely for waiting.
     const terminalStatuses = ['completed', 'failed', 'completed_with_warnings', 'stalled']
     const { data: hardCeilingAudits, error: ceilingError } = await db
       .from('audits')
-      .select('id, status, progress_percent, updated_at, created_at, workspace_id, user_id, product_url, audit_type')
+      .select('id, status, progress_percent, updated_at, created_at, crawl_started_at, workspace_id, user_id, product_url, audit_type')
       .not('status', 'in', `(${terminalStatuses.join(',')})`)
       .is('deleted_at', null)
       .lt('created_at', hardCeilingCutoff)
@@ -117,13 +123,46 @@ export async function runStallSweep() {
     // The old filter caused a 16-hour stuck audit to be silently skipped.
 
     let swept = 0
+    let skippedQueued = 0
+    const sweepNow = Date.now()
+    const ACTIVE_STATUSES = ['crawling', 'analysing', 'generating_report']
 
     for (const audit of allStalled) {
       const auditId = (audit as any).id as string
       const progress = (audit as any).progress_percent as number ?? 0
       const status = (audit as any).status as string
       const createdAt = (audit as any).created_at as string
-      const ageMinutes = Math.round((Date.now() - new Date(createdAt).getTime()) / 60000)
+      const updatedAt = (audit as any).updated_at as string
+      const crawlStartedAt = (audit as any).crawl_started_at as string | null
+
+      // ── Per-audit tier re-verification (2026-06-10) ──────────────────
+      // Queue-aware: the hard ceiling measures PROCESSING time, not wall
+      // time since creation. crawl_started_at marks when work actually
+      // began (website audits); brand audits have no crawl phase and fall
+      // back to created_at (they dispatch immediately, so queue time is
+      // negligible for them until brand-side concurrency exists).
+      const updatedAtMs = new Date(updatedAt).getTime()
+      const processingStartMs = crawlStartedAt
+        ? new Date(crawlStartedAt).getTime()
+        : new Date(createdAt).getTime()
+
+      const tier1ActiveStall = ACTIVE_STATUSES.includes(status)
+        && updatedAtMs < sweepNow - ACTIVE_STALL_THRESHOLD_MINUTES * 60 * 1000
+      const tier2QueuedStall = status === 'payment_received'
+        && updatedAtMs < sweepNow - QUEUED_STALL_THRESHOLD_MINUTES * 60 * 1000
+      const tier3HardCeiling = status !== 'payment_received'
+        && processingStartMs < sweepNow - HARD_CEILING_MINUTES * 60 * 1000
+
+      if (!tier1ActiveStall && !tier2QueuedStall && !tier3HardCeiling) {
+        // Candidate was old by created_at but hasn't exceeded any real
+        // threshold (e.g. it waited in queue and is now processing
+        // normally, with a fresh heartbeat). Leave it alone — the next
+        // sweep pass re-evaluates it.
+        skippedQueued++
+        continue
+      }
+
+      const ageMinutes = Math.round((sweepNow - processingStartMs) / 60000)
 
       // Check if a report row actually exists in the DB — don't rely on progress %
       // (progress=82 means reporting STARTED, not that the report was written)
@@ -212,8 +251,8 @@ export async function runStallSweep() {
       swept++
     }
 
-    console.log(`[stall-sweeper] Swept ${swept} stalled audits`)
-    return { swept, audits: allStalled.map((a: any) => a.id) }
+    console.log(`[stall-sweeper] Swept ${swept} stalled audits (${skippedQueued} candidates skipped — within processing-time limits)`)
+    return { swept, skipped: skippedQueued, audits: allStalled.map((a: any) => a.id) }
 }
 
 export const stallSweeperFn = inngest.createFunction(
