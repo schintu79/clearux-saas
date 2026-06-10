@@ -1529,14 +1529,33 @@ export async function crawlPages(
         for (const page of results) {
           if (page && pages.length < maxPages) {
             // Canonical dedup: if this page's canonical URL resolves to a
-            // different page we've already crawled, mark it as duplicate
+            // different page we've already crawled, mark it as duplicate.
+            //
+            // MISCONFIGURED-CANONICAL GUARD (2026-06-10): many sites set a
+            // site-wide canonical in a shared layout/template, making EVERY
+            // page claim the homepage as canonical. Obeying that signal made
+            // us drop /product, /pricing, /about etc. as "duplicates" and
+            // audit only 7 of 18 discovered pages (fixpath.ai itself had
+            // this bug — root layout canonical). Rule: a NON-ROOT page whose
+            // canonical points at the SITE ROOT is treated as misconfigured,
+            // crawled anyway, and recorded so the analyzer can flag the SEO
+            // defect. Genuine canonical dedup (trailing slash, utm variants,
+            // alternate URLs of the same content) still applies.
             const pageCanonical = page.headTags?.canonical
             if (pageCanonical) {
               try {
-                const canonicalNorm = normalizeUrlForDedup(new URL(pageCanonical, page.url).toString())
+                const canonicalUrlObj = new URL(pageCanonical, page.url)
+                const canonicalNorm = normalizeUrlForDedup(canonicalUrlObj.toString())
                 const pageNorm = normalizeUrlForDedup(page.url)
-                if (canonicalNorm !== pageNorm && isVisited(canonicalNorm)) {
-                  // Page is a duplicate of an already-crawled canonical — skip
+                const pageIsRoot = (new URL(page.url).pathname.replace(/\/$/, '') || '/') === '/'
+                const canonicalIsRoot = (canonicalUrlObj.pathname.replace(/\/$/, '') || '/') === '/'
+
+                if (canonicalNorm !== pageNorm && canonicalIsRoot && !pageIsRoot) {
+                  // Misconfigured site-wide canonical — keep the page, flag the defect
+                  console.warn(`[crawler] Misconfigured canonical on ${page.url} → points at site root. Crawling anyway.`)
+                  excludedUrls.push({ url: page.url, reason: `MISCONFIGURED_CANONICAL: page declares site root as canonical — crawled anyway; this is an SEO defect on the site` })
+                } else if (canonicalNorm !== pageNorm && isVisited(canonicalNorm)) {
+                  // Page is a genuine duplicate of an already-crawled canonical — skip
                   pagesDuplicate++
                   excludedUrls.push({ url: page.url, reason: `Canonical duplicate of ${pageCanonical}` })
                   continue
@@ -1608,13 +1627,22 @@ export async function crawlPages(
 
           for (const page of results) {
             if (page && pages.length < maxPages) {
-              // Canonical dedup for level 2
+              // Canonical dedup for level 2 — same misconfigured-canonical
+              // guard as level 1: non-root pages claiming the site root as
+              // canonical are crawled anyway (site-wide canonical defect).
               const pageCanonical = page.headTags?.canonical
               if (pageCanonical) {
                 try {
-                  const canonicalNorm = normalizeUrlForDedup(new URL(pageCanonical, page.url).toString())
+                  const canonicalUrlObj = new URL(pageCanonical, page.url)
+                  const canonicalNorm = normalizeUrlForDedup(canonicalUrlObj.toString())
                   const pageNorm = normalizeUrlForDedup(page.url)
-                  if (canonicalNorm !== pageNorm && isVisited(canonicalNorm)) {
+                  const pageIsRoot = (new URL(page.url).pathname.replace(/\/$/, '') || '/') === '/'
+                  const canonicalIsRoot = (canonicalUrlObj.pathname.replace(/\/$/, '') || '/') === '/'
+
+                  if (canonicalNorm !== pageNorm && canonicalIsRoot && !pageIsRoot) {
+                    console.warn(`[crawler] Misconfigured canonical on ${page.url} → points at site root. Crawling anyway.`)
+                    excludedUrls.push({ url: page.url, reason: `MISCONFIGURED_CANONICAL: page declares site root as canonical — crawled anyway; this is an SEO defect on the site` })
+                  } else if (canonicalNorm !== pageNorm && isVisited(canonicalNorm)) {
                     pagesDuplicate++
                     excludedUrls.push({ url: page.url, reason: `Canonical duplicate of ${pageCanonical}` })
                     continue

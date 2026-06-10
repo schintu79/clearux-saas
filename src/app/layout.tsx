@@ -104,13 +104,12 @@ export const metadata: Metadata = {
     ],
     apple: '/apple-touch-icon.png',
   },
-  alternates: {
-    canonical: siteUrl,
-    languages: {
-      'en': siteUrl,
-      'x-default': siteUrl,
-    },
-  },
+  // NOTE (2026-06-10): canonical/languages REMOVED from the root layout.
+  // Next.js metadata inherits — a root-level canonical made EVERY page
+  // declare the homepage as its canonical URL. That told search engines
+  // (and our own crawler) that /product, /pricing, /why-fixpath etc. were
+  // duplicates of the homepage — only 7 of 18 pages were ever audited.
+  // Canonical must be set per-page (or via generateMetadata) only.
   other: {
     'content-language': 'en',
   },

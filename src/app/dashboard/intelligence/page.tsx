@@ -165,6 +165,8 @@ type AuditPageRow = {
   url: string;
   title: string | null;
   ai_readability: AIPageReadability | null;
+  /** User-toggled: excluded pages stay visible but don't count toward the AI readability average */
+  excluded_from_score?: boolean;
 };
 
 /* ── Helpers ────────────────────────────────────────── */
@@ -767,7 +769,7 @@ function IntelligencePage() {
     const supabase = createBrowserSupabase();
     supabase
       .from('audit_pages')
-      .select('id, url, title, ai_readability')
+      .select('id, url, title, ai_readability, excluded_from_score')
       .eq('audit_id', audit.id)
       .then(({ data }) => setAuditPages((data || []) as AuditPageRow[]));
 
@@ -1298,10 +1300,29 @@ function IntelligencePage() {
     return sorted;
   }, [auditPages, pageSort]);
 
-  const pagesScored = auditPages.filter(p => p.ai_readability?.overallScore != null);
+  // Excluded pages (user toggle) stay visible in the list but drop out of
+  // the average and the Good/Needs work/Poor breakdown — a dashboard page
+  // AI can't read is expected and shouldn't penalize the site's score.
+  const pagesScored = auditPages.filter(p => p.ai_readability?.overallScore != null && !p.excluded_from_score);
+  const pagesExcludedCount = auditPages.filter(p => p.excluded_from_score).length;
   const avgPageScore = pagesScored.length > 0
     ? Math.round(pagesScored.reduce((s, p) => s + (p.ai_readability!.overallScore || 0), 0) / pagesScored.length)
     : null;
+
+  const togglePageExcluded = async (pageId: string, excluded: boolean) => {
+    // Optimistic update — revert on API failure
+    setAuditPages(prev => prev.map(p => p.id === pageId ? { ...p, excluded_from_score: excluded } : p));
+    try {
+      const res = await fetch(`/api/audit-pages/${pageId}/exclude`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ excluded }),
+      });
+      if (!res.ok) throw new Error('Failed to update');
+    } catch {
+      setAuditPages(prev => prev.map(p => p.id === pageId ? { ...p, excluded_from_score: !excluded } : p));
+    }
+  };
   const pagesGreen = pagesScored.filter(p => p.ai_readability?.status === 'green').length;
   const pagesAmber = pagesScored.filter(p => p.ai_readability?.status === 'amber').length;
   const pagesRed = pagesScored.filter(p => p.ai_readability?.status === 'red').length;
@@ -2628,6 +2649,9 @@ function IntelligencePage() {
                 {avgPageScore != null && (
                   <span className="ml-auto text-[11px] font-semibold tabular-nums" style={{ color: scoreColor(avgPageScore) }}>
                     avg {avgPageScore}/100 · {pagesScored.length} page{pagesScored.length === 1 ? '' : 's'}
+                    {pagesExcludedCount > 0 && (
+                      <span className="font-normal" style={{ color: 'var(--m-muted)' }}> · {pagesExcludedCount} excluded</span>
+                    )}
                   </span>
                 )}
               </div>
@@ -2638,14 +2662,15 @@ function IntelligencePage() {
                   const status = r.status;
                   const extractable = r.extractable || [];
                   const missing = r.missing || [];
+                  const isExcluded = !!page.excluded_from_score;
                   return (
-                    <li key={page.id || page.url}>
+                    <li key={page.id || page.url} style={isExcluded ? { opacity: 0.55 } : undefined}>
                       <details className="group">
                         <summary className="px-5 py-3.5 flex items-center gap-3 cursor-pointer list-none [&::-webkit-details-marker]:hidden hover:bg-[color-mix(in_srgb,var(--ink)_3%,transparent)]">
                           <span
                             className="w-2.5 h-2.5 rounded-full flex-shrink-0"
                             style={{
-                              background: status === 'green' ? 'var(--ok)' : status === 'amber' ? 'var(--warn)' : status === 'red' ? 'var(--severe)' : 'var(--m-muted)',
+                              background: isExcluded ? 'var(--m-muted)' : status === 'green' ? 'var(--ok)' : status === 'amber' ? 'var(--warn)' : status === 'red' ? 'var(--severe)' : 'var(--m-muted)',
                             }}
                           />
                           <div className="flex-1 min-w-0">
@@ -2654,8 +2679,31 @@ function IntelligencePage() {
                             </p>
                             <p className="text-[11px] truncate" style={{ color: 'var(--m-muted)' }}>{page.url}</p>
                           </div>
+                          {page.id && (
+                            <button
+                              onClick={(e) => {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                togglePageExcluded(page.id!, !isExcluded);
+                              }}
+                              title={isExcluded
+                                ? 'Include this page in the AI readability score'
+                                : "Exclude this page from the AI readability score (the page stays visible — it just won't count toward the average)"}
+                              className="flex-shrink-0 text-[10px] font-medium px-2 py-1 rounded-md border transition-colors hover:opacity-80"
+                              style={{
+                                color: isExcluded ? 'var(--ink)' : 'var(--m-muted)',
+                                borderColor: 'var(--rule)',
+                                background: isExcluded ? 'color-mix(in srgb, var(--ink) 6%, transparent)' : 'transparent',
+                              }}
+                            >
+                              {isExcluded ? 'Excluded' : 'Exclude'}
+                            </button>
+                          )}
                           {score != null && (
-                            <span className="text-[14px] font-bold tabular-nums flex-shrink-0" style={{ color: scoreColor(score) }}>
+                            <span
+                              className="text-[14px] font-bold tabular-nums flex-shrink-0"
+                              style={{ color: isExcluded ? 'var(--m-muted)' : scoreColor(score), textDecoration: isExcluded ? 'line-through' : 'none' }}
+                            >
                               {score}
                             </span>
                           )}
