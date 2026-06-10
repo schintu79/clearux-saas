@@ -1651,18 +1651,21 @@ function IntelligencePage() {
                   <p className="text-[10px] font-semibold uppercase tracking-[0.05em]" style={{ color: 'var(--m-muted)' }}>Accuracy</p>
                 </div>
                 <div className="flex items-baseline gap-0.5 mb-1.5">
-                  <span className="text-[22px] font-bold tabular-nums leading-none" style={{ color: scoreColor(avgAccuracy) }}>{avgAccuracy > 0 ? avgAccuracy : '--'}</span>
-                  {avgAccuracy > 0 && <span className="text-[11px]" style={{ color: 'var(--m-muted)' }}>%</span>}
+                  {/* Interrogation-first (2026-06-10): the paid benchmark measures
+                      accuracy independently of audits — a workspace with saved
+                      interrogations shows its number even before the first audit. */}
+                  <span className="text-[22px] font-bold tabular-nums leading-none" style={{ color: scoreColor(iqAccuracy ?? avgAccuracy) }}>{iqAccuracy ?? (avgAccuracy > 0 ? avgAccuracy : '--')}</span>
+                  {(iqAccuracy != null || avgAccuracy > 0) && <span className="text-[11px]" style={{ color: 'var(--m-muted)' }}>%</span>}
                 </div>
                 <p className="text-[11px] leading-snug" style={{ color: 'var(--m-muted)' }}>
-                  How well AI matches your actual site content
+                  {iqAccuracy != null ? 'Measured from your AI interrogation benchmark' : 'How well AI matches your actual site content'}
                 </p>
                 {hallucinations.length > 0 && (
                   <div className="flex items-center gap-1 text-[10px] font-medium mt-2 px-2 py-1 rounded" style={{ background: 'color-mix(in srgb, var(--severe) 6%, transparent)', color: 'var(--severe)' }}>
                     <AlertTriangle size={9} className="flex-shrink-0" /> {hallucinations.length} factually wrong answer{hallucinations.length > 1 ? 's' : ''}
                   </div>
                 )}
-                {avgAccuracy > 0 && avgAccuracy < 60 && hallucinations.length === 0 && (
+                {(iqAccuracy ?? avgAccuracy) > 0 && (iqAccuracy ?? avgAccuracy) < 60 && hallucinations.length === 0 && (
                   <div className="flex items-center gap-1 text-[10px] font-medium mt-2 px-2 py-1 rounded" style={{ background: 'color-mix(in srgb, var(--warn) 6%, transparent)', color: 'var(--warn)' }}>
                     <AlertTriangle size={9} className="flex-shrink-0" /> AI has an incomplete picture
                   </div>
@@ -1685,7 +1688,7 @@ function IntelligencePage() {
                   )}
                 </div>
                 <p className="text-[11px] leading-snug" style={{ color: 'var(--m-muted)' }}>
-                  How AI portrays your brand reputation
+                  {sentimentScore != null ? 'How AI portrays your brand reputation' : 'Run an audit to measure brand sentiment'}
                 </p>
                 {sentimentScore != null && sentimentScore < 40 && (
                   <div className="flex items-center gap-1 text-[10px] font-medium mt-2 px-2 py-1 rounded" style={{ background: 'color-mix(in srgb, var(--severe) 6%, transparent)', color: 'var(--severe)' }}>
