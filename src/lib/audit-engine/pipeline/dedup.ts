@@ -269,6 +269,26 @@ function samePage(a: FindingForDedup, b: FindingForDedup): boolean {
   return !!(a.page_url && b.page_url && a.page_url === b.page_url)
 }
 
+/** Extract quoted site text ('...' or "...") of meaningful length from a finding */
+function quotedPhrases(f: FindingForDedup): Set<string> {
+  const text = `${f.title} ${f.description}`
+  const phrases = new Set<string>()
+  const matches = text.match(/['"‘“]([^'"’”]{8,80})['"’”]/g) || []
+  for (const m of matches) {
+    phrases.add(m.replace(/['"‘“’”]/g, '').toLowerCase().trim())
+  }
+  return phrases
+}
+
+/** True when two findings quote the same literal text from the site */
+function sharedQuotedPhrase(a: FindingForDedup, b: FindingForDedup): boolean {
+  const pa = quotedPhrases(a)
+  if (pa.size === 0) return false
+  const pb = quotedPhrases(b)
+  for (const p of pa) if (pb.has(p)) return true
+  return false
+}
+
 // ── Public API ───────────────────────────────────────────────
 
 /**
@@ -294,7 +314,15 @@ export function identifyDuplicates(findings: FindingForDedup[]): string[] {
       } else if (sameModule(findings[i], findings[j])) {
         threshold = THRESHOLDS.SAME_MODULE
       }
-      if (sim >= threshold) {
+      // Quoted-phrase rule (2026-06-10): two findings on the SAME page that
+      // quote the SAME literal site text (e.g. both critique the 'request
+      // information' button) are the same issue, even when their titles
+      // differ enough to slip under the similarity threshold. This caught
+      // a real case: the CTA finding shipped twice (once HIGH, once MEDIUM)
+      // in the same report.
+      const quotedDup = samePage(findings[i], findings[j])
+        && sharedQuotedPhrase(findings[i], findings[j])
+      if (sim >= threshold || quotedDup) {
         group.push(j)
         seen.add(j)
       }

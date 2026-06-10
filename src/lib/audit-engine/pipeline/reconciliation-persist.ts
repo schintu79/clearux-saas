@@ -386,7 +386,9 @@ export async function updateAuditWithReconciliation(
     .update({
       reconciliation_summary: summary,
       audit_run_type: auditRunType,
-      score_version: 'v1',
+      // v2 (2026-06-10): severity caps on the overall score — a site with
+      // open critical/high issues can no longer average its way to 85+.
+      score_version: 'v2',
     })
     .eq('id', auditId)
 

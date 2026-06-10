@@ -122,6 +122,52 @@ export interface SiteProfile {
   contextNotes: string
 }
 
+/**
+ * Severity cap (score model v2, 2026-06-10).
+ * The overall score is the mean of 28 category scores, where zero-finding
+ * categories score 95-99. That arithmetic guaranteed inflation: a site with
+ * SEVEN open high-severity issues could not score below ~80 (qinacademy.com
+ * scored 87 with 7 high). The cap encodes the professional judgment the
+ * average can't: you cannot be an 87 site with 7 high-severity issues open.
+ * Fixing the issues lifts the cap — honest score, built-in motivation loop.
+ */
+export interface ScoreCapInfo {
+  applied: boolean
+  cap: number | null
+  reason: string | null
+}
+
+export function applySeverityCap(
+  overall: number,
+  findings: Array<{ severity: string }>,
+): { overall: number; capInfo: ScoreCapInfo } {
+  let critical = 0, high = 0, medium = 0
+  for (const f of findings) {
+    if (f.severity === 'critical') critical++
+    else if (f.severity === 'high') high++
+    else if (f.severity === 'medium') medium++
+  }
+
+  let cap: number | null = null
+  let reason: string | null = null
+  if (critical >= 1) { cap = 55; reason = `${critical} open critical issue${critical > 1 ? 's' : ''}` }
+  else if (high >= 6) { cap = 65; reason = `${high} open high-severity issues` }
+  else if (high >= 3) { cap = 72; reason = `${high} open high-severity issues` }
+  else if (high >= 1) { cap = 80; reason = `${high} open high-severity issue${high > 1 ? 's' : ''}` }
+  else if (medium >= 6) { cap = 85; reason = `${medium} open medium-severity issues` }
+
+  if (cap != null && overall > cap) {
+    return { overall: cap, capInfo: { applied: true, cap, reason } }
+  }
+  return { overall, capInfo: { applied: false, cap: null, reason: null } }
+}
+
+/** Deterministic, user-facing sentence explaining an applied cap. */
+export function capSummarySentence(capInfo: ScoreCapInfo): string {
+  if (!capInfo.applied || !capInfo.reason) return ''
+  return ` The overall score is currently capped at ${capInfo.cap}/100 by ${capInfo.reason} — resolving them unlocks the site's full score.`
+}
+
 export interface ReportData {
   executiveSummary: string
   keyRecommendation: string | null          // kept for backwards compat
@@ -133,6 +179,8 @@ export interface ReportData {
   aiDiscoverabilityScore: number
   contentScore: number
   categoryScores: CategoryScore[]
+  /** Score model v2: set when the overall was capped by open severity counts */
+  scoreCapInfo?: ScoreCapInfo
   siteProfile?: SiteProfile
   verificationSummary?: {
     likelyFixed: number
@@ -670,6 +718,48 @@ function isSpeculativeFinding(f: AnalysisFinding): boolean {
 }
 
 /**
+ * Programmatic contradiction net (2026-06-10) — safety net behind the
+ * MISSING-vs-WEAK prompt rule. If a finding claims an element is absent
+ * while the crawled content demonstrably contains it, the finding is
+ * dropped before it ever reaches the report. A report that says "you have
+ * no testimonials" to a site with a visible testimonials section loses
+ * the client's trust in every other finding.
+ */
+const ABSENCE_CONTRADICTION_RULES: Array<{ claim: RegExp; evidence: RegExp; label: string }> = [
+  {
+    claim: /\b(no|missing|lacks?|without|absence of|doesn'?t (have|include|contain))\b[^.]{0,60}\b(testimonials?|reviews?|social proof)\b/i,
+    evidence: /testimonial|from our students|what (our )?(customers|clients|students) say/i,
+    label: 'testimonials',
+  },
+  {
+    claim: /\b(no|missing|lacks?|without)\b[^.]{0,40}\b(faq|frequently asked)\b/i,
+    evidence: /\bfaq\b|frequently asked/i,
+    label: 'FAQ',
+  },
+  {
+    claim: /\b(no|missing|lacks?|without)\b[^.]{0,50}\b(contact (information|details|page)|phone number|email address)\b/i,
+    evidence: /contact (us|&|and|form|support)|@[a-z0-9-]+\.[a-z]{2,}|\+?\d[\d\s().-]{7,}/i,
+    label: 'contact information',
+  },
+  {
+    claim: /\b(no|missing|lacks?|without)\b[^.]{0,40}\b(pricing|prices)\b/i,
+    evidence: /\$\s?\d|\d+\s?(€|CAD|USD)|\/(hour|month|session)\b|pricing/i,
+    label: 'pricing',
+  },
+]
+
+function contradictsContent(f: AnalysisFinding, pageContent: string): boolean {
+  const claimText = `${f.title} ${f.description}`
+  for (const rule of ABSENCE_CONTRADICTION_RULES) {
+    if (rule.claim.test(claimText) && rule.evidence.test(pageContent)) {
+      console.warn(`[contradiction-net] Dropped finding "${f.title.slice(0, 80)}" — claims missing ${rule.label}, but content contains it`)
+      return true
+    }
+  }
+  return false
+}
+
+/**
  * Programmatic deduplication — removes findings that are near-duplicates of each other.
  * Uses title similarity and description overlap to detect the same issue reported multiple times.
  */
@@ -835,6 +925,12 @@ EVIDENCE RULES — ZERO SPECULATION:
 - If you cannot point to a specific quoted excerpt proving the issue, the finding does not exist.
 - Before finalizing, check for CONTRADICTORY evidence — if the page contradicts your claim, DROP the finding.
 - A finding CANNOT be surfaced from category expectations alone — it must have specific evidence FROM THE PROVIDED CONTENT.
+
+MISSING vs WEAK — NEVER CLAIM ABSENT WHAT EXISTS (TRUST-CRITICAL):
+Claiming something is "missing" when it exists on the site instantly destroys the client's trust in the entire report. Before ANY "missing/no/lacks X" claim, search ALL provided page content for X.
+- If X exists but is WEAK, the finding must ACKNOWLEDGE it exists and critique its quality. Example: NOT "The site has no testimonials" but "You have testimonials with student names, but they are not linked to any trusted platform (Google Reviews, Trustpilot) or tied to verifiable results, which limits their persuasive power."
+- If a tag/element exists but is generic or duplicated (e.g., meta description present but identical to the title), say "present but weak/generic", NEVER "missing".
+- A weak-but-present element is usually MEDIUM severity at most, not HIGH.
 
 JS-RENDERED CONTENT: Dynamic elements (carousels, rotating headlines, tabs) may only show ONE state. Never judge full messaging strategy on a single captured snapshot.
 
@@ -1036,6 +1132,7 @@ Analyze this category and return the JSON array now.`
     return findings
       .filter((f) => f.severity && f.title && f.description && f.recommendation)
       .filter((f) => !isSpeculativeFinding(f))
+      .filter((f) => !contradictsContent(f, pageContent))
       .map((f) => ({
         ...f,
         targetElement: f.targetElement || null,
@@ -1298,9 +1395,11 @@ export async function generateReport(
       return cats.length > 0 ? Math.round(cats.reduce((s, c) => s + c.score, 0) / cats.length) : 50
     }
     const allScores = categoryScores.filter(c => c.score >= 0).map(c => c.score)
-    const overallScore = allScores.length > 0
+    const overallScoreRaw = allScores.length > 0
       ? Math.round(allScores.reduce((s, v) => s + v, 0) / allScores.length)
       : prev.previousOverallScore
+    // Score model v2: cap by open severity profile (consistent with deep mode)
+    const { overall: overallScore, capInfo: baselineCapInfo } = applySeverityCap(overallScoreRaw, findings)
 
     // Build executive summary — deterministic, no AI, language-aware
     const executiveSummary = getBaselineSummary(
@@ -1321,7 +1420,7 @@ export async function generateReport(
     console.log(`[generateReport] BASELINE: prev=${prev.previousOverallScore}, now=${overallScore}, fixed=${fixedCount}, dismissed=${dismissedCount}, nothingChanged=${nothingChanged}`)
 
     return {
-      executiveSummary,
+      executiveSummary: executiveSummary + capSummarySentence(baselineCapInfo),
       keyRecommendation: topRecs[0] || getDefaultRecommendation(language),
       topRecommendations: topRecs.length > 0 ? topRecs : [getDefaultRecommendation(language)],
       overallScore,
@@ -1331,6 +1430,7 @@ export async function generateReport(
       aiDiscoverabilityScore: pillarAvg(12, 16),
       contentScore: overallScore,
       categoryScores,
+      scoreCapInfo: baselineCapInfo,
     }
   }
 
@@ -1508,9 +1608,17 @@ export async function generateReport(
   const calculatedFuture = pillarAvg(12, 16)
 
   const allScores = categoryScores.filter(c => c.score >= 0).map(c => c.score)
-  const calculatedOverall = allScores.length > 0
+  const calculatedOverallRaw = allScores.length > 0
     ? Math.round(allScores.reduce((s, v) => s + v, 0) / allScores.length)
     : 50
+
+  // Score model v2: cap the overall by the open severity profile. The
+  // category average alone could not drop below ~80 even with 7 open
+  // high-severity issues (zero-finding categories at 95-99 drown them out).
+  const { overall: calculatedOverall, capInfo } = applySeverityCap(calculatedOverallRaw, findings)
+  if (capInfo.applied) {
+    console.log(`[generateReport] SEVERITY CAP: ${calculatedOverallRaw} → ${calculatedOverall} (${capInfo.reason})`)
+  }
 
   if (verifiedCleanZero) {
     console.log(`[generateReport] VERIFIED CLEAN ZERO: 0 findings with healthy pipeline, ${pagesAnalyzed} pages crawled. Coverage-based scoring. Overall=${calculatedOverall}`)
@@ -1594,7 +1702,7 @@ The scores above have been calculated deterministically from actual findings. Yo
 For the EXECUTIVE SUMMARY:
 - Write 4-5 well-crafted paragraphs (not bullet points)
 - Start with what the website does, who it serves, and the overall impression
-- Reference the pre-calculated overall score (${calculatedOverall}/100) — explain what it means for this site
+- Reference the pre-calculated overall score (${calculatedOverall}/100) — explain what it means for this site${capInfo.applied ? `\n- IMPORTANT: the overall score is CAPPED at ${capInfo.cap}/100 because of ${capInfo.reason}. State this plainly: the site cannot score higher while these issues remain open, and fixing them unlocks the full score. Do not soften this.` : ''}
 - Be genuine about strengths — if the score is high, acknowledge that the site is strong
 - Address the most impactful findings with depth: explain the human impact, not just the technical problem
 - If a site profile is provided, frame your analysis within the correct industry context. Don't penalize industry-appropriate design choices.
@@ -1682,6 +1790,7 @@ ${language !== 'en' ? `\nFINAL REMINDER — LANGUAGE: The executiveSummary, topR
           aiDiscoverabilityScore: calculatedFuture,
           contentScore: calculatedOverall,
           categoryScores,
+          scoreCapInfo: capInfo,
           siteProfile: siteProfile || undefined,
         }
       }
@@ -1708,7 +1817,7 @@ ${language !== 'en' ? `\nFINAL REMINDER — LANGUAGE: The executiveSummary, topR
     .map(f => f.recommendation)
 
   return {
-    executiveSummary: basicSummary,
+    executiveSummary: basicSummary + capSummarySentence(capInfo),
     keyRecommendation: fallbackRecs[0] || getDefaultRecommendation(language),
     topRecommendations: fallbackRecs.length > 0 ? fallbackRecs : [getDefaultRecommendation(language)],
     overallScore: calculatedOverall,
@@ -1718,6 +1827,7 @@ ${language !== 'en' ? `\nFINAL REMINDER — LANGUAGE: The executiveSummary, topR
     aiDiscoverabilityScore: calculatedFuture,
     contentScore: calculatedOverall,
     categoryScores,
+    scoreCapInfo: capInfo,
     siteProfile: siteProfile || undefined,
   }
 }
@@ -1847,7 +1957,9 @@ export function calculateScoresFromFindings(findings: AuditFinding[], language: 
   // Filter out -1 sentinels (unanalyzed categories) for overall score
   const analyzedScores = categoryScores.filter(c => c.score >= 0).map(c => c.score)
   // Fallback 50 = neutral/unknown, not a reward. Same as clampScore() default.
-  const overall = analyzedScores.length > 0 ? Math.round(analyzedScores.reduce((a, b) => a + b, 0) / analyzedScores.length) : 50
+  const overallRaw = analyzedScores.length > 0 ? Math.round(analyzedScores.reduce((a, b) => a + b, 0) / analyzedScores.length) : 50
+  // Score model v2: same severity cap as generateReport — fallback path included
+  const { overall, capInfo: fallbackCapInfo } = applySeverityCap(overallRaw, findings)
 
   const pillarAvg = (start: number, end: number) => {
     const cats = categoryScores.slice(start, Math.min(end, categoryScores.length)).filter(c => c.score >= 0)
@@ -1871,9 +1983,10 @@ export function calculateScoresFromFindings(findings: AuditFinding[], language: 
     .map(f => f.recommendation)
 
   return {
-    executiveSummary: summary,
+    executiveSummary: summary + capSummarySentence(fallbackCapInfo),
     keyRecommendation: topRecs[0] || getDefaultRecommendation(language),
     topRecommendations: topRecs.length > 0 ? topRecs : [getDefaultRecommendation(language)],
+    scoreCapInfo: fallbackCapInfo,
     overallScore: overall,
     uxScore: pillarAvg(0, 4),
     conversionScore: pillarAvg(4, 8),
