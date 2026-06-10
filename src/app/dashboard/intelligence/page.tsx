@@ -2304,9 +2304,11 @@ function IntelligencePage() {
                           disabled={iqRunning || iqBatch.running}
                           className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[11.5px] font-medium transition-all"
                           style={{
-                            background: selected ? 'var(--ink)' : 'var(--paper-2)',
-                            color: selected ? 'var(--paper)' : 'var(--ink-2)',
-                            border: `1px solid ${selected ? 'var(--ink)' : 'var(--rule)'}`,
+                            // Green selection — the only black element in this console
+                            // is the primary Interrogate AI button.
+                            background: selected ? 'color-mix(in srgb, var(--ok) 10%, transparent)' : 'var(--paper-2)',
+                            color: 'var(--ink)',
+                            border: `1px solid ${selected ? 'color-mix(in srgb, var(--ok) 45%, transparent)' : 'var(--rule)'}`,
                             opacity: (iqRunning || iqBatch.running) ? 0.5 : 1,
                           }}
                           title={m.free ? 'Included free with every audit' : 'Uses 1 check'}
@@ -2388,34 +2390,37 @@ function IntelligencePage() {
                               disabled={iqBatch.running ? !hasSaved : (iqRunning || !canAsk)}
                               className="w-full text-left flex items-start gap-2.5 px-3 py-2 transition-colors"
                               style={{
-                                background: isActive ? 'var(--ink)' : q.isPinned ? 'color-mix(in srgb, var(--ok) 4%, transparent)' : idx % 2 === 0 ? 'transparent' : 'color-mix(in srgb, var(--ink) 2%, transparent)',
-                                color: isActive ? 'var(--paper)' : 'var(--ink)',
+                                // Selected = light tint + left accent (was solid black, which
+                                // buried the info pills). Pills stay visible on every row.
+                                background: isActive ? 'color-mix(in srgb, var(--ink) 7%, transparent)' : q.isPinned ? 'color-mix(in srgb, var(--ok) 4%, transparent)' : idx % 2 === 0 ? 'transparent' : 'color-mix(in srgb, var(--ink) 2%, transparent)',
+                                color: 'var(--ink)',
+                                boxShadow: isActive ? 'inset 3px 0 0 var(--ink)' : 'none',
                                 borderBottom: showPinDivider ? '2px solid var(--rule)' : idx < sortedQs.length - 1 ? '1px solid var(--rule)' : 'none',
                                 opacity: (iqRunning && !isActive) ? 0.5 : 1,
                               }}
                             >
-                              <span className="text-[10px] font-mono font-medium mt-0.5 flex-shrink-0 w-4 text-right" style={{ color: isActive ? 'var(--paper)' : 'var(--m-muted)', opacity: 0.6 }}>
-                                {q.isPinned && <CircleDot size={8} className="inline -mt-px mr-0.5" style={{ color: isActive ? 'var(--paper)' : 'var(--ok)' }} />}
+                              <span className="text-[10px] font-mono font-medium mt-0.5 flex-shrink-0 w-4 text-right" style={{ color: 'var(--m-muted)', opacity: isActive ? 1 : 0.6 }}>
+                                {q.isPinned && <CircleDot size={8} className="inline -mt-px mr-0.5" style={{ color: 'var(--ok)' }} />}
                                 {idx + 1}
                               </span>
                               <div className="flex-1 min-w-0">
                                 <div className="flex items-center gap-1.5">
                                   <span className="text-[13px] leading-snug">{q.text}</span>
                                   {iqBatch.running && iqBatchCurrent === normQ(q.text) && (
-                                    <span className="inline-flex items-center gap-1 text-[9px] font-semibold uppercase tracking-wider px-1.5 py-px rounded-full flex-shrink-0" style={{ background: isActive ? 'rgba(255,255,255,0.18)' : 'color-mix(in srgb, var(--signal) 12%, transparent)', color: isActive ? 'var(--paper)' : 'var(--ink)' }}>
+                                    <span className="inline-flex items-center gap-1 text-[9px] font-semibold uppercase tracking-wider px-1.5 py-px rounded-full flex-shrink-0" style={{ background: 'color-mix(in srgb, var(--signal) 12%, transparent)', color: 'var(--ink)' }}>
                                       <Loader2 size={9} className="animate-spin" /> running
                                     </span>
                                   )}
                                   {iqBatch.running && iqBatchCurrent !== normQ(q.text) && iqBatchPending.has(normQ(q.text)) && (
-                                    <span className="text-[9px] font-semibold uppercase tracking-wider px-1.5 py-px rounded-full flex-shrink-0" style={{ background: isActive ? 'rgba(255,255,255,0.12)' : 'color-mix(in srgb, var(--ink) 6%, transparent)', color: isActive ? 'var(--paper)' : 'var(--m-muted)' }}>
+                                    <span className="text-[9px] font-semibold uppercase tracking-wider px-1.5 py-px rounded-full flex-shrink-0" style={{ background: 'color-mix(in srgb, var(--ink) 6%, transparent)', color: 'var(--m-muted)' }}>
                                       queued
                                     </span>
                                   )}
                                 </div>
-                                {!isActive && (
+                                {(
                                   <div className="flex items-center gap-1.5 mt-1">
                                     {q.isBenchmark ? (
-                                      <span className="text-[9px] font-semibold uppercase tracking-wider px-1.5 py-px rounded" style={{ background: isActive ? 'rgba(255,255,255,0.15)' : 'color-mix(in srgb, var(--ink) 6%, transparent)', color: isActive ? 'var(--paper)' : 'var(--m-muted)' }}>
+                                      <span className="text-[9px] font-semibold uppercase tracking-wider px-1.5 py-px rounded" style={{ background: 'color-mix(in srgb, var(--ink) 6%, transparent)', color: 'var(--m-muted)' }}>
                                         Benchmark
                                       </span>
                                     ) : (
