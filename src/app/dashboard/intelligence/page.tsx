@@ -12,7 +12,7 @@
  *  6. Methodology Transparency — what was queried, when, how
  */
 
-import React, { Suspense, useCallback, useEffect, useMemo, useState } from 'react';
+import React, { Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import {
@@ -554,6 +554,18 @@ function IntelligencePage() {
     if (!workspaceId || !questionText.trim() || iqRunning) return;
     const trimmed = questionText.trim();
 
+    // During a batch run: navigation through READY answers only — no new
+    // paid runs (the batch owns the quota). Marks the view as user-pinned
+    // so the batch loop stops yanking it to the running question.
+    if (iqBatch.running) {
+      const saved = iqPastResults.get(normQ(trimmed));
+      if (!saved || saved.length === 0) return;
+      iqUserNavRef.current = true;
+      setIqActiveQuestion(trimmed);
+      setIqResults(saved);
+      return;
+    }
+
     // Check for saved (cached) results for this question
     const savedResults = iqPastResults.get(normQ(trimmed));
 
@@ -767,6 +779,12 @@ function IntelligencePage() {
    * question charges 1 check via the existing /run endpoint. Progressive:
    * answers render as each question completes. */
   const [iqBatch, setIqBatch] = useState<{ running: boolean; done: number; total: number; error: string | null }>({ running: false, done: 0, total: 0, error: null });
+  // Batch navigation (2026-06-10): the user can browse READY answers while
+  // the batch runs. The view only auto-follows the running question until
+  // the user clicks something — then their choice is respected.
+  const iqUserNavRef = useRef(false);
+  const [iqBatchCurrent, setIqBatchCurrent] = useState<string | null>(null);
+  const [iqBatchPending, setIqBatchPending] = useState<Set<string>>(new Set());
 
   const iqFreeModelSlugs = useMemo(() => IQ_MODEL_DISPLAY.filter((m) => m.free).map((m) => m.slug), [IQ_MODEL_DISPLAY]);
 
@@ -844,29 +862,44 @@ function IntelligencePage() {
     const unanswered = iqQuestions.filter((q) => !iqPastResults.has(normQ(q.questionText)));
     // Default: complete the unanswered set. If everything is answered, re-run all.
     const targets = unanswered.length > 0 ? unanswered : iqQuestions;
+    iqUserNavRef.current = false;
+    setIqBatchPending(new Set(targets.map((q) => normQ(q.questionText))));
     setIqBatch({ running: true, done: 0, total: targets.length, error: null });
     for (let i = 0; i < targets.length; i++) {
       const q = targets[i];
-      setIqActiveQuestion(q.questionText);
-      // Pending placeholders while this question runs
-      setIqResults(iqFreeModelSlugs.map((slug) => {
-        const shortId = IQ_MODEL_DISPLAY.find((m) => m.slug === slug)?.shortId ?? slug;
-        const prov = providerKeyToIcon(shortId);
-        return { modelSlug: slug, modelShortId: shortId, modelDisplayName: prov ? PROVIDER_LABEL[prov] : shortId, status: 'running', responseText: null, themes: [], accuracy: null, accuracyNote: null, latencyMs: null, error: null };
-      }));
+      const qKey = normQ(q.questionText);
+      setIqBatchCurrent(qKey);
+      // Auto-follow the running question ONLY until the user navigates
+      if (!iqUserNavRef.current) {
+        setIqActiveQuestion(q.questionText);
+        // Pending placeholders while this question runs
+        setIqResults(iqFreeModelSlugs.map((slug) => {
+          const shortId = IQ_MODEL_DISPLAY.find((m) => m.slug === slug)?.shortId ?? slug;
+          const prov = providerKeyToIcon(shortId);
+          return { modelSlug: slug, modelShortId: shortId, modelDisplayName: prov ? PROVIDER_LABEL[prov] : shortId, status: 'running', responseText: null, themes: [], accuracy: null, accuracyNote: null, latencyMs: null, error: null };
+        }));
+      }
       try {
         const mapped = await runOneIqQuestion(q);
-        setIqResults(mapped);
+        if (!iqUserNavRef.current) {
+          setIqActiveQuestion(q.questionText);
+          setIqResults(mapped);
+        }
+        setIqBatchPending((prev) => { const next = new Set(prev); next.delete(qKey); return next; });
         setIqBatch((b) => ({ ...b, done: i + 1 }));
       } catch (err) {
         const msg = err instanceof Error ? err.message : 'Something went wrong';
         // Quota exhausted or hard failure — stop the batch, keep what we have
         setIqBatch((b) => ({ ...b, running: false, error: msg }));
+        setIqBatchCurrent(null);
+        setIqBatchPending(new Set());
         fetchIqUsage();
         return;
       }
     }
     setIqBatch((b) => ({ ...b, running: false }));
+    setIqBatchCurrent(null);
+    setIqBatchPending(new Set());
     fetchIqUsage();
   };
 
@@ -2311,7 +2344,7 @@ function IntelligencePage() {
                             <button
                               key={q.key}
                               onClick={q.onClick}
-                              disabled={iqRunning || !canAsk}
+                              disabled={iqBatch.running ? !hasSaved : (iqRunning || !canAsk)}
                               className="w-full text-left flex items-start gap-2.5 px-3 py-2 transition-colors"
                               style={{
                                 background: isActive ? 'var(--ink)' : q.isPinned ? 'color-mix(in srgb, var(--ok) 4%, transparent)' : idx % 2 === 0 ? 'transparent' : 'color-mix(in srgb, var(--ink) 2%, transparent)',
@@ -2327,6 +2360,16 @@ function IntelligencePage() {
                               <div className="flex-1 min-w-0">
                                 <div className="flex items-center gap-1.5">
                                   <span className="text-[13px] leading-snug">{q.text}</span>
+                                  {iqBatch.running && iqBatchCurrent === normQ(q.text) && (
+                                    <span className="inline-flex items-center gap-1 text-[9px] font-semibold uppercase tracking-wider px-1.5 py-px rounded-full flex-shrink-0" style={{ background: isActive ? 'rgba(255,255,255,0.18)' : 'color-mix(in srgb, var(--signal) 12%, transparent)', color: isActive ? 'var(--paper)' : 'var(--ink)' }}>
+                                      <Loader2 size={9} className="animate-spin" /> running
+                                    </span>
+                                  )}
+                                  {iqBatch.running && iqBatchCurrent !== normQ(q.text) && iqBatchPending.has(normQ(q.text)) && (
+                                    <span className="text-[9px] font-semibold uppercase tracking-wider px-1.5 py-px rounded-full flex-shrink-0" style={{ background: isActive ? 'rgba(255,255,255,0.12)' : 'color-mix(in srgb, var(--ink) 6%, transparent)', color: isActive ? 'var(--paper)' : 'var(--m-muted)' }}>
+                                      queued
+                                    </span>
+                                  )}
                                 </div>
                                 {!isActive && (
                                   <div className="flex items-center gap-1.5 mt-1">
