@@ -171,6 +171,16 @@ type AuditPageRow = {
 
 /* ── Helpers ────────────────────────────────────────── */
 
+/**
+ * Normalize a question for cache keying (2026-06-10). Saved answers were
+ * keyed by EXACT question text, so whenever the industry shortlist
+ * refreshed its wording every paid answer orphaned ("questions muted on
+ * each refresh"). Normalized keys survive punctuation/case/spacing drift.
+ */
+function normQ(s: string): string {
+  return (s || '').toLowerCase().replace(/[^a-z0-9 ]/g, '').replace(/\s+/g, ' ').trim();
+}
+
 function scoreColor(s: number | null | undefined): string {
   if (s == null) return 'var(--m-muted)';
   if (s >= 70) return 'var(--ok)';
@@ -502,8 +512,8 @@ function IntelligencePage() {
           };
         });
         // Keep the most recent result per question (first in the list since ordered desc)
-        if (!map.has(qText) && results.length > 0) {
-          map.set(qText, results);
+        if (!map.has(normQ(qText)) && results.length > 0) {
+          map.set(normQ(qText), results);
         }
       }
       setIqPastResults(map);
@@ -523,7 +533,7 @@ function IntelligencePage() {
     // Find the first question (pinned = first 3) that has cached results
     for (let i = 0; i < Math.min(3, iqQuestions.length); i++) {
       const q = iqQuestions[i];
-      const cached = iqPastResults.get(q.questionText);
+      const cached = iqPastResults.get(normQ(q.questionText));
       if (cached && cached.length > 0) {
         setIqActiveQuestion(q.questionText);
         setIqResults(cached);
@@ -545,7 +555,7 @@ function IntelligencePage() {
     const trimmed = questionText.trim();
 
     // Check for saved (cached) results for this question
-    const savedResults = iqPastResults.get(trimmed);
+    const savedResults = iqPastResults.get(normQ(trimmed));
 
     // Per-question model memory: if we have saved results, check if any
     // currently-selected models already have cached answers we can show instantly
@@ -626,13 +636,13 @@ function IntelligencePage() {
           if (combined.length > 0) {
             setIqPastResults(prev => {
               const next = new Map(prev);
-              const existing = next.get(trimmed) ?? [];
+              const existing = next.get(normQ(trimmed)) ?? [];
               // Merge: keep existing + add new (no duplicates by modelSlug)
               const merged = [...existing];
               for (const r of mapped) {
                 if (!merged.some(e => e.modelSlug === r.modelSlug)) merged.push(r);
               }
-              next.set(trimmed, merged);
+              next.set(normQ(trimmed), merged);
               return next;
             });
           }
@@ -722,12 +732,12 @@ function IntelligencePage() {
       if (mapped.length > 0) {
         setIqPastResults(prev => {
           const next = new Map(prev);
-          const existing = next.get(trimmed) ?? [];
+          const existing = next.get(normQ(trimmed)) ?? [];
           const merged = [...existing];
           for (const r of mapped) {
             if (!merged.some(e => e.modelSlug === r.modelSlug)) merged.push(r);
           }
-          next.set(trimmed, merged);
+          next.set(normQ(trimmed), merged);
           return next;
         });
       }
@@ -748,6 +758,116 @@ function IntelligencePage() {
     } finally {
       setIqRunning(false);
     }
+  };
+
+  /* ── One-button interrogation (2026-06-10) ──────────────────
+   * Runs the full benchmark question set against the free models in one
+   * pass so the user gets their AI accuracy immediately instead of paying
+   * per click to discover it. Saved answers are skipped (free); each new
+   * question charges 1 check via the existing /run endpoint. Progressive:
+   * answers render as each question completes. */
+  const [iqBatch, setIqBatch] = useState<{ running: boolean; done: number; total: number; error: string | null }>({ running: false, done: 0, total: 0, error: null });
+
+  const iqFreeModelSlugs = useMemo(() => IQ_MODEL_DISPLAY.filter((m) => m.free).map((m) => m.slug), [IQ_MODEL_DISPLAY]);
+
+  // Live AI accuracy from saved interrogation results: Accurate=1, Partial=0.5
+  const iqAccuracy = useMemo(() => {
+    if (iqPastResults.size === 0) return null;
+    let pts = 0, n = 0;
+    iqPastResults.forEach((results) => {
+      for (const r of results) {
+        const a = (r.accuracy || '').toLowerCase();
+        if (!a) continue;
+        n++;
+        if (a.startsWith('accur')) pts += 1;
+        else if (a.startsWith('part')) pts += 0.5;
+      }
+    });
+    return n === 0 ? null : Math.round((pts / n) * 100);
+  }, [iqPastResults]);
+  const iqAnsweredCount = useMemo(() => iqQuestions.filter((q) => iqPastResults.has(normQ(q.questionText))).length, [iqQuestions, iqPastResults]);
+
+  const runOneIqQuestion = async (q: { questionId: string; questionText: string; family?: string }) => {
+    const res = await fetch('/api/ai-interrogation/run', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        workspace_id: workspaceId,
+        question_id: q.questionId ?? null,
+        question_text: q.questionText,
+        question_family: q.family ?? 'general_discovery',
+        selected_models: iqFreeModelSlugs,
+      }),
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({ error: 'Request failed' }));
+      throw new Error(err.error ?? 'Request failed');
+    }
+    const data = await res.json();
+    const mapped = (data.results ?? []).map((r: any) => {
+      const slug = r.modelSlug ?? r.model_slug ?? '';
+      const shortId = IQ_MODEL_DISPLAY.find((m) => m.slug === slug)?.shortId ?? slug;
+      const prov = providerKeyToIcon(shortId);
+      return {
+        modelSlug: slug,
+        modelShortId: shortId,
+        modelDisplayName: r.modelLabel ?? r.model_label ?? (prov ? PROVIDER_LABEL[prov] : shortId),
+        status: r.status ?? 'completed',
+        responseText: r.responseText ?? r.response_text ?? null,
+        themes: r.themes ?? [],
+        accuracy: r.accuracy ?? null,
+        accuracyNote: r.accuracyNote ?? r.accuracy_note ?? null,
+        latencyMs: r.latencyMs ?? r.latency_ms ?? null,
+        error: r.error ?? r.errorMessage ?? r.error_message ?? null,
+      };
+    });
+    if (mapped.length > 0) {
+      setIqPastResults((prev) => {
+        const next = new Map(prev);
+        next.set(normQ(q.questionText), mapped);
+        return next;
+      });
+    }
+    if (data.usage) {
+      setIqUsage({
+        checksUsed: data.usage.checksUsed ?? 0,
+        checksLimit: data.usage.checksLimit ?? 0,
+        checksRemaining: data.usage.checksRemaining ?? 0,
+        canInterrogate: (data.usage.checksRemaining ?? 0) > 0,
+      });
+    }
+    return mapped;
+  };
+
+  const handleIqRunAll = async () => {
+    if (!workspaceId || iqRunning || iqBatch.running || iqQuestions.length === 0) return;
+    const unanswered = iqQuestions.filter((q) => !iqPastResults.has(normQ(q.questionText)));
+    // Default: complete the unanswered set. If everything is answered, re-run all.
+    const targets = unanswered.length > 0 ? unanswered : iqQuestions;
+    setIqBatch({ running: true, done: 0, total: targets.length, error: null });
+    for (let i = 0; i < targets.length; i++) {
+      const q = targets[i];
+      setIqActiveQuestion(q.questionText);
+      // Pending placeholders while this question runs
+      setIqResults(iqFreeModelSlugs.map((slug) => {
+        const shortId = IQ_MODEL_DISPLAY.find((m) => m.slug === slug)?.shortId ?? slug;
+        const prov = providerKeyToIcon(shortId);
+        return { modelSlug: slug, modelShortId: shortId, modelDisplayName: prov ? PROVIDER_LABEL[prov] : shortId, status: 'running', responseText: null, themes: [], accuracy: null, accuracyNote: null, latencyMs: null, error: null };
+      }));
+      try {
+        const mapped = await runOneIqQuestion(q);
+        setIqResults(mapped);
+        setIqBatch((b) => ({ ...b, done: i + 1 }));
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : 'Something went wrong';
+        // Quota exhausted or hard failure — stop the batch, keep what we have
+        setIqBatch((b) => ({ ...b, running: false, error: msg }));
+        fetchIqUsage();
+        return;
+      }
+    }
+    setIqBatch((b) => ({ ...b, running: false }));
+    fetchIqUsage();
   };
 
   useEffect(() => {
@@ -1913,14 +2033,18 @@ function IntelligencePage() {
               <div className="flex flex-col lg:flex-row gap-6">
                 {/* Left — Scores */}
                 <div className="flex items-center gap-5 lg:pr-8 lg:border-r flex-shrink-0" style={{ borderColor: 'var(--rule)' }}>
-                  <ScoreCircle score={perceptionAccuracy} size="big" />
+                  <ScoreCircle score={iqAccuracy ?? perceptionAccuracy} size="big" />
                   <div>
                     <p className="text-[11px] font-semibold uppercase tracking-wider" style={{ color: 'var(--m-muted)' }}>AI Accuracy</p>
                     <p className="text-[26px] font-bold tabular-nums leading-tight mt-0.5" style={{ color: 'var(--ink)' }}>
-                      {perceptionAccuracy != null ? `${perceptionAccuracy}%` : 'Not measured'}
+                      {(iqAccuracy ?? perceptionAccuracy) != null ? `${iqAccuracy ?? perceptionAccuracy}%` : 'Not measured'}
                     </p>
                     <p className="text-[13px] mt-1" style={{ color: 'var(--m-muted)' }}>
-                      {perceptionAccuracy != null ? `Across ${perceptionMeasured.length} model${perceptionMeasured.length !== 1 ? 's' : ''}` : 'Run an audit to measure'}
+                      {iqAccuracy != null
+                        ? `Across ${iqAnsweredCount} benchmark question${iqAnsweredCount !== 1 ? 's' : ''}`
+                        : perceptionAccuracy != null
+                        ? `Across ${perceptionMeasured.length} model${perceptionMeasured.length !== 1 ? 's' : ''}`
+                        : 'Use Interrogate AI below to measure'}
                     </p>
                     {hasPerceptionSentiment && (
                       <div className="flex items-center gap-2.5 mt-3 pt-3" style={{ borderTop: '1px solid var(--rule)' }}>
@@ -2046,14 +2170,50 @@ function IntelligencePage() {
                 )}
               </div>
             </div>
-            <p className="text-[12px] mb-3" style={{ color: 'var(--m-muted)' }}>
-              Select up to {IQ_MAX_MODELS} models, then pick a question. Previously asked questions load instantly at no cost.
+            <p className="text-[12px] mb-2" style={{ color: 'var(--ink-2)' }}>
+              These are the {iqQuestions.length || 10} questions people most often ask AI models about businesses in your industry.
+              Your AI Accuracy is measured against them, so it stays comparable between audits. Saved answers load instantly at no cost.
             </p>
+            {(() => {
+              const unanswered = iqQuestions.length - iqAnsweredCount;
+              const cost = unanswered > 0 ? unanswered : iqQuestions.length;
+              const exhausted = iqUsage != null && !iqUsage.canInterrogate;
+              const disabled = iqRunning || iqBatch.running || iqQuestions.length === 0 || (exhausted && true);
+              return (
+                <div className="flex items-center gap-3 mb-3 flex-wrap">
+                  <button
+                    type="button"
+                    onClick={handleIqRunAll}
+                    disabled={disabled}
+                    className="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-[12.5px] font-semibold transition-all disabled:opacity-50"
+                    style={{ background: 'var(--ink)', color: 'var(--paper)' }}
+                  >
+                    {iqBatch.running ? (
+                      <><Loader2 size={13} className="animate-spin" /> Interrogating AI… {iqBatch.done}/{iqBatch.total}</>
+                    ) : unanswered > 0 ? (
+                      <><MessageSquare size={13} /> Interrogate AI — {unanswered} question{unanswered !== 1 ? 's' : ''} ({cost} check{cost !== 1 ? 's' : ''})</>
+                    ) : (
+                      <><MessageSquare size={13} /> Re-run all questions ({cost} checks)</>
+                    )}
+                  </button>
+                  {iqBatch.error && (
+                    <span className="text-[11px]" style={{ color: 'var(--severe)' }}>
+                      Stopped: {iqBatch.error}. Answers already collected are saved.
+                    </span>
+                  )}
+                  {exhausted && !iqBatch.running && (
+                    <span className="text-[11px]" style={{ color: 'var(--warn)' }}>
+                      No checks left this period — saved answers remain available free.
+                    </span>
+                  )}
+                </div>
+              );
+            })()}
 
             {/* Split layout: left panel (models + questions) | right panel (answers) */}
             <div className="flex flex-col lg:flex-row gap-3 flex-1 min-h-0 overflow-hidden">
               {/* ── Left panel: Models + Questions ── */}
-              <div className="lg:w-[340px] flex-shrink-0 flex flex-col overflow-hidden">
+              <div className="lg:w-1/3 lg:min-w-[300px] lg:max-w-[440px] flex-shrink-0 flex flex-col overflow-hidden">
                 {/* Model selector — sticky at top */}
                 <div className="flex-shrink-0 pb-3 z-10" style={{ background: 'var(--card)' }}>
                   <p className="text-[11px] font-semibold uppercase tracking-[0.05em] mb-2" style={{ color: 'var(--m-muted)' }}>
@@ -2125,8 +2285,8 @@ function IntelligencePage() {
                       <div className="rounded-lg overflow-hidden" style={{ border: '1px solid var(--rule)' }}>
                         {sortedQs.map((q, idx) => {
                           const isActive = iqActiveQuestion === q.text;
-                          const hasSaved = iqPastResults.has(q.text);
-                          const pastR = iqPastResults.get(q.text);
+                          const hasSaved = iqPastResults.has(normQ(q.text));
+                          const pastR = iqPastResults.get(normQ(q.text));
                           const probeGroup = questionGroups.find(g => g.question === q.text);
                           let accCount = 0, partCount = 0, wrongCount = 0;
                           if (pastR && pastR.length > 0) {
