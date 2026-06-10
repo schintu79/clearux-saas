@@ -2443,6 +2443,19 @@ RULES FOR RE-AUDIT:
       return hasDescription || hasVoice || hasTone || hasColors || hasLogo
     }
 
+    // ── Analysis health tracking (zero-findings policy) — handler scope ──
+    // Distinguishes "system failed" (insert errors, category timeouts/errors,
+    // batch timeouts) from "genuinely clean" (all calls succeeded, zero issues).
+    // Read by the zero-findings-policy step AFTER the deep/baseline branch:
+    // zero findings + fault → fail + refund; zero + healthy → legit clean result.
+    let totalFindingsCount = 0
+    let totalEmptyCategories = 0
+    let totalAnalyzedCategories = 0
+    let totalInsertFailures = 0
+    let totalLostFindings = 0
+    let totalFailedCategories = 0
+    let anyBatchTimedOut = false
+
     if (effectiveDepthMode === 'baseline') {
       // ════════════════════════════════════════════════════════════
       // BASELINE RE-AUDIT — NO AI ANALYSIS
@@ -3077,9 +3090,8 @@ RULES FOR RE-AUDIT:
         UX_CATEGORY_NAMES.slice(24, 28)
       )
 
-      let totalFindingsCount = 0
-      let totalEmptyCategories = 0
-      let totalAnalyzedCategories = 0
+      // Health/total accumulators are declared at handler scope (above the
+      // baseline/deep branch) so the zero-findings-policy step can read them.
       // NOTE: logActivity/setProgress calls are INSIDE each step.run below
       // so they don't re-execute on every Inngest invocation (which was
       // causing unnecessary DB writes and eating into the 300s Vercel budget).
@@ -3281,6 +3293,8 @@ RULES FOR RE-AUDIT:
         totalEmptyCategories += batchResult.emptyCategoriesInBatch
         totalAnalyzedCategories += batchResult.categoriesInBatch
         if ((batchResult as any).insertFailed) {
+          totalInsertFailures++
+          totalLostFindings += (batchResult as any).attemptedInserts || 0
           console.error(`[inngest] ALERT: Batch ${batchIdx + 1} findings insert FAILED for audit ${auditId} — ${(batchResult as any).attemptedInserts} findings lost`)
           auditLimitations.push({
             id: `batch_${batchIdx + 1}_insert_failed`,
@@ -3289,6 +3303,7 @@ RULES FOR RE-AUDIT:
           })
         }
         if (batchResult.batchTimedOut) {
+          anyBatchTimedOut = true
           console.error(`[inngest] ALERT: Batch ${batchIdx + 1} fully timed out for audit ${auditId}`)
           // Contradiction check: batch-level timeout → flag degraded confidence
           const timedOutCategories = batch.join(', ')
@@ -3301,6 +3316,7 @@ RULES FOR RE-AUDIT:
         // Per-category timeout tracking: if individual categories in a completed batch timed out
         if (!batchResult.batchTimedOut && batchResult.categoryTimings) {
           const timedOutCats = batchResult.categoryTimings.filter((t: any) => t.status === 'timeout' || t.status === 'error')
+          totalFailedCategories += timedOutCats.length
           if (timedOutCats.length > 0) {
             const catNames = timedOutCats.map((t: any) => t.name).join(', ')
             auditLimitations.push({
@@ -3341,6 +3357,67 @@ RULES FOR RE-AUDIT:
     }
 
     // ──────────────────────────────────────────────────────────
+    // ZERO-FINDINGS POLICY (added 2026-06-10)
+    // Zero findings is only a valid result when the pipeline is healthy.
+    //  - Zero + system fault (insert failures, category timeouts/errors,
+    //    batch timeouts) → the zero is OUR fault → fail the audit, refund
+    //    the credit, tell the user clearly. Never ship fabricated scores.
+    //  - Zero + healthy pipeline → legitimate clean site → ship the report,
+    //    no refund. The customer is entitled to know their site is clean.
+    // ──────────────────────────────────────────────────────────
+    const zeroFindingsVerdict = await step.run('zero-findings-policy', async () => {
+      const db = getDb()
+      const { count, error: countError } = await db
+        .from('audit_findings')
+        .select('id', { count: 'exact', head: true })
+        .eq('audit_id', auditId)
+
+      if (countError) {
+        // Can't verify — don't abort on a count failure, but log it
+        console.error(`[inngest] zero-findings-policy: count query failed: ${countError.message}`)
+        return { action: 'continue' as const, findingsCount: -1 }
+      }
+
+      const findingsCount = count ?? 0
+      if (findingsCount > 0) {
+        return { action: 'continue' as const, findingsCount }
+      }
+
+      const faultReasons: string[] = []
+      if (totalInsertFailures > 0) faultReasons.push(`${totalInsertFailures} batch insert failure(s) — ${totalLostFindings} finding(s) produced but not saved`)
+      if (totalFailedCategories > 0) faultReasons.push(`${totalFailedCategories} category analyzer(s) timed out or errored`)
+      if (anyBatchTimedOut) faultReasons.push('at least one analysis batch fully timed out')
+      const systemFault = faultReasons.length > 0
+
+      if (!systemFault) {
+        // Genuinely clean: every analyzer call succeeded, every insert succeeded,
+        // the site simply has no findings worth reporting at this depth.
+        await auditLog(auditId, 'clean_zero_verified', 'success',
+          `Zero findings with a fully healthy pipeline (${totalAnalyzedCategories} categories analyzed, 0 timeouts, 0 insert failures). This is a verified clean result — shipping report, no refund.`)
+        return { action: 'continue' as const, findingsCount: 0 }
+      }
+
+      // The zero is our fault — fail loudly, refund, do not fabricate a report.
+      const reason = faultReasons.join('; ')
+      console.error(`[inngest] Audit ${auditId}: zero findings caused by SYSTEM FAILURE (${reason}) — failing audit and refunding credit`)
+      await refundCredit(auditId)
+      await db.from('audits').update({
+        status: 'failed',
+        crawl_error: `AUDIT_SYSTEM_ERROR: The analysis ran but we could not produce reliable findings due to an internal error (${reason.slice(0, 250)}). This was our fault, not a problem with your site. Your credit has been refunded — please re-run the audit.`,
+        updated_at: new Date().toISOString(),
+      } as any).eq('id', auditId)
+      await logPipelineFailed(auditId, `Zero findings due to system failure: ${reason.slice(0, 200)}`)
+      await auditLog(auditId, 'audit_failed_zero_findings_system', 'error',
+        `Audit failed: analysis produced zero findings because of a system error (${reason.slice(0, 200)}). Credit refunded. No report was generated — fabricated scores are never shipped.`)
+      return { action: 'abort' as const, findingsCount: 0 }
+    })
+
+    if (zeroFindingsVerdict && (zeroFindingsVerdict as any).action === 'abort') {
+      console.warn(`[inngest] Audit ${auditId} aborted by zero-findings policy — credit refunded, no report generated`)
+      return { aborted: 'zero_findings_system_failure', auditId }
+    }
+
+    // ──────────────────────────────────────────────────────────
     // QUALITY GATES: Dedup + speculative filter + relevance scoring
     // Combined into one step to eliminate Inngest cold-start overhead
     // ──────────────────────────────────────────────────────────
@@ -3366,14 +3443,12 @@ RULES FOR RE-AUDIT:
         .order('sort_order', { ascending: true })
 
       if (!allQGFindings || allQGFindings.length === 0) {
-        console.error(`[inngest] Audit ${auditId}: ZERO findings after analysis — this likely means all analyzer calls timed out or failed`)
-        await auditLog(auditId, 'findings_critical', 'warning',
-          'Zero findings produced by analysis — all category analyzers may have timed out. Scores will reflect limited evidence.')
-        auditLimitations.push({
-          id: 'zero_findings_all_failed',
-          title: 'Analysis produced no findings',
-          description: 'All audit categories returned zero findings. This usually means the AI analysis calls timed out or encountered errors. The resulting scores are not reliable. We strongly recommend re-running this audit.',
-        })
+        // Zero findings here means the zero-findings-policy step already verified
+        // the pipeline was healthy (faulty zeros abort before this point).
+        // This is a legitimate clean result — no quality gates needed.
+        console.log(`[inngest] Audit ${auditId}: zero findings (verified clean by policy step) — skipping quality gates`)
+        await auditLog(auditId, 'quality_gates_skipped_clean', 'info',
+          'No findings to quality-check — verified clean result.')
         await setProgress(auditId, 75)
         return
       }

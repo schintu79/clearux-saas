@@ -39,13 +39,14 @@ const QUEUED_STALL_THRESHOLD_MINUTES = 30
  */
 const HARD_CEILING_MINUTES = 20
 
-export const stallSweeperFn = inngest.createFunction(
-  {
-    id: 'audit-stall-sweeper',
-    retries: 1,
-    triggers: [{ cron: '*/5 * * * *' }], // Every 5 minutes
-  },
-  async () => {
+/**
+ * Core sweep logic — shared by the Inngest cron function AND the Vercel Cron
+ * backup route (/api/cron/stall-sweep). Added 2026-06-10: the Inngest cron
+ * silently stopped firing (audits sat non-terminal for 49+ minutes with no
+ * sweep on June 9), so a second, independent trigger path now exists.
+ * The sweep is idempotent — safe to run from both triggers concurrently.
+ */
+export async function runStallSweep() {
     const db = createServiceSupabase()
 
     const activeCutoff = new Date(Date.now() - ACTIVE_STALL_THRESHOLD_MINUTES * 60 * 1000).toISOString()
@@ -213,5 +214,13 @@ export const stallSweeperFn = inngest.createFunction(
 
     console.log(`[stall-sweeper] Swept ${swept} stalled audits`)
     return { swept, audits: allStalled.map((a: any) => a.id) }
+}
+
+export const stallSweeperFn = inngest.createFunction(
+  {
+    id: 'audit-stall-sweeper',
+    retries: 1,
+    triggers: [{ cron: '*/5 * * * *' }], // Every 5 minutes
   },
+  async () => runStallSweep(),
 )

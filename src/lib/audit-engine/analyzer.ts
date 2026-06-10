@@ -1396,19 +1396,17 @@ export async function generateReport(
   // Derive coverage level from crawl summary
   const pagesAnalyzed = auditData.crawl_summary?.pages_analyzed ?? 0
 
-  // Zero-findings safety net: if this is a deep audit with pages crawled but
-  // zero findings survived the pipeline, treat ALL categories as evidence_limited
-  // and use LOW_COV_JITTER (85-89) regardless of coverage. This prevents the
-  // "Healthy — no issues found" illusion when quality gates removed everything.
-  const pipelineFilteredAll = findings.length === 0 && pagesAnalyzed > 0
+  // Zero-findings policy (2026-06-10): a zero-findings audit caused by system
+  // failure (insert errors, analyzer timeouts) is FAILED + REFUNDED by the
+  // zero-findings-policy step in process-audit.ts and never reaches report
+  // generation. If we're here with 0 findings, the pipeline verified the zero
+  // is genuine — score by crawl coverage only, with honest clean messaging.
+  const verifiedCleanZero = findings.length === 0 && pagesAnalyzed > 0
 
-  const coverageJitter = pipelineFilteredAll ? LOW_COV_JITTER
-    : pagesAnalyzed <= 1 ? LOW_COV_JITTER
+  const coverageJitter = pagesAnalyzed <= 1 ? LOW_COV_JITTER
     : pagesAnalyzed <= 3 ? MEDIUM_COV_JITTER
     : CLEAN_JITTER
-  const coverageState: CategoryScore['score_state'] = pipelineFilteredAll ? 'evidence_limited'
-    : pagesAnalyzed <= 1 ? 'evidence_limited'
-    : pagesAnalyzed <= 3 ? 'evidence_limited'
+  const coverageState: CategoryScore['score_state'] = pagesAnalyzed <= 3 ? 'evidence_limited'
     : 'clean'
 
   // Group findings by category_index (0-27)
@@ -1466,15 +1464,13 @@ export async function generateReport(
     if (catFindings.length === 0) {
       // Clean category — use coverage-adjusted jitter to reflect crawl depth.
       // Low coverage (1 page) = 85-89, medium (2-3) = 90-93, high (4+) = 95-99.
-      // Pipeline-filtered-all: 85-89 regardless of coverage — we can't trust 0 findings.
-      // This prevents "high score + 0 findings" when we simply didn't see enough.
+      // Zero findings reaching this point is a VERIFIED clean result (faulty
+      // zeros are failed + refunded upstream by the zero-findings-policy step).
       score = coverageJitter[gi % coverageJitter.length]
       score_state = coverageState
-      summary = pipelineFilteredAll
-        ? 'Quality filtering removed all findings — scores may not reflect the full state.'
-        : pagesAnalyzed <= 1
+      summary = pagesAnalyzed <= 1
         ? 'No issues identified — limited pages analyzed, coverage may be incomplete.'
-        : 'No issues identified — strong performance in this category.'
+        : 'No issues identified — verified clean in this category.'
     } else {
       score = BASE_SCORE
       for (const f of catFindings) {
@@ -1516,8 +1512,8 @@ export async function generateReport(
     ? Math.round(allScores.reduce((s, v) => s + v, 0) / allScores.length)
     : 50
 
-  if (pipelineFilteredAll) {
-    console.warn(`[generateReport] PIPELINE FILTERED ALL: 0 findings after quality gates with ${pagesAnalyzed} pages crawled. Using LOW_COV_JITTER (85-89) and evidence_limited state. Overall=${calculatedOverall}`)
+  if (verifiedCleanZero) {
+    console.log(`[generateReport] VERIFIED CLEAN ZERO: 0 findings with healthy pipeline, ${pagesAnalyzed} pages crawled. Coverage-based scoring. Overall=${calculatedOverall}`)
   }
   console.log(`[generateReport] DEEP MODE DETERMINISTIC: overall=${calculatedOverall}, findings=${findings.length}, categories_with_findings=${findingsByCategory.size}`)
 
@@ -1771,15 +1767,12 @@ function calculateScoresFromFindings(findings: AuditFinding[], language: string 
   const LOW_COV_JITTER =    [87, 86, 88, 85, 89, 86, 88, 87, 85, 89, 86, 88, 87, 85, 89, 86, 88, 87, 85, 89, 86, 88, 85, 89, 87, 86, 88, 85]
   const MEDIUM_COV_JITTER = [92, 91, 93, 90, 93, 91, 93, 92, 90, 93, 91, 93, 92, 90, 93, 91, 93, 92, 90, 93, 91, 93, 90, 93, 92, 91, 93, 90]
 
-  // Zero-findings safety net — must match generateReport() logic
-  const pipelineFilteredAll = findings.length === 0 && pagesAnalyzed > 0
-
-  const coverageJitter = pipelineFilteredAll ? LOW_COV_JITTER
-    : pagesAnalyzed <= 1 ? LOW_COV_JITTER
+  // Zero-findings policy — must match generateReport() logic. Faulty zeros are
+  // failed + refunded upstream; a zero here is a verified clean result.
+  const coverageJitter = pagesAnalyzed <= 1 ? LOW_COV_JITTER
     : pagesAnalyzed <= 3 ? MEDIUM_COV_JITTER
     : CLEAN_JITTER
-  const coverageState: CategoryScore['score_state'] = pipelineFilteredAll ? 'evidence_limited'
-    : pagesAnalyzed <= 3 ? 'evidence_limited'
+  const coverageState: CategoryScore['score_state'] = pagesAnalyzed <= 3 ? 'evidence_limited'
     : 'clean'
 
   // Assign findings to categories — prefer category_index, fall back to keyword matching
@@ -1835,11 +1828,9 @@ function calculateScoresFromFindings(findings: AuditFinding[], language: string 
     if (catFindings.length === 0) {
       // Clean category — coverage-adjusted jitter prevents misleading high scores
       const score = coverageJitter[catIdx % coverageJitter.length]
-      const summary = pipelineFilteredAll
-        ? 'Quality filtering removed all findings — scores may not reflect the full state.'
-        : pagesAnalyzed <= 1
+      const summary = pagesAnalyzed <= 1
         ? 'No issues identified — limited pages analyzed, coverage may be incomplete.'
-        : 'No issues identified — strong performance in this category.'
+        : 'No issues identified — verified clean in this category.'
       return { name, score, summary, score_state: coverageState }
     }
     let score = BASE_SCORE

@@ -1,5 +1,11 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
+  "crons": [
+    {
+      "path": "/api/cron/stall-sweep",
+      "schedule": "*/10 * * * *"
+    }
+  ],
   "functions": {
     "src/app/api/inngest/route.ts": {
       "maxDuration": 300,
