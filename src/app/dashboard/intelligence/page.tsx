@@ -812,6 +812,27 @@ function IntelligencePage() {
   }, [iqPastResults]);
   const iqAnsweredCount = useMemo(() => iqQuestions.filter((q) => iqPastResults.has(normQ(q.questionText))).length, [iqQuestions, iqPastResults]);
 
+  // Per-model accuracy from saved interrogation results — drives the
+  // always-visible 6-model widget row in the console header.
+  const iqPerModel = useMemo(() => {
+    const acc: Record<string, { pts: number; n: number }> = {};
+    iqPastResults.forEach((results) => {
+      for (const r of results) {
+        const a = (r.accuracy || '').toLowerCase();
+        if (!a || !r.modelSlug) continue;
+        if (!acc[r.modelSlug]) acc[r.modelSlug] = { pts: 0, n: 0 };
+        acc[r.modelSlug].n++;
+        if (a.startsWith('accur')) acc[r.modelSlug].pts += 1;
+        else if (a.startsWith('part')) acc[r.modelSlug].pts += 0.5;
+      }
+    });
+    const out: Record<string, { score: number; n: number }> = {};
+    for (const [k, v] of Object.entries(acc)) {
+      if (v.n > 0) out[k] = { score: Math.round((v.pts / v.n) * 100), n: v.n };
+    }
+    return out;
+  }, [iqPastResults]);
+
   const runOneIqQuestion = async (q: { questionId: string; questionText: string; family?: string }) => {
     const res = await fetch('/api/ai-interrogation/run', {
       method: 'POST',
@@ -2213,40 +2234,44 @@ function IntelligencePage() {
                 )}
               </div>
             </div>
-            {hasModelBreakdown && (
-              <div className="mb-3">
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
-                  {mergedModelBreakdown.map((probe) => {
-                    const badge = accuracyBadge(probe.accuracy_score, probe.status);
-                    const measured = probe.status === 'measured' || !probe.status;
-                    const hasSent = probe.sentiment_score != null;
-                    return (
-                      <div key={probe.model_id} className="rounded-lg px-3 py-2.5 bg-white dark:bg-white/[0.04]" style={{ border: '1px solid var(--rule)' }}>
-                        <div className="flex items-center gap-2">
-                          <AIProviderIcon provider={providerKeyToIcon(probe.model_id) ?? 'chatgpt'} size={16} />
-                          <span className="text-[12px] font-semibold truncate" style={{ color: 'var(--ink)' }}>{probe.model_label}</span>
-                          <span className="ml-auto text-[16px] font-bold tabular-nums flex-shrink-0" style={{ color: measured ? scoreColor(probe.accuracy_score) : 'var(--m-muted)' }}>
-                            {measured ? `${probe.accuracy_score}%` : '—'}
-                          </span>
-                        </div>
-                        <div className="flex items-center gap-1.5 mt-1.5">
-                          <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded" style={{ background: badge.bg, color: badge.color }}>{badge.label}</span>
-                          {measured && probe.total_questions > 0 && (
-                            <span className="text-[10px]" style={{ color: 'var(--ink-2)' }}>{probe.total_questions} question{probe.total_questions !== 1 ? 's' : ''}</span>
-                          )}
-                          {hasSent && (
-                            <span className="ml-auto text-[10px]" style={{ color: 'var(--ink-2)' }}>Sentiment {probe.sentiment_score}/100</span>
-                          )}
-                        </div>
+            {/* All 6 model cards always visible (2026-06-10) — saved results
+                fill in as the user pulls them; unmeasured models say so. */}
+            <div className="mb-3">
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2">
+                {IQ_MODEL_DISPLAY.map((m) => {
+                  const provider = providerKeyToIcon(m.shortId);
+                  const iq = iqPerModel[m.slug];
+                  const probe = mergedModelBreakdown.find((pb) => pb.model_id === m.shortId && (pb.status === 'measured' || !pb.status));
+                  const score = iq ? iq.score : probe ? probe.accuracy_score : null;
+                  const nQuestions = iq ? iq.n : probe ? probe.total_questions : 0;
+                  const badge = score != null ? accuracyBadge(score, 'measured') : null;
+                  return (
+                    <div key={m.slug} className="rounded-lg px-3 py-2.5 bg-white dark:bg-white/[0.04]" style={{ border: '1px solid var(--rule)', opacity: score != null ? 1 : 0.75 }}>
+                      <div className="flex items-center gap-1.5">
+                        {provider && <AIProviderIcon provider={provider} size={14} />}
+                        <span className="text-[11.5px] font-semibold truncate" style={{ color: 'var(--ink)' }}>{provider ? PROVIDER_LABEL[provider] : m.shortId}</span>
+                        <span className="ml-auto text-[15px] font-bold tabular-nums flex-shrink-0" style={{ color: score != null ? scoreColor(score) : 'var(--m-muted)' }}>
+                          {score != null ? `${score}%` : '—'}
+                        </span>
                       </div>
-                    );
-                  })}
-                </div>
-                <p className="text-[10px] mt-1.5" style={{ color: 'var(--m-muted)' }}>
-                  Accuracy per model across the benchmark set — graded against your actual website content. Accurate = 100% · Partial = 50% · No data = 25% · Inaccurate = 0%.
-                </p>
+                      <div className="flex items-center gap-1.5 mt-1.5">
+                        {badge ? (
+                          <span className="text-[9.5px] font-semibold px-1.5 py-0.5 rounded" style={{ background: badge.bg, color: badge.color }}>{badge.label}</span>
+                        ) : (
+                          <span className="text-[9.5px] font-semibold px-1.5 py-0.5 rounded" style={{ background: 'color-mix(in srgb, var(--ink) 5%, transparent)', color: 'var(--m-muted)' }}>Not measured</span>
+                        )}
+                        <span className="text-[9.5px] truncate" style={{ color: 'var(--ink-2)' }}>
+                          {score != null ? `${nQuestions} question${nQuestions !== 1 ? 's' : ''}` : 'Select & interrogate'}
+                        </span>
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
-            )}
+              <p className="text-[10px] mt-1.5" style={{ color: 'var(--m-muted)' }}>
+                Accuracy per model across the benchmark set — graded against your actual website content. Accurate = 100% · Partial = 50% · No data = 25% · Inaccurate = 0%. Saved results persist — re-running is never required to view them.
+              </p>
+            </div>
             <p className="text-[12px] mb-2" style={{ color: 'var(--ink-2)' }}>
               These are the {iqQuestions.length || 10} questions people most often ask AI models about businesses in your industry.
               Your AI Accuracy is measured against them, so it stays comparable between audits. Saved answers load instantly at no cost.
