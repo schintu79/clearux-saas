@@ -116,7 +116,17 @@ export async function POST(
         console.error(`[retry] ${auditType} audit ${auditId} failed:`, err)
       }
     })
-    inngest.send({ name: eventName, data: { auditId } }).catch((err) => console.error(`[retry] Inngest dispatch failed for ${auditId}:`, err))
+    // MUST await — unawaited send() is dropped when the Vercel lambda
+    // freezes after the response returns (audits stuck at payment_received).
+    try {
+      await inngest.send({ name: eventName, data: { auditId } })
+    } catch (err) {
+      console.error(`[retry] Inngest dispatch failed for ${auditId}:`, err)
+      return NextResponse.json(
+        { error: 'Audit was reset but the processing job could not be dispatched. Please try again.' },
+        { status: 500 },
+      )
+    }
 
     return NextResponse.json({
       status: 'payment_received',

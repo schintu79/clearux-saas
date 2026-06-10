@@ -80,9 +80,19 @@ export async function POST(
     const auditType = (a as any).audit_type || ((a as any).brand_identity_id && !(a as any).product_url ? 'brand_identity' : 'website')
     const eventName = auditType === 'brand_identity' ? 'brand-audit/process' : 'audit/process'
     console.log(`[restart] Dispatching ${auditType} audit ${auditId} to Inngest`)
-    inngest.send({ name: eventName, data: { auditId } }).catch((err) => {
-      console.error(`[restart] Failed to send Inngest event for audit ${auditId}:`, err)
-    })
+    // MUST await: on Vercel the lambda freezes as soon as the response is
+    // returned, so an unawaited send() is frequently dropped in flight —
+    // the audit resets to 1% but Inngest never receives the event, leaving
+    // it stuck at payment_received until the queued-stall sweeper (30 min).
+    try {
+      await inngest.send({ name: eventName, data: { auditId } })
+    } catch (sendErr) {
+      console.error(`[restart] Failed to send Inngest event for audit ${auditId}:`, sendErr)
+      return NextResponse.json(
+        { error: 'Audit was reset but the processing job could not be dispatched. Please try again.' },
+        { status: 500 },
+      )
+    }
 
     return NextResponse.json({ ok: true, message: 'Audit restarted' })
   } catch (err) {

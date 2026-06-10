@@ -207,9 +207,19 @@ export async function POST(request: NextRequest) {
     const eventName = auditType === 'brand_identity' ? 'brand-audit/process' : 'audit/process'
 
     console.log(`[credits] Dispatching ${auditType} audit ${audit_id} to Inngest (class: ${quota.billing_class})`)
-    inngest.send({ name: eventName, data: { auditId: audit_id } }).catch((err) => {
+    // MUST await — unawaited send() is dropped when the Vercel lambda
+    // freezes after the response returns (audits stuck at payment_received,
+    // credit already deducted). The queued-stall sweeper refunds those after
+    // 30 min, but the user should know immediately.
+    try {
+      await inngest.send({ name: eventName, data: { auditId: audit_id } })
+    } catch (err) {
       console.error(`[credits] Failed to send Inngest event for audit ${audit_id}:`, err)
-    })
+      return NextResponse.json(
+        { error: 'Payment accepted but the audit job could not be dispatched. Use Try again on the audit page — your credit is refunded automatically if the audit cannot start.' },
+        { status: 500 },
+      )
+    }
 
     return NextResponse.json({
       success: true,

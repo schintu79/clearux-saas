@@ -92,9 +92,17 @@ export async function POST(request: NextRequest) {
     const auditType = a.audit_type || (a.brand_identity_id && !a.product_url ? 'brand_identity' : 'website')
     const eventName = auditType === 'brand_identity' ? 'brand-audit/process' : 'audit/process'
     console.log(`[process] Dispatching ${auditType} audit ${audit_id} to Inngest`)
-    inngest.send({ name: eventName, data: { auditId: audit_id } }).catch((err) => {
+    // MUST await — unawaited send() is dropped when the Vercel lambda
+    // freezes after the response returns (audits stuck at payment_received).
+    try {
+      await inngest.send({ name: eventName, data: { auditId: audit_id } })
+    } catch (err) {
       console.error(`[process] Failed to send Inngest event for audit ${audit_id}:`, err)
-    })
+      return NextResponse.json(
+        { error: 'Audit created but the processing job could not be dispatched. Please retry from the audit page.' },
+        { status: 500 },
+      )
+    }
 
     return NextResponse.json(
       { message: 'Audit processing started', audit_id },
