@@ -796,20 +796,15 @@ function IntelligencePage() {
   const iqFreeModelSlugs = useMemo(() => IQ_MODEL_DISPLAY.filter((m) => m.free).map((m) => m.slug), [IQ_MODEL_DISPLAY]);
 
   // Live AI accuracy from saved interrogation results: Accurate=1, Partial=0.5
-  const iqAccuracy = useMemo(() => {
-    if (iqPastResults.size === 0) return null;
-    let pts = 0, n = 0;
+  // Shared formula (interrogation-metrics) — same numbers as the Overview card.
+  const iqFlatAnswers = useMemo(() => {
+    const flat: Array<{ accuracy: string | null; responseText: string | null }> = [];
     iqPastResults.forEach((results) => {
-      for (const r of results) {
-        const a = (r.accuracy || '').toLowerCase();
-        if (!a) continue;
-        n++;
-        if (a.startsWith('accur')) pts += 1;
-        else if (a.startsWith('part')) pts += 0.5;
-      }
+      for (const r of results) flat.push({ accuracy: r.accuracy, responseText: r.responseText });
     });
-    return n === 0 ? null : Math.round((pts / n) * 100);
+    return flat;
   }, [iqPastResults]);
+  const iqAccuracy = useMemo(() => interrogationAccuracy(iqFlatAnswers), [iqFlatAnswers]);
   const iqAnsweredCount = useMemo(() => iqQuestions.filter((q) => iqPastResults.has(normQ(q.questionText))).length, [iqQuestions, iqPastResults]);
 
   // Per-model accuracy from saved interrogation results — drives the
@@ -842,40 +837,14 @@ function IntelligencePage() {
    *   (markers like 'legitimate/regulated/trusted' vs 'scam/caution/avoid').
    *   Needs >=3 marker hits to report — otherwise stays unmeasured. */
   const iqVisibility = useMemo(() => {
-    if (iqPastResults.size === 0) return null;
-    const brand = ((bundle?.audit as any)?.brand_name || workspace?.brand_name || workspace?.name || '').toLowerCase();
-    const dom = (workspace?.primary_domain || '').toLowerCase().replace(/^www\./, '');
-    const brandTokens = [brand, dom, dom.split('.')[0]].filter((t) => t && t.length >= 3);
-    if (brandTokens.length === 0) return null;
-    const UNKNOWN_RE = /\b(i (don'?t|do not) have (any |specific )?(information|details|data)|not familiar with|couldn'?t find (any )?information|no (publicly )?available information|unable to (find|locate|verify) (any )?information)\b/i;
-    let known = 0, total = 0;
-    iqPastResults.forEach((results) => {
-      for (const r of results) {
-        if (!r.responseText || r.responseText.length < 30) continue;
-        total++;
-        const text = r.responseText.toLowerCase();
-        const mentionsBrand = brandTokens.some((t) => text.includes(t));
-        if (mentionsBrand && !UNKNOWN_RE.test(r.responseText)) known++;
-      }
-    });
-    return total === 0 ? null : Math.round((known / total) * 100);
-  }, [iqPastResults, bundle?.audit, workspace]);
+    const tokens = brandTokensFor(
+      (bundle?.audit as any)?.brand_name || (workspace as any)?.brand_name || workspace?.name,
+      (workspace as any)?.primary_domain,
+    );
+    return interrogationVisibility(iqFlatAnswers, tokens);
+  }, [iqFlatAnswers, bundle?.audit, workspace]);
 
-  const iqSentiment = useMemo(() => {
-    if (iqPastResults.size === 0) return null;
-    const POSITIVE = /\b(legitimate|trusted|trustworthy|reliable|reputable|regulated|licensed|well[- ]regarded|recommended|positive reviews?|safe to use|credible|established)\b/gi;
-    const NEGATIVE = /\b(scam|fraud|caution|warning|red flags?|avoid|complaints?|risky|not recommended|concerns?|suspicious|unverified claims|misleading)\b/gi;
-    let pos = 0, neg = 0;
-    iqPastResults.forEach((results) => {
-      for (const r of results) {
-        if (!r.responseText) continue;
-        pos += (r.responseText.match(POSITIVE) || []).length;
-        neg += (r.responseText.match(NEGATIVE) || []).length;
-      }
-    });
-    if (pos + neg < 3) return null; // insufficient signal — stay honest
-    return Math.round((pos / (pos + neg)) * 100);
-  }, [iqPastResults]);
+  const iqSentiment = useMemo(() => interrogationSentiment(iqFlatAnswers), [iqFlatAnswers]);
 
   const runOneIqQuestion = async (q: { questionId: string; questionText: string; family?: string }) => {
     const res = await fetch('/api/ai-interrogation/run', {
