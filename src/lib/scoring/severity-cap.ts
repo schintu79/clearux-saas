@@ -56,6 +56,38 @@ export function applySeverityCapFromCounts(
   return { overall, capInfo: { applied: false, cap: null, reason: null } }
 }
 
+/**
+ * Module-scale severity cap (2026-06-11). A module spans 4 of 28
+ * categories — the site-wide thresholds (6 highs → 65) are far too
+ * lenient at that scale, which let a module carrying 2 high-severity
+ * issues display 80 beside a site verdict of 65. Thresholds here are
+ * proportionate to a 4-category scope.
+ */
+export function applyModuleSeverityCap(
+  score: number,
+  findings: Array<{ severity: string }>,
+): { overall: number; capInfo: ScoreCapInfo } {
+  let critical = 0, high = 0, medium = 0
+  for (const f of findings) {
+    if (f.severity === 'critical') critical++
+    else if (f.severity === 'high') high++
+    else if (f.severity === 'medium') medium++
+  }
+
+  let cap: number | null = null
+  let reason: string | null = null
+  if (critical >= 1) { cap = 55; reason = `${critical} critical issue${critical > 1 ? 's' : ''}` }
+  else if (high >= 3) { cap = 65; reason = `${high} high-severity issues` }
+  else if (high === 2) { cap = 72; reason = '2 high-severity issues' }
+  else if (high === 1) { cap = 80; reason = '1 high-severity issue' }
+  else if (medium >= 3) { cap = 85; reason = `${medium} medium-severity issues` }
+
+  if (cap != null && score > cap) {
+    return { overall: cap, capInfo: { applied: true, cap, reason } }
+  }
+  return { overall: score, capInfo: { applied: false, cap: null, reason: null } }
+}
+
 /** Deterministic, user-facing sentence explaining an applied cap. */
 export function capSummarySentence(capInfo: ScoreCapInfo): string {
   if (!capInfo.applied || !capInfo.reason) return ''

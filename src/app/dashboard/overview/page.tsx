@@ -74,7 +74,7 @@ import {
   type LatestAuditBundle,
 } from '@/lib/dashboard/latest-audit';
 import { healthLabel, type HealthContext } from '@/lib/audit-findings-presentation';
-import { applySeverityCap } from '@/lib/scoring/severity-cap';
+import { applySeverityCap, applyModuleSeverityCap } from '@/lib/scoring/severity-cap';
 import { useWorkspace } from '@/context/WorkspaceContext';
 import { useAuditProgress } from '@/hooks/useAuditProgress';
 import EmptyAudit from '@/components/dashboard/v2/EmptyAudit';
@@ -690,10 +690,12 @@ function OverviewInner() {
   // Categories cards, radar, and module dots all read pillarScores, so
   // they stay mutually consistent. Fixing a module's issues lifts its
   // cap live, same as the overall.
-  pillarScores = pillarScores.map((p) => ({
-    ...p,
-    score: applySeverityCap(p.score, findingsByPillarName[p.name] || []).overall,
-  }));
+  const pillarCapInfo: Record<string, ReturnType<typeof applyModuleSeverityCap>['capInfo']> = {};
+  pillarScores = pillarScores.map((p) => {
+    const capped = applyModuleSeverityCap(p.score, findingsByPillarName[p.name] || []);
+    pillarCapInfo[p.name] = capped.capInfo;
+    return { ...p, score: capped.overall };
+  });
 
   const execSummary = (report.executive_summary || '').trim();
 
@@ -1075,6 +1077,11 @@ function OverviewInner() {
           <p className="text-[11px]" style={{ color: 'var(--m-muted)' }}>
             · {pillarScores.length} module{pillarScores.length === 1 ? '' : 's'} · expand for sub-checkpoints
           </p>
+          {scoreCapInfo.applied && (
+            <p className="text-[11px]" style={{ color: 'var(--warn)' }}>
+              · Modules rate each area on its own — the overall {overallScore}/100 is capped by {scoreCapInfo.reason} across the whole site.
+            </p>
+          )}
         </div>
       )}
       {pillarScores.length > 0 && (
@@ -1095,6 +1102,7 @@ function OverviewInner() {
                 tint={tint}
                 Icon={PIcon}
                 findingCount={findingCount}
+                capReason={pillarCapInfo[p.name]?.applied ? pillarCapInfo[p.name].reason : null}
                 breakdown={pillarCats.slice(0, 4).map((cat, relIdx) => ({
                   name: cat.name,
                   score: cat.score,
@@ -1367,6 +1375,7 @@ function CategoryModuleCard({
   tint,
   Icon,
   findingCount,
+  capReason = null,
   breakdown,
   href,
   expanded,
@@ -1377,6 +1386,8 @@ function CategoryModuleCard({
   tint: { dot: string; bg: string; border: string };
   Icon: React.ElementType;
   findingCount: number;
+  /** Set when the module score is capped by its own open findings */
+  capReason?: string | null;
   breakdown: Array<{ name: string; score: number; Icon: React.ElementType }>;
   href: string;
   expanded: boolean;
@@ -1405,6 +1416,11 @@ function CategoryModuleCard({
           <p className="text-[10px] leading-tight mt-0.5" style={{ color: 'var(--m-muted)' }}>
             {findingCount} finding{findingCount !== 1 ? 's' : ''}
           </p>
+          {capReason && (
+            <p className="text-[9.5px] leading-tight mt-1 font-medium px-1.5 py-0.5 rounded inline-block" style={{ color: 'var(--warn)', background: 'color-mix(in srgb, var(--warn) 9%, transparent)' }}>
+              Held down by {capReason}
+            </p>
+          )}
         </div>
       </div>
 
