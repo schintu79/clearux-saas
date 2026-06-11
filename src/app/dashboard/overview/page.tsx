@@ -697,6 +697,29 @@ function OverviewInner() {
     return { ...p, score: capped.overall };
   });
 
+  // ── Compose modules into the verdict (2026-06-11, product decision) ──
+  // The displayed module scores must AVERAGE to the capped overall — a 65
+  // verdict above categories averaging 80 read as broken math. Rule:
+  // issue-carrying modules are scaled down until the average composes;
+  // CLEAN modules keep their true score (a clean area must never absorb
+  // other modules' issues — that would destroy the diagnostic value).
+  if (pillarScores.length > 0 && scoreCapInfo.applied) {
+    const carriers = pillarScores.filter((p) => (findingsByPillarName[p.name]?.length || 0) > 0);
+    const cleanSum = pillarScores
+      .filter((p) => (findingsByPillarName[p.name]?.length || 0) === 0)
+      .reduce((sum, p) => sum + p.score, 0);
+    const carrierSum = carriers.reduce((sum, p) => sum + p.score, 0);
+    const targetCarrierSum = overallScore * pillarScores.length - cleanSum;
+    if (carrierSum > 0 && targetCarrierSum > 0 && targetCarrierSum < carrierSum) {
+      const factor = targetCarrierSum / carrierSum;
+      pillarScores = pillarScores.map((p) =>
+        (findingsByPillarName[p.name]?.length || 0) > 0
+          ? { ...p, score: Math.max(0, Math.round(p.score * factor)) }
+          : p,
+      );
+    }
+  }
+
   const execSummary = (report.executive_summary || '').trim();
 
   // AI readability summary (Row 3, AI monitoring card).
@@ -1079,7 +1102,7 @@ function OverviewInner() {
           </p>
           {scoreCapInfo.applied && (
             <p className="text-[11px]" style={{ color: 'var(--warn)' }}>
-              · Modules rate each area on its own — the overall {overallScore}/100 is capped by {scoreCapInfo.reason} across the whole site.
+              · Module scores are weighted to compose into your overall {overallScore}/100 — clean modules keep their full score; modules with open issues carry the cap ({scoreCapInfo.reason}).
             </p>
           )}
         </div>
