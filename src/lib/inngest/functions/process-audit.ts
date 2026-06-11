@@ -209,6 +209,56 @@ async function auditLog(
  * Every audit_findings insert MUST go through this helper.
  * Returns the number of rows inserted (0 on failure).
  */
+/** Strip characters Postgres TEXT rejects (null bytes kill entire batch inserts). */
+function pgSafeText<T extends string | null | undefined>(s: T): T {
+  if (!s) return s
+  return s.replace(/\u0000/g, '') as T
+}
+
+/**
+ * Insert crawled pages and CHECK THE ERROR (same disease as the findings
+ * insert: supabase-js never throws, and an unchecked batch insert that
+ * fails — e.g. a null byte in Jina-rendered content_text — silently
+ * leaves the Pages tab empty for that site forever).
+ */
+async function insertPagesChecked(
+  db: ReturnType<typeof getDb>,
+  auditId: string,
+  rows: any[],
+  label: string,
+): Promise<number> {
+  if (!rows || rows.length === 0) return 0
+  // Sanitize text fields — one bad character must not cost all pages
+  const safe = rows.map((r) => ({
+    ...r,
+    url: pgSafeText(r.url),
+    title: pgSafeText(r.title),
+    h1: pgSafeText(r.h1),
+    meta_description: pgSafeText(r.meta_description),
+    content_text: pgSafeText(r.content_text),
+  }))
+  const { error } = await db.from('audit_pages').insert(safe as any)
+  if (error) {
+    console.error(`[inngest] PAGES INSERT FAILED (${label}): ${error.message}`, {
+      auditId, rowCount: rows.length, code: (error as any).code, details: (error as any).details,
+    })
+    await auditLog(auditId, 'pages_insert_failed', 'error',
+      `${label}: failed to save ${rows.length} crawled page(s) — ${error.message}. The Pages tab and per-page AI readability will be empty for this audit.`,
+      { label, row_count: rows.length, db_error: error.message })
+    // Last resort: insert one-by-one so a single poison row doesn't cost all pages
+    let saved = 0
+    for (const row of safe) {
+      const { error: rowErr } = await db.from('audit_pages').insert(row as any)
+      if (!rowErr) saved++
+    }
+    if (saved > 0) {
+      console.warn(`[inngest] PAGES INSERT recovered ${saved}/${rows.length} rows individually (${label})`)
+    }
+    return saved
+  }
+  return rows.length
+}
+
 async function insertFindingsChecked(
   db: ReturnType<typeof getDb>,
   auditId: string,
@@ -943,7 +993,7 @@ Return 2-6 findings. Be specific and evidence-based. Reference specific files/co
           fetch_strategy: page.acquisition.method,
         }))
         if (pageInserts.length > 0) {
-          await db.from('audit_pages').insert(pageInserts as any)
+          await insertPagesChecked(db, auditId, pageInserts, 'acquisition-pipeline')
         }
 
         // ── Build crawl summary (same shape as existing) ──
@@ -1185,7 +1235,7 @@ Return 2-6 findings. Be specific and evidence-based. Reference specific files/co
         fetch_strategy: page.fetchStrategy || null,
       }))
       if (pageInserts.length > 0) {
-        await db.from('audit_pages').insert(pageInserts as any)
+        await insertPagesChecked(db, auditId, pageInserts, 'legacy-crawl')
       }
 
       // Build crawl summary payload
