@@ -74,7 +74,7 @@ import {
   type LatestAuditBundle,
 } from '@/lib/dashboard/latest-audit';
 import { healthLabel, type HealthContext } from '@/lib/audit-findings-presentation';
-import { applySeverityCap, applyModuleSeverityCap } from '@/lib/scoring/severity-cap';
+import { applySeverityCap, composeModuleScores } from '@/lib/scoring/severity-cap';
 import { useWorkspace } from '@/context/WorkspaceContext';
 import { useAuditProgress } from '@/hooks/useAuditProgress';
 import EmptyAudit from '@/components/dashboard/v2/EmptyAudit';
@@ -690,35 +690,14 @@ function OverviewInner() {
   // Categories cards, radar, and module dots all read pillarScores, so
   // they stay mutually consistent. Fixing a module's issues lifts its
   // cap live, same as the overall.
-  const pillarCapInfo: Record<string, ReturnType<typeof applyModuleSeverityCap>['capInfo']> = {};
-  pillarScores = pillarScores.map((p) => {
-    const capped = applyModuleSeverityCap(p.score, findingsByPillarName[p.name] || []);
-    pillarCapInfo[p.name] = capped.capInfo;
-    return { ...p, score: capped.overall };
-  });
-
-  // ── Compose modules into the verdict (2026-06-11, product decision) ──
-  // The displayed module scores must AVERAGE to the capped overall — a 65
-  // verdict above categories averaging 80 read as broken math. Rule:
-  // issue-carrying modules are scaled down until the average composes;
-  // CLEAN modules keep their true score (a clean area must never absorb
-  // other modules' issues — that would destroy the diagnostic value).
-  if (pillarScores.length > 0 && scoreCapInfo.applied) {
-    const carriers = pillarScores.filter((p) => (findingsByPillarName[p.name]?.length || 0) > 0);
-    const cleanSum = pillarScores
-      .filter((p) => (findingsByPillarName[p.name]?.length || 0) === 0)
-      .reduce((sum, p) => sum + p.score, 0);
-    const carrierSum = carriers.reduce((sum, p) => sum + p.score, 0);
-    const targetCarrierSum = overallScore * pillarScores.length - cleanSum;
-    if (carrierSum > 0 && targetCarrierSum > 0 && targetCarrierSum < carrierSum) {
-      const factor = targetCarrierSum / carrierSum;
-      pillarScores = pillarScores.map((p) =>
-        (findingsByPillarName[p.name]?.length || 0) > 0
-          ? { ...p, score: Math.max(0, Math.round(p.score * factor)) }
-          : p,
-      );
-    }
-  }
+  // ── Shared display chain (2026-06-11): per-module caps + composition ──
+  // composeModuleScores in @/lib/scoring/severity-cap is THE single source —
+  // the Find page uses the identical call, so the two surfaces cannot
+  // disagree on a module's number again (Find showed 81 vs Overview 48).
+  const composedModules = composeModuleScores(pillarScores, findingsByPillarName, overallScore, scoreCapInfo.applied);
+  const pillarCapInfo: Record<string, import('@/lib/scoring/severity-cap').ScoreCapInfo> = {};
+  for (const m of composedModules) pillarCapInfo[m.name] = m.capInfo;
+  pillarScores = composedModules.map(({ name, score }) => ({ name, score }));
 
   const execSummary = (report.executive_summary || '').trim();
 

@@ -88,6 +88,46 @@ export function applyModuleSeverityCap(
   return { overall: score, capInfo: { applied: false, cap: null, reason: null } }
 }
 
+/**
+ * Compose display module scores (2026-06-11) — THE single chain every
+ * surface must use: per-module cap, then scale issue-carrying modules so
+ * the displayed module average equals the capped overall (clean modules
+ * keep their true score). The Find page showed 81 while the Overview
+ * showed 48 for the same module because each computed its own math.
+ */
+export interface DisplayModuleScore {
+  name: string
+  score: number
+  capInfo: ScoreCapInfo
+}
+
+export function composeModuleScores(
+  modules: Array<{ name: string; score: number }>,
+  findingsByModule: Record<string, Array<{ severity: string }>>,
+  cappedOverall: number,
+  overallCapApplied: boolean,
+): DisplayModuleScore[] {
+  let out: DisplayModuleScore[] = modules.map((m) => {
+    const capped = applyModuleSeverityCap(m.score, findingsByModule[m.name] || [])
+    return { name: m.name, score: capped.overall, capInfo: capped.capInfo }
+  })
+
+  if (overallCapApplied && out.length > 0) {
+    const hasFindings = (name: string) => (findingsByModule[name]?.length || 0) > 0
+    const carriers = out.filter((m) => hasFindings(m.name))
+    const cleanSum = out.filter((m) => !hasFindings(m.name)).reduce((s, m) => s + m.score, 0)
+    const carrierSum = carriers.reduce((s, m) => s + m.score, 0)
+    const target = cappedOverall * out.length - cleanSum
+    if (carrierSum > 0 && target > 0 && target < carrierSum) {
+      const factor = target / carrierSum
+      out = out.map((m) =>
+        hasFindings(m.name) ? { ...m, score: Math.max(0, Math.round(m.score * factor)) } : m,
+      )
+    }
+  }
+  return out
+}
+
 /** Deterministic, user-facing sentence explaining an applied cap. */
 export function capSummarySentence(capInfo: ScoreCapInfo): string {
   if (!capInfo.applied || !capInfo.reason) return ''

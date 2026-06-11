@@ -71,6 +71,7 @@ import {
   FindingEvidencePanel,
 } from '@/components/dashboard/v2/AuditTrustLayer';
 import { computeCoverageLabel } from '@/lib/audit-engine/pipeline/trust-summary';
+import { applySeverityCap, composeModuleScores } from '@/lib/scoring/severity-cap';
 import type { CrawlSummary } from '@/types/database';
 
 const SEVERITY_RANK: Record<string, number> = { critical: 4, high: 3, medium: 2, low: 1 };
@@ -198,18 +199,43 @@ function FindPageInner() {
     return result;
   }, [bundle]);
 
-  // Per-module aggregate score, used as the at-a-glance number on each
-  // bucket header. Mirrors the Overview category cards.
+  // Per-module aggregate score for bucket headers — runs the IDENTICAL
+  // shared chain as the Overview category cards (raw category means →
+  // overall severity cap → per-module caps → composition). Before this,
+  // Find showed the raw mean (81) while Overview showed the composed
+  // score (48) for the same module.
   const moduleScores = useMemo<Record<string, number>>(() => {
     const rawJson = (bundle?.report?.raw_json || null) as any;
     if (!rawJson?.categoryScores || !Array.isArray(rawJson.categoryScores)) return {};
-    const out: Record<string, number> = {};
+
+    // Raw per-module means from category scores
+    const rawModules: Array<{ name: string; score: number }> = [];
+    const allCatScores: number[] = [];
     for (let i = 0; i < PHASE1_MODULES.length; i++) {
       const cats = rawJson.categoryScores.filter((_: any, idx: number) => Math.floor(idx / 4) === i).filter((c: any) => c.score >= 0);
       if (cats.length > 0) {
-        out[PHASE1_MODULES[i]] = Math.round(cats.reduce((s: number, c: any) => s + c.score, 0) / cats.length);
+        rawModules.push({ name: PHASE1_MODULES[i], score: Math.round(cats.reduce((s: number, c: any) => s + c.score, 0) / cats.length) });
+        for (const c of cats) allCatScores.push(c.score);
       }
     }
+    if (rawModules.length === 0) return {};
+
+    // Open findings grouped by module — same population the Overview uses
+    const openAll = (bundle?.findings || []).filter(
+      (f: any) => f.status !== 'fixed' && !f.dismissed && f.verification_status !== 'verified_fixed',
+    );
+    const byModule: Record<string, Array<{ severity: string }>> = {};
+    for (const name of PHASE1_MODULES) byModule[name] = [];
+    for (const f of openAll) {
+      const mi = moduleIndexForFinding(f);
+      if (mi >= 0 && mi < PHASE1_MODULES.length) byModule[PHASE1_MODULES[mi]].push(f);
+    }
+
+    const rawOverall = Math.round(allCatScores.reduce((s, v) => s + v, 0) / allCatScores.length);
+    const { overall: cappedOverall, capInfo } = applySeverityCap(rawOverall, openAll);
+    const composed = composeModuleScores(rawModules, byModule, cappedOverall, capInfo.applied);
+    const out: Record<string, number> = {};
+    for (const m of composed) out[m.name] = m.score;
     return out;
   }, [bundle]);
 

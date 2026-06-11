@@ -2340,7 +2340,7 @@ The content below is from the ENTIRE site, not just one page. Before flagging so
           const prevDataResult = await withTimeout(Promise.all([
             noteDb.from('reports').select('overall_score, executive_summary, raw_json').eq('audit_id', prevAuditId).single(),
             noteDb.from('audit_findings')
-              .select('id, title, severity, description, recommendation, estimated_impact, target_element, page_url, sort_order, status, dismissed, dismissal_reason, category_index, fix_status, finding_type, checklist_item_id')
+              .select('id, title, severity, description, recommendation, estimated_impact, target_element, page_url, sort_order, status, dismissed, dismissal_reason, category_index, fix_status, finding_type, fix_type, confidence_level, checklist_item_id')
               .eq('audit_id', prevAuditId)
               .order('sort_order', { ascending: true }).limit(60),
           ]), CONTEXT_DB_TIMEOUT, 'prev-audit-db')
@@ -2385,6 +2385,15 @@ The scores above are from the client's PREVIOUS audit of this SAME site. Your ne
               fix_status: f.fix_status || null,
               finding_type: f.finding_type || 'fixable',
               checklist_item_id: f.checklist_item_id || null,
+              // CARRY-FORWARD FIDELITY (2026-06-11): this mapper silently
+              // dropped category_index (and never fetched fix_type), so every
+              // baseline re-audit inserted carried findings with NULL module
+              // assignment — the Find page's per-module filters matched
+              // nothing ('View findings' showed empty for every category) and
+              // module scores/counts drifted.
+              category_index: f.category_index ?? null,
+              fix_type: f.fix_type ?? null,
+              confidence_level: f.confidence_level || 'heuristic',
             }))
             const findingLines = (prevFindingsRes.data as any[]).map((f) => {
               if (f.dismissed) return `  [SKIP] "${f.title}" — Dismissed: ${f.dismissal_reason || 'by user'}`
@@ -2525,6 +2534,20 @@ RULES FOR RE-AUDIT:
     let anyBatchTimedOut = false
 
     if (effectiveDepthMode === 'baseline') {
+      // Honest disclosure (2026-06-11): baseline re-audits skip ALL deep AI
+      // analysis — including Brand DNA comparison — by design (score
+      // stability). If the workspace has a brand identity attached, say so
+      // explicitly instead of silently ignoring the Brand DNA toggle, which
+      // read as "Include Brand DNA is broken".
+      if (auditDetails.brandIdentityId) {
+        auditLimitations.push({
+          id: 'brand_dna_baseline_skip',
+          title: 'Brand DNA comparison not run',
+          description: 'This was a standard re-audit, which reuses your previous findings for score stability and skips fresh AI analysis — including the Brand DNA comparison. Run a Deep audit to compare the site against your brand guidelines.',
+        })
+        await auditLog(auditId, 'brand_dna_skipped_baseline', 'info',
+          'Baseline re-audit — Brand DNA comparison skipped (deep analysis not run). Use a Deep audit for brand guideline comparison.')
+      }
       // ════════════════════════════════════════════════════════════
       // BASELINE RE-AUDIT — NO AI ANALYSIS
       // Copy previous findings based on their status:
