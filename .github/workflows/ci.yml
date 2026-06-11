@@ -1,0 +1,42 @@
+# ============================================================
+# Fixpath CI — Series A Plan Phase 0.1
+# ============================================================
+# Blocking gates on every PR and every push to main:
+#   1. TypeScript compiles (tsc --noEmit)
+#   2. Test suite passes (jest)
+# A red check here MUST block merge (enable branch protection on
+# main: Settings → Branches → require status checks: "ci").
+#
+# NOTE: eslint is intentionally absent — the repo has no eslint
+# dependency/config yet (next lint was never wired). Adding it is
+# tracked in the plan's debt register; it joins this workflow the
+# same day it's configured. Do NOT add a non-functional step.
+# ============================================================
+
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  ci:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Typecheck (blocking)
+        run: npx tsc --noEmit
+
+      - name: Tests (blocking)
+        run: npx jest --ci

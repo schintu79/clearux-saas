@@ -741,15 +741,21 @@ const PRESENCE_FABRICATION_RULES: Array<{ claim: RegExp; evidence: RegExp; label
 ]
 
 export function contradictsContent(f: Pick<AnalysisFinding, 'title' | 'description'>, pageContent: string): boolean {
-  const claimText = `${f.title} ${f.description}`
+  // Test title and description as SEPARATE segments. Concatenating them let
+  // "…attribution. Testimonials lack links…" match the absence pattern
+  // ("lack …60 chars… testimonials") ACROSS the title/description seam,
+  // wrongly dropping legitimate quality critiques (caught by the
+  // contradiction-net test suite on day one, 2026-06-11).
+  const segments = [f.title || '', f.description || '']
+  const claimMatches = (re: RegExp) => segments.some((t) => re.test(t))
   for (const rule of ABSENCE_CONTRADICTION_RULES) {
-    if (rule.claim.test(claimText) && rule.evidence.test(pageContent)) {
+    if (claimMatches(rule.claim) && rule.evidence.test(pageContent)) {
       console.warn(`[contradiction-net] Dropped finding "${f.title.slice(0, 80)}" — claims missing ${rule.label}, but content contains it`)
       return true
     }
   }
   for (const rule of PRESENCE_FABRICATION_RULES) {
-    if (rule.claim.test(claimText) && !rule.evidence.test(pageContent)) {
+    if (claimMatches(rule.claim) && !rule.evidence.test(pageContent)) {
       console.warn(`[contradiction-net] Dropped finding "${f.title.slice(0, 80)}" — critiques ${rule.label} the content shows no evidence of`)
       return true
     }
