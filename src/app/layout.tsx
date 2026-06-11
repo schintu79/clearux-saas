@@ -104,12 +104,20 @@ export const metadata: Metadata = {
     ],
     apple: '/apple-touch-icon.png',
   },
-  // NOTE (2026-06-10): canonical/languages REMOVED from the root layout.
-  // Next.js metadata inherits — a root-level canonical made EVERY page
-  // declare the homepage as its canonical URL. That told search engines
-  // (and our own crawler) that /product, /pricing, /why-fixpath etc. were
-  // duplicates of the homepage — only 7 of 18 pages were ever audited.
-  // Canonical must be set per-page (or via generateMetadata) only.
+  // CANONICAL HISTORY:
+  // 2026-06-10: a root-level ABSOLUTE canonical (canonical: siteUrl) made
+  //   every page declare the homepage as its canonical — search engines and
+  //   our own crawler treated /product, /pricing etc. as duplicates; only
+  //   7 of 18 pages were ever audited. Removed.
+  // 2026-06-11: re-added as a RELATIVE canonical ('./'). With metadataBase
+  //   set, Next.js resolves './' against EACH route's own path, emitting a
+  //   correct per-page self-canonical (<link rel="canonical"
+  //   href="https://www.fixpath.ai/product"> on /product, etc.) — fixing
+  //   the "missing canonical" signal flagged on every page by the AI
+  //   readability audit. Pages defining their own alternates override this.
+  alternates: {
+    canonical: './',
+  },
   other: {
     'content-language': 'en',
   },
