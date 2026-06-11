@@ -270,7 +270,7 @@ function summarizeResponse(responseText: string): string | null {
  * (which has full website crawl data as ground truth), but catches the
  * most common failure modes.
  */
-function assessAccuracy(
+export function assessAccuracy(
   responseText: string,
   modelLabel: string,
   ctx: InterrogationRequest['businessContext'],
@@ -477,6 +477,11 @@ export async function runInterrogation(
             token_output: tokenOutput,
             estimated_cost_cents: Math.round(costCents),
             status: 'completed',
+            // Persist the grade (2026-06-10) — it was computed here and
+            // returned in the live response but never stored, so every
+            // refresh lost it ("No Data" badges on saved answers).
+            accuracy,
+            accuracy_note: accuracyNote,
           })
           .eq('id', resultRowId)
       }

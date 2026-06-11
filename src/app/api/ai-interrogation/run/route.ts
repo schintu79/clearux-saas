@@ -11,7 +11,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createServerSupabase, createServiceSupabase } from '@/lib/supabase-server'
 import { checkInterrogationQuota, getInterrogationUsage } from '@/lib/ai/interrogation-usage'
-import { runInterrogation, generateFollowups } from '@/lib/ai/interrogation-engine'
+import { runInterrogation, generateFollowups, assessAccuracy } from '@/lib/ai/interrogation-engine'
 import { findModelBySlug, DEFAULT_MODEL_CATALOG } from '@/lib/ai/model-catalog'
 import { isOpenRouterConfigured } from '@/lib/ai/openrouter-client'
 
@@ -173,10 +173,11 @@ export async function GET(request: NextRequest) {
 
     const db = createServiceSupabase()
 
-    // Verify user owns this workspace
+    // Verify user owns this workspace (brand fields used by the lazy
+    // accuracy backfill below)
     const { data: workspace, error: wsError } = await db
       .from('workspaces')
-      .select('id')
+      .select('id, primary_domain, brand_name, category, region, language')
       .eq('id', workspaceId)
       .eq('user_id', user.id)
       .eq('status', 'active')
@@ -237,6 +238,59 @@ export async function GET(request: NextRequest) {
         .order('created_at', { ascending: true })
 
       allResults = results ?? []
+    }
+
+    // ── Self-healing accuracy backfill (2026-06-10) ─────────────
+    // Grades were computed in-memory but never persisted before today,
+    // so historical rows have accuracy NULL despite full answers (the
+    // user paid for those checks). Grade them on read ONCE with the same
+    // assessAccuracy used live, persist, and serve graded rows. After
+    // the first page load per workspace this is a no-op.
+    const ungraded = allResults.filter(
+      (r: any) => r.status === 'completed' && !r.accuracy && r.response_text,
+    )
+    if (ungraded.length > 0) {
+      let detectedIndustry: string | null = null
+      const { data: latestAudit } = await db
+        .from('audits')
+        .select('detected_industry')
+        .eq('workspace_id', workspaceId)
+        .in('status', ['completed', 'completed_with_warnings'])
+        .is('deleted_at', null)
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle()
+      if (latestAudit?.detected_industry) detectedIndustry = latestAudit.detected_industry
+
+      const ws = workspace as any
+      const ctx = {
+        domain: ws.primary_domain ?? null,
+        brandName: ws.brand_name ?? null,
+        category: ws.category ?? detectedIndustry ?? null,
+        region: ws.region ?? null,
+        language: ws.language ?? null,
+        description: null,
+      }
+
+      for (const row of ungraded) {
+        try {
+          const { accuracy, accuracyNote } = assessAccuracy(
+            row.response_text as string,
+            (row.model_label ?? row.model_slug) as string,
+            ctx,
+          )
+          row.accuracy = accuracy
+          row.accuracy_note = accuracyNote
+          const { error: gradeErr } = await db
+            .from('workspace_ai_interrogation_results')
+            .update({ accuracy, accuracy_note: accuracyNote } as any)
+            .eq('id', row.id)
+          if (gradeErr) console.error('[interrogation] Backfill grade persist failed:', gradeErr.message)
+        } catch (gradeErr) {
+          console.error('[interrogation] Backfill grading failed (non-fatal):', gradeErr)
+        }
+      }
+      console.log(`[interrogation] Backfilled accuracy for ${ungraded.length} historical result(s) in workspace ${workspaceId}`)
     }
 
     // Group results by interrogation ID
