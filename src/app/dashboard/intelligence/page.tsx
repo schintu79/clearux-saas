@@ -70,6 +70,7 @@ import EmptyAudit from '@/components/dashboard/v2/EmptyAudit';
 import PageHeader from '@/components/dashboard/v2/PageHeader';
 import OverviewBreadcrumb from '@/components/dashboard/OverviewBreadcrumb';
 import type { BrandIntelligenceSummary } from '@/lib/audit-engine/brand-intelligence';
+import { interrogationAccuracy, interrogationVisibility, interrogationSentiment, brandTokensFor } from '@/lib/scoring/interrogation-metrics';
 
 /* ── Fix instructions for missing AI readability signals ── */
 
