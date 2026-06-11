@@ -847,7 +847,10 @@ function IntelligencePage() {
 
   const iqSentiment = useMemo(() => interrogationSentiment(iqFlatAnswers), [iqFlatAnswers]);
 
-  const runOneIqQuestion = async (q: { questionId: string; questionText: string; family?: string }) => {
+  const runOneIqQuestion = async (
+    q: { questionId: string; questionText: string; family?: string },
+    models: string[],
+  ) => {
     const res = await fetch('/api/ai-interrogation/run', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -856,7 +859,7 @@ function IntelligencePage() {
         question_id: q.questionId ?? null,
         question_text: q.questionText,
         question_family: q.family ?? 'general_discovery',
-        selected_models: iqFreeModelSlugs,
+        selected_models: models,
       }),
     });
     if (!res.ok) {
@@ -884,7 +887,10 @@ function IntelligencePage() {
     if (mapped.length > 0) {
       setIqPastResults((prev) => {
         const next = new Map(prev);
-        next.set(normQ(q.questionText), mapped);
+        // MERGE by model — replacing wiped other models' saved answers
+        const existing = next.get(normQ(q.questionText)) ?? [];
+        const merged = existing.filter((e) => !mapped.some((m: any) => m.modelSlug === e.modelSlug));
+        next.set(normQ(q.questionText), [...merged, ...mapped]);
         return next;
       });
     }
@@ -899,33 +905,52 @@ function IntelligencePage() {
     return mapped;
   };
 
+  /** Models the batch will use: the user's pill selection (free models as default). */
+  const iqBatchModels = iqSelectedModels.length > 0 ? iqSelectedModels : iqFreeModelSlugs;
+
+  /** Selected models that have NO saved answer yet for a question. */
+  const iqMissingModelsFor = (questionText: string): string[] => {
+    const saved = iqPastResults.get(normQ(questionText)) ?? [];
+    return iqBatchModels.filter((slug) => !saved.some((r) => r.modelSlug === slug));
+  };
+
   const handleIqRunAll = async () => {
     if (!workspaceId || iqRunning || iqBatch.running || iqQuestions.length === 0) return;
-    const unanswered = iqQuestions.filter((q) => !iqPastResults.has(normQ(q.questionText)));
-    // Default: complete the unanswered set. If everything is answered, re-run all.
-    const targets = unanswered.length > 0 ? unanswered : iqQuestions;
+    // Honor the SELECTED models (bug fix 2026-06-11: the batch hardcoded the
+    // 3 free models — selecting Gemini/Grok/Meta re-ran Perplexity/DeepSeek/
+    // ChatGPT instead). Run only the model/question pairs that are missing;
+    // if the selection is fully answered everywhere, re-run it all.
+    let targets = iqQuestions
+      .map((q) => ({ q, models: iqMissingModelsFor(q.questionText) }))
+      .filter((t) => t.models.length > 0);
+    if (targets.length === 0) {
+      targets = iqQuestions.map((q) => ({ q, models: [...iqBatchModels] }));
+    }
     iqUserNavRef.current = false;
-    setIqBatchPending(new Set(targets.map((q) => normQ(q.questionText))));
+    setIqBatchPending(new Set(targets.map((t) => normQ(t.q.questionText))));
     setIqBatch({ running: true, done: 0, total: targets.length, error: null });
     for (let i = 0; i < targets.length; i++) {
-      const q = targets[i];
+      const { q, models } = targets[i];
       const qKey = normQ(q.questionText);
       setIqBatchCurrent(qKey);
       // Auto-follow the running question ONLY until the user navigates
       if (!iqUserNavRef.current) {
         setIqActiveQuestion(q.questionText);
-        // Pending placeholders while this question runs
-        setIqResults(iqFreeModelSlugs.map((slug) => {
+        // Show already-saved answers for the selection + pending for the missing
+        const cached = (iqPastResults.get(qKey) ?? []).filter((r) => iqBatchModels.includes(r.modelSlug));
+        const pending = models.map((slug) => {
           const shortId = IQ_MODEL_DISPLAY.find((m) => m.slug === slug)?.shortId ?? slug;
           const prov = providerKeyToIcon(shortId);
           return { modelSlug: slug, modelShortId: shortId, modelDisplayName: prov ? PROVIDER_LABEL[prov] : shortId, status: 'running', responseText: null, themes: [], accuracy: null, accuracyNote: null, latencyMs: null, error: null };
-        }));
+        });
+        setIqResults([...cached, ...pending]);
       }
       try {
-        const mapped = await runOneIqQuestion(q);
+        const mapped = await runOneIqQuestion(q, models);
         if (!iqUserNavRef.current) {
+          const cached = (iqPastResults.get(qKey) ?? []).filter((r) => iqBatchModels.includes(r.modelSlug) && !mapped.some((m: any) => m.modelSlug === r.modelSlug));
           setIqActiveQuestion(q.questionText);
-          setIqResults(mapped);
+          setIqResults([...cached, ...mapped]);
         }
         setIqBatchPending((prev) => { const next = new Set(prev); next.delete(qKey); return next; });
         setIqBatch((b) => ({ ...b, done: i + 1 }));
@@ -2297,7 +2322,9 @@ function IntelligencePage() {
               Your AI Accuracy is measured against them, so it stays comparable between audits. Saved answers load instantly at no cost.
             </p>
             {(() => {
-              const unanswered = iqQuestions.length - iqAnsweredCount;
+              // Cost = questions with at least one SELECTED model missing a
+              // saved answer (1 check per question run, models share the run)
+              const unanswered = iqQuestions.filter((q) => iqMissingModelsFor(q.questionText).length > 0).length;
               const cost = unanswered > 0 ? unanswered : iqQuestions.length;
               const exhausted = iqUsage != null && !iqUsage.canInterrogate;
               const disabled = iqRunning || iqBatch.running || iqQuestions.length === 0 || (exhausted && true);
