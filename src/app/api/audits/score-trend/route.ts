@@ -5,6 +5,7 @@
 
 import { NextRequest, NextResponse } from 'next/server'
 import { createServerSupabase, createServiceSupabase } from '@/lib/supabase-server'
+import { applySeverityCapFromCounts } from '@/lib/scoring/severity-cap'
 
 export async function GET(request: NextRequest) {
   try {
@@ -58,7 +59,7 @@ export async function GET(request: NextRequest) {
     const auditIds = domainAudits.map((a: any) => a.id)
     const { data: reports } = await db
       .from('reports')
-      .select('audit_id, overall_score, ux_score, conversion_score, mobile_score, ai_discoverability_score, content_score, total_issues, critical_count, high_count, ai_visibility_breakdown, raw_json')
+      .select('audit_id, overall_score, ux_score, conversion_score, mobile_score, ai_discoverability_score, content_score, total_issues, critical_count, high_count, medium_count, ai_visibility_breakdown, raw_json')
       .in('audit_id', auditIds)
 
     const reportsMap: Record<string, any> = {}
@@ -88,6 +89,19 @@ export async function GET(request: NextRequest) {
         if (analyzed.length > 0) {
           overallScore = Math.round(analyzed.reduce((s, c) => s + c.score, 0) / analyzed.length)
         }
+      }
+
+      // Score model v2 (2026-06-11): the recompute above exists only to strip
+      // -1 sentinels, but it was OVERWRITING the stored capped score with the
+      // raw category mean — the trend showed 89 while the health score showed
+      // the true capped 65. Re-apply the severity cap from the report's own
+      // severity counts so the trend always matches the verdict.
+      if (overallScore != null && r) {
+        overallScore = applySeverityCapFromCounts(overallScore, {
+          critical: r.critical_count ?? 0,
+          high: r.high_count ?? 0,
+          medium: r.medium_count ?? 0,
+        }).overall
       }
 
       return {

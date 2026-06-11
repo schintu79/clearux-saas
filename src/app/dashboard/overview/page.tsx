@@ -682,6 +682,18 @@ function OverviewInner() {
     }
   }
 
+  // ── Score model v2: per-module severity caps (2026-06-11) ──────────
+  // Module scores were raw category math, so a module carrying open
+  // high-severity findings could read 80-96 right next to a capped
+  // overall of 65 — contradictory reporting. Each module is now capped
+  // by ITS OWN open findings using the same thresholds as the overall.
+  // Categories cards, radar, and module dots all read pillarScores, so
+  // they stay mutually consistent. Fixing a module's issues lifts its
+  // cap live, same as the overall.
+  pillarScores = pillarScores.map((p) => ({
+    ...p,
+    score: applySeverityCap(p.score, findingsByPillarName[p.name] || []).overall,
+  }));
 
   const execSummary = (report.executive_summary || '').trim();
 

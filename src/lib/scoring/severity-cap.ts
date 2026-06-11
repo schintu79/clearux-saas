@@ -31,7 +31,17 @@ export function applySeverityCap(
     else if (f.severity === 'high') high++
     else if (f.severity === 'medium') medium++
   }
+  return applySeverityCapFromCounts(overall, { critical, high, medium })
+}
 
+/**
+ * Count-based variant — for callers that only have stored severity counts
+ * (e.g. the score-trend API reading reports rows) or per-module subsets.
+ */
+export function applySeverityCapFromCounts(
+  overall: number,
+  { critical, high, medium }: { critical: number; high: number; medium: number },
+): { overall: number; capInfo: ScoreCapInfo } {
   let cap: number | null = null
   let reason: string | null = null
   if (critical >= 1) { cap = 55; reason = `${critical} open critical issue${critical > 1 ? 's' : ''}` }
