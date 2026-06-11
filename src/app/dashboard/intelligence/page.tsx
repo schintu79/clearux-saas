@@ -833,6 +833,50 @@ function IntelligencePage() {
     return out;
   }, [iqPastResults]);
 
+  /* ── Visibility + Sentiment from saved interrogation answers (2026-06-11) ──
+   * The lean audit pipeline doesn't produce probe-based visibility/sentiment,
+   * but the paid benchmark answers contain both signals. Deterministic:
+   * - Visibility: share of answers where the model demonstrably knows the
+   *   brand (mentions name/domain, not a refusal/unknown response).
+   * - Sentiment: reassurance vs warning language across the answers
+   *   (markers like 'legitimate/regulated/trusted' vs 'scam/caution/avoid').
+   *   Needs >=3 marker hits to report — otherwise stays unmeasured. */
+  const iqVisibility = useMemo(() => {
+    if (iqPastResults.size === 0) return null;
+    const brand = ((bundle?.audit as any)?.brand_name || workspace?.brand_name || workspace?.name || '').toLowerCase();
+    const dom = (workspace?.primary_domain || '').toLowerCase().replace(/^www\./, '');
+    const brandTokens = [brand, dom, dom.split('.')[0]].filter((t) => t && t.length >= 3);
+    if (brandTokens.length === 0) return null;
+    const UNKNOWN_RE = /\b(i (don'?t|do not) have (any |specific )?(information|details|data)|not familiar with|couldn'?t find (any )?information|no (publicly )?available information|unable to (find|locate|verify) (any )?information)\b/i;
+    let known = 0, total = 0;
+    iqPastResults.forEach((results) => {
+      for (const r of results) {
+        if (!r.responseText || r.responseText.length < 30) continue;
+        total++;
+        const text = r.responseText.toLowerCase();
+        const mentionsBrand = brandTokens.some((t) => text.includes(t));
+        if (mentionsBrand && !UNKNOWN_RE.test(r.responseText)) known++;
+      }
+    });
+    return total === 0 ? null : Math.round((known / total) * 100);
+  }, [iqPastResults, bundle?.audit, workspace]);
+
+  const iqSentiment = useMemo(() => {
+    if (iqPastResults.size === 0) return null;
+    const POSITIVE = /\b(legitimate|trusted|trustworthy|reliable|reputable|regulated|licensed|well[- ]regarded|recommended|positive reviews?|safe to use|credible|established)\b/gi;
+    const NEGATIVE = /\b(scam|fraud|caution|warning|red flags?|avoid|complaints?|risky|not recommended|concerns?|suspicious|unverified claims|misleading)\b/gi;
+    let pos = 0, neg = 0;
+    iqPastResults.forEach((results) => {
+      for (const r of results) {
+        if (!r.responseText) continue;
+        pos += (r.responseText.match(POSITIVE) || []).length;
+        neg += (r.responseText.match(NEGATIVE) || []).length;
+      }
+    });
+    if (pos + neg < 3) return null; // insufficient signal — stay honest
+    return Math.round((pos / (pos + neg)) * 100);
+  }, [iqPastResults]);
+
   const runOneIqQuestion = async (q: { questionId: string; questionText: string; family?: string }) => {
     const res = await fetch('/api/ai-interrogation/run', {
       method: 'POST',
@@ -1647,12 +1691,14 @@ function IntelligencePage() {
                   <p className="text-[10px] font-semibold uppercase tracking-[0.05em]" style={{ color: 'var(--m-muted)' }}>AI Visibility</p>
                 </div>
                 <div className="flex items-baseline gap-0.5 mb-1.5">
-                  <span className="text-[22px] font-bold tabular-nums leading-none" style={{ color: scoreColor(visibilityScore) }}>{visibilityScore != null ? Math.round(visibilityScore) : '--'}</span>
-                  {visibilityScore != null && <span className="text-[11px]" style={{ color: 'var(--m-muted)' }}>%</span>}
+                  <span className="text-[22px] font-bold tabular-nums leading-none" style={{ color: scoreColor(visibilityScore ?? iqVisibility) }}>{visibilityScore != null ? Math.round(visibilityScore) : iqVisibility != null ? iqVisibility : '--'}</span>
+                  {(visibilityScore != null || iqVisibility != null) && <span className="text-[11px]" style={{ color: 'var(--m-muted)' }}>%</span>}
                 </div>
                 <p className="text-[11px] leading-snug" style={{ color: 'var(--m-muted)' }}>
                   {modelProbes.length > 0
                     ? `${recognizedCount} of ${modelProbes.length} models mention your brand`
+                    : visibilityScore == null && iqVisibility != null
+                    ? 'Share of benchmark answers where AI knows your brand'
                     : 'How often AI mentions your brand'}
                 </p>
                 {recognizedCount < modelProbes.length && modelProbes.length > 0 && (
@@ -1703,13 +1749,17 @@ function IntelligencePage() {
                   <p className="text-[10px] font-semibold uppercase tracking-[0.05em]" style={{ color: 'var(--m-muted)' }}>Sentiment</p>
                 </div>
                 <div className="flex items-baseline gap-1.5 mb-1.5">
-                  <span className="text-[22px] font-bold tabular-nums leading-none" style={{ color: scoreColor(sentimentScore) }}>{sentimentScore ?? '--'}</span>
-                  {sentimentScore != null && (
-                    <span className="text-[11px] font-semibold" style={{ color: scoreColor(sentimentScore) }}>{sentimentLabel(sentimentScore).label}</span>
+                  <span className="text-[22px] font-bold tabular-nums leading-none" style={{ color: scoreColor(sentimentScore ?? iqSentiment) }}>{sentimentScore ?? iqSentiment ?? '--'}</span>
+                  {(sentimentScore ?? iqSentiment) != null && (
+                    <span className="text-[11px] font-semibold" style={{ color: scoreColor(sentimentScore ?? iqSentiment) }}>{sentimentLabel((sentimentScore ?? iqSentiment)!).label}</span>
                   )}
                 </div>
                 <p className="text-[11px] leading-snug" style={{ color: 'var(--m-muted)' }}>
-                  {sentimentScore != null ? 'How AI portrays your brand reputation' : 'Run an audit to measure brand sentiment'}
+                  {sentimentScore != null
+                    ? 'How AI portrays your brand reputation'
+                    : iqSentiment != null
+                    ? 'Tone of your AI interrogation answers'
+                    : 'Run an audit to measure brand sentiment'}
                 </p>
                 {sentimentScore != null && sentimentScore < 40 && (
                   <div className="flex items-center gap-1 text-[10px] font-medium mt-2 px-2 py-1 rounded" style={{ background: 'color-mix(in srgb, var(--severe) 6%, transparent)', color: 'var(--severe)' }}>
