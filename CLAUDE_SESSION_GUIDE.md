@@ -2,6 +2,8 @@
 
 **Read this file at the start of EVERY session. No exceptions.**
 
+**ALSO READ: `docs/SERIES_A_ENGINEERING_PLAN.md` — the plan of record (phases, debt register, operating standards, scale architecture). All work is prioritized against it. New ideas go into its parking lot or they don't exist.**
+
 This document exists because a one-line missing DB enum value (`completed_with_warnings`) took two full days to diagnose. The root cause was trivial. The investigation was not, because the wrong assumptions were made at every step. This guide prevents that from happening again.
 
 ---
