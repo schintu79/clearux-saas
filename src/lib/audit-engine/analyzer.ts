@@ -695,7 +695,7 @@ const ABSENCE_CONTRADICTION_RULES: Array<{ claim: RegExp; evidence: RegExp; labe
     // or a testimonials section heading) — NOT the bare word "testimonial",
     // which product/marketing copy mentions descriptively (fixpath.ai itself
     // describes testimonial checks as a feature without having any).
-    evidence: /["“][^"”]{25,300}["”]\s*[-—–]?\s*[A-Z][\w.]+|from our (students|customers|clients)|what (our )?(customers|clients|students|users) say|testimonials?\s*<|>\s*testimonials?\b/i,
+    evidence: /["“][^"”]{25,300}["”]\s*[—–-]\s*[A-Z][\w.]+|from our (students|customers|clients)|what (our )?(customers|clients|students|users) say|^\s*#*\s*testimonials\s*$/im,
     label: 'testimonials',
   },
   {
@@ -725,7 +725,7 @@ const ABSENCE_CONTRADICTION_RULES: Array<{ claim: RegExp; evidence: RegExp; labe
 const PRESENCE_FABRICATION_RULES: Array<{ claim: RegExp; evidence: RegExp; label: string }> = [
   {
     claim: /\b(testimonials?|customer quotes?|reviews?)\b[^.]{0,80}\b(lack|without|don'?t (show|include)|are (generic|anonymous|unattributed)|appear to be|missing (attribution|names))/i,
-    evidence: /["“][^"”]{25,300}["”]\s*[-—–]?\s*[A-Z][\w.]+|from our (students|customers|clients)|what (our )?(customers|clients|students|users) say/i,
+    evidence: /["“][^"”]{25,300}["”]\s*[—–-]\s*[A-Z][\w.]+|from our (students|customers|clients)|what (our )?(customers|clients|students|users) say|^\s*#*\s*testimonials\s*$/im,
     label: 'testimonials/customer quotes',
   },
   {
@@ -740,7 +740,7 @@ const PRESENCE_FABRICATION_RULES: Array<{ claim: RegExp; evidence: RegExp; label
   },
 ]
 
-function contradictsContent(f: AnalysisFinding, pageContent: string): boolean {
+export function contradictsContent(f: Pick<AnalysisFinding, 'title' | 'description'>, pageContent: string): boolean {
   const claimText = `${f.title} ${f.description}`
   for (const rule of ABSENCE_CONTRADICTION_RULES) {
     if (rule.claim.test(claimText) && rule.evidence.test(pageContent)) {

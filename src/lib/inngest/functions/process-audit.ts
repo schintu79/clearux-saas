@@ -17,7 +17,7 @@ import { crawlPages, formatHeadTagsForAnalysis, type HeadTagData } from '@/lib/a
 import { runCrawlPreflight } from '@/lib/audit-engine/crawl-preflight'
 import { probeAIDiscovery, formatAIDiscoveryForAnalysis } from '@/lib/audit-engine/ai-discovery-probe'
 import { validateStructuredData, formatValidationForAnalysis } from '@/lib/audit-engine/structured-data-validator'
-import { analyzeCategory, generateReport, verifyFindings, UX_CATEGORIES, detectSiteProfile, calculateScoresFromFindings } from '@/lib/audit-engine/analyzer'
+import { analyzeCategory, generateReport, verifyFindings, UX_CATEGORIES, detectSiteProfile, calculateScoresFromFindings, contradictsContent } from '@/lib/audit-engine/analyzer'
 import type { SiteProfile } from '@/lib/audit-engine/analyzer'
 import { generatePdfReport } from '@/lib/audit-engine/pdf'
 import { sendAuditComplete, sendFreeAuditReady } from '@/lib/audit-engine/email'
@@ -3565,6 +3565,32 @@ RULES FOR RE-AUDIT:
 
       const idsToDelete = new Set<string>()
       const batchUpdates: Array<{ id: string; updates: Record<string, any> }> = []
+
+      // ── Fabrication net at the GATE (2026-06-11) ─────────────────────
+      // The analyzer-level contradiction net only screens NEW findings.
+      // Baseline re-audits CARRY findings forward verbatim, so a fabricated
+      // finding born before the net deployed ('testimonials lack
+      // attribution' on a site with zero testimonials) kept resurfacing on
+      // every re-audit as a zombie. Quality gates see every finding on
+      // every run — screen them all against the crawled content here.
+      try {
+        const gateContent = crawlResult?.pageContent || ''
+        if (gateContent.length > 100) {
+          for (const f of findings) {
+            if (contradictsContent({ title: f.title, description: f.description }, gateContent)) {
+              idsToDelete.add(f.id)
+              console.warn(`[quality-gates] Fabrication net dropped carried finding: "${f.title.slice(0, 80)}"`)
+            }
+          }
+          if (idsToDelete.size > 0) {
+            await auditLog(auditId, 'fabrication_net_dropped', 'warning',
+              `${idsToDelete.size} finding(s) removed — they claim or critique elements the crawled content shows no evidence of (e.g. testimonials on a site that has none).`)
+            findings = findings.filter((f) => !idsToDelete.has(f.id))
+          }
+        }
+      } catch (netErr) {
+        console.error('[quality-gates] Fabrication net error (non-fatal):', netErr)
+      }
 
       // ── Pipeline instrumentation: snapshot raw findings before gates ───
       const rawCount = findings.length
