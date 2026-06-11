@@ -937,8 +937,25 @@ export async function generateFindingsForStarvedCategories(
   siteUrl: string,
   _language: string = 'en',
 ): Promise<Map<number, AnalysisFinding[]>> {
-  if (starvedCategories.length === 0) return new Map()
+  // ── DISABLED (2026-06-11, product decision) ─────────────────────────
+  // These template findings are hardcoded, site-blind boilerplate. One of
+  // them ("add customer testimonials...") shipped in a fixpath.ai report
+  // describing testimonials the site doesn't have — exactly the fabricated
+  // generic advice the product exists to eliminate. Under the deterministic
+  // scoring model (score model v2) a low category score REQUIRES real
+  // findings, so the "low score with 0 findings" starvation this module
+  // patched can no longer occur in normal operation. If a gap appears, we
+  // log it and show nothing — honest absence beats canned filler.
+  if (starvedCategories.length > 0) {
+    console.warn(
+      `[minimum-findings] DISABLED — ${starvedCategories.length} starved categor${starvedCategories.length === 1 ? 'y' : 'ies'} detected (${starvedCategories.map(c => `${c.categoryName}:${c.score}`).join(', ')}). ` +
+      'Template injection is off: deterministic scoring should make this impossible — investigate if this log appears.'
+    )
+  }
+  return new Map()
 
+  /* Legacy template path retained below for reference — unreachable. */
+  // eslint-disable-next-line no-unreachable
   const results = new Map<number, AnalysisFinding[]>()
 
   for (const cat of starvedCategories) {

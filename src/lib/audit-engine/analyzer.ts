@@ -691,7 +691,11 @@ function isSpeculativeFinding(f: AnalysisFinding): boolean {
 const ABSENCE_CONTRADICTION_RULES: Array<{ claim: RegExp; evidence: RegExp; label: string }> = [
   {
     claim: /\b(no|missing|lacks?|without|absence of|doesn'?t (have|include|contain))\b[^.]{0,60}\b(testimonials?|reviews?|social proof)\b/i,
-    evidence: /testimonial|from our students|what (our )?(customers|clients|students) say/i,
+    // Evidence must show testimonial STRUCTURE (quoted praise with attribution
+    // or a testimonials section heading) — NOT the bare word "testimonial",
+    // which product/marketing copy mentions descriptively (fixpath.ai itself
+    // describes testimonial checks as a feature without having any).
+    evidence: /["“][^"”]{25,300}["”]\s*[-—–]?\s*[A-Z][\w.]+|from our (students|customers|clients)|what (our )?(customers|clients|students|users) say|testimonials?\s*<|>\s*testimonials?\b/i,
     label: 'testimonials',
   },
   {
@@ -711,11 +715,42 @@ const ABSENCE_CONTRADICTION_RULES: Array<{ claim: RegExp; evidence: RegExp; labe
   },
 ]
 
+/**
+ * Reverse direction (2026-06-11): findings that critique the QUALITY of an
+ * element the site doesn't have. The fixpath.ai audit claimed "the site
+ * includes customer quotes, but they lack attribution" — the site has zero
+ * testimonials. A presence-critique requires structural evidence the
+ * element exists; the bare concept word in marketing copy is not enough.
+ */
+const PRESENCE_FABRICATION_RULES: Array<{ claim: RegExp; evidence: RegExp; label: string }> = [
+  {
+    claim: /\b(testimonials?|customer quotes?|reviews?)\b[^.]{0,80}\b(lack|without|don'?t (show|include)|are (generic|anonymous|unattributed)|appear to be|missing (attribution|names))/i,
+    evidence: /["“][^"”]{25,300}["”]\s*[-—–]?\s*[A-Z][\w.]+|from our (students|customers|clients)|what (our )?(customers|clients|students|users) say/i,
+    label: 'testimonials/customer quotes',
+  },
+  {
+    claim: /\b(client|customer|partner) logos?\b[^.]{0,60}\b(lack|low[- ]quality|outdated|too small|inconsistent)/i,
+    evidence: /\b(trusted by|used by|our (clients|customers|partners))\b/i,
+    label: 'client logos',
+  },
+  {
+    claim: /\bcase stud(y|ies)\b[^.]{0,70}\b(lack|don'?t|without|too (short|vague)|missing (results|metrics))/i,
+    evidence: /\bcase stud(y|ies)\b[^.]{0,120}\b(read|view|see|results?|how )/i,
+    label: 'case studies',
+  },
+]
+
 function contradictsContent(f: AnalysisFinding, pageContent: string): boolean {
   const claimText = `${f.title} ${f.description}`
   for (const rule of ABSENCE_CONTRADICTION_RULES) {
     if (rule.claim.test(claimText) && rule.evidence.test(pageContent)) {
       console.warn(`[contradiction-net] Dropped finding "${f.title.slice(0, 80)}" — claims missing ${rule.label}, but content contains it`)
+      return true
+    }
+  }
+  for (const rule of PRESENCE_FABRICATION_RULES) {
+    if (rule.claim.test(claimText) && !rule.evidence.test(pageContent)) {
+      console.warn(`[contradiction-net] Dropped finding "${f.title.slice(0, 80)}" — critiques ${rule.label} the content shows no evidence of`)
       return true
     }
   }
@@ -894,6 +929,18 @@ Claiming something is "missing" when it exists on the site instantly destroys th
 - If X exists but is WEAK, the finding must ACKNOWLEDGE it exists and critique its quality. Example: NOT "The site has no testimonials" but "You have testimonials with student names, but they are not linked to any trusted platform (Google Reviews, Trustpilot) or tied to verifiable results, which limits their persuasive power."
 - If a tag/element exists but is generic or duplicated (e.g., meta description present but identical to the title), say "present but weak/generic", NEVER "missing".
 - A weak-but-present element is usually MEDIUM severity at most, not HIGH.
+
+QUOTE-TO-CRITIQUE — FABRICATING PRESENCE IS WORSE THAN CLAIMING ABSENCE:
+The rule above does NOT mean you should hedge into "exists but weak" when unsure. You may only critique the QUALITY of an element if you can quote it VERBATIM from the provided content.
+- "The site includes customer quotes but they lack attribution" is a FABRICATION unless you quote an actual customer quote from the content. If you cannot quote a testimonial, the site has no testimonials — say so.
+- MENTION IS NOT EXISTENCE: marketing/feature/demo copy often DESCRIBES concepts ("we check your testimonials", "social proof analysis", example findings in product screenshots). A page talking ABOUT testimonials does not HAVE testimonials. Never cite descriptive or demo copy as evidence an element exists.
+- Decision rule: can you paste the element's own text into the finding? Yes → critique its quality. No → it is absent; write an absence finding.
+
+HONEST ABSENCE FOR NEW BRANDS:
+When trust elements (testimonials, client logos, case studies, reviews) are genuinely absent and the site profile indicates a new/emerging brand, the recommendation must respect that absence is BETTER than fabrication:
+- Recommend EARNING real proof: pilot programs, named founder credibility, transparent "early access" framing, money-back guarantees, public roadmaps/changelogs — and adding real testimonials only as they are collected.
+- Explicitly note that fabricated or anonymous filler testimonials would damage trust more than showing none.
+- NEVER recommend "add customer testimonials" to a business that has no customers' quotes to show.
 
 JS-RENDERED CONTENT: Dynamic elements (carousels, rotating headlines, tabs) may only show ONE state. Never judge full messaging strategy on a single captured snapshot.
 
