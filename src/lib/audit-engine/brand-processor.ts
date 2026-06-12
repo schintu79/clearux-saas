@@ -42,13 +42,14 @@ async function auditLog(
 ) {
   try {
     const db = getDb()
-    await db.from('audit_logs').insert({
+    const { error: uncheckedInsertErr1 } = await db.from('audit_logs').insert({
       audit_id: auditId,
       event,
       status,
       message: message || null,
       metadata: metadata || {},
     } as any)
+    if (uncheckedInsertErr1) console.error(`[db] insert failed (audit_logs): ${uncheckedInsertErr1.message}`)
   } catch (err) {
     console.error('[brand-processor] log error:', err)
   }
@@ -177,7 +178,8 @@ async function _processBrandAuditInner(auditId: string): Promise<void> {
         file_name: f.file_name,
         file_url: f.file_url,
       }))
-      await db.from('brand_audit_file_snapshots').insert(snapshots as any)
+      const { error: uncheckedInsertErr2 } = await db.from('brand_audit_file_snapshots').insert(snapshots as any)
+      if (uncheckedInsertErr2) console.error(`[db] insert failed (brand_audit_file_snapshots): ${uncheckedInsertErr2.message}`)
     } catch (snapErr) {
       console.error('[brand-processor] Snapshot insert error (non-fatal):', snapErr)
     }

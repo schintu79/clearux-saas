@@ -227,12 +227,13 @@ export async function recordAuditStats(
         } as any)
         .eq('id', ex.id)
     } else {
-      await db
+      const { error: uncheckedInsertErr1 } = await db
         .from('global_quality_stats')
         .insert({
           ...stat,
           updated_at: new Date().toISOString(),
         } as any)
+      if (uncheckedInsertErr1) console.error(`[db] insert failed (global_quality_stats): ${uncheckedInsertErr1.message}`)
     }
   }
 }

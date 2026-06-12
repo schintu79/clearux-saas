@@ -126,8 +126,10 @@ export async function runHumanPerceptionPipeline(params: {
       recent_reviews: p.recentReviews.slice(0, 10),
     }))
     await db.from('brand_reviews').insert(reviewRows).then(
-      () => console.log(`[human-perception] Persisted ${reviewRows.length} review platform(s)`),
-      (err: unknown) => console.warn('[human-perception] Failed to persist reviews:', err),
+      ({ error }: { error: { message: string } | null }) => {
+        if (error) console.error(`[human-perception] brand_reviews insert FAILED: ${error.message}`)
+        else console.log(`[human-perception] Persisted ${reviewRows.length} review platform(s)`)
+      },
     )
   }
 
@@ -150,8 +152,10 @@ export async function runHumanPerceptionPipeline(params: {
       posted_at: m.postedAt || null,
     }))
     await db.from('reddit_mentions').insert(redditRows).then(
-      () => console.log(`[human-perception] Persisted ${redditRows.length} Reddit mention(s)`),
-      (err: unknown) => console.warn('[human-perception] Failed to persist Reddit mentions:', err),
+      ({ error }: { error: { message: string } | null }) => {
+        if (error) console.error(`[human-perception] reddit_mentions insert FAILED: ${error.message}`)
+        else console.log(`[human-perception] Persisted ${redditRows.length} Reddit mention(s)`)
+      },
     )
   }
 
@@ -172,8 +176,10 @@ export async function runHumanPerceptionPipeline(params: {
       published_at: m.publishedAt || null,
     }))
     await db.from('web_mentions').insert(webRows).then(
-      () => console.log(`[human-perception] Persisted ${webRows.length} web mention(s)`),
-      (err: unknown) => console.warn('[human-perception] Failed to persist web mentions:', err),
+      ({ error }: { error: { message: string } | null }) => {
+        if (error) console.error(`[human-perception] web_mentions insert FAILED: ${error.message}`)
+        else console.log(`[human-perception] Persisted ${webRows.length} web mention(s)`)
+      },
     )
   }
 

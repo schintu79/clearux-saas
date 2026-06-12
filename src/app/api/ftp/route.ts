@@ -376,7 +376,7 @@ async function handleWrite(body: any, userId: string, workspaceId?: string) {
   } catch (err: any) {
     // Log failure
     try {
-      await db.from('ftp_deploy_log').insert({
+      const { error: uncheckedInsertErr1 } = await db.from('ftp_deploy_log').insert({
         connection_id: connectionId,
         user_id: userId,
         audit_id: auditId || null,
@@ -385,7 +385,8 @@ async function handleWrite(body: any, userId: string, workspaceId?: string) {
         action: 'update',
         status: 'failed',
         error_message: err?.message || 'Unknown error',
-      } as any);
+      } as any)
+      if (uncheckedInsertErr1) console.error(`[db] insert failed (ftp_deploy_log): ${uncheckedInsertErr1.message}`);
     } catch { /* swallow — deploy log is best-effort */ }
 
     return NextResponse.json({ error: err?.message || 'Failed to write file' }, { status: 500 });
@@ -429,7 +430,7 @@ async function handleRestore(body: any, userId: string, workspaceId?: string) {
     await client.disconnect();
 
     // Log the restore as its own deploy log entry
-    await db.from('ftp_deploy_log').insert({
+    const { error: uncheckedInsertErr2 } = await db.from('ftp_deploy_log').insert({
       connection_id: connId,
       user_id: userId,
       audit_id: entry.audit_id || null,
@@ -440,7 +441,8 @@ async function handleRestore(body: any, userId: string, workspaceId?: string) {
       new_content: entry.backup_content.substring(0, 50000),
       status: 'success',
       restored_from_log_id: deployLogId,
-    } as any);
+    } as any)
+    if (uncheckedInsertErr2) console.error(`[db] insert failed (ftp_deploy_log): ${uncheckedInsertErr2.message}`);
 
     return NextResponse.json({ success: true, filePath: entry.file_path, message: 'Original file restored successfully.' });
   } catch (err: any) {

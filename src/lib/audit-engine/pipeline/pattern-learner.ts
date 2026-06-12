@@ -347,7 +347,7 @@ export async function runLearningCycle(
 
   // 5. Log all rules to rule_changelog
   for (const rule of allRules) {
-    await db.from('rule_changelog').insert({
+    const { error: uncheckedInsertErr1 } = await db.from('rule_changelog').insert({
       rule_type: rule.ruleType,
       action: rule.action,
       rule_key: rule.ruleKey,
@@ -358,6 +358,7 @@ export async function runLearningCycle(
       data_points: rule.dataPoints,
       auto_applied: rule.autoApplied,
     } as any)
+    if (uncheckedInsertErr1) console.error(`[db] insert failed (rule_changelog): ${uncheckedInsertErr1.message}`)
   }
 
   // 6. Generate insights

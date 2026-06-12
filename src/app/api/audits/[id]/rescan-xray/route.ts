@@ -150,7 +150,7 @@ export async function POST(
   await db.from('multi_model_probes').delete().eq('audit_id', auditId)
 
   for (const b of comparison.benchmarks) {
-    await db.from('multi_model_probes').insert({
+    const { error: uncheckedInsertErr1 } = await db.from('multi_model_probes').insert({
       audit_id: auditId,
       model_id: b.modelId,
       model_label: b.modelLabel,
@@ -165,6 +165,7 @@ export async function POST(
       status: b.status,
       error_message: b.errorMessage,
     } as any)
+    if (uncheckedInsertErr1) console.error(`[db] insert failed (multi_model_probes): ${uncheckedInsertErr1.message}`)
   }
 
   const measured = comparison.benchmarks.filter((b) => b.status === 'measured')
