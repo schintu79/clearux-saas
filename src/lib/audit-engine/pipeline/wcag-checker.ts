@@ -561,21 +561,38 @@ async function runAutomatedChecks(page: Page, url: string): Promise<WcagCheckRes
         outlineNone++
       }
     }
-    // Also check global *:focus { outline: none }
+    // Check for a TRULY global focus-outline removal (2026-06-12 fix).
+    // The old regex (/\*.*:focus|:focus/) matched ANY selector containing
+    // ':focus' that set outline:none — including the textbook-accessible
+    // pattern 'input:focus-visible { outline: none; box-shadow: ring }'.
+    // It flagged fixpath.ai itself as critical while the site had a
+    // correct global *:focus-visible 2px outline. A removal only counts
+    // when (a) the selector is genuinely global (*:focus / *:focus-visible
+    // or a bare html/body :focus), AND (b) the same rule provides NO
+    // replacement indicator (box-shadow), AND (c) no other global rule
+    // restores a visible indicator.
     let globalOutlineNone = false
+    let globalIndicatorProvided = false
     for (const sheet of document.styleSheets) {
       try {
         for (const rule of sheet.cssRules) {
           if (rule instanceof CSSStyleRule) {
-            if (/\*.*:focus|:focus/.test(rule.selectorText) && rule.style.outline === 'none') {
-              globalOutlineNone = true
-              break
-            }
+            const sel = rule.selectorText || ''
+            const isGlobalFocusSel = /(^|,)\s*(\*|html|body)?\s*:focus(-visible)?\s*($|,)/.test(sel) || /(^|,)\s*\*\s*:focus(-visible)?/.test(sel)
+            if (!isGlobalFocusSel) continue
+            const removesOutline = rule.style.outline === 'none' || rule.style.outlineStyle === 'none' || rule.style.outlineWidth === '0px'
+            const providesIndicator =
+              (rule.style.boxShadow && rule.style.boxShadow !== 'none') ||
+              (rule.style.outline && rule.style.outline !== 'none' && rule.style.outline !== '') ||
+              (rule.style.outlineWidth && rule.style.outlineWidth !== '0px' && rule.style.outlineWidth !== '')
+            if (providesIndicator) globalIndicatorProvided = true
+            else if (removesOutline) globalOutlineNone = true
           }
         }
       } catch { /* cross-origin */ }
-      if (globalOutlineNone) break
     }
+    // A global rule that RESTORES a visible indicator outweighs a removal
+    if (globalIndicatorProvided) globalOutlineNone = false
     return { outlineNone, globalOutlineNone }
   })
   addResult('2.4.7', focusVisible.globalOutlineNone ? 'fail' : (focusVisible.outlineNone > 5 ? 'warning' : 'pass'),
@@ -905,6 +922,35 @@ export async function checkWcagAutomated(
   return { automatedResults, heuristicPrompts }
 }
 
+
+/**
+ * Severity doctrine governor (2026-06-12, Stefano's calibration call):
+ * CRITICAL is reserved for findings where a user literally cannot
+ * complete a task — keyboard traps, global focus-indicator removal,
+ * zoom/scaling disabled, unlabeled form inputs, keyboard-unreachable
+ * controls. Anything else marked critical by an individual check is
+ * demoted to high. One critical caps the site at 55 — that penalty must
+ * be reserved for true blockers, or scores become punishment instead of
+ * information. Centralized here so individual checks stay simple and
+ * the doctrine has ONE enforcement point.
+ */
+const CRITICAL_ELIGIBLE_PATTERNS: RegExp[] = [
+  /keyboard trap/i,
+  /focus (outline|indicator|style)s? .*(remov|disabl|none)|outline:\s*none/i,
+  /(maximum-scale|user-scalable|zoom).*(disabl|restrict|prevent)|disables user scaling/i,
+  /(input|form (field|control))s? .*(without|lack|missing|no) (a |an )?(label|accessible name)/i,
+  /not (keyboard[- ])?(focusable|reachable|operable)|cannot be reached.*keyboard/i,
+]
+
+export function enforceWcagSeverityDoctrine(findings: WcagFinding[]): WcagFinding[] {
+  return findings.map((f) => {
+    if (f.severity !== 'critical') return f
+    const text = `${f.title} ${f.description}`
+    if (CRITICAL_ELIGIBLE_PATTERNS.some((re) => re.test(text))) return f
+    return { ...f, severity: 'high' as const }
+  })
+}
+
 /**
  * Merge automated + heuristic results into final WcagPageResult objects.
  */
@@ -932,7 +978,7 @@ export function buildWcagResults(
       checklist: allResults.sort((a, b) => a.criterion.id.localeCompare(b.criterion.id)),
       score: calculateScore(allResults),
       summary: buildSummary(allResults),
-      findings: resultsToFindings(allResults, url),
+      findings: enforceWcagSeverityDoctrine(resultsToFindings(allResults, url)),
     })
   }
 
