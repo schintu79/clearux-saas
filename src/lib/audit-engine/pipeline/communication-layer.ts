@@ -244,6 +244,10 @@ const ABBREV_SHIELD: Array<[RegExp, string]> = [
 function shieldAbbreviations(text: string): string {
   let out = text
   for (const [re, token] of ABBREV_SHIELD) out = out.replace(re, token)
+  // Numbered-list markers ('1.' after a colon or newline) are not
+  // sentence boundaries — the splitter was truncating recommendations
+  // at 'The link should: 1.'
+  out = out.replace(/([:\n]\s*)(\d{1,2})\./g, '$1$2\u0001DOT\u0001')
   // Dotted numeric references (WCAG 2.4.7, version 1.2, §3.3.2) — a period
   // between digits is never a sentence boundary. This was the source of
   // '[WCAG 2. 4. 7]' in customer-facing text: the splitter cut at every
@@ -320,8 +324,12 @@ function extractWhyFromDescription(description: string): string {
 function simplifyRecommendation(recommendation: string): string {
   // Remove code blocks
   let simplified = recommendation.replace(/```[\s\S]*?```/g, '').trim()
-  // Remove HTML tags in the text
-  simplified = simplified.replace(/<[^>]+>/g, '')
+  // HTML tag mentions: keep the tag NAME as text (2026-06-12 — deleting
+  // them produced "Add a skip link in the page's ." when the source said
+  // "in the page's <body>"). Closing tags drop; opening tags become the
+  // quoted tag name.
+  simplified = simplified.replace(/<\/[a-z][a-z0-9-]*\s*>/gi, '')
+  simplified = simplified.replace(/<([a-z][a-z0-9-]*)\b[^>]*>/gi, "'$1'")
   // Inline code: KEEP the inner text (2026-06-12 — deleting it produced
   // recommendations ending at '(e.g.' because the example WAS the code span)
   simplified = simplified.replace(/`([^`]+)`/g, '$1')
