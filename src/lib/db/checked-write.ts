@@ -13,6 +13,7 @@
 //   3. optionally records an audit_logs row so failures are visible
 //      in the product, not just in Vercel logs
 
+import * as Sentry from '@sentry/nextjs'
 import { filterRowsToContract, INSERT_CONTRACTS, type ContractTable } from './insert-contracts'
 
 type AnyDb = {
@@ -45,6 +46,11 @@ export async function insertChecked(
     const { rows: filtered, unknownKeys } = filterRowsToContract(table as ContractTable, rows)
     if (unknownKeys.length > 0) {
       console.error(`[db] SCHEMA DRIFT (${table}, ${ctx.label}): stripped unknown key(s) ${unknownKeys.join(', ')} — add migration + snapshot + contract in one commit`)
+      Sentry.captureMessage(`Schema drift: ${table} insert carried unknown key(s)`, {
+        level: 'warning',
+        tags: { table, label: ctx.label },
+        extra: { unknownKeys },
+      })
     }
     rows = filtered
   }
@@ -53,6 +59,11 @@ export async function insertChecked(
   if (error) {
     console.error(`[db] INSERT FAILED (${table}, ${ctx.label}): ${error.message}`, {
       code: error.code, details: error.details, rowCount: rows.length, auditId: ctx.auditId ?? undefined,
+    })
+    Sentry.captureMessage(`DB insert failed: ${table} (${ctx.label})`, {
+      level: 'error',
+      tags: { table, label: ctx.label },
+      extra: { dbError: error.message, code: error.code, details: error.details, rowCount: rows.length, auditId: ctx.auditId ?? undefined },
     })
     if (ctx.auditId) {
       // Best-effort visibility in the product. Never let the log write

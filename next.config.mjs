@@ -1,3 +1,5 @@
+import { withSentryConfig } from '@sentry/nextjs'
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   // PDFKit requires native Node.js modules and font file access.
@@ -14,4 +16,13 @@ const nextConfig = {
   },
 };
 
-export default nextConfig;
+export default withSentryConfig(nextConfig, {
+  // org/project only matter for source-map upload, which only runs when
+  // SENTRY_AUTH_TOKEN is set (add it in Vercel env to get readable stack
+  // traces). Builds succeed without it.
+  org: process.env.SENTRY_ORG || 'fixpath',
+  project: process.env.SENTRY_PROJECT || 'clearux-saas',
+  silent: !process.env.CI,
+  widenClientFileUpload: true,
+  disableLogger: true,
+});
