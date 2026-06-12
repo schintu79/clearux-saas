@@ -89,11 +89,22 @@ export function applyModuleSeverityCap(
 }
 
 /**
- * Compose display module scores (2026-06-11) — THE single chain every
- * surface must use: per-module cap, then scale issue-carrying modules so
- * the displayed module average equals the capped overall (clean modules
- * keep their true score). The Find page showed 81 while the Overview
- * showed 48 for the same module because each computed its own math.
+ * Compose display module scores — THE single chain every surface must
+ * use so no two pages disagree on a module's number (the original bug:
+ * Find showed 81 while Overview showed 48 for the same module).
+ *
+ * 2026-06-12 MODEL FIX: this used to ALSO scale issue-carrying modules
+ * so the displayed module average equaled the capped overall. That
+ * forced-average step was a spec bug: with 7 open criticals (overall
+ * cap 55) and three clean modules in the 90s, carriers were crushed to
+ * 19/23/30 while their own model said "3 mediums → cap 85" right on the
+ * card. Indefensible math shown to customers.
+ *
+ * The rule now: every module shows its OWN severity-capped score —
+ * traceable to its own findings, nothing else. The overall is a
+ * worst-driven verdict (severity cap), NOT an average of the module
+ * scores, and the UI says so explicitly. cappedOverall /
+ * overallCapApplied params are kept so call sites don't churn.
  */
 export interface DisplayModuleScore {
   name: string
@@ -104,28 +115,13 @@ export interface DisplayModuleScore {
 export function composeModuleScores(
   modules: Array<{ name: string; score: number }>,
   findingsByModule: Record<string, Array<{ severity: string }>>,
-  cappedOverall: number,
-  overallCapApplied: boolean,
+  _cappedOverall?: number,
+  _overallCapApplied?: boolean,
 ): DisplayModuleScore[] {
-  let out: DisplayModuleScore[] = modules.map((m) => {
+  return modules.map((m) => {
     const capped = applyModuleSeverityCap(m.score, findingsByModule[m.name] || [])
     return { name: m.name, score: capped.overall, capInfo: capped.capInfo }
   })
-
-  if (overallCapApplied && out.length > 0) {
-    const hasFindings = (name: string) => (findingsByModule[name]?.length || 0) > 0
-    const carriers = out.filter((m) => hasFindings(m.name))
-    const cleanSum = out.filter((m) => !hasFindings(m.name)).reduce((s, m) => s + m.score, 0)
-    const carrierSum = carriers.reduce((s, m) => s + m.score, 0)
-    const target = cappedOverall * out.length - cleanSum
-    if (carrierSum > 0 && target > 0 && target < carrierSum) {
-      const factor = target / carrierSum
-      out = out.map((m) =>
-        hasFindings(m.name) ? { ...m, score: Math.max(0, Math.round(m.score * factor)) } : m,
-      )
-    }
-  }
-  return out
 }
 
 /** Deterministic, user-facing sentence explaining an applied cap. */

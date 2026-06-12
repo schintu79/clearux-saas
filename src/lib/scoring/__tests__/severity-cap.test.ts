@@ -95,7 +95,7 @@ describe('applyModuleSeverityCap — module-scale thresholds', () => {
   })
 })
 
-describe('composeModuleScores — composition invariant', () => {
+describe('composeModuleScores — own-cap model (forced-average scaling REMOVED 2026-06-12)', () => {
   const NAMES = ['A', 'B', 'C', 'D', 'E', 'F', 'G']
 
   function build(scores: number[], findingCounts: number[], sev = 'high') {
@@ -107,30 +107,60 @@ describe('composeModuleScores — composition invariant', () => {
     return { modules, byModule }
   }
 
-  it('INVARIANT: displayed module mean equals the capped overall (±1 rounding) when cap applied', () => {
-    // Approximates the 2026-06-11 raseedinvest state: overall capped to 65
-    const { modules, byModule } = build([80, 80, 80, 96, 72, 65, 85], [2, 1, 1, 1, 2, 3, 4], 'high')
-    const composed = composeModuleScores(modules, byModule, 65, true)
-    const mean = composed.reduce((s, m) => s + m.score, 0) / composed.length
-    expect(Math.abs(mean - 65)).toBeLessThanOrEqual(1)
+  // REGRESSION (2026-06-12, audit adac62e1): the forced-average step
+  // crushed carriers to absurd values — Foundation displayed 30 while its
+  // own card said "held down by 3 medium-severity issues" (own cap: 85).
+  // A module's displayed score must NEVER be lower than its own severity
+  // cap explanation justifies.
+  it('REGRESSION fixpath: module with 3 mediums shows its own cap (85), never a scaled 30', () => {
+    const modules = [
+      { name: 'Foundation', score: 93 },
+      { name: 'Human Experience', score: 87 },
+      { name: 'Accessibility', score: 87 },
+      { name: 'Future Readiness', score: 96 },
+    ]
+    const byModule = {
+      Foundation: many('medium', 3),
+      'Human Experience': [],
+      Accessibility: many('critical', 7),
+      'Future Readiness': [],
+    }
+    const composed = composeModuleScores(modules, byModule, 55, true)
+    const byName = Object.fromEntries(composed.map((m) => [m.name, m.score]))
+    expect(byName.Foundation).toBe(85)
+    expect(byName.Accessibility).toBe(55)
+    expect(byName['Human Experience']).toBe(87)
+    expect(byName['Future Readiness']).toBe(96)
   })
 
-  it('clean modules (zero findings) keep their exact score', () => {
+  it('INVARIANT: every displayed module score equals applyModuleSeverityCap of its own raw score', () => {
+    const { modules, byModule } = build([80, 96, 72, 90], [2, 0, 3, 1], 'high')
+    const composed = composeModuleScores(modules, byModule, 55, true)
+    for (let i = 0; i < modules.length; i++) {
+      const expected = applyModuleSeverityCap(modules[i].score, byModule[NAMES[i]] || [])
+      expect(composed[i].score).toBe(expected.overall)
+      expect(composed[i].capInfo).toEqual(expected.capInfo)
+    }
+  })
+
+  it('clean modules (zero findings) keep their exact score regardless of overall cap', () => {
     const { modules, byModule } = build([90, 90, 96], [3, 3, 0], 'high')
     const composed = composeModuleScores(modules, byModule, 60, true)
     expect(composed.find((m) => m.name === 'C')!.score).toBe(96)
-    // carriers absorbed the deficit
-    expect(composed.find((m) => m.name === 'A')!.score).toBeLessThan(90)
   })
 
-  it('preserves ordering among carriers (distinct post-cap scores)', () => {
-    // Note: identical caps legitimately flatten ties (85 and 95 both capped
-    // at 72 by 2 highs become equal) — ordering is preserved among DISTINCT
-    // post-cap scores, which is what this pins.
+  it('overall cap params have NO effect on module scores (kept only for call-site compatibility)', () => {
+    const { modules, byModule } = build([97, 80], [1, 2], 'high')
+    const withCap = composeModuleScores(modules, byModule, 55, true)
+    const withoutCap = composeModuleScores(modules, byModule, 90, false)
+    expect(withCap.map((m) => m.score)).toEqual(withoutCap.map((m) => m.score))
+  })
+
+  it('preserves ordering among distinct post-cap scores', () => {
     const modules = [
-      { name: 'A', score: 85 }, // 1 high → cap 80
-      { name: 'B', score: 70 }, // 1 high → stays 70
-      { name: 'C', score: 95 }, // 3 medium → cap 85
+      { name: 'A', score: 85 },
+      { name: 'B', score: 70 },
+      { name: 'C', score: 95 },
     ]
     const byModule = {
       A: many('high', 1),
@@ -141,20 +171,6 @@ describe('composeModuleScores — composition invariant', () => {
     const byName = Object.fromEntries(composed.map((m) => [m.name, m.score]))
     expect(byName.C).toBeGreaterThan(byName.A)
     expect(byName.A).toBeGreaterThan(byName.B)
-  })
-
-  it('no overall cap → only per-module caps apply, no scaling', () => {
-    const { modules, byModule } = build([97, 97], [1, 0], 'high')
-    const composed = composeModuleScores(modules, byModule, 90, false)
-    expect(composed.find((m) => m.name === 'A')!.score).toBe(80) // module cap: 1 high
-    expect(composed.find((m) => m.name === 'B')!.score).toBe(97) // untouched
-  })
-
-  it('does not scale when target is unreachable (all clean, overall capped)', () => {
-    const { modules, byModule } = build([95, 96], [0, 0], 'high')
-    const composed = composeModuleScores(modules, byModule, 60, true)
-    // no carriers — nothing to scale; clean scores must survive
-    expect(composed.map((m) => m.score)).toEqual([95, 96])
   })
 
   it('never produces negative scores', () => {
