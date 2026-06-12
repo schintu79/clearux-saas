@@ -68,13 +68,14 @@ export async function POST(
       } as any)
       .eq('id', auditId)
 
-    await db.from('audit_logs').insert({
+    const { error: uncheckedInsertErr1 } = await db.from('audit_logs').insert({
       audit_id: auditId,
       event: 'audit_restarted',
       status: 'info',
       message: `Restarted after being stuck in "${a.status}" for ${Math.round(elapsed / 1000)}s`,
       metadata: {},
     } as any)
+    if (uncheckedInsertErr1) console.error(`[db] insert failed (audit_logs): ${uncheckedInsertErr1.message}`)
 
     // ── Billing: re-deduct the credit if this audit was previously refunded ──
     // Failure paths auto-refund the credit. Restarting consumes the service

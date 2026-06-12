@@ -90,13 +90,14 @@ export async function POST(
     await db.from('brand_audit_file_snapshots').delete().eq('audit_id', auditId)
 
     // Log retry
-    await db.from('audit_logs').insert({
+    const { error: uncheckedInsertErr1 } = await db.from('audit_logs').insert({
       audit_id: auditId,
       event: 'audit_retry',
       status: 'info',
       message: 'User triggered retry on failed audit',
       metadata: {},
     } as any)
+    if (uncheckedInsertErr1) console.error(`[db] insert failed (audit_logs): ${uncheckedInsertErr1.message}`)
 
     // Trigger audit processing via after() — keeps function alive after response
     const ar = audit as any

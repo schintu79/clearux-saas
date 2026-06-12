@@ -389,7 +389,8 @@ export async function POST(request: NextRequest) {
       })
 
       if (inserts.length > 0) {
-        await db.from('competitor_benchmarks').insert(inserts)
+        const { error: uncheckedInsertErr1 } = await db.from('competitor_benchmarks').insert(inserts)
+        if (uncheckedInsertErr1) console.error(`[db] insert failed (competitor_benchmarks): ${uncheckedInsertErr1.message}`)
       }
 
       return NextResponse.json({
@@ -485,7 +486,8 @@ export async function POST(request: NextRequest) {
       }
     })
 
-    await db.from('competitor_benchmarks').insert(inserts)
+    const { error: uncheckedInsertErr2 } = await db.from('competitor_benchmarks').insert(inserts)
+    if (uncheckedInsertErr2) console.error(`[db] insert failed (competitor_benchmarks): ${uncheckedInsertErr2.message}`)
 
     return NextResponse.json({
       domain,

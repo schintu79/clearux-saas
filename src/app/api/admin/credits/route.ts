@@ -52,7 +52,7 @@ export async function POST(request: NextRequest) {
 
     // Log the action (non-critical — don't block the response if logging fails)
     try {
-      await db.from('admin_logs').insert({
+      const { error: uncheckedInsertErr1 } = await db.from('admin_logs').insert({
         admin_id: adminUser.id,
         event: 'credit_adjustment',
         target_user_id: user_id,
@@ -64,6 +64,7 @@ export async function POST(request: NextRequest) {
           reason: reason || null,
         },
       } as any)
+      if (uncheckedInsertErr1) console.error(`[db] insert failed (admin_logs): ${uncheckedInsertErr1.message}`)
     } catch (logErr) {
       // admin_logs table may not exist yet — silently continue
       console.warn('Non-critical: admin log insert failed:', logErr)

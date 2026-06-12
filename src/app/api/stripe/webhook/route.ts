@@ -208,13 +208,14 @@ export async function POST(request: NextRequest) {
       }
 
       // Log payment event
-      await supabase.from('audit_logs').insert({
+      const { error: uncheckedInsertErr1 } = await supabase.from('audit_logs').insert({
         audit_id: auditId,
         event: 'payment_received',
         status: 'success',
         message: 'Payment received for single audit',
         metadata: { stripe_payment_intent_id: session.payment_intent, amount_cents: session.amount_total },
       } as any)
+      if (uncheckedInsertErr1) console.error(`[db] insert failed (audit_logs): ${uncheckedInsertErr1.message}`)
 
       // Send confirmation email
       const { data: audit } = await supabase

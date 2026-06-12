@@ -62,7 +62,7 @@ export async function saveSnapshot(params: {
 
   const { userId, brandDomain, auditId, biSummary, reviewScore, webMentionCount, redditMentionCount } = params
 
-  await db.from('intelligence_snapshots').insert({
+  const { error: uncheckedInsertErr1 } = await db.from('intelligence_snapshots').insert({
     user_id: userId,
     brand_domain: brandDomain,
     audit_id: auditId,
@@ -78,6 +78,7 @@ export async function saveSnapshot(params: {
     negative_theme_count: biSummary?.negativeThemes?.length ?? null,
     full_data: biSummary ?? null,
   } as any)
+  if (uncheckedInsertErr1) console.error(`[db] insert failed (intelligence_snapshots): ${uncheckedInsertErr1.message}`)
 }
 
 /* ── Trend retrieval ─────────────────────────────────── */

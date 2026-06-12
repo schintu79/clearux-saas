@@ -63,13 +63,14 @@ export async function POST(request: NextRequest) {
     }
 
     // Log it
-    await db.from('audit_logs').insert({
+    const { error: uncheckedInsertErr1 } = await db.from('audit_logs').insert({
       audit_id: '00000000-0000-0000-0000-000000000000',
       event: 'admin_role_change',
       status: 'info',
       message: `Admin ${adminUser.email} changed role of ${user_id} to ${role}`,
       metadata: { admin_id: adminUser.id, target_user_id: user_id, new_role: role },
     } as any)
+    if (uncheckedInsertErr1) console.error(`[db] insert failed (audit_logs): ${uncheckedInsertErr1.message}`)
 
     return NextResponse.json({ success: true, role })
   } catch (err) {

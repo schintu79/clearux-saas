@@ -271,7 +271,7 @@ export async function runPromptLibrary(
       results.push(result)
 
       // Store result in DB
-      await db.from('prompt_results').insert({
+      const { error: uncheckedInsertErr1 } = await db.from('prompt_results').insert({
         audit_id: auditId,
         prompt_id: prompt.id,
         brand_domain: brandDomain,
@@ -284,6 +284,7 @@ export async function runPromptLibrary(
         share_of_voice: analysis.shareOfVoice,
         competitors_mentioned: analysis.competitorsMentioned,
       } as any)
+      if (uncheckedInsertErr1) console.error(`[db] insert failed (prompt_results): ${uncheckedInsertErr1.message}`)
     }
   }
 

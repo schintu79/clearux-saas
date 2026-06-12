@@ -78,12 +78,13 @@ export async function POST(request: NextRequest) {
     // Re-trigger via Inngest
     await inngest.send({ name: 'audit/process', data: { auditId } })
 
-    await db.from('audit_logs').insert({
+    const { error: uncheckedInsertErr1 } = await db.from('audit_logs').insert({
       audit_id: auditId,
       event: 'manual_retry',
       status: 'info',
       message: 'Audit manually retried by admin via debug endpoint',
     } as any)
+    if (uncheckedInsertErr1) console.error(`[db] insert failed (audit_logs): ${uncheckedInsertErr1.message}`)
 
     return NextResponse.json({ success: true, message: 'Audit reset and re-queued' })
   }

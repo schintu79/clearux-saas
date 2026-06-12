@@ -162,7 +162,7 @@ export async function analyzeContentGaps(params: {
   // Store in DB
   const db = createServiceSupabase()
   for (const brief of allBriefs) {
-    await db.from('content_gaps').insert({
+    const { error: uncheckedInsertErr1 } = await db.from('content_gaps').insert({
       audit_id: auditId,
       user_id: userId,
       brand_domain: brandDomain,
@@ -177,6 +177,7 @@ export async function analyzeContentGaps(params: {
       estimated_impact: brief.estimatedImpact,
       status: 'open',
     } as any)
+    if (uncheckedInsertErr1) console.error(`[db] insert failed (content_gaps): ${uncheckedInsertErr1.message}`)
   }
 
   const highImpactCount = allBriefs.filter(b => b.estimatedImpact === 'high').length

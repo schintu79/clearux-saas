@@ -282,7 +282,7 @@ export async function recordFindingShown(
       } as any)
       .eq('id', ex.id)
   } else {
-    await db
+    const { error: uncheckedInsertErr1 } = await db
       .from('finding_patterns')
       .insert({
         title_hash: hash,
@@ -294,6 +294,7 @@ export async function recordFindingShown(
         total_accepted: 0,
         avg_severity: severityWeight[severity] || 2,
       } as any)
+    if (uncheckedInsertErr1) console.error(`[db] insert failed (finding_patterns): ${uncheckedInsertErr1.message}`)
   }
 }
 

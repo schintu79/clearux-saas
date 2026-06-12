@@ -1937,7 +1937,8 @@ Return 2-6 findings. Be specific and evidence-based. Reference specific files/co
               accuracy: r.accuracy, accuracy_note: r.accuracyNote,
               cited_url: r.citedUrl, model_used: r.modelUsed,
             }))
-            await db.from('llm_probe_results').insert(probeInserts as any)
+            const { error: uncheckedInsertErr1 } = await db.from('llm_probe_results').insert(probeInserts as any)
+            if (uncheckedInsertErr1) console.error(`[db] insert failed (llm_probe_results): ${uncheckedInsertErr1.message}`)
           }
           await auditLog(auditId, 'llm_probe_completed', 'success',
             `LLM probe: ${session.accuracySummary.scorePercent}% accuracy`)
@@ -1975,7 +1976,8 @@ Return 2-6 findings. Be specific and evidence-based. Reference specific files/co
               citation_type: c.citationType,
               model_used: 'claude-haiku',
             }))
-            await db.from('ai_citations').insert(inserts as any)
+            const { error: uncheckedInsertErr2 } = await db.from('ai_citations').insert(inserts as any)
+            if (uncheckedInsertErr2) console.error(`[db] insert failed (ai_citations): ${uncheckedInsertErr2.message}`)
           }
           await auditLog(auditId, 'citation_audit_completed', 'info',
             `Citation audit: ${result.citedPages.length} pages cited, citability: ${result.citabilityScore}%`)
@@ -2075,7 +2077,8 @@ Return 2-6 findings. Be specific and evidence-based. Reference specific files/co
               total_questions: b.totalQuestions, results_json: b.results as any,
               status: b.status, error_message: b.errorMessage,
             }))
-            await db.from('multi_model_probes').insert(benchInserts as any)
+            const { error: uncheckedInsertErr3 } = await db.from('multi_model_probes').insert(benchInserts as any)
+            if (uncheckedInsertErr3) console.error(`[db] insert failed (multi_model_probes): ${uncheckedInsertErr3.message}`)
           }
           const industry = detectIndustry(
             auditDetails.productType,
@@ -2262,7 +2265,8 @@ Return 2-6 findings. Be specific and evidence-based. Reference specific files/co
             language: s.language,
             priority: s.priority,
           }))
-          await db.from('fix_playbooks').insert(inserts as any)
+          const { error: uncheckedInsertErr4 } = await db.from('fix_playbooks').insert(inserts as any)
+          if (uncheckedInsertErr4) console.error(`[db] insert failed (fix_playbooks): ${uncheckedInsertErr4.message}`)
         }
 
         await auditLog(auditId, 'fix_playbooks_generated', 'info',
@@ -4979,7 +4983,8 @@ RULES FOR RE-AUDIT:
               category: r.category,
               evidence: r.evidence,
             }))
-            await db.from('predictive_recommendations').insert(inserts as any)
+            const { error: uncheckedInsertErr5 } = await db.from('predictive_recommendations').insert(inserts as any)
+            if (uncheckedInsertErr5) console.error(`[db] insert failed (predictive_recommendations): ${uncheckedInsertErr5.message}`)
           }
 
           await auditLog(auditId, 'predictive_recommendations_generated', 'info',

@@ -302,7 +302,7 @@ export async function PATCH(
 
       // Auto-create a site_note so the AI skips this in future audits
       const domain = normalizeDomain((audit as any).product_url)
-      await db.from('site_notes').insert({
+      const { error: uncheckedInsertErr1 } = await db.from('site_notes').insert({
         user_id: user.id,
         domain,
         note_type: 'dismissal',
@@ -312,6 +312,7 @@ export async function PATCH(
         is_active: true,
         workspace_id: (audit as any).workspace_id || null,
       } as any)
+      if (uncheckedInsertErr1) console.error(`[db] insert failed (site_notes): ${uncheckedInsertErr1.message}`)
 
       // Recalculate score after dismissal
       const scoreUpdate = await recalculateFromFindings(db, (finding as any).audit_id)
@@ -461,7 +462,7 @@ export async function PATCH(
       // Record action history
       const prevFixStatus = (finding as any).fix_status || 'unreviewed'
       const resolvedFixStatus = (updates.fix_status || newFixStatus || prevFixStatus) as string
-      await db.from('finding_action_history').insert({
+      const { error: uncheckedInsertErr2 } = await db.from('finding_action_history').insert({
         finding_id: findingId,
         user_id: user.id,
         action: action_mode || 'status_change',
@@ -469,6 +470,7 @@ export async function PATCH(
         to_status: resolvedFixStatus,
         note: note || null,
       } as any)
+      if (uncheckedInsertErr2) console.error(`[db] insert failed (finding_action_history): ${uncheckedInsertErr2.message}`)
 
       // Recalculate score if status changed to/from fixed
       let scoreUpdate = null
