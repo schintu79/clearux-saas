@@ -656,6 +656,7 @@ function OverviewInner() {
   // the overview showed an uncapped 87 while the report stored the capped
   // 65 for the same audit. Cap counts only OPEN findings, so fixing the
   // high-severity issues lifts the cap in real time.
+  const uncappedOverallScore = overallScore; // shown struck-through so the cap math is visible
   const { overall: cappedOverallScore, capInfo: scoreCapInfo } = applySeverityCap(overallScore, openFindings);
   overallScore = cappedOverallScore;
 
@@ -682,6 +683,7 @@ function OverviewInner() {
   // composeModuleScores in @/lib/scoring/severity-cap is THE single source —
   // the Find page uses the identical call, so the two surfaces cannot
   // disagree on a module's number again (Find showed 81 vs Overview 48).
+  const rawPillarScore: Record<string, number> = Object.fromEntries(pillarScores.map((p) => [p.name, p.score]));
   const composedModules = composeModuleScores(pillarScores, findingsByPillarName, overallScore, scoreCapInfo.applied);
   const pillarCapInfo: Record<string, import('@/lib/scoring/severity-cap').ScoreCapInfo> = {};
   for (const m of composedModules) pillarCapInfo[m.name] = m.capInfo;
@@ -989,7 +991,7 @@ function OverviewInner() {
             </span>
             {scoreCapInfo.applied && (
               <p className="text-[11px] mt-2 text-center leading-snug max-w-[260px]" style={{ color: 'var(--warn)' }}>
-                Score capped by {scoreCapInfo.reason} — fixing them unlocks your full score.
+                Your checks average <s>{uncappedOverallScore}</s> — capped at {overallScore} by {scoreCapInfo.reason}. Fixing them unlocks your full score.
               </p>
             )}
           </div>
@@ -1093,6 +1095,7 @@ function OverviewInner() {
                 Icon={PIcon}
                 findingCount={findingCount}
                 capReason={pillarCapInfo[p.name]?.applied ? pillarCapInfo[p.name].reason : null}
+                rawScore={rawPillarScore[p.name] ?? null}
                 breakdown={pillarCats.slice(0, 4).map((cat, relIdx) => ({
                   name: cat.name,
                   score: cat.score,
@@ -1366,6 +1369,7 @@ function CategoryModuleCard({
   Icon,
   findingCount,
   capReason = null,
+  rawScore = null,
   breakdown,
   href,
   expanded,
@@ -1378,6 +1382,8 @@ function CategoryModuleCard({
   findingCount: number;
   /** Set when the module score is capped by its own open findings */
   capReason?: string | null;
+  /** Uncapped module score — struck through beside the capped one so the math is visible */
+  rawScore?: number | null;
   breakdown: Array<{ name: string; score: number; Icon: React.ElementType }>;
   href: string;
   expanded: boolean;
@@ -1414,7 +1420,10 @@ function CategoryModuleCard({
         </div>
       </div>
 
-      <div className="px-3 pb-2">
+      <div className="px-3 pb-2 flex items-baseline gap-2">
+        {capReason && rawScore != null && rawScore > score && (
+          <s className="text-[15px] font-semibold tabular-nums" style={{ color: 'var(--m-muted)' }}>{rawScore}</s>
+        )}
         <span className={`text-[28px] font-bold tabular-nums leading-none ${scoreColor(score)}`}>{score}</span>
       </div>
 
