@@ -7,6 +7,7 @@
 // ============================================================
 
 import puppeteer, { type Browser, type Page } from 'puppeteer-core'
+import { launchAuditBrowser } from '@/lib/audit-engine/browser-launcher'
 import type { AnalysisFinding } from './analyzer'
 
 /* ── Viewport definitions ────────────────────────────────── */
@@ -67,43 +68,8 @@ type ResponsiveIssueType =
 /* ── Browser management ──────────────────────────────────── */
 
 async function launchBrowser(): Promise<Browser> {
-  let executablePath: string
-
-  try {
-    // Serverless (Vercel / AWS Lambda) — use @sparticuz/chromium
-    const chromium = await import('@sparticuz/chromium')
-    executablePath = await chromium.default.executablePath()
-    return await puppeteer.launch({
-      args: chromium.default.args,
-      defaultViewport: null,
-      executablePath,
-      headless: true,
-    })
-  } catch {
-    // Local dev — try common Chromium/Chrome paths
-    const paths = [
-      '/usr/bin/chromium-browser',
-      '/usr/bin/chromium',
-      '/usr/bin/google-chrome',
-      '/usr/bin/google-chrome-stable',
-      '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',
-    ]
-    for (const p of paths) {
-      try {
-        const { accessSync } = await import('fs')
-        accessSync(p)
-        executablePath = p
-        return await puppeteer.launch({
-          executablePath,
-          headless: true,
-          args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage'],
-        })
-      } catch {
-        continue
-      }
-    }
-    throw new Error('No Chromium/Chrome binary found. Install @sparticuz/chromium or Chrome.')
-  }
+  // Shared launcher (Plan §0.6) — real serverless error is reported, not swallowed
+  return launchAuditBrowser({ viewport: null })
 }
 
 /* ── Page-level checks ───────────────────────────────────── */
