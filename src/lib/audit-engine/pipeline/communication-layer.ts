@@ -220,13 +220,40 @@ const JARGON_MAP: Array<[RegExp, string]> = [
   [/\bsemantic\b/gi, 'meaningful'],
   [/\bresponsive\b/gi, 'mobile-friendly'],
   [/\breadability score\b/gi, 'readability'],
-  [/\bWCAG\s*\d*\.?\d*\s*(AA|AAA)?/gi, 'accessibility standards'],
+  // 2026-06-12: the old rule here rewrote 'WCAG 2.4.7' into mangled text
+  // ('accessibility standards.7') by half-eating the criterion number.
+  // WCAG criterion IDs are CITABLE EVIDENCE — a trust product keeps them.
+  // Only the bare level suffix is softened (e.g. 'WCAG AA' → 'accessibility
+  // standards (WCAG AA)').
+  [/\bWCAG\s+(AA|AAA)\b/g, 'accessibility standards (WCAG $1)'],
   [/\bheading hierarchy\b/gi, 'heading structure'],
   [/\bcanonical URL\b/gi, 'preferred web address'],
   [/\bstructured data\b/gi, 'machine-readable information'],
   [/\brender\b/gi, 'display'],
   [/\blazy load(ing)?\b/gi, 'delayed loading'],
 ]
+
+/** Shield abbreviations from the sentence splitter (e.g., i.e., etc., vs., approx.) */
+const ABBREV_SHIELD: Array<[RegExp, string]> = [
+  [/\be\.\s?g\./gi, '\u0001EG\u0001'],
+  [/\bi\.\s?e\./gi, '\u0001IE\u0001'],
+  [/\betc\./gi, '\u0001ETC\u0001'],
+  [/\bvs\./gi, '\u0001VS\u0001'],
+  [/\bapprox\./gi, '\u0001APPROX\u0001'],
+]
+function shieldAbbreviations(text: string): string {
+  let out = text
+  for (const [re, token] of ABBREV_SHIELD) out = out.replace(re, token)
+  return out
+}
+function unshieldAbbreviations(text: string): string {
+  return text
+    .replace(/\u0001EG\u0001/g, 'e.g.')
+    .replace(/\u0001IE\u0001/g, 'i.e.')
+    .replace(/\u0001ETC\u0001/g, 'etc.')
+    .replace(/\u0001VS\u0001/g, 'vs.')
+    .replace(/\u0001APPROX\u0001/g, 'approx.')
+}
 
 function stripTechnicalJargon(text: string): string {
   let result = text
@@ -250,8 +277,9 @@ function simplifyDescription(description: string): string {
     return inner
   })
   // Take first 2-3 sentences
-  const sentences = simplified.match(/[^.!?]+[.!?]+/g) || [simplified]
-  const plain = sentences.slice(0, 3).join(' ').trim()
+  const shielded = shieldAbbreviations(simplified)
+  const sentences = shielded.match(/[^.!?]+[.!?]+/g) || [shielded]
+  const plain = unshieldAbbreviations(sentences.slice(0, 3).join(' ').trim())
   return stripTechnicalJargon(plain) || simplified.slice(0, 300)
 }
 
@@ -271,7 +299,7 @@ function extractWhyFromDescription(description: string): string {
     'hurts', 'damages', 'weakens', 'confuses',
     'lost', 'missing', 'broken',
   ]
-  const sentences = description.match(/[^.!?]+[.!?]+/g) || []
+  const sentences = (shieldAbbreviations(description).match(/[^.!?]+[.!?]+/g) || []).map(unshieldAbbreviations)
   for (const sentence of sentences) {
     const sentenceLower = sentence.toLowerCase()
     if (impactIndicators.some(ind => sentenceLower.includes(ind))) {
