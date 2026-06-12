@@ -1,0 +1,68 @@
+{
+  "_meta": {
+    "description": "Snapshot of the LIVE Supabase schema (public) for write-path tables. This is the single source of truth the schema contract tests run against. Operating standard: any schema change = migration file + applied live + this snapshot refreshed, all in the SAME commit. Refresh: run scripts/schema-snapshot.sql against the live DB and paste the result here.",
+    "project_id": "mbavusgdbpldizeyizps",
+    "generated_at": "2026-06-12",
+    "generated_by": "information_schema.columns via Supabase MCP"
+  },
+  "audit_findings": {
+    "columns": ["id", "audit_id", "checklist_item_id", "severity", "title", "description", "evidence", "page_url", "recommendation", "estimated_impact", "sort_order", "created_at", "target_element", "screenshot_url", "status", "status_updated_at", "status_note", "dismissed", "dismissal_reason", "dismissed_at", "verification_status", "verification_note", "category_index", "ai_interpretation", "human_interpretation", "finding_type", "fix_type", "action_mode", "fix_payload", "fix_format", "is_editable", "is_deployable", "approval_required", "fix_status", "deployable_type", "default_owner", "confidence_level", "detection_source", "owner_team", "performance_metric_type", "owner_roles", "primary_owner_role", "handoff_ready", "handoff_payload", "issue_family_id", "status_in_audit", "score_impact", "scope_json", "page_count_affected", "confidence_score", "business_relevance", "communication", "viewport"],
+    "required": ["audit_id", "severity", "title", "description", "recommendation"]
+  },
+  "audit_pages": {
+    "columns": ["id", "audit_id", "url", "title", "h1", "meta_description", "content_text", "links_found", "broken_links", "has_structured_data", "structured_data", "status_code", "load_time_ms", "is_mobile_friendly", "viewport_meta", "crawled_at", "screenshot_url", "ai_readability", "technical_audit", "crawl_status", "skip_reason", "canonical_url", "is_duplicate", "page_type", "fetch_strategy", "performance_data", "excluded_from_score", "wcag_checklist", "wcag_score", "code_quality"],
+    "required": ["audit_id", "url"]
+  },
+  "audit_logs": {
+    "columns": ["id", "audit_id", "event", "status", "message", "metadata", "created_at"],
+    "required": ["audit_id", "event"]
+  },
+  "audits": {
+    "columns": ["id", "user_id", "status", "product_url", "product_type", "target_user", "ux_concern", "notes", "pages_crawled", "crawl_error", "delivery_deadline", "completed_at", "created_at", "updated_at", "plan", "language", "white_label_company_name", "white_label_logo_url", "is_free_preview", "claimed_by", "free_audit_email", "share_token", "share_enabled", "depth_mode", "selected_pillars", "brand_identity_id", "selected_modules", "audit_type", "previous_audit_id", "detected_industry", "progress_percent", "crawl_summary", "crawl_started_at", "crawl_completed_at", "performance_summary", "role_summaries", "speed_data", "speed_tested_at", "brand_name", "sentiment_data", "human_perception_data", "deleted_at", "audit_stage", "workspace_id", "pipeline_version", "audit_run_type", "trigger_source", "coverage_summary_json", "score_version", "reconciliation_summary"],
+    "required": ["product_type", "ux_concern"]
+  },
+  "reports": {
+    "columns": ["id", "audit_id", "executive_summary", "key_recommendation", "total_issues", "critical_count", "high_count", "medium_count", "low_count", "overall_score", "ux_score", "conversion_score", "mobile_score", "ai_discoverability_score", "content_score", "raw_json", "pdf_url", "pdf_generated_at", "created_at", "updated_at", "ai_visibility_breakdown", "model_benchmarks", "brand_intelligence"],
+    "required": ["audit_id", "executive_summary"]
+  },
+  "workspace_ai_interrogations": {
+    "columns": ["id", "workspace_id", "user_id", "question_id", "question_text_snapshot", "question_family", "selected_models", "status", "started_at", "completed_at", "usage_units_consumed", "token_input_total", "token_output_total", "estimated_cost_cents", "source_question_set_id", "is_followup", "parent_interrogation_id", "created_at"],
+    "required": ["workspace_id", "user_id", "question_text_snapshot", "question_family", "selected_models"]
+  },
+  "workspace_ai_interrogation_results": {
+    "columns": ["id", "interrogation_id", "model_slug", "model_label", "provider", "response_text", "response_summary", "themes", "latency_ms", "token_input", "token_output", "estimated_cost_cents", "status", "error_message", "created_at", "accuracy", "accuracy_note"],
+    "required": ["interrogation_id", "model_slug", "model_label", "provider"]
+  },
+  "workspace_ai_question_sets": {
+    "columns": ["id", "workspace_id", "generated_at", "valid_until", "category_snapshot", "region_snapshot", "language_snapshot", "source_context", "question_ids", "ranking_metadata", "version", "created_at"],
+    "required": ["workspace_id", "valid_until", "question_ids"]
+  },
+  "workspaces": {
+    "columns": ["id", "user_id", "name", "slug", "primary_domain", "brand_name", "workspace_type", "status", "active_audit_id", "active_brand_identity_id", "settings_json", "created_at", "updated_at", "archived_at", "category", "subcategory", "region", "country", "city", "language", "audience_type"],
+    "required": ["user_id", "name", "slug"]
+  },
+  "payments": {
+    "columns": ["id", "audit_id", "user_id", "stripe_payment_intent_id", "stripe_customer_id", "stripe_invoice_id", "amount_cents", "currency", "status", "invoice_url", "receipt_url", "created_at", "updated_at"],
+    "required": ["user_id"]
+  },
+  "score_snapshots": {
+    "columns": ["id", "audit_id", "workspace_id", "category_key", "raw_score", "adjusted_score", "active_issue_count", "weighted_issue_total", "resolved_issue_credit", "recommendation_penalty", "calculation_json", "created_at"],
+    "required": ["audit_id", "workspace_id"]
+  },
+  "finding_evidence": {
+    "columns": ["id", "audit_finding_id", "evidence_type", "page_url", "selector_or_location", "raw_value", "normalized_value", "snapshot_json", "created_at"],
+    "required": ["audit_finding_id", "evidence_type"]
+  },
+  "finding_action_history": {
+    "columns": ["id", "finding_id", "user_id", "action", "from_status", "to_status", "note", "metadata", "created_at"],
+    "required": ["finding_id", "user_id", "action", "to_status"]
+  },
+  "notifications": {
+    "columns": ["id", "title", "message", "icon", "color", "show_in_overview", "is_active", "created_by", "created_at", "updated_at"],
+    "required": ["title", "message"]
+  },
+  "profiles": {
+    "columns": ["id", "full_name", "company", "email", "avatar_url", "audit_count", "created_at", "updated_at", "credits", "billing_company_name", "billing_vat_number", "billing_address_line1", "billing_address_line2", "billing_city", "billing_postal_code", "billing_country", "white_label", "package_tier", "role", "marketing_emails", "welcome_email_sent", "subscription_plan", "subscription_status", "subscription_interval", "stripe_customer_id", "stripe_subscription_id", "audits_remaining", "audits_per_month", "billing_period_start", "billing_period_end", "deep_audits_per_month", "ai_checks_per_month", "max_active_workspaces", "workspace_creations_per_cycle", "reaudits_per_cycle", "deep_audits_per_cycle", "brand_ai_requests_per_cycle", "free_membership", "free_membership_expiry"],
+    "required": ["id", "email"]
+  }
+}
