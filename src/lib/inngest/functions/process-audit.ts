@@ -12,6 +12,7 @@
 // ============================================================
 
 import { inngest } from '../client'
+import { filterRowsToContract } from '@/lib/db/insert-contracts'
 import { createServiceSupabase } from '@/lib/supabase-server'
 import { crawlPages, formatHeadTagsForAnalysis, type HeadTagData } from '@/lib/audit-engine/crawler'
 import { runCrawlPreflight } from '@/lib/audit-engine/crawl-preflight'
@@ -229,7 +230,7 @@ async function insertPagesChecked(
 ): Promise<number> {
   if (!rows || rows.length === 0) return 0
   // Sanitize text fields — one bad character must not cost all pages
-  const safe = rows.map((r) => ({
+  const sanitized = rows.map((r) => ({
     ...r,
     url: pgSafeText(r.url),
     title: pgSafeText(r.title),
@@ -237,6 +238,15 @@ async function insertPagesChecked(
     meta_description: pgSafeText(r.meta_description),
     content_text: pgSafeText(r.content_text),
   }))
+  // Contract net (Plan §0.3): a payload key outside the insert contract
+  // must cost ONE field, never the whole batch (the viewport disease).
+  const { rows: safe, unknownKeys } = filterRowsToContract('audit_pages', sanitized)
+  if (unknownKeys.length > 0) {
+    console.error(`[inngest] SCHEMA DRIFT (audit_pages, ${label}): stripped unknown key(s) ${unknownKeys.join(', ')} — add migration + snapshot + contract in one commit`)
+    await auditLog(auditId, 'schema_drift_detected', 'warning',
+      `audit_pages insert (${label}) carried unknown column(s): ${unknownKeys.join(', ')}. Keys stripped so the batch survives — fix the contract chain.`,
+      { table: 'audit_pages', label, unknown_keys: unknownKeys })
+  }
   const { error } = await db.from('audit_pages').insert(safe as any)
   if (error) {
     console.error(`[inngest] PAGES INSERT FAILED (${label}): ${error.message}`, {
@@ -266,7 +276,17 @@ async function insertFindingsChecked(
   label: string,
 ): Promise<number> {
   if (!rows || rows.length === 0) return 0
-  const { error } = await db.from('audit_findings').insert(rows as any)
+  // Contract net (Plan §0.3): the viewport incident cost 3 days of
+  // fabricated scores because ONE unknown key killed every batch.
+  // Unknown keys are stripped and reported; the findings still land.
+  const { rows: safeRows, unknownKeys } = filterRowsToContract('audit_findings', rows)
+  if (unknownKeys.length > 0) {
+    console.error(`[inngest] SCHEMA DRIFT (audit_findings, ${label}): stripped unknown key(s) ${unknownKeys.join(', ')} — add migration + snapshot + contract in one commit`)
+    await auditLog(auditId, 'schema_drift_detected', 'warning',
+      `audit_findings insert (${label}) carried unknown column(s): ${unknownKeys.join(', ')}. Keys stripped so the batch survives — fix the contract chain.`,
+      { table: 'audit_findings', label, unknown_keys: unknownKeys })
+  }
+  const { error } = await db.from('audit_findings').insert(safeRows as any)
   if (error) {
     console.error(`[inngest] FINDINGS INSERT FAILED (${label}): ${error.message}`, {
       auditId,
@@ -1539,9 +1559,12 @@ Return 2-6 findings. Be specific and evidence-based. Reference specific files/co
             .update({ speed_data: speedSummary, speed_tested_at: speedData.testedAt } as any)
             .eq('id', auditId)
           if (speedFindings.length > 0) {
+            // 2026-06-12: `category` and `position` are NOT audit_findings
+            // columns — this payload silently killed EVERY pagespeed batch
+            // since it shipped (PostgREST rejects the whole insert). Pinned
+            // by schema-contract.test.ts. Use category_index / sort_order.
             const findingRows = speedFindings.map((f, i) => ({
               audit_id: auditId,
-              category: 'Performance & Page Speed',
               category_index: 12, // Module 3 (future_readiness), cat 0 = Performance & Technical Health
               title: f.title,
               description: f.description,
@@ -1550,7 +1573,7 @@ Return 2-6 findings. Be specific and evidence-based. Reference specific files/co
               detection_source: 'pagespeed_api',
               performance_metric_type: f.metricType || null,
               status: 'open' as const,
-              position: 900 + i,
+              sort_order: 900 + i,
               communication: buildCommunicationForGenericFinding({ title: f.title, description: f.description, recommendation: f.recommendation, estimatedImpact: null, severity: f.severity }, siteProfile),
             }))
             await insertFindingsChecked(db, auditId, findingRows, 'pagespeed')
@@ -1657,8 +1680,14 @@ Return 2-6 findings. Be specific and evidence-based. Reference specific files/co
 
           if (wcagResult.pages.length > 0) {
             const db = getDb()
-            await Promise.all(wcagResult.pages.map((page) =>
-              db
+            // 2026-06-12: this update wrote wcag_checklist/wcag_score for
+            // months while the columns DID NOT EXIST — unchecked, so it
+            // failed silently on every accessibility audit and the WCAG
+            // per-page UI never had data. Columns added by migration
+            // 20260612_audit_pages_wcag_code_quality; error now checked.
+            const wcagUpdateErrors: string[] = []
+            await Promise.all(wcagResult.pages.map(async (page) => {
+              const { error } = await db
                 .from('audit_pages')
                 .update({
                   wcag_checklist: JSON.stringify(page.checklist),
@@ -1666,7 +1695,14 @@ Return 2-6 findings. Be specific and evidence-based. Reference specific files/co
                 } as any)
                 .eq('audit_id', auditId)
                 .eq('url', page.url)
-            ))
+              if (error) wcagUpdateErrors.push(`${page.url}: ${error.message}`)
+            }))
+            if (wcagUpdateErrors.length > 0) {
+              console.error(`[inngest] WCAG page-score update failed for ${wcagUpdateErrors.length}/${wcagResult.pages.length} pages`, wcagUpdateErrors.slice(0, 3))
+              await auditLog(auditId, 'wcag_page_update_failed', 'warning',
+                `Failed to save per-page WCAG scores for ${wcagUpdateErrors.length} of ${wcagResult.pages.length} pages — ${wcagUpdateErrors[0]}`,
+                { failed_count: wcagUpdateErrors.length, page_count: wcagResult.pages.length })
+            }
           }
 
           await auditLog(auditId, 'wcag_check_completed', 'success',
