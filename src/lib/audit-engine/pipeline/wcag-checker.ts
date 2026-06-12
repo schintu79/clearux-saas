@@ -561,21 +561,38 @@ async function runAutomatedChecks(page: Page, url: string): Promise<WcagCheckRes
         outlineNone++
       }
     }
-    // Also check global *:focus { outline: none }
+    // Check for a TRULY global focus-outline removal (2026-06-12 fix).
+    // The old regex (/\*.*:focus|:focus/) matched ANY selector containing
+    // ':focus' that set outline:none — including the textbook-accessible
+    // pattern 'input:focus-visible { outline: none; box-shadow: ring }'.
+    // It flagged fixpath.ai itself as critical while the site had a
+    // correct global *:focus-visible 2px outline. A removal only counts
+    // when (a) the selector is genuinely global (*:focus / *:focus-visible
+    // or a bare html/body :focus), AND (b) the same rule provides NO
+    // replacement indicator (box-shadow), AND (c) no other global rule
+    // restores a visible indicator.
     let globalOutlineNone = false
+    let globalIndicatorProvided = false
     for (const sheet of document.styleSheets) {
       try {
         for (const rule of sheet.cssRules) {
           if (rule instanceof CSSStyleRule) {
-            if (/\*.*:focus|:focus/.test(rule.selectorText) && rule.style.outline === 'none') {
-              globalOutlineNone = true
-              break
-            }
+            const sel = rule.selectorText || ''
+            const isGlobalFocusSel = /(^|,)\s*(\*|html|body)?\s*:focus(-visible)?\s*($|,)/.test(sel) || /(^|,)\s*\*\s*:focus(-visible)?/.test(sel)
+            if (!isGlobalFocusSel) continue
+            const removesOutline = rule.style.outline === 'none' || rule.style.outlineStyle === 'none' || rule.style.outlineWidth === '0px'
+            const providesIndicator =
+              (rule.style.boxShadow && rule.style.boxShadow !== 'none') ||
+              (rule.style.outline && rule.style.outline !== 'none' && rule.style.outline !== '') ||
+              (rule.style.outlineWidth && rule.style.outlineWidth !== '0px' && rule.style.outlineWidth !== '')
+            if (providesIndicator) globalIndicatorProvided = true
+            else if (removesOutline) globalOutlineNone = true
           }
         }
       } catch { /* cross-origin */ }
-      if (globalOutlineNone) break
     }
+    // A global rule that RESTORES a visible indicator outweighs a removal
+    if (globalIndicatorProvided) globalOutlineNone = false
     return { outlineNone, globalOutlineNone }
   })
   addResult('2.4.7', focusVisible.globalOutlineNone ? 'fail' : (focusVisible.outlineNone > 5 ? 'warning' : 'pass'),
