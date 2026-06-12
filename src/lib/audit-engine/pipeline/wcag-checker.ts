@@ -905,6 +905,35 @@ export async function checkWcagAutomated(
   return { automatedResults, heuristicPrompts }
 }
 
+
+/**
+ * Severity doctrine governor (2026-06-12, Stefano's calibration call):
+ * CRITICAL is reserved for findings where a user literally cannot
+ * complete a task — keyboard traps, global focus-indicator removal,
+ * zoom/scaling disabled, unlabeled form inputs, keyboard-unreachable
+ * controls. Anything else marked critical by an individual check is
+ * demoted to high. One critical caps the site at 55 — that penalty must
+ * be reserved for true blockers, or scores become punishment instead of
+ * information. Centralized here so individual checks stay simple and
+ * the doctrine has ONE enforcement point.
+ */
+const CRITICAL_ELIGIBLE_PATTERNS: RegExp[] = [
+  /keyboard trap/i,
+  /focus (outline|indicator|style)s? .*(remov|disabl|none)|outline:\s*none/i,
+  /(maximum-scale|user-scalable|zoom).*(disabl|restrict|prevent)|disables user scaling/i,
+  /(input|form (field|control))s? .*(without|lack|missing|no) (a |an )?(label|accessible name)/i,
+  /not (keyboard[- ])?(focusable|reachable|operable)|cannot be reached.*keyboard/i,
+]
+
+export function enforceWcagSeverityDoctrine(findings: WcagFinding[]): WcagFinding[] {
+  return findings.map((f) => {
+    if (f.severity !== 'critical') return f
+    const text = `${f.title} ${f.description}`
+    if (CRITICAL_ELIGIBLE_PATTERNS.some((re) => re.test(text))) return f
+    return { ...f, severity: 'high' as const }
+  })
+}
+
 /**
  * Merge automated + heuristic results into final WcagPageResult objects.
  */
@@ -932,7 +961,7 @@ export function buildWcagResults(
       checklist: allResults.sort((a, b) => a.criterion.id.localeCompare(b.criterion.id)),
       score: calculateScore(allResults),
       summary: buildSummary(allResults),
-      findings: resultsToFindings(allResults, url),
+      findings: enforceWcagSeverityDoctrine(resultsToFindings(allResults, url)),
     })
   }
 
