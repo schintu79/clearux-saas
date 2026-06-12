@@ -9,7 +9,7 @@
  *  1. prepareFindingsForExport()  — flat transform from GroupedFinding[]
  *  2. deduplicateFindings()       — merge near-duplicates across modules
  *  3. enrichAffectedPages()       — extract URLs from description text
- *  4. classifyFindingEvidence()   — tag verified / observed / unverified
+ *  4. classifyFindingEvidence()   — tag verified / AI-assessed / unverified
  *  5. groupRelatedFindings()      — cluster findings about the same element
  *  6. renderMarkdown()            — structured handoff document
  *
@@ -62,6 +62,10 @@ export interface ExportFinding {
   dismissalReason: string | null;
   /** Dual-layer communication data (nullable for legacy findings) */
   communication: FindingCommunication | null;
+  /** Pipeline detection metadata (2026-06-12) — drives evidence
+   *  classification from DB truth instead of regex-guessing from prose. */
+  confidenceLevel: string | null; // 'deterministic' | 'interpretive' | 'heuristic'
+  detectionSource: string | null; // 'wcag_checker', 'analyzer', ...
 }
 
 export interface ExportMeta {
@@ -122,10 +126,13 @@ const STATUS_LABELS: Record<string, string> = {
   fixed: 'Fixed',
 };
 
+// 2026-06-12 unified evidence vocabulary — must match the trust strip and
+// finding badges (trust-summary.ts evidenceDisplayLabel): Verified =
+// instrument measured it; AI-assessed = the LLM concluded it.
 const EVIDENCE_LABELS: Record<EvidenceStrength, string> = {
   verified: 'Verified',
-  observed: 'Observed',
-  unverified: 'Needs verification',
+  ai_assessed: 'AI-assessed',
+  unverified: 'Not enough evidence',
 };
 
 /* ── Core transform ─────────────────────────────────────── */
@@ -172,6 +179,8 @@ export function prepareFindingsForExport(
       dismissed: f.dismissed,
       dismissalReason: f.dismissal_reason || null,
       communication: f.communication || null,
+      confidenceLevel: f.confidence_level || null,
+      detectionSource: f.detection_source || null,
     };
   });
 }

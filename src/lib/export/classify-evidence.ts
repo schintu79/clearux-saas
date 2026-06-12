@@ -1,14 +1,23 @@
 /**
  * Evidence classifier for export findings.
  *
- * Tags each finding with an evidence strength level:
- *  - 'verified':   Cites specific evidence (URLs, elements, code, data)
- *  - 'observed':   Describes a real issue but without hard evidence
- *  - 'unverified': Essentially says "we didn't test this" or "no evidence found"
+ * 2026-06-12 VOCABULARY UNIFICATION (Stefano's call): the product has ONE
+ * two-tier evidence taxonomy everywhere — trust strip, finding badges,
+ * and exports:
+ *  - 'verified':    an instrument measured it — deterministic detection
+ *                   (confidence_level 'deterministic': WCAG checker,
+ *                   schema validator, responsive browser test, PageSpeed,
+ *                   head-tag parser).
+ *  - 'ai_assessed': the LLM concluded it (interpretive/heuristic review).
+ *  - 'unverified':  the finding essentially says "we couldn't test this" —
+ *                   labeled "Not enough evidence", never dressed up.
  *
- * This classification helps the export renderer surface verified findings
- * prominently and flag unverified ones transparently, so the recipient
- * knows exactly which items are confirmed problems vs. audit gaps.
+ * The previous classifier REGEX-GUESSED strength from finding text while
+ * the DB already carried confidence_level/detection_source — so the trust
+ * strip said '76% verified' while the export labeled the same deterministic
+ * findings 'Observed'. Two taxonomies for one dataset. Classification now
+ * starts from the pipeline's own metadata; text patterns only catch the
+ * honest-absence tier.
  *
  * React-free, reusable across all export renderers.
  */
@@ -17,7 +26,7 @@ import type { ExportFinding } from './findings-formatter';
 
 /* ── Types ─────────────────────────────────────────────── */
 
-export type EvidenceStrength = 'verified' | 'observed' | 'unverified';
+export type EvidenceStrength = 'verified' | 'ai_assessed' | 'unverified';
 
 export interface ClassifiedFinding extends ExportFinding {
   evidenceStrength: EvidenceStrength;
@@ -45,55 +54,42 @@ const UNVERIFIED_PATTERNS = [
   /the\s+audit\s+indicates?\s+.*\s+not\s+.*\s+(highlight|discoverabil|verif)/i,
 ];
 
-/**
- * Patterns that indicate the finding cites specific, verifiable evidence.
- */
-const VERIFIED_PATTERNS = [
-  /canonical\s*(tag|url)?\s*(set|point|show|reveal|configured|misconfigured)\s+to\s+['"]?https?:\/\//i,
-  /og:(title|description|image)\s*[=:]\s*['"]?/i,
-  /shows?\s+['"].*?['"]/i,        // quotes specific text found on page
-  /\bfor\s+example,?\s+the\s+/i,   // "for example, the pricing page..."
-  /\bthe\s+(site\s+map|sitemap|crawl|scan|response)\s+(reveals?|shows?|contains?)/i,
-  /\b\d+\s+(pages?|urls?)\s+(have|share|use|show|display)/i,  // "14 pages have..."
-  /https?:\/\/[^\s]+\s+(shows?|has|have|displays?|returns?|contains?)/i,
-  /\bJSON-LD\s+(block|data|markup)\s+(is|was|lacks?|missing)/i,
-  /\blocated\s+(at|on|in)\s+/i,
-  /\bfound\s+(on|in|at)\s+(page|url|line|element)/i,
-  /\btest\s+results?\s+show/i,
-  /\bscreenshot|element\s+inspector|devtools/i,
-  /\bresponse\s+(code|header|status)\s+\d/i,
+/** Detection sources produced by instruments, not the LLM. */
+const DETERMINISTIC_SOURCES = [
+  'wcag_checker',
+  'structured_data',
+  'head_tag',
+  'crawler',
+  'responsive_checker',
+  'performance_checker',
+  'pagespeed_api',
 ];
 
 /* ── Classifier ────────────────────────────────────────── */
 
 function classifyEvidence(f: ExportFinding): EvidenceStrength {
-  const text = [
-    f.description,
-    f.evidence || '',
-    f.whyItMatters || '',
-  ].join(' ');
+  // 1. The pipeline's own metadata wins — deterministic detection is
+  //    'verified' regardless of how the prose reads.
+  if (
+    f.confidenceLevel === 'deterministic' ||
+    (f.detectionSource && DETERMINISTIC_SOURCES.includes(f.detectionSource))
+  ) {
+    return 'verified';
+  }
 
-  // Check for unverified first — these override everything
-  const hasUnverifiedSignal = UNVERIFIED_PATTERNS.some((p) => p.test(text));
-
-  // Check for verified signals
-  const hasVerifiedSignal = VERIFIED_PATTERNS.some((p) => p.test(text));
-
-  // If the finding has explicit evidence field with substance, it's verified
+  // 2. Honest-absence tier: the finding admits we couldn't test this.
+  //    Substantive evidence text vetoes the demotion.
+  const text = [f.description, f.evidence || '', f.whyItMatters || ''].join(' ');
   const hasSubstantiveEvidence =
     f.evidence !== null &&
     f.evidence !== undefined &&
     f.evidence.trim().length > 20;
-
-  if (hasUnverifiedSignal && !hasVerifiedSignal && !hasSubstantiveEvidence) {
+  if (UNVERIFIED_PATTERNS.some((p) => p.test(text)) && !hasSubstantiveEvidence) {
     return 'unverified';
   }
 
-  if (hasVerifiedSignal || hasSubstantiveEvidence) {
-    return 'verified';
-  }
-
-  return 'observed';
+  // 3. Everything else is the LLM's conclusion.
+  return 'ai_assessed';
 }
 
 /* ── Public API ─────────────────────────────────────────── */

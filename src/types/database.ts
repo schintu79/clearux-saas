@@ -211,6 +211,10 @@ export interface CrawlSummary {
   }
   excluded_urls:        Array<{ url: string; reason: string }>
   coverage_notes:       string[]
+  /** Which independent checks actually executed (2026-06-12) — display
+   *  names ('SEO', 'WCAG', 'Schema', 'Performance', 'Responsive').
+   *  Optional: audits before this shipped derive checks from findings. */
+  checks_executed?:     string[]
 }
 
 /** Per-page performance data — stored as jsonb on audit_pages.performance_data */

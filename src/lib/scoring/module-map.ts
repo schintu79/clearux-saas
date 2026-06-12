@@ -35,6 +35,39 @@ export function keywordModuleIndexFor(title?: string | null, description?: strin
 }
 
 /**
+ * Topical miscategorization corrections (2026-06-12).
+ *
+ * The analyzer stamps every finding with the category it was generated
+ * UNDER — when the LLM drifts off-topic mid-category, the finding inherits
+ * a category it doesn't belong to. First confirmed case: a security/
+ * data-handling-transparency finding born during 'On-Page SEO Fundamentals'
+ * (category 16) rendered under the SEO module. Findings carry forward
+ * verbatim on baseline re-audits, so the correction must run at the
+ * quality gate (sees every finding every run), not only at generation.
+ *
+ * Rules are deliberately NARROW: strong topical signal for the target
+ * category AND zero signal for the current one. Returns the corrected
+ * category_index, or null when no correction applies.
+ */
+const SECURITY_TRUST_SIGNAL = /\b(security|privacy|data\s+(handling|protection|processing|retention)|gdpr|ccpa|personal\s+data|pii|confidentialit)/i
+const SEO_SIGNAL = /\b(seo|meta\s+(title|description|tag)|title\s+tag|serp|search\s+engine|ranking|keyword|sitemap|crawlab|canonical|robots\.txt|index(ing|abilit)|hreflang|backlink|rich\s+(result|snippet)|structured\s+data)/i
+
+export function correctedCategoryIndexFor(
+  categoryIndex: number | null | undefined,
+  title?: string | null,
+  description?: string | null,
+): number | null {
+  if (typeof categoryIndex !== 'number') return null
+  const text = `${title || ''} ${description || ''}`
+  // Security/privacy/data-handling finding sitting in an SEO category
+  // (16-19) → Trust, Credibility & Social Proof (category 5, module 1).
+  if (categoryIndex >= 16 && categoryIndex <= 19 && SECURITY_TRUST_SIGNAL.test(text) && !SEO_SIGNAL.test(text)) {
+    return 5
+  }
+  return null
+}
+
+/**
  * Module index for a finding: explicit category_index wins; NULL falls
  * back to keywords; unmatched lands in Foundation (index 0) — the same
  * catch-all Overview always used, so counts and lists agree everywhere.

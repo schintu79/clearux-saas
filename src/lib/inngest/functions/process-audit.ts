@@ -14,7 +14,7 @@
 import { inngest } from '../client'
 import * as Sentry from '@sentry/nextjs'
 import { filterRowsToContract } from '@/lib/db/insert-contracts'
-import { keywordModuleIndexFor } from '@/lib/scoring/module-map'
+import { keywordModuleIndexFor, correctedCategoryIndexFor } from '@/lib/scoring/module-map'
 import { applySeverityCap, capSummarySentence } from '@/lib/scoring/severity-cap'
 import { createServiceSupabase } from '@/lib/supabase-server'
 import { crawlPages, formatHeadTagsForAnalysis, type HeadTagData } from '@/lib/audit-engine/crawler'
@@ -1544,12 +1544,12 @@ Return 2-6 findings. Be specific and evidence-based. Reference specific files/co
             description: (vi.description || '') as string,
           })))
           const hasMobileViewport = result.results.some((r: any) => r.hasMobileViewport)
-          return { summary: result.summary, findingsCount: result.findings.length, viewportIssues: allViewportIssues, hasMobileViewport }
+          return { summary: result.summary, findingsCount: result.findings.length, viewportIssues: allViewportIssues, hasMobileViewport, ran: true }
         } catch (err) {
           console.error('[inngest] Responsive check failed (non-fatal):', err)
           await auditLog(auditId, 'responsive_check_failed', 'warning',
             `Responsive check failed: ${err instanceof Error ? err.message : String(err)}. Continuing with text-based analysis.`)
-          return { summary: '', findingsCount: 0, viewportIssues: [] as any[], hasMobileViewport: false }
+          return { summary: '', findingsCount: 0, viewportIssues: [] as any[], hasMobileViewport: false, ran: false }
         }
       })()
 
@@ -1753,12 +1753,13 @@ Return 2-6 findings. Be specific and evidence-based. Reference specific files/co
             summary: formatWcagForPrompt(wcagResult),
             findingsCount: wcagResult.totalFindings,
             overallScore: wcagResult.overallScore,
+            ran: true,
           }
         } catch (err) {
           console.error('[inngest] WCAG check failed (non-fatal):', err)
           await auditLog(auditId, 'wcag_check_failed', 'warning',
             `WCAG check failed: ${err instanceof Error ? err.message : String(err)}. Continuing with text-based analysis.`)
-          return { summary: '', findingsCount: 0, overallScore: 0 }
+          return { summary: '', findingsCount: 0, overallScore: 0, ran: false }
         }
       })()
 
@@ -1766,7 +1767,7 @@ Return 2-6 findings. Be specific and evidence-based. Reference specific files/co
       // Individual checks have their own try/catch, but if Puppeteer
       // or the PageSpeed API hangs, the Promise.all blocks forever.
       const SITE_CHECKS_TIMEOUT_MS = 120_000
-      const [responsive, _pagespeed, wcag] = await Promise.race([
+      const [responsive, pagespeedResult, wcag] = await Promise.race([
         Promise.all([
           responsivePromise,
           pagespeedPromise,
@@ -1804,8 +1805,10 @@ Return 2-6 findings. Be specific and evidence-based. Reference specific files/co
       }
 
       await logStageCompleted(auditId, 'checking', 'Site checks complete')
-      return { responsive, wcag }
-      }, 150_000, 'parallel-site-checks', { responsive: null as any, wcag: null as any })
+      // pagespeedRan: success writes speed_data + findings; null means failed,
+      // skipped (brand_identity), or timed out — feeds checks_executed below.
+      return { responsive, wcag, pagespeedRan: Boolean(pagespeedResult) }
+      }, 150_000, 'parallel-site-checks', { responsive: null as any, wcag: null as any, pagespeedRan: false })
     })
 
     const responsiveCheck = parallelChecks.responsive
@@ -1846,7 +1849,7 @@ Return 2-6 findings. Be specific and evidence-based. Reference specific files/co
         try {
           const headTagPages = crawlResult.headTags || []
           if (headTagPages.length === 0) {
-            return { summary: '', findingsCount: 0, typesFound: [] as string[] }
+            return { summary: '', findingsCount: 0, typesFound: [] as string[], ran: false }
           }
           const result = validateStructuredData(headTagPages)
           const summary = formatValidationForAnalysis(result)
@@ -1887,10 +1890,10 @@ Return 2-6 findings. Be specific and evidence-based. Reference specific files/co
             })
             await insertFindingsChecked(db, auditId, sdInserts, 'structured-data')
           }
-          return { summary, findingsCount: result.findings.length, typesFound: result.typesFound }
+          return { summary, findingsCount: result.findings.length, typesFound: result.typesFound, ran: true }
         } catch (err) {
           console.error('[inngest] Structured data validation failed (non-fatal):', err)
-          return { summary: '', findingsCount: 0, typesFound: [] as string[] }
+          return { summary: '', findingsCount: 0, typesFound: [] as string[], ran: false }
         }
       })()
 
@@ -2211,6 +2214,47 @@ Return 2-6 findings. Be specific and evidence-based. Reference specific files/co
     const multiModelResult = probeResults.multiModel
 
     // ──────────────────────────────────────────────────────────
+    // Persist checks_executed into audits.crawl_summary (2026-06-12).
+    // The 'Checks run' trust strip derived check names from SURVIVING
+    // findings — a check that ran clean (or whose findings deduped away)
+    // vanished from the strip ('Checks run: WCAG' on an audit where
+    // responsive + PageSpeed also ran). computeChecksRun() prefers this
+    // execution metadata; findings-derived detection stays as the
+    // fallback for audits that predate it.
+    // ──────────────────────────────────────────────────────────
+    await step.run('persist-checks-executed', async () => {
+      // SEO (head-tag/crawler parsing) always runs once a crawl succeeds.
+      const checksExecuted: string[] = ['SEO']
+      if (responsiveCheck?.ran) checksExecuted.push('Responsive')
+      if (parallelChecks.pagespeedRan) checksExecuted.push('Performance')
+      if (wcagCheck?.ran) checksExecuted.push('WCAG')
+      if (structuredDataResult?.ran) checksExecuted.push('Schema')
+
+      const db = getDb()
+      const { data: auditRow, error: fetchError } = await db
+        .from('audits')
+        .select('crawl_summary')
+        .eq('id', auditId)
+        .single()
+      if (fetchError) {
+        await auditLog(auditId, 'checks_executed_persist_failed', 'warning',
+          `Could not read crawl_summary to persist checks_executed: ${fetchError.message}`)
+        return { persisted: false, checksExecuted }
+      }
+      const mergedSummary = { ...((auditRow as any)?.crawl_summary || {}), checks_executed: checksExecuted }
+      const { error: updateError } = await db
+        .from('audits')
+        .update({ crawl_summary: mergedSummary, updated_at: new Date().toISOString() } as any)
+        .eq('id', auditId)
+      if (updateError) {
+        await auditLog(auditId, 'checks_executed_persist_failed', 'warning',
+          `Could not persist checks_executed into crawl_summary: ${updateError.message}`)
+        return { persisted: false, checksExecuted }
+      }
+      return { persisted: true, checksExecuted }
+    })
+
+    // ──────────────────────────────────────────────────────────
     // STEP 2j: Fix Playbooks (fast, depends on probe results)
     // ──────────────────────────────────────────────────────────
     const playbooks = await step.run('fix-playbooks', async () => {
@@ -2417,7 +2461,7 @@ The content below is from the ENTIRE site, not just one page. Before flagging so
           const prevDataResult = await withTimeout(Promise.all([
             noteDb.from('reports').select('overall_score, executive_summary, raw_json').eq('audit_id', prevAuditId).single(),
             noteDb.from('audit_findings')
-              .select('id, title, severity, description, recommendation, estimated_impact, target_element, page_url, sort_order, status, dismissed, dismissal_reason, category_index, fix_status, finding_type, fix_type, confidence_level, checklist_item_id')
+              .select('id, title, severity, description, recommendation, estimated_impact, target_element, page_url, sort_order, status, dismissed, dismissal_reason, category_index, fix_status, finding_type, fix_type, confidence_level, detection_source, checklist_item_id')
               .eq('audit_id', prevAuditId)
               .order('sort_order', { ascending: true }).limit(60),
           ]), CONTEXT_DB_TIMEOUT, 'prev-audit-db')
@@ -2471,6 +2515,11 @@ The scores above are from the client's PREVIOUS audit of this SAME site. Your ne
               category_index: f.category_index ?? null,
               fix_type: f.fix_type ?? null,
               confidence_level: f.confidence_level || 'heuristic',
+              // 2026-06-12: detection_source was never fetched/carried — the
+              // baseline insert then hardcoded 'gap_fill', stripping
+              // instrument provenance from every carried finding (WCAG/
+              // schema/responsive findings displayed as 'AI review').
+              detection_source: f.detection_source || null,
             }))
             const findingLines = (prevFindingsRes.data as any[]).map((f) => {
               if (f.dismissed) return `  [SKIP] "${f.title}" — Dismissed: ${f.dismissal_reason || 'by user'}`
@@ -2685,7 +2734,11 @@ RULES FOR RE-AUDIT:
             finding_type: pfFindingType,
             fix_type: pfFixType,
             confidence_level: (pf as any).confidence_level || 'heuristic',
-            detection_source: 'gap_fill',
+            // 2026-06-12: was hardcoded 'gap_fill' — every carried finding
+            // lost its instrument provenance on re-audit (a WCAG-checker
+            // finding became 'AI review' in the trust layer and dropped out
+            // of the verified evidence tier). Preserve the original source.
+            detection_source: (pf as any).detection_source || 'gap_fill',
             communication: buildCommunicationForGenericFinding({ title: pf.title, description: pf.description, recommendation: pf.recommendation, estimatedImpact: pf.estimated_impact || null, severity: pf.severity }, siteProfile),
             ...computeActionModelFields({ title: pf.title, description: pf.description, recommendation: pf.recommendation, fix_type: pfFixType, finding_type: pfFindingType }),
           })
@@ -3624,7 +3677,7 @@ RULES FOR RE-AUDIT:
       // ══════════════════════════════════════════════════════════
       const { data: allQGFindings } = await db
         .from('audit_findings')
-        .select('id, title, description, recommendation, severity, page_url, sort_order, confidence_level, detection_source, finding_type, fix_type, fix_payload, target_element')
+        .select('id, title, description, recommendation, severity, page_url, sort_order, category_index, confidence_level, detection_source, finding_type, fix_type, fix_payload, target_element')
         .eq('audit_id', auditId)
         .order('sort_order', { ascending: true })
 
@@ -3650,6 +3703,7 @@ RULES FOR RE-AUDIT:
         severity: (f.severity || 'medium') as string,
         page_url: (f.page_url || null) as string | null,
         sort_order: (f.sort_order ?? 0) as number,
+        category_index: (f.category_index ?? null) as number | null,
         confidence_level: (f.confidence_level || 'heuristic') as ConfidenceLevel,
         detection_source: (f.detection_source || 'analyzer') as DetectionSource,
         finding_type: (f.finding_type || 'fixable') as string,
@@ -3685,6 +3739,31 @@ RULES FOR RE-AUDIT:
         }
       } catch (netErr) {
         console.error('[quality-gates] Fabrication net error (non-fatal):', netErr)
+      }
+
+      // ── Topical miscategorization correction (2026-06-12) ─────────────
+      // The analyzer stamps findings with the category they were generated
+      // UNDER — off-topic LLM drift inherits the wrong module (security-
+      // transparency finding rendered under SEO). Runs at the gate because
+      // baseline re-audits carry findings verbatim: generation-time-only
+      // rules never heal existing rows.
+      try {
+        let corrected = 0
+        for (const f of findings) {
+          const newIdx = correctedCategoryIndexFor(f.category_index, f.title, f.description)
+          if (newIdx !== null && newIdx !== f.category_index) {
+            f.category_index = newIdx
+            batchUpdates.push({ id: f.id, updates: { category_index: newIdx } })
+            corrected++
+            console.log(`[quality-gates] Category corrected → ${newIdx}: "${f.title.slice(0, 80)}"`)
+          }
+        }
+        if (corrected > 0) {
+          await auditLog(auditId, 'category_corrected', 'info',
+            `${corrected} finding(s) moved to the module their content belongs to (topical correction).`)
+        }
+      } catch (catErr) {
+        console.error('[quality-gates] Category correction error (non-fatal):', catErr)
       }
 
       // ── Pipeline instrumentation: snapshot raw findings before gates ───
@@ -4082,6 +4161,7 @@ RULES FOR RE-AUDIT:
             severity: demotedSeverity as string,
             page_url: (rf.page_url || null) as string | null,
             sort_order: (rf.sort_order ?? 0) as number,
+            category_index: (rf.category_index ?? null) as number | null,
             confidence_level: 'heuristic' as ConfidenceLevel,
             detection_source: (rf.detection_source || 'analyzer') as DetectionSource,
             finding_type: (rf.finding_type || 'fixable') as string,
