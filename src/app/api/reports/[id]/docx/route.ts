@@ -171,7 +171,11 @@ function progressBar(score: number, totalWidth: number, color: string): Table {
 
 /* ── Core DOCX generation — exported for PDF route ────────── */
 
-export async function buildDocx(auditId: string): Promise<{ buffer: Buffer; safeDomain: string; whitelabelCompany: string | null }> {
+// 2026-06-12: NOT exported — route.ts files may only export HTTP handlers
+// and route config. Next's route type validation rejects extra exports
+// (only enforced by `next build` with webpack; Turbopack builds skipped
+// this check, which is why the defect shipped unnoticed).
+async function buildDocx(auditId: string): Promise<{ buffer: Buffer; safeDomain: string; whitelabelCompany: string | null }> {
     const db = createServiceSupabase()
 
     const [auditRes, reportRes, findingsRes, pagesRes] = await Promise.all([

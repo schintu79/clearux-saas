@@ -44,5 +44,12 @@ export default withSentryConfig(nextConfig, {
   project: process.env.SENTRY_PROJECT || 'clearux-saas',
   silent: !process.env.CI,
   widenClientFileUpload: true,
-  disableLogger: true,
+  telemetry: false,
+  // A deploy must NEVER fail because Sentry's upload did (wrong slug,
+  // Sentry outage, expired token). 2026-06-12: the plugin's default
+  // errorHandler killed the first webpack build over a project-slug
+  // mismatch. Sourcemap upload is best-effort; errors are logged.
+  errorHandler: (err) => {
+    console.warn('[sentry] build plugin error (non-fatal, sourcemaps may be missing):', err?.message || err)
+  },
 });
