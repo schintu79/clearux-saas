@@ -1412,19 +1412,21 @@ function CategoryModuleCard({
           <p className="text-[10px] leading-tight mt-0.5" style={{ color: 'var(--m-muted)' }}>
             {findingCount} finding{findingCount !== 1 ? 's' : ''}
           </p>
-          {capReason && (
-            <p className="text-[9.5px] leading-tight mt-1 font-medium px-1.5 py-0.5 rounded inline-block" style={{ color: 'var(--warn)', background: 'color-mix(in srgb, var(--warn) 9%, transparent)' }}>
-              Held down by {capReason}
-            </p>
-          )}
         </div>
       </div>
 
-      <div className="px-3 pb-2 flex items-baseline gap-2">
-        {capReason && rawScore != null && rawScore > score && (
-          <s className="text-[15px] font-semibold tabular-nums" style={{ color: 'var(--m-muted)' }}>{rawScore}</s>
+      <div className="px-3 pb-2">
+        <div className="flex items-baseline gap-2">
+          {capReason && rawScore != null && rawScore > score && (
+            <s className="text-[15px] font-semibold tabular-nums" style={{ color: 'var(--m-muted)' }}>{rawScore}</s>
+          )}
+          <span className={`text-[28px] font-bold tabular-nums leading-none ${scoreColor(score)}`}>{score}</span>
+        </div>
+        {capReason && (
+          <p className="text-[9.5px] leading-tight mt-1.5 font-medium px-1.5 py-0.5 rounded inline-block" style={{ color: 'var(--warn)', background: 'color-mix(in srgb, var(--warn) 9%, transparent)' }}>
+            Held down by {capReason}
+          </p>
         )}
-        <span className={`text-[28px] font-bold tabular-nums leading-none ${scoreColor(score)}`}>{score}</span>
       </div>
 
       {breakdown.length > 0 && expanded && (
