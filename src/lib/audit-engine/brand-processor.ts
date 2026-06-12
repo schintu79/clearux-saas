@@ -5,6 +5,7 @@
 // ============================================================
 
 import { createServiceSupabase } from '@/lib/supabase-server'
+import { insertChecked } from '@/lib/db/checked-write'
 import { extractAllBrandFiles, type ExtractedContent } from './brand-file-extractor'
 import {
   analyzeAllBrandCategories,
@@ -251,7 +252,14 @@ async function _processBrandAuditInner(auditId: string): Promise<void> {
       }
     }
     if (findingsToInsert.length > 0) {
-      await db.from('audit_findings').insert(findingsToInsert as any)
+      // Checked (Plan §0.4): silent loss here = brand report with scores
+      // but zero findings, the exact fabrication pattern of June 2026.
+      const brandFindingsInsert = await insertChecked(db, 'audit_findings', findingsToInsert, {
+        label: 'brand-processor findings', auditId,
+      })
+      if (!brandFindingsInsert.ok) {
+        throw new Error(`Brand findings insert failed: ${brandFindingsInsert.errorMessage}`)
+      }
     }
 
     // Store report

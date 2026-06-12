@@ -7,6 +7,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { stripe } from '@/lib/stripe'
 import { createServerSupabase, createServiceSupabase } from '@/lib/supabase-server'
+import { insertChecked } from '@/lib/db/checked-write'
 
 export async function POST(request: NextRequest) {
   try {
@@ -77,16 +78,12 @@ export async function POST(request: NextRequest) {
     const currentCredits = profile?.credits ?? 0
     const newBalance = currentCredits + creditsToAdd
 
-    await db
-      .from('profiles')
-      .update({
-        credits: newBalance,
-        updated_at: new Date().toISOString(),
-      } as any)
-      .eq('id', user.id)
-
-    // Record the payment to prevent duplicate processing
-    await db.from('payments').insert({
+    // 2026-06-12 (Plan §0.4): payment record FIRST — it is the idempotency
+    // lock. The old order granted credits, then fire-and-forgot this insert;
+    // a silent insert failure meant the next verify call re-granted the
+    // same purchase forever. If we cannot record the payment, we do not
+    // grant — the user retries and nothing is lost.
+    const recorded = await insertChecked(db, 'payments', {
       user_id: user.id,
       audit_id: null,
       stripe_payment_intent_id: matchingSession.payment_intent as string,
@@ -94,7 +91,30 @@ export async function POST(request: NextRequest) {
       amount_cents: matchingSession.amount_total || 0,
       currency: matchingSession.currency || 'usd',
       status: 'succeeded',
-    } as any)
+    }, { label: 'verify-credits payment record' })
+    if (!recorded.ok) {
+      return NextResponse.json(
+        { error: 'Could not record the payment. No credits were added — please try again.' },
+        { status: 500 },
+      )
+    }
+
+    const { error: grantError } = await db
+      .from('profiles')
+      .update({
+        credits: newBalance,
+        updated_at: new Date().toISOString(),
+      } as any)
+      .eq('id', user.id)
+    if (grantError) {
+      // Payment row exists, credits not granted — visible incident, no
+      // double-grant possible. Surface it instead of pretending success.
+      console.error(`[verify-credits] CRITICAL: payment recorded but credit grant FAILED for user ${user.id}: ${grantError.message}`)
+      return NextResponse.json(
+        { error: 'Payment recorded but credits could not be added. Please contact support.' },
+        { status: 500 },
+      )
+    }
 
     console.log(
       `[verify-credits] Added ${creditsToAdd} credits for user ${user.id}. Balance: ${currentCredits} → ${newBalance}`,

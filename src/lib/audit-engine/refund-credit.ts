@@ -35,7 +35,8 @@ export async function refundCredit(auditId: string): Promise<void> {
     // Only refund credit-based or free-first payments (not Stripe payments)
     if (paymentId.startsWith('credit_') || paymentId.startsWith('free_first_')) {
       if (paymentId.startsWith('credit_')) {
-        // Add credit back
+        // Add credit back — checked (Plan §0.4): a silently failed refund
+        // means the user paid for a failed audit and got nothing back.
         const { data: profile } = await db
           .from('profiles')
           .select('credits')
@@ -43,25 +44,31 @@ export async function refundCredit(auditId: string): Promise<void> {
           .single()
 
         const currentCredits = (profile as any)?.credits ?? 0
-        await db
+        const { error: refundError } = await db
           .from('profiles')
           .update({ credits: currentCredits + 1, updated_at: new Date().toISOString() } as any)
           .eq('id', userId)
+        if (refundError) {
+          // Do NOT write the credit_refunded marker below — restart billing
+          // counts those markers to decide re-deduction; a marker without a
+          // real refund would double-charge the user on restart.
+          console.error(`[refund-credit] CRITICAL: refund FAILED for user ${userId} on audit ${auditId}: ${refundError.message} — user paid for a failed audit and was not refunded`)
+          return
+        }
       }
 
-      // Log the refund
-      try {
-        await db.from('audit_logs').insert({
-          audit_id: auditId,
-          event: 'credit_refunded',
-          status: 'success',
-          message: paymentId.startsWith('free_first_')
-            ? 'Free first audit — no credit to refund'
-            : '1 credit refunded to user',
-          metadata: {},
-        } as any)
-      } catch {
-        // Log is non-critical
+      // Log the refund — this row is ALSO the billing marker restart reads
+      const { error: markerError } = await db.from('audit_logs').insert({
+        audit_id: auditId,
+        event: 'credit_refunded',
+        status: 'success',
+        message: paymentId.startsWith('free_first_')
+          ? 'Free first audit — no credit to refund'
+          : '1 credit refunded to user',
+        metadata: {},
+      } as any)
+      if (markerError) {
+        console.error(`[refund-credit] credit refunded but credit_refunded marker FAILED for audit ${auditId}: ${markerError.message} — restart billing may miss this refund`)
       }
     }
   } catch (err) {

@@ -11,6 +11,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createServerSupabase, createServiceSupabase } from '@/lib/supabase-server'
 import { inngest } from '@/lib/inngest/client'
 import { getAuditUsage, checkAuditQuota } from '@/lib/audit-usage'
+import { insertChecked, insertLogged } from '@/lib/db/checked-write'
 
 export const maxDuration = 300 // 5 minutes (Vercel Pro max)
 
@@ -154,14 +155,21 @@ export async function POST(request: NextRequest) {
         ? `reaudit_${Date.now()}`
         : `deep_audit_${Date.now()}`
 
-    await db.from('payments').insert({
+    // Checked (Plan §0.4): this row is the billing record for the credit
+    // spend — losing it silently breaks usage accounting and audit history.
+    // We do NOT abort the audit if it fails (credit already deducted; the
+    // user must get their audit), but the failure is loud and logged.
+    const paymentRecorded = await insertChecked(db, 'payments', {
       audit_id,
       user_id: user.id,
       amount_cents: 0,
       currency: 'usd',
       status: 'succeeded',
       stripe_payment_intent_id: paymentRef,
-    } as any)
+    }, { label: 'credits-route billing record', auditId: audit_id })
+    if (!paymentRecorded.ok) {
+      console.error(`[credits] CRITICAL: credit deducted for audit ${audit_id} but billing record FAILED — usage accounting is now short one row`)
+    }
 
     // ── Update audit status to start pipeline ────────────────
     await db
@@ -189,12 +197,12 @@ export async function POST(request: NextRequest) {
         ? `Re-audit used. ${finalUsage.re_audits_used}/${finalUsage.re_audits_limit} this period.`
         : `Deep audit used. ${finalUsage.deep_audits_used}/${finalUsage.deep_audits_limit} this period.`
 
-    await db.from('audit_logs').insert({
+    await insertLogged(db, 'audit_logs', {
       audit_id,
       event: logEvent,
       status: 'success',
       message: logMessage,
-    } as any)
+    }, 'credits-route')
 
     // ── Dispatch to Inngest ──────────────────────────────────
     const { data: auditRecord } = await db

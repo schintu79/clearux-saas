@@ -23,6 +23,7 @@
 
 import { inngest } from '../client'
 import { createServiceSupabase } from '@/lib/supabase-server'
+import { insertChecked } from '@/lib/db/checked-write'
 import { extractAllBrandFiles, type ExtractedContent } from '@/lib/audit-engine/brand-file-extractor'
 import {
   analyzeAllBrandCategories,
@@ -79,13 +80,14 @@ async function auditLog(
 ) {
   try {
     const db = getDb()
-    await db.from('audit_logs').insert({
+    const { error } = await db.from('audit_logs').insert({
       audit_id: auditId,
       event,
       status,
       message: message || null,
       metadata: metadata || {},
     } as any)
+    if (error) console.error(`[inngest:brand] audit_logs insert failed (${event}): ${error.message}`)
   } catch (err) {
     console.error('[inngest:brand] log error:', err)
   }
@@ -339,6 +341,10 @@ export const processBrandAuditFn = inngest.createFunction(
           [],
         )
 
+        // Checked batch insert (Plan §0.4) — was an unchecked per-row loop:
+        // a schema mismatch would have silently stored ZERO brand findings
+        // while logging 'findings_stored' success below.
+        const brandRows: any[] = []
         for (const catResult of reportData.categoryResults) {
           for (const finding of catResult.findings) {
             const classification = classifyFinding({
@@ -354,7 +360,7 @@ export const processBrandAuditFn = inngest.createFunction(
               severity: finding.severity,
               ...classification,
             })
-            await db.from('audit_findings').insert({
+            brandRows.push({
               audit_id: auditId,
               severity: finding.severity,
               title: finding.title,
@@ -369,12 +375,18 @@ export const processBrandAuditFn = inngest.createFunction(
               confidence_level: 'interpretive',
               detection_source: 'brand_analyzer',
               communication: buildCommunicationForGenericFinding({ title: finding.title, description: finding.description, recommendation: finding.recommendation, estimatedImpact: finding.estimatedImpact || null, severity: finding.severity }, null),
-            } as any)
+            })
           }
+        }
+        const brandInsert = await insertChecked(db, 'audit_findings', brandRows, {
+          label: 'brand-analysis findings', auditId,
+        })
+        if (!brandInsert.ok) {
+          throw new Error(`Brand findings insert failed: ${brandInsert.errorMessage} — failing the step so Inngest retries instead of shipping a fabricated empty report`)
         }
 
         await auditLog(auditId, 'findings_stored', 'info',
-          `Stored ${sortOrder} raw brand findings for pipeline processing`)
+          `Stored ${brandInsert.saved} raw brand findings for pipeline processing`)
       })
 
       // Update progress after analysis + store

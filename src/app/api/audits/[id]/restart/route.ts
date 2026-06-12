@@ -103,14 +103,23 @@ export async function POST(
           const { data: profile } = await db.from('profiles').select('credits').eq('id', userId).single()
           const current = (profile as any)?.credits ?? 0
           const newBalance = Math.max(0, current - 1)
-          await db.from('profiles').update({ credits: newBalance, updated_at: new Date().toISOString() } as any).eq('id', userId)
-          await db.from('audit_logs').insert({
-            audit_id: auditId,
-            event: 'credit_rededucted',
-            status: 'info',
-            message: `Restart re-used 1 credit (previously refunded after a failed attempt). Balance: ${newBalance}.`,
-            metadata: { refunds, rededucts: rededucts + 1 },
-          } as any)
+          // Checked (Plan §0.4): if the re-deduction fails silently, every
+          // refunded-then-restarted audit becomes a free audit. Only write
+          // the credit_rededucted marker when the deduction actually landed
+          // — the marker is what prevents double re-deduction next restart.
+          const { error: redeductError } = await db.from('profiles').update({ credits: newBalance, updated_at: new Date().toISOString() } as any).eq('id', userId)
+          if (redeductError) {
+            console.error(`[restart] CRITICAL: credit re-deduction FAILED for user ${userId} on audit ${auditId}: ${redeductError.message} — restart proceeds unbilled`)
+          } else {
+            const { error: markerError } = await db.from('audit_logs').insert({
+              audit_id: auditId,
+              event: 'credit_rededucted',
+              status: 'info',
+              message: `Restart re-used 1 credit (previously refunded after a failed attempt). Balance: ${newBalance}.`,
+              metadata: { refunds, rededucts: rededucts + 1 },
+            } as any)
+            if (markerError) console.error(`[restart] CRITICAL: credit re-deducted but marker write FAILED for audit ${auditId}: ${markerError.message} — next restart may double-deduct`)
+          }
         }
       }
     } catch (billErr) {

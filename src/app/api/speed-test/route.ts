@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createServiceSupabase, createServerSupabase } from '@/lib/supabase-server'
 import { runFullSpeedTest, generateSpeedFindings } from '@/lib/pagespeed'
 import type { SpeedDataSummary } from '@/types/database'
+import { insertChecked } from '@/lib/db/checked-write'
 
 /**
  * POST /api/speed-test
@@ -96,34 +97,38 @@ export async function POST(req: NextRequest) {
       .from('audits')
       .update({ speed_data: speedSummary, speed_tested_at: speedData.testedAt } as any)
       .eq('id', auditId)
+    // Checked batch insert (Plan §0.4) — was an unchecked per-row loop;
+    // a schema mismatch would have silently dropped every speed finding
+    // while reporting findings_generated > 0 to the client.
     let sortOrder = 100
-    for (const sf of speedFindings) {
-      await db.from('audit_findings').insert({
-        audit_id: auditId,
-        category_index: 12,
-        finding_type: sf.fixableFromConsole ? 'specific' : 'strategic',
-        fix_type: null,
-        severity: sf.severity,
-        title: sf.title,
-        description: sf.description,
-        evidence: null,
-        page_url: productUrl,
-        recommendation: sf.recommendation,
-        estimated_impact: null,
-        target_element: null,
-        screenshot_url: null,
-        sort_order: sortOrder++,
-        detection_source: 'pagespeed_api',
-        confidence_level: 'deterministic',
-        default_owner: sf.ownerTeam,
-        performance_metric_type: sf.metricType,
-        owner_team: sf.ownerTeam,
-      } as any)
-    }
+    const speedRows = speedFindings.map((sf: any) => ({
+      audit_id: auditId,
+      category_index: 12,
+      finding_type: sf.fixableFromConsole ? 'specific' : 'strategic',
+      fix_type: null,
+      severity: sf.severity,
+      title: sf.title,
+      description: sf.description,
+      evidence: null,
+      page_url: productUrl,
+      recommendation: sf.recommendation,
+      estimated_impact: null,
+      target_element: null,
+      screenshot_url: null,
+      sort_order: sortOrder++,
+      detection_source: 'pagespeed_api',
+      confidence_level: 'deterministic',
+      default_owner: sf.ownerTeam,
+      performance_metric_type: sf.metricType,
+      owner_team: sf.ownerTeam,
+    }))
+    const speedInsert = await insertChecked(db, 'audit_findings', speedRows, {
+      label: 'speed-test findings', auditId,
+    })
 
     return NextResponse.json({
       speed_data: speedSummary,
-      findings_generated: speedFindings.length,
+      findings_generated: speedInsert.saved,
     })
   } catch (err) {
     console.error('[speed-test] Error:', err)
