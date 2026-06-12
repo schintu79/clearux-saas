@@ -244,10 +244,16 @@ const ABBREV_SHIELD: Array<[RegExp, string]> = [
 function shieldAbbreviations(text: string): string {
   let out = text
   for (const [re, token] of ABBREV_SHIELD) out = out.replace(re, token)
+  // Dotted numeric references (WCAG 2.4.7, version 1.2, §3.3.2) — a period
+  // between digits is never a sentence boundary. This was the source of
+  // '[WCAG 2. 4. 7]' in customer-facing text: the splitter cut at every
+  // digit-period and re-joined with spaces.
+  out = out.replace(/(\d)\.(?=\d)/g, '$1\u0001DOT\u0001')
   return out
 }
 function unshieldAbbreviations(text: string): string {
   return text
+    .replace(/\u0001DOT\u0001/g, '.')
     .replace(/\u0001EG\u0001/g, 'e.g.')
     .replace(/\u0001IE\u0001/g, 'i.e.')
     .replace(/\u0001ETC\u0001/g, 'etc.')
@@ -316,10 +322,12 @@ function simplifyRecommendation(recommendation: string): string {
   let simplified = recommendation.replace(/```[\s\S]*?```/g, '').trim()
   // Remove HTML tags in the text
   simplified = simplified.replace(/<[^>]+>/g, '')
-  // Remove inline code
-  simplified = simplified.replace(/`[^`]+`/g, '')
+  // Inline code: KEEP the inner text (2026-06-12 — deleting it produced
+  // recommendations ending at '(e.g.' because the example WAS the code span)
+  simplified = simplified.replace(/`([^`]+)`/g, '$1')
   // Take first sentence or two
-  const sentences = simplified.match(/[^.!?]+[.!?]+/g) || [simplified]
+  const shieldedRec = shieldAbbreviations(simplified)
+  const sentences = (shieldedRec.match(/[^.!?]+[.!?]+/g) || [shieldedRec]).map(unshieldAbbreviations)
   const plain = sentences.slice(0, 2).join(' ').trim()
   return stripTechnicalJargon(plain) || simplified.slice(0, 200)
 }
