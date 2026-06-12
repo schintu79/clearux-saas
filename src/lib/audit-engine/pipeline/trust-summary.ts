@@ -45,6 +45,9 @@ export interface AuditTrustSummary {
   observed_percent: number
   heuristic_percent: number
   undetermined_percent: number
+  /** 2026-06-12 unified display tier: observed + heuristic — everything
+   *  the LLM concluded rather than an instrument measured. */
+  ai_assessed_percent: number
   /** Which independent checks were run */
   checks_run: string[]
   /** Total findings used for computation */
@@ -93,6 +96,23 @@ export function mapEvidenceType(finding: AuditFinding): EvidenceType {
     default:
       return 'heuristic'
   }
+}
+
+/**
+ * User-facing evidence label (2026-06-12 unification — Stefano's call):
+ * TWO tiers everywhere. 'Verified' = an instrument measured it
+ * (deterministic detection). 'AI-assessed' = the LLM concluded it
+ * (interpretive/heuristic). 'Not enough evidence' stays as the honesty
+ * valve for very-low-confidence findings. The internal EvidenceType keeps
+ * its four values because confidence math still distinguishes interpretive
+ * from heuristic — but no user-facing surface may print 'Observed' or
+ * 'Heuristic'. Export labels (findings-formatter EVIDENCE_LABELS) and the
+ * strip/badges must agree with this function.
+ */
+export function evidenceDisplayLabel(type: EvidenceType): 'Verified' | 'AI-assessed' | 'Not enough evidence' {
+  if (type === 'verified') return 'Verified'
+  if (type === 'undetermined') return 'Not enough evidence'
+  return 'AI-assessed'
 }
 
 /** Check if detection source is deterministic (parser/validator/checker) */
@@ -260,27 +280,27 @@ export function computeConfidenceLabel(
   if (coverageLabel === 'limited') {
     return {
       label: 'low',
-      text: 'Limited coverage with mostly heuristic evidence',
+      text: 'Limited coverage with mostly AI-assessed evidence',
     }
   }
 
   if (strongEvidence >= 60 && coverageLabel === 'full') {
     return {
       label: 'high',
-      text: 'Mostly verified or directly observed evidence',
+      text: 'Mostly instrument-verified evidence',
     }
   }
 
   if (strongEvidence >= 40) {
     return {
       label: 'medium',
-      text: 'Mixed verified and heuristic evidence',
+      text: 'Mixed verified and AI-assessed evidence',
     }
   }
 
   return {
     label: 'low',
-    text: 'Mostly heuristic evaluation',
+    text: 'Mostly AI-assessed evaluation',
   }
 }
 
@@ -380,6 +400,8 @@ export function computeAuditTrustSummary(
   const observedPercent = Math.round((observed / total) * 100)
   const heuristicPercent = Math.round((heuristic / total) * 100)
   const undeterminedPercent = Math.round((undetermined / total) * 100)
+  // Computed from raw counts (not the rounded percents) to avoid drift
+  const aiAssessedPercent = Math.round(((observed + heuristic) / total) * 100)
 
   // Crawl coverage
   const coverage = computeCoverageLabel(crawlSummary)
@@ -387,8 +409,9 @@ export function computeAuditTrustSummary(
   // Overall confidence
   const confidence = computeConfidenceLabel(verifiedPercent, observedPercent, coverage.label)
 
-  // Independent checks
-  const checksRun = computeChecksRun(findings)
+  // Independent checks — execution metadata from the pipeline wins;
+  // findings-derived detection covers audits that predate it.
+  const checksRun = computeChecksRun(findings, crawlSummary?.checks_executed)
 
   return {
     crawl_coverage_label: coverage.label,
@@ -399,6 +422,7 @@ export function computeAuditTrustSummary(
     observed_percent: observedPercent,
     heuristic_percent: heuristicPercent,
     undetermined_percent: undeterminedPercent,
+    ai_assessed_percent: aiAssessedPercent,
     checks_run: checksRun,
     total_findings: findings.length,
   }

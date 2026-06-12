@@ -6,7 +6,9 @@ import { ShieldCheck, Eye, Lightbulb, Rocket, GitCompareArrows, BarChart3 } from
  * 6 proof blocks in a 3×2 grid with soft internal dividers.
  * Each block: icon → strong title → one tight sentence.
  *
- * Top row introduces the 3-tier trust model (Verified, Observed, Heuristic).
+ * Top row introduces the trust model (2026-06-12 unified vocabulary:
+ * Verified / AI-assessed / honest absence — must match the product's
+ * evidence badges in AuditTrustLayer).
  * Bottom row reinforces product mechanics that support trust.
  */
 
@@ -14,17 +16,17 @@ const BLOCKS = [
   {
     Icon: ShieldCheck,
     title: 'Verified',
-    desc: 'Direct checks for issues that can be tested: missing metadata, broken links, accessibility violations.',
+    desc: 'An instrument measured it: accessibility violations, broken metadata, schema errors, real page evidence.',
   },
   {
     Icon: Eye,
-    title: 'Observed',
-    desc: 'Page evidence extracted from the real site — layout consistency, messaging clarity, structural weaknesses.',
+    title: 'AI-assessed',
+    desc: 'Expert AI review where judgment matters — messaging clarity, structural weaknesses, positioning. Always labeled as such.',
   },
   {
     Icon: Lightbulb,
-    title: 'Heuristic',
-    desc: 'Applied where human judgment matters: perception, differentiation, and clarity of positioning.',
+    title: 'Nothing invented',
+    desc: 'When something can’t be tested, we say so. Findings without evidence are labeled, never dressed up.',
   },
   {
     Icon: BarChart3,

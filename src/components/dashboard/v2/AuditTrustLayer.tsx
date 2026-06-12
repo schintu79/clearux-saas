@@ -8,7 +8,7 @@
  *   2. AuditConfidenceCard    — individual card in the strip
  *   3. CategoryTrustMeta      — compact trust metadata on category cards
  *   4. CategoryTrustBadge     — reusable badge primitive
- *   5. FindingEvidenceBadge   — verified/observed/heuristic badge
+ *   5. FindingEvidenceBadge   — Verified / AI-assessed badge
  *   6. FindingSourceLabel     — detection method label
  *   7. FindingSurfaceScope    — desktop/mobile scope indicator
  *   8. FindingEvidencePanel   — expandable proof section
@@ -26,6 +26,7 @@ import {
   computeAuditTrustSummary,
   computeFindingTrust,
   mapEvidenceType,
+  evidenceDisplayLabel,
   mapSourceLabel,
   mapAffectedSurfaces,
   type AuditTrustSummary,
@@ -69,7 +70,7 @@ export function AuditConfidenceStrip({ findings, crawlSummary, className = '' }:
       <AuditConfidenceCard
         label="Evidence mix"
         value={`${trust.verified_percent}% verified`}
-        subvalue={`${trust.observed_percent}% observed · ${trust.heuristic_percent}% heuristic`}
+        subvalue={`${trust.ai_assessed_percent}% AI-assessed${trust.undetermined_percent > 0 ? ` · ${trust.undetermined_percent}% not enough evidence` : ''}`}
         tone={trust.verified_percent >= 50 ? 'good' : trust.verified_percent >= 25 ? 'neutral' : 'warning'}
       />
       <AuditConfidenceCard
@@ -181,7 +182,7 @@ interface FindingEvidenceBadgeProps {
 }
 
 /**
- * Compact pill showing Verified / Observed / Heuristic / Not enough evidence.
+ * Compact pill showing Verified / AI-assessed / Not enough evidence.
  * Place in the finding metadata row next to severity.
  */
 export function FindingEvidenceBadge({ finding }: FindingEvidenceBadgeProps) {
@@ -205,26 +206,27 @@ export function EvidenceBadge({ type }: { type: EvidenceType }) {
   )
 }
 
+// 2026-06-12 unified evidence vocabulary: labels come from
+// evidenceDisplayLabel() — two tiers (Verified / AI-assessed) plus the
+// honesty valve. 'Observed' and 'Heuristic' no longer appear anywhere
+// user-facing; the export labels (findings-formatter) use the same words.
 function evidenceBadgeStyle(type: EvidenceType): { label: string; className: string } {
+  const label = evidenceDisplayLabel(type)
   switch (type) {
     case 'verified':
       return {
-        label: 'Verified',
+        label,
         className: 'bg-green-50 text-green-700 dark:bg-green-950/30 dark:text-green-400',
       }
     case 'observed':
-      return {
-        label: 'Observed',
-        className: 'bg-blue-50 text-blue-700 dark:bg-blue-950/30 dark:text-blue-400',
-      }
     case 'heuristic':
       return {
-        label: 'Heuristic',
-        className: 'bg-amber-50 text-amber-700 dark:bg-amber-950/30 dark:text-amber-400',
+        label,
+        className: 'bg-blue-50 text-blue-700 dark:bg-blue-950/30 dark:text-blue-400',
       }
     case 'undetermined':
       return {
-        label: 'Not enough evidence',
+        label,
         className: 'bg-ink/5 text-ink/60 dark:bg-ink/10 dark:text-ink/60',
       }
   }
@@ -359,9 +361,9 @@ function InfoTooltip({ children, content }: InfoTooltipProps) {
 
 export function ConfidenceInfoTooltip({ label }: { label: ConfidenceLabel }) {
   const text = {
-    high: 'Mostly verified or directly observed evidence',
-    medium: 'Mixed verified and heuristic evidence',
-    low: 'Limited coverage or mostly heuristic evaluation',
+    high: 'Mostly instrument-verified evidence',
+    medium: 'Mixed verified and AI-assessed evidence',
+    low: 'Limited coverage or mostly AI-assessed evaluation',
   }[label]
 
   return (
