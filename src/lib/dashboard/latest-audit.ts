@@ -12,6 +12,7 @@
 // ============================================================
 
 import { createBrowserSupabase } from '@/lib/supabase-ssr'
+import { moduleIndexFor } from '@/lib/scoring/module-map'
 import type { Audit, AuditFinding, Report } from '@/types/database'
 
 /**
@@ -218,18 +219,16 @@ export function extractSnippet(recommendation: string | null | undefined): strin
   return null
 }
 
+// 2026-06-12: shared categorizer (module-map.ts) — NULL category_index
+// findings now keyword-match into real modules instead of vanishing into
+// a 'General' bucket the module filter never showed. Overview counts and
+// Find & Fix lists are structurally identical now.
 export function moduleNameForFinding(f: AuditFinding): string {
-  const idx = f.category_index
-  if (idx == null) return 'General'
-  const moduleIdx = Math.floor(idx / 4)
-  const names = ['Foundation', 'Human Experience', 'Inclusive Design', 'Future Readiness', 'SEO Structure & Rules', 'Accessibility Readiness', 'Design Consistency']
-  return names[moduleIdx] || 'General'
+  return PHASE1_MODULES[moduleIndexForFinding(f)]
 }
 
 export function moduleIndexForFinding(f: AuditFinding): number {
-  const idx = f.category_index
-  if (idx == null) return -1
-  return Math.max(0, Math.min(6, Math.floor(idx / 4)))
+  return moduleIndexFor(f.category_index, f.title, f.description)
 }
 
 export const MODULE_TINTS = [

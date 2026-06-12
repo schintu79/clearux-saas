@@ -75,6 +75,7 @@ import {
 } from '@/lib/dashboard/latest-audit';
 import { healthLabel, type HealthContext } from '@/lib/audit-findings-presentation';
 import { applySeverityCap, composeModuleScores } from '@/lib/scoring/severity-cap';
+import { moduleIndexFor } from '@/lib/scoring/module-map';
 import { useWorkspace } from '@/context/WorkspaceContext';
 import { useAuditProgress } from '@/hooks/useAuditProgress';
 import EmptyAudit from '@/components/dashboard/v2/EmptyAudit';
@@ -661,25 +662,12 @@ function OverviewInner() {
   // Findings per pillar (used by Row 2 audit-style category cards).
   const findingsByPillarName: Record<string, AuditFinding[]> = {};
   for (const name of PILLAR_NAMES) findingsByPillarName[name] = [];
+  // 2026-06-12: shared categorizer (module-map.ts) — this inline loop had
+  // its own keyword fallback while Find & Fix mapped strictly by index, so
+  // the cards counted findings the Find page never showed.
   for (const f of openFindings) {
-    const catIdx = (f as any).category_index;
-    if (typeof catIdx === 'number') {
-      const pIdx = PILLAR_RANGES.findIndex(([s, e]) => catIdx >= s && catIdx < e);
-      if (pIdx >= 0) findingsByPillarName[PILLAR_NAMES[pIdx]].push(f);
-    } else {
-      // Heuristic fallback — match keywords to a pillar name's first 1-2 words.
-      const text = `${f.title} ${f.description}`.toLowerCase();
-      let placed = false;
-      for (let i = 0; i < PILLAR_NAMES.length; i++) {
-        const words = PILLAR_NAMES[i].toLowerCase().split(/[&,\s]+/).filter(w => w.length > 3);
-        if (words.some(w => text.includes(w))) {
-          findingsByPillarName[PILLAR_NAMES[i]].push(f);
-          placed = true;
-          break;
-        }
-      }
-      if (!placed && PILLAR_NAMES.length > 0) findingsByPillarName[PILLAR_NAMES[0]].push(f);
-    }
+    const pIdx = moduleIndexFor((f as any).category_index, f.title, f.description);
+    if (pIdx >= 0 && pIdx < PILLAR_NAMES.length) findingsByPillarName[PILLAR_NAMES[pIdx]].push(f);
   }
 
   // ── Score model v2: per-module severity caps (2026-06-11) ──────────

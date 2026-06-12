@@ -14,6 +14,7 @@
 import { inngest } from '../client'
 import * as Sentry from '@sentry/nextjs'
 import { filterRowsToContract } from '@/lib/db/insert-contracts'
+import { keywordModuleIndexFor } from '@/lib/scoring/module-map'
 import { createServiceSupabase } from '@/lib/supabase-server'
 import { crawlPages, formatHeadTagsForAnalysis, type HeadTagData } from '@/lib/audit-engine/crawler'
 import { runCrawlPreflight } from '@/lib/audit-engine/crawl-preflight'
@@ -251,7 +252,11 @@ async function insertPagesChecked(
       `audit_pages insert (${label}) carried unknown column(s): ${unknownKeys.join(', ')}. Keys stripped so the batch survives — fix the contract chain.`,
       { table: 'audit_pages', label, unknown_keys: unknownKeys })
   }
-  const { error } = await db.from('audit_pages').insert(safe as any)
+  // 2026-06-12: upsert with ignoreDuplicates — acquisition pipeline and
+  // legacy crawl can both insert the same audit_id+url; the duplicate-key
+  // violation was killing the whole batch (24/25 saved only via per-row
+  // recovery on audit 3b69d832).
+  const { error } = await db.from('audit_pages').upsert(safe as any, { onConflict: 'audit_id,url', ignoreDuplicates: true })
   if (error) {
     console.error(`[inngest] PAGES INSERT FAILED (${label}): ${error.message}`, {
       auditId, rowCount: rows.length, code: (error as any).code, details: (error as any).details,
@@ -262,7 +267,7 @@ async function insertPagesChecked(
     // Last resort: insert one-by-one so a single poison row doesn't cost all pages
     let saved = 0
     for (const row of safe) {
-      const { error: rowErr } = await db.from('audit_pages').insert(row as any)
+      const { error: rowErr } = await db.from('audit_pages').upsert(row as any, { onConflict: 'audit_id,url', ignoreDuplicates: true })
       if (!rowErr) saved++
     }
     if (saved > 0) {
@@ -1598,7 +1603,13 @@ Return 2-6 findings. Be specific and evidence-based. Reference specific files/co
           return speedSummary
         } catch (err) {
           console.error('[process-audit] PageSpeed test error (non-fatal):', err)
-          await auditLog(auditId, 'pagespeed_error', 'warning', 'PageSpeed API call failed — continuing without real CWV data')
+          // 2026-06-12 (D8): include the REAL error — this log line said
+          // 'call failed' for weeks while hiding whether it was a key,
+          // quota, timeout, or HTTP failure.
+          const psReason = err instanceof Error ? err.message : String(err)
+          await auditLog(auditId, 'pagespeed_error', 'warning',
+            `PageSpeed API call failed — continuing without real CWV data. Reason: ${psReason.slice(0, 300)}`,
+            { error: psReason.slice(0, 500), has_api_key: Boolean(process.env.PAGESPEED_API_KEY || process.env.GOOGLE_PAGESPEED_API_KEY) })
           return null
         }
       })()
@@ -2630,7 +2641,14 @@ RULES FOR RE-AUDIT:
           batchInserts.push({
             audit_id: auditId,
             checklist_item_id: null,
-            category_index: (pf as any).category_index ?? null,
+            // 2026-06-12: heal NULL category_index at carry time. Rows born
+            // before the carry-forward fidelity fix carry NULL through every
+            // baseline re-audit forever (verbatim copy = no self-healing).
+            // Keyword inference persists the module's first category index;
+            // unmatched stays NULL (UI catch-all handles display) — never
+            // bake a guess into data.
+            category_index: (pf as any).category_index
+              ?? (() => { const km = keywordModuleIndexFor(pf.title, pf.description); return km !== null ? km * 4 : null })(),
             severity: pf.severity,
             title: pf.title,
             description: pf.description,

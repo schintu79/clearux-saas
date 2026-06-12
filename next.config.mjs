@@ -25,6 +25,14 @@ const nextConfig = {
     serverActions: {
       bodySizeLimit: '2mb',
     },
+    // 2026-06-12: WCAG checker passes inline functions to page.evaluate();
+    // the minifier renames their closure references, and the serialized
+    // function dies in the browser with TDZ errors ("Cannot access 'ew'
+    // before initialization" — first seen the moment Chromium actually
+    // worked in prod). Server bundles don't need minification (size is
+    // not user-facing). TEMPORARY until the evaluate blocks are made
+    // self-contained — tracked in the plan's debt register.
+    serverMinification: false,
   },
 };
 
