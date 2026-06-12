@@ -15,6 +15,7 @@ import { inngest } from '../client'
 import * as Sentry from '@sentry/nextjs'
 import { filterRowsToContract } from '@/lib/db/insert-contracts'
 import { keywordModuleIndexFor } from '@/lib/scoring/module-map'
+import { applySeverityCap, capSummarySentence } from '@/lib/scoring/severity-cap'
 import { createServiceSupabase } from '@/lib/supabase-server'
 import { crawlPages, formatHeadTagsForAnalysis, type HeadTagData } from '@/lib/audit-engine/crawler'
 import { runCrawlPreflight } from '@/lib/audit-engine/crawl-preflight'
@@ -4483,11 +4484,36 @@ RULES FOR RE-AUDIT:
       console.log(`[inngest] Audit ${auditId} generateReport() returned in ${Date.now() - reportStepStart}ms${narrativeDegraded ? ' (deterministic fallback — AI narrative failed)' : ''}`)
       await setProgress(auditId, stageProgress('reporting', 0.4))
 
+      // ── SCORE FROM DB (2026-06-12) ────────────────────────────
+      // Deterministic steps (wcag/responsive/pagespeed) insert findings
+      // directly into the DB — the in-memory `findings` array never
+      // contains them. The stored report under-counted severities and
+      // scored 72 while every live surface recomputed 55 from the DB
+      // (first exposed when WCAG findings landed for the first time).
+      // The DB is the single source of truth for counts and the cap.
+      const { data: dbFindingRows } = await db
+        .from('audit_findings')
+        .select('severity')
+        .eq('audit_id', auditId)
+        .eq('dismissed', false)
+        .in('status', ['open', 'in_progress'])
+      const scoringFindings: Array<{ severity: string }> =
+        (dbFindingRows as Array<{ severity: string }> | null) ?? findings
       const severityCount = {
-        critical: findings.filter((f) => f.severity === 'critical').length,
-        high: findings.filter((f) => f.severity === 'high').length,
-        medium: findings.filter((f) => f.severity === 'medium').length,
-        low: findings.filter((f) => f.severity === 'low').length,
+        critical: scoringFindings.filter((f) => f.severity === 'critical').length,
+        high: scoringFindings.filter((f) => f.severity === 'high').length,
+        medium: scoringFindings.filter((f) => f.severity === 'medium').length,
+        low: scoringFindings.filter((f) => f.severity === 'low').length,
+      }
+      // Re-apply the severity cap against DB truth (can only lower the score)
+      const dbCapResult = applySeverityCap(reportData.overallScore, scoringFindings)
+      if (dbCapResult.overall < reportData.overallScore) {
+        console.log(`[inngest] Score re-capped from DB findings: ${reportData.overallScore} → ${dbCapResult.overall} (${dbCapResult.capInfo.reason})`)
+        reportData.overallScore = dbCapResult.overall
+        // Replace any stale cap sentence written from the in-memory view
+        reportData.executiveSummary = reportData.executiveSummary
+          .replace(/ The overall score is currently capped at [^.]*\.?/g, '')
+          .trimEnd() + capSummarySentence(dbCapResult.capInfo)
       }
 
       // Use verification data directly from the step (not from DB columns which may not exist)
@@ -4567,7 +4593,7 @@ RULES FOR RE-AUDIT:
         audit_id: auditId,
         executive_summary: reportData.executiveSummary,
         key_recommendation: reportData.keyRecommendation,
-        total_issues: findings.length,
+        total_issues: scoringFindings.length,
         critical_count: severityCount.critical,
         high_count: severityCount.high,
         medium_count: severityCount.medium,
@@ -4602,12 +4628,12 @@ RULES FOR RE-AUDIT:
       await setProgress(auditId, stageProgress('reporting', 0.9))
 
       await logStageCompleted(auditId, 'reporting', 'Report generated', {
-        total_issues: findings.length,
+        total_issues: scoringFindings.length,
         ...severityCount,
         has_pdf: !!pdfUrl,
       })
       await auditLog(auditId, 'report_generated', 'success', 'Report generated', {
-        total_issues: findings.length,
+        total_issues: scoringFindings.length,
         ...severityCount,
         has_pdf: !!pdfUrl,
       })

@@ -1069,7 +1069,7 @@ function OverviewInner() {
           </p>
           {scoreCapInfo.applied && (
             <p className="text-[11px]" style={{ color: 'var(--warn)' }}>
-              · Module scores are weighted to compose into your overall {overallScore}/100 — clean modules keep their full score; modules with open issues carry the cap ({scoreCapInfo.reason}).
+              · Each module is scored on its own checks and capped by its own open issues. Your overall {overallScore}/100 is a separate verdict driven by your most severe issues ({scoreCapInfo.reason}) — it is not an average of the modules.
             </p>
           )}
         </div>
