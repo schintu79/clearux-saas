@@ -1672,13 +1672,17 @@ Return 2-6 findings. Be specific and evidence-based. Reference specific files/co
                   description: finding.description,
                   recommendation: finding.recommendation,
                   severity: finding.severity,
-                  categoryIndex: 8,
+                  categoryIndex: 20, // Accessibility Readiness (module 5) — matches the insert below
                 })
                 const wcagDesc = `[WCAG ${finding.wcagCriterion}] ${finding.description}`
                 wcagInserts.push({
                   audit_id: auditId,
                   checklist_item_id: null,
-                  category_index: 8,
+                  // 2026-06-12: was 8 (→ module 2, Inclusive Design). WCAG
+                  // findings belong to Accessibility Readiness (module 5,
+                  // categories 20-23) — the module card the user sees them
+                  // scored under. floor(20/4) = 5.
+                  category_index: 20,
                   finding_type: cls.findingType,
                   fix_type: cls.fixType,
                   severity: finding.severity,
