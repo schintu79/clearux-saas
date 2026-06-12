@@ -456,7 +456,9 @@ function renderSingleFinding(
         lines.push(techNote);
         lines.push('');
       }
-      if (techFix) {
+      // 2026-06-12: skip when identical to the note — exports printed the
+      // same technical block twice (seen on the skip-link finding).
+      if (techFix && techFix.trim() !== (techNote || '').trim()) {
         lines.push(`*Technical fix:* ${techFix}`);
         lines.push('');
       }
@@ -572,7 +574,8 @@ function renderMarkdownFlat(
           lines.push(techNote);
           lines.push('');
         }
-        if (techFix) {
+        // 2026-06-12: skip when identical to the note (same dedup as above)
+        if (techFix && techFix.trim() !== (techNote || '').trim()) {
           lines.push(`*Technical fix:* ${techFix}`);
           lines.push('');
         }
