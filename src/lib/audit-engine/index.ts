@@ -30,13 +30,16 @@ async function log(
   metadata?: Record<string, unknown>,
 ) {
   try {
-    await db.from('audit_logs').insert({
+    const { error: legacyInsertError6 } = await db.from('audit_logs').insert({
       audit_id: auditId,
       event,
       status,
       message: message || null,
       metadata: metadata || {},
     } as any)
+    if (legacyInsertError6) {
+      console.error(`[audit-engine] INSERT FAILED (audit_logs): ${legacyInsertError6.message}`)
+    }
   } catch (err) {
     console.error('[audit-engine] log error:', err)
   }
@@ -206,7 +209,7 @@ async function _processAuditInner(auditId: string): Promise<void> {
       const technicalAudit = technicalAuditByUrl.get(page.url) ?? null
       const codeQuality = codeQualityByUrl.get(page.url) ?? null
       const performanceData = performanceByUrl.get(page.url) ?? null
-      await db.from('audit_pages').insert({
+      const { error: legacyInsertError5 } = await db.from('audit_pages').insert({
         audit_id: auditId,
         url: page.url,
         title: page.title,
@@ -226,6 +229,9 @@ async function _processAuditInner(auditId: string): Promise<void> {
         performance_data: performanceData,
         crawled_at: page.crawledAt,
       } as any)
+      if (legacyInsertError5) {
+        console.error(`[audit-engine] INSERT FAILED (audit_pages): ${legacyInsertError5.message}`)
+      }
     }
 
     await db
@@ -259,7 +265,7 @@ async function _processAuditInner(auditId: string): Promise<void> {
       // Store responsive findings as audit findings
       let sortOrderResp = 0
       for (const finding of responsiveResult.findings) {
-        await db.from('audit_findings').insert({
+        const { error: legacyInsertError4 } = await db.from('audit_findings').insert({
           audit_id: auditId,
           checklist_item_id: null,
           severity: finding.severity,
@@ -273,6 +279,9 @@ async function _processAuditInner(auditId: string): Promise<void> {
           screenshot_url: null,
           sort_order: sortOrderResp++,
         } as any)
+        if (legacyInsertError4) {
+          console.error(`[audit-engine] INSERT FAILED (audit_findings): ${legacyInsertError4.message}`)
+        }
       }
 
       await log(db, auditId, 'responsive_check_completed', 'success',
@@ -292,7 +301,7 @@ async function _processAuditInner(auditId: string): Promise<void> {
         const perfFindings = generatePerformanceFindings(performanceSummary, perfPageData)
         let sortOrderPerf = 0
         for (const pf of perfFindings) {
-          await db.from('audit_findings').insert({
+          const { error: legacyInsertError3 } = await db.from('audit_findings').insert({
             audit_id: auditId,
             category_index: 12, // Performance category
             finding_type: 'strategic',
@@ -313,6 +322,9 @@ async function _processAuditInner(auditId: string): Promise<void> {
             performance_metric_type: pf.performance_metric_type,
             owner_team: pf.owner_team,
           } as any)
+          if (legacyInsertError3) {
+            console.error(`[audit-engine] INSERT FAILED (audit_findings): ${legacyInsertError3.message}`)
+          }
         }
         if (perfFindings.length > 0) {
           await log(db, auditId, 'performance_findings_generated', 'success',
@@ -356,7 +368,7 @@ async function _processAuditInner(auditId: string): Promise<void> {
         const speedFindings = generateSpeedFindings(speedData)
         let sortOrderSpeed = 100
         for (const sf of speedFindings) {
-          await db.from('audit_findings').insert({
+          const { error: legacyInsertError2 } = await db.from('audit_findings').insert({
             audit_id: auditId,
             category_index: 12,
             finding_type: sf.fixableFromConsole ? 'specific' : 'strategic',
@@ -377,6 +389,9 @@ async function _processAuditInner(auditId: string): Promise<void> {
             performance_metric_type: sf.metricType,
             owner_team: sf.ownerTeam,
           } as any)
+          if (legacyInsertError2) {
+            console.error(`[audit-engine] INSERT FAILED (audit_findings): ${legacyInsertError2.message}`)
+          }
         }
         if (speedFindings.length > 0) {
           await log(db, auditId, 'speed_findings_generated', 'success',
@@ -480,8 +495,9 @@ async function _processAuditInner(auditId: string): Promise<void> {
       },
     )
 
+    let findingInsertFailures = 0
     for (const finding of findings) {
-      const { data: inserted } = await db
+      const { data: inserted, error: findingInsertError } = await db
         .from('audit_findings')
         .insert({
           audit_id: auditId,
@@ -503,7 +519,14 @@ async function _processAuditInner(auditId: string): Promise<void> {
         .select()
         .single()
 
+      if (findingInsertError) {
+        findingInsertFailures++
+        console.error(`[audit-engine] FINDING INSERT FAILED: ${findingInsertError.message}`)
+      }
       if (inserted) allFindings.push(inserted as any)
+    }
+    if (findingInsertFailures > 0) {
+      await log(db, auditId, 'findings_insert_failed', 'error', `Legacy engine: ${findingInsertFailures}/${findings.length} finding inserts failed — scores may undercount real issues`)
     }
 
     await log(db, auditId, 'full_analysis_completed', 'success', `Built-in analysis: ${allFindings.length} findings`)
@@ -606,7 +629,7 @@ async function _processAuditInner(auditId: string): Promise<void> {
     await setProgress(db, auditId, 95)
 
     // Insert report
-    await db
+    const { error: legacyInsertError1 } = await db
       .from('reports')
       .insert({
         audit_id: auditId,
@@ -630,6 +653,9 @@ async function _processAuditInner(auditId: string): Promise<void> {
         pdf_url: pdfUrl,
         pdf_generated_at: pdfUrl ? new Date().toISOString() : null,
       } as any)
+    if (legacyInsertError1) {
+      throw new Error(`Legacy engine: report insert FAILED: ${legacyInsertError1.message}`)
+    }
 
     await log(db, auditId, 'report_generated', 'success', 'Report generated', {
       total_issues: allFindings.length,

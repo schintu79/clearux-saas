@@ -11,6 +11,7 @@ import { stripe } from '@/lib/stripe'
 import { createServerSupabase } from '@/lib/supabase-server'
 import { createServiceSupabase } from '@/lib/supabase-server'
 import { processAudit } from '@/lib/audit-engine'
+import { insertChecked, insertLogged } from '@/lib/db/checked-write'
 
 const verifySchema = z.object({
   audit_id: z.string().uuid('Invalid audit ID'),
@@ -92,8 +93,10 @@ export async function POST(request: NextRequest) {
       .maybeSingle()
 
     if (!existingPayment) {
-      // Insert payment record
-      await serviceDb.from('payments').insert({
+      // Insert payment record — checked (Plan §0.4): this row is the
+      // dedup guard against double-processing; a silent failure here
+      // meant repeat verifications re-ran the whole flow.
+      const recorded = await insertChecked(serviceDb, 'payments', {
         audit_id,
         user_id: user.id,
         stripe_payment_intent_id: matchingSession.payment_intent as string,
@@ -104,7 +107,13 @@ export async function POST(request: NextRequest) {
         status: 'succeeded',
         invoice_url: null,
         receipt_url: null,
-      } as any)
+      }, { label: 'stripe-verify payment record', auditId: audit_id })
+      if (!recorded.ok) {
+        return NextResponse.json(
+          { error: 'Could not record the payment. Please retry — the audit was not started.' },
+          { status: 500 },
+        )
+      }
     }
 
     // Update audit status
@@ -119,7 +128,7 @@ export async function POST(request: NextRequest) {
       .eq('id', audit_id)
 
     // Log it
-    await serviceDb.from('audit_logs').insert({
+    await insertLogged(serviceDb, 'audit_logs', {
       audit_id,
       event: 'payment_verified',
       status: 'success',
@@ -128,7 +137,7 @@ export async function POST(request: NextRequest) {
         stripe_session_id: matchingSession.id,
         amount_total: matchingSession.amount_total,
       },
-    } as any)
+    }, 'stripe-verify')
 
     // Trigger audit processing
     processAudit(audit_id).catch((err) => {

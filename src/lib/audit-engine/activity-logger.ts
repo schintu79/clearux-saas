@@ -23,13 +23,14 @@ async function log(
 ) {
   try {
     const db = getDb()
-    await db.from('audit_logs').insert({
+    const { error } = await db.from('audit_logs').insert({
       audit_id: auditId,
       event,
       status,
       message,
       metadata: metadata ?? {},
     } as any)
+    if (error) console.error(`[activity-logger] audit_logs insert failed (${event}): ${error.message}`)
   } catch (err) {
     console.error('[activity-logger] log error:', err)
   }

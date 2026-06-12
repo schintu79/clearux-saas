@@ -182,7 +182,8 @@ async function auditLog(
 ) {
   try {
     const db = getDb()
-    // 10s timeout — audit logging is non-critical, must never block the pipeline
+    // 10s timeout — audit logging is non-critical, must never block the pipeline.
+    // But the PostgREST error must be visible (supabase-js never throws).
     await Promise.race([
       db.from('audit_logs').insert({
         audit_id: auditId,
@@ -190,7 +191,9 @@ async function auditLog(
         status,
         message: message || null,
         metadata: metadata || {},
-      } as any),
+      } as any).then(({ error }: { error: { message: string } | null }) => {
+        if (error) console.error(`[inngest] audit_logs insert failed (${event}): ${error.message}`)
+      }),
       new Promise<void>((resolve) => setTimeout(resolve, 10_000)),
     ])
   } catch (err) {
@@ -813,7 +816,7 @@ Return 2-6 findings. Be specific and evidence-based. Reference specific files/co
           selectedModules: auditDetails.selectedModules,
         }
 
-        await db.from('reports').insert({
+        const { error: baselineReportInsertError } = await db.from('reports').insert({
           audit_id: auditId,
           executive_summary: reportData.executiveSummary,
           key_recommendation: reportData.keyRecommendation,
@@ -831,6 +834,9 @@ Return 2-6 findings. Be specific and evidence-based. Reference specific files/co
           pdf_url: pdfUrl,
           pdf_generated_at: pdfUrl ? new Date().toISOString() : null,
         } as any)
+        if (baselineReportInsertError) {
+          throw new Error(`Baseline report insert FAILED — audit must not complete without a report: ${baselineReportInsertError.message}`)
+        }
 
         // ── Heartbeat: report row inserted → 89% ──
         await setProgress(auditId, 89)
@@ -4505,7 +4511,7 @@ RULES FOR RE-AUDIT:
       }
 
       // Insert report
-      await db.from('reports').insert({
+      const { error: mainReportInsertError } = await db.from('reports').insert({
         audit_id: auditId,
         executive_summary: reportData.executiveSummary,
         key_recommendation: reportData.keyRecommendation,
@@ -4535,6 +4541,9 @@ RULES FOR RE-AUDIT:
           insight: multiModelResult.comparison.insight,
         } : null,
       } as any)
+      if (mainReportInsertError) {
+        throw new Error(`Report insert FAILED — audit must not complete without a report: ${mainReportInsertError.message}`)
+      }
 
       // ── Heartbeat: report inserted into DB → 89% ──
       console.log(`[inngest] Audit ${auditId} report DB insert complete in ${Date.now() - reportStepStart}ms`)
