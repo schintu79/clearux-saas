@@ -688,15 +688,19 @@ function issuesToFindings(results: ResponsiveCheckResult[]): AnalysisFinding[] {
         title: issue.title,
         description: issue.description,
         recommendation: issue.recommendation,
+        // 2026-06-12: severity words removed from impact copy — a LOW
+        // finding was displaying 'Medium — affects...' in Why it matters,
+        // contradicting its own badge. Impact text describes consequences;
+        // the severity badge grades them.
         estimatedImpact: issue.type === 'missing_viewport_meta'
-          ? 'Critical — without viewport meta, the entire mobile experience is broken.'
+          ? 'Without a viewport meta tag, the entire mobile experience is broken.'
           : issue.type === 'horizontal_overflow'
-          ? 'High — horizontal scrolling is the #1 mobile usability complaint.'
+          ? 'Horizontal scrolling is the #1 mobile usability complaint.'
           : issue.type === 'touch_target_small'
-          ? 'High — users will struggle to tap interactive elements accurately.'
+          ? 'Users will struggle to tap buttons and links accurately.'
           : issue.type === 'desktop_nav_hidden'
-          ? 'High — hiding primary navigation on desktop reduces discoverability, delays orientation, and weakens first-impression clarity for mainstream sites.'
-          : 'Medium — affects mobile user experience quality.',
+          ? 'Hiding primary navigation on desktop reduces discoverability, delays orientation, and weakens first-impression clarity.'
+          : 'Makes the site harder to read and use on mobile devices.',
         targetElement: issue.element || null,
         pageUrl: result.url,
       })

@@ -216,7 +216,11 @@ export function computeCoverageLabel(crawl: CrawlSummary | null): { label: Cover
   if (!crawl) return { label: 'limited', text: 'No crawl data available' }
 
   const { urls_discovered, pages_analyzed } = crawl
-  const total = urls_discovered || 1
+  // 2026-06-12: pages_analyzed can legitimately exceed urls_discovered
+  // (the canonical-misconfiguration guard crawls pages past the initial
+  // discovery list) — the strip showed '25 of 20 key URLs'. The
+  // denominator is whichever is larger; coverage cannot exceed 100%.
+  const total = Math.max(urls_discovered || 1, pages_analyzed || 0, 1)
 
   // Coverage ratio
   const ratio = pages_analyzed / total
@@ -224,20 +228,20 @@ export function computeCoverageLabel(crawl: CrawlSummary | null): { label: Cover
   if (ratio >= 0.7) {
     return {
       label: 'full',
-      text: `${pages_analyzed} of ${urls_discovered} key URLs audited`,
+      text: `${pages_analyzed} of ${total} key URLs audited`,
     }
   }
 
   if (ratio >= 0.3) {
     return {
       label: 'partial',
-      text: `${pages_analyzed} of ${urls_discovered} key URLs audited`,
+      text: `${pages_analyzed} of ${total} key URLs audited`,
     }
   }
 
   return {
     label: 'limited',
-    text: `${pages_analyzed} of ${urls_discovered} key URLs audited`,
+    text: `${pages_analyzed} of ${total} key URLs audited`,
   }
 }
 
@@ -284,7 +288,14 @@ export function computeConfidenceLabel(
  * Determine which independent checks were run during this audit.
  * Derives from detection_source values present on findings.
  */
-export function computeChecksRun(findings: AuditFinding[]): string[] {
+export function computeChecksRun(findings: AuditFinding[], executedChecks?: string[] | null): string[] {
+  // 2026-06-12: deriving 'checks run' ONLY from surviving findings
+  // under-reports — a check that ran clean, or whose findings were
+  // deduplicated away, vanished from the strip ('Checks run: WCAG' on an
+  // audit where responsive + PageSpeed also ran). When the pipeline
+  // provides execution metadata (crawl_summary.checks_executed), it wins;
+  // findings-derived detection remains the fallback for old audits.
+  if (executedChecks && executedChecks.length > 0) return executedChecks
   const sources = new Set(findings.map(f => f.detection_source).filter(Boolean))
   const checks: string[] = []
 
