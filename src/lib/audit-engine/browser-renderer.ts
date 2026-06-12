@@ -12,6 +12,7 @@
  */
 
 import puppeteer, { type Browser, type Page } from 'puppeteer-core'
+import { launchAuditBrowser } from '@/lib/audit-engine/browser-launcher'
 import type { HeadTagData } from './crawler'
 
 // ── Types ─────────────────────────────────────────────────────
@@ -66,50 +67,11 @@ const RENDER_BLOCK_PATTERNS: Array<{ pattern: RegExp; label: string }> = [
  * 2. Fall back to local Chrome/Chromium binary
  */
 async function launchBrowser(): Promise<Browser> {
-  let executablePath: string
-
-  try {
-    const chromium = await import('@sparticuz/chromium')
-    executablePath = await chromium.default.executablePath()
-    return await puppeteer.launch({
-      args: [
-        ...chromium.default.args,
-        '--disable-web-security',  // Allow cross-origin resource loading
-        '--disable-features=IsolateOrigins,site-per-process',
-      ],
-      defaultViewport: { width: 1440, height: 900 },
-      executablePath,
-      headless: true,
-    })
-  } catch {
-    const paths = [
-      '/usr/bin/chromium-browser',
-      '/usr/bin/chromium',
-      '/usr/bin/google-chrome',
-      '/usr/bin/google-chrome-stable',
-      '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',
-    ]
-    for (const p of paths) {
-      try {
-        const { accessSync } = await import('fs')
-        accessSync(p)
-        return await puppeteer.launch({
-          executablePath: p,
-          headless: true,
-          defaultViewport: { width: 1440, height: 900 },
-          args: [
-            '--no-sandbox',
-            '--disable-setuid-sandbox',
-            '--disable-dev-shm-usage',
-            '--disable-web-security',
-          ],
-        })
-      } catch {
-        continue
-      }
-    }
-    throw new Error('No Chromium/Chrome binary found for browser rendering.')
-  }
+  // Shared launcher (Plan §0.6) — real serverless error is reported, not swallowed
+  return launchAuditBrowser({
+    viewport: { width: 1440, height: 900 },
+    extraArgs: ['--disable-web-security', '--disable-features=IsolateOrigins,site-per-process'],
+  })
 }
 
 // ── Content extraction ────────────────────────────────────────
