@@ -12,6 +12,7 @@
 // ============================================================
 
 import { inngest } from '../client'
+import * as Sentry from '@sentry/nextjs'
 import { filterRowsToContract } from '@/lib/db/insert-contracts'
 import { createServiceSupabase } from '@/lib/supabase-server'
 import { crawlPages, formatHeadTagsForAnalysis, type HeadTagData } from '@/lib/audit-engine/crawler'
@@ -337,6 +338,13 @@ export const processAuditFn = inngest.createFunction(
         const failureError = (event as any)?.data?.error
         const failureReason = (failureError?.message || failureError?.name || 'unknown error') as string
         console.error(`[inngest/onFailure] Audit ${auditId} run failed with: ${failureReason}`)
+        // Sentry (Plan §0.5): a dead pipeline run is the highest-severity
+        // event this product has — it must page, not scroll away in logs.
+        Sentry.captureMessage(`Audit pipeline run FAILED: ${failureReason.slice(0, 200)}`, {
+          level: 'error',
+          tags: { area: 'inngest-pipeline', handler: 'onFailure' },
+          extra: { auditId, failureReason },
+        })
         const db = createServiceSupabase()
         const { data } = await db
           .from('audits')
