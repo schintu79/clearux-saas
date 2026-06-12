@@ -956,6 +956,13 @@ Return 2-6 findings. Be specific and evidence-based. Reference specific files/co
       }, 30_000, 'crawl-preflight')
     })
 
+    // Declared HERE (before every step that references it) and assigned by
+    // the detect-site-profile step further down. See the comment at that
+    // step: as a `const` declared mid-function it put four earlier steps'
+    // closures in the temporal dead zone — the real cause of the
+    // "Cannot access before initialization" crashes in pagespeed/wcag.
+    let siteProfile: SiteProfile | null = null
+
     // STEP 2: Crawl pages
     // ──────────────────────────────────────────────────────────
     const crawlResult = await step.run('crawl-pages', async () => {
@@ -2537,8 +2544,19 @@ RULES FOR RE-AUDIT:
     // STEP 3b: Detect site profile (industry, audience, context)
     // Runs once before any analysis. Lightweight (~2s Haiku call).
     // Feeds into analyzeCategory() so findings are context-aware.
+    //
+    // 2026-06-12 THE REAL TDZ BUG: this was `const siteProfile = ...`
+    // declared HERE, but the pagespeed/wcag/structured-data steps above
+    // reference siteProfile in their insert payloads — invoking those
+    // closures before this line = temporal dead zone crash. Minified
+    // builds reported it as "Cannot access 'ew'/'e_' before
+    // initialization", which we misread as a bundler bug; the webpack
+    // unminified build named the variable. This single line is why
+    // PageSpeed (D8) and WCAG silently produced nothing for weeks.
+    // Now: nullable assignment — steps that run before detection get a
+    // null profile (generic communication copy, same as the brand path).
     // ──────────────────────────────────────────────────────────
-    const siteProfile: SiteProfile | null = await step.run('detect-site-profile', async () => {
+    siteProfile = await step.run('detect-site-profile', async () => {
       return withStepTimeout(async () => {
       try {
         await logActivity(auditId, 'Detecting site industry and audience profile...')
