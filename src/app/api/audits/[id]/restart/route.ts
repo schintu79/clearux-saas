@@ -4,7 +4,7 @@
 // ============================================================
 
 import { NextRequest, NextResponse } from 'next/server'
-import { createServiceSupabase } from '@/lib/supabase-server'
+import { createServerSupabase, createServiceSupabase } from '@/lib/supabase-server'
 import { inngest } from '@/lib/inngest/client'
 
 const RESTARTABLE = ['crawling', 'analysing', 'generating_report', 'payment_received', 'failed']
@@ -18,6 +18,16 @@ export async function POST(
 ) {
   try {
     const { id: auditId } = await params
+
+    // Auth (Plan §0.7, D12): this route restarts pipelines and moves
+    // credits — it was callable by ANYONE with an audit id. Require a
+    // session and ownership of the audit.
+    const authDb = await createServerSupabase()
+    const { data: { user } } = await authDb.auth.getUser()
+    if (!user) {
+      return NextResponse.json({ error: 'Not authenticated' }, { status: 401 })
+    }
+
     const db = createServiceSupabase()
 
     const { data: audit, error } = await db
@@ -32,6 +42,9 @@ export async function POST(
     }
 
     const a = audit as any
+    if (a.user_id && a.user_id !== user.id) {
+      return NextResponse.json({ error: 'Audit not found' }, { status: 404 })
+    }
 
     if (!RESTARTABLE.includes(a.status)) {
       return NextResponse.json(
