@@ -2223,6 +2223,7 @@ Return 2-6 findings. Be specific and evidence-based. Reference specific files/co
     // fallback for audits that predate it.
     // ──────────────────────────────────────────────────────────
     await step.run('persist-checks-executed', async () => {
+      return withStepTimeout(async () => {
       // SEO (head-tag/crawler parsing) always runs once a crawl succeeds.
       const checksExecuted: string[] = ['SEO']
       if (responsiveCheck?.ran) checksExecuted.push('Responsive')
@@ -2252,6 +2253,7 @@ Return 2-6 findings. Be specific and evidence-based. Reference specific files/co
         return { persisted: false, checksExecuted }
       }
       return { persisted: true, checksExecuted }
+      }, 15_000, 'persist-checks-executed', { persisted: false, checksExecuted: [] as string[] })
     })
 
     // ──────────────────────────────────────────────────────────
