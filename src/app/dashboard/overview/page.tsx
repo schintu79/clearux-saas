@@ -895,71 +895,82 @@ function OverviewInner() {
         </div>
       </div>
 
-      {/* ── Alert / executive summary slot ───────────────── */}
-      <AlertOrSummary
-        critical={severityCounts.critical}
-        execSummary={execSummary}
-        overallScore={overallScore}
-        latestAuditId={audit.id}
-        completedAt={audit.completed_at || audit.created_at}
-        totalFindings={openFindings.length}
-        healthCtx={{
-          pagesAnalyzed: (audit as any)?.crawl_summary?.pages_analyzed ?? 0,
-          findings: openFindings.map(f => ({ severity: f.severity, confidence_level: (f as any).confidence_level, category_index: f.category_index })),
-          categoryScores: categoryScores.map(c => ({ score_state: (c as any).score_state })),
-        }}
-      />
-
-      {/* ── Re-audit reconciliation delta summary ────────── */}
+      {/* ── Executive summary + re-audit results (one card) ──
+           The re-audit reconciliation row is now rendered INSIDE the
+           executive-summary card (AlertOrSummary's reAuditFooter slot)
+           below a divider, so the two read as a single block. Pure layout —
+           same data sources (report executive_summary + reconciliationSummary). */}
       {(() => {
         const rawJson = (bundle?.report?.raw_json || null) as any;
         const recon = rawJson?.reconciliationSummary;
-        if (!recon) return null;
-        const { verifiedFixed, regressed, newFindings, stillOpen, notReverified } = recon;
-        const prevScore = scoreTrend.length >= 2 ? scoreTrend[scoreTrend.length - 2]?.overallScore : null;
-        const scoreDelta = prevScore != null ? overallScore - prevScore : null;
-        return (
-          <div className="mb-4 p-4 rounded-xl border flex items-start gap-3" style={{ background: 'color-mix(in srgb, var(--signal) 3%, var(--card))', borderColor: 'color-mix(in srgb, var(--signal) 15%, var(--rule))' }}>
-            <RefreshCw size={16} className="flex-shrink-0 mt-0.5" style={{ color: 'var(--signal)' }} />
-            <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium mb-1" style={{ color: 'var(--ink)' }}>Re-audit results</p>
-              <div className="flex flex-wrap gap-x-4 gap-y-1 text-[12px]">
-                {verifiedFixed > 0 && (
-                  <span className="inline-flex items-center gap-1">
-                    <CheckCircle2 size={11} className="text-ok" />
-                    <span style={{ color: 'var(--ink)' }}>{verifiedFixed} fixed</span>
-                  </span>
-                )}
-                {stillOpen > 0 && (
-                  <span className="inline-flex items-center gap-1" style={{ color: 'var(--m-muted)' }}>
-                    {stillOpen} still open
-                  </span>
-                )}
-                {newFindings > 0 && (
-                  <span className="inline-flex items-center gap-1">
-                    <Zap size={11} style={{ color: 'var(--signal)' }} />
-                    <span style={{ color: 'var(--ink)' }}>{newFindings} new</span>
-                  </span>
-                )}
-                {regressed > 0 && (
-                  <span className="inline-flex items-center gap-1">
-                    <AlertTriangle size={11} className="text-severe" />
-                    <span style={{ color: 'var(--ink)' }}>{regressed} regressed</span>
-                  </span>
-                )}
-                {notReverified > 0 && (
-                  <span className="inline-flex items-center gap-1" style={{ color: 'var(--m-muted)' }}>
-                    {notReverified} not re-checked
-                  </span>
-                )}
-                {scoreDelta != null && (
-                  <span className={`font-semibold tabular-nums ${scoreDelta > 0 ? 'text-ok' : scoreDelta < 0 ? 'text-severe' : ''}`} style={scoreDelta === 0 ? { color: 'var(--m-muted)' } : {}}>
-                    {scoreDelta > 0 ? '+' : ''}{scoreDelta} score
-                  </span>
-                )}
-              </div>
+        let reAuditFooter: React.ReactNode = null;
+        if (recon) {
+          const { verifiedFixed, regressed, newFindings, stillOpen, notReverified } = recon;
+          const prevScore = scoreTrend.length >= 2 ? scoreTrend[scoreTrend.length - 2]?.overallScore : null;
+          const scoreDelta = prevScore != null ? overallScore - prevScore : null;
+          reAuditFooter = (
+            <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5 text-[12px]">
+              <span className="inline-flex items-center gap-1.5 font-medium" style={{ color: 'var(--ink)' }}>
+                <RefreshCw size={13} style={{ color: 'var(--signal)' }} /> Re-audit results
+              </span>
+              {verifiedFixed > 0 && (
+                <span className="inline-flex items-center gap-1">
+                  <CheckCircle2 size={11} className="text-ok" />
+                  <span style={{ color: 'var(--ink)' }}>{verifiedFixed} fixed</span>
+                </span>
+              )}
+              {stillOpen > 0 && (
+                <span className="inline-flex items-center gap-1" style={{ color: 'var(--m-muted)' }}>
+                  {stillOpen} still open
+                </span>
+              )}
+              {newFindings > 0 && (
+                <span className="inline-flex items-center gap-1">
+                  <Zap size={11} style={{ color: 'var(--signal)' }} />
+                  <span style={{ color: 'var(--ink)' }}>{newFindings} new</span>
+                </span>
+              )}
+              {regressed > 0 && (
+                <span className="inline-flex items-center gap-1">
+                  <AlertTriangle size={11} className="text-severe" />
+                  <span style={{ color: 'var(--ink)' }}>{regressed} regressed</span>
+                </span>
+              )}
+              {notReverified > 0 && (
+                <span className="inline-flex items-center gap-1" style={{ color: 'var(--m-muted)' }}>
+                  {notReverified} not re-checked
+                </span>
+              )}
+              {scoreDelta != null && (
+                <span className={`font-semibold tabular-nums ${scoreDelta > 0 ? 'text-ok' : scoreDelta < 0 ? 'text-severe' : ''}`} style={scoreDelta === 0 ? { color: 'var(--m-muted)' } : undefined}>
+                  {scoreDelta > 0 ? '+' : ''}{scoreDelta} score change
+                </span>
+              )}
+              <Link
+                href={productUrl ? `${dashPrefix}/new-audit?url=${encodeURIComponent(productUrl)}` : `${dashPrefix}/new-audit`}
+                className="ml-auto inline-flex items-center gap-1 font-medium hover:underline"
+                style={{ color: 'var(--signal)' }}
+              >
+                <RefreshCw size={12} /> Re-run to track progress
+              </Link>
             </div>
-          </div>
+          );
+        }
+        return (
+          <AlertOrSummary
+            critical={severityCounts.critical}
+            execSummary={execSummary}
+            overallScore={overallScore}
+            latestAuditId={audit.id}
+            completedAt={audit.completed_at || audit.created_at}
+            totalFindings={openFindings.length}
+            healthCtx={{
+              pagesAnalyzed: (audit as any)?.crawl_summary?.pages_analyzed ?? 0,
+              findings: openFindings.map(f => ({ severity: f.severity, confidence_level: (f as any).confidence_level, category_index: f.category_index })),
+              categoryScores: categoryScores.map(c => ({ score_state: (c as any).score_state })),
+            }}
+            reAuditFooter={reAuditFooter}
+          />
         );
       })()}
 
@@ -1017,14 +1028,38 @@ function OverviewInner() {
         </DashboardCard>
 
         {/* 2) Score Over Time */}
+        {(() => {
+          // pts badge: latest overall vs the previous audit (▲/▼ N pts).
+          const ptsDelta = scoreTrend.length >= 2
+            ? (scoreTrend[scoreTrend.length - 1]?.overallScore ?? 0) - (scoreTrend[scoreTrend.length - 2]?.overallScore ?? 0)
+            : null;
+          const ptsBadge = ptsDelta != null ? (
+            <span
+              className={`inline-flex items-center gap-1 text-[11px] font-semibold tabular-nums px-2 py-1 rounded-full ${ptsDelta > 0 ? 'text-ok' : ptsDelta < 0 ? 'text-severe' : ''}`}
+              style={{
+                background: ptsDelta > 0
+                  ? 'color-mix(in srgb, var(--ok) 12%, transparent)'
+                  : ptsDelta < 0
+                    ? 'color-mix(in srgb, var(--severe) 12%, transparent)'
+                    : 'color-mix(in srgb, var(--ink) 7%, transparent)',
+                color: ptsDelta === 0 ? 'var(--m-muted)' : undefined,
+              }}
+            >
+              {ptsDelta > 0 ? '▲' : ptsDelta < 0 ? '▼' : '—'} {Math.abs(ptsDelta)} pts
+            </span>
+          ) : null;
+          return (
         <DashboardCard
           title="Score Over Time"
           subtitle={scoreTrend.length >= 2 ? `${scoreTrend.length} audits` : 'Trend appears after next audit'}
           icon={TrendingUp}
           titleSize="lg"
+          rightBadge={ptsBadge}
         >
           {scoreTrend.length >= 2 ? (
-            <ScoreOverTimeChart trend={scoreTrend} />
+            <div className="h-full flex flex-col justify-end">
+              <ScoreOverTimeChart trend={scoreTrend} />
+            </div>
           ) : (
             <div className="flex flex-col items-center justify-center py-8 text-center">
               <TrendingUp size={28} style={{ color: 'var(--m-muted)', opacity: 0.4 }} className="mb-2" />
@@ -1039,6 +1074,8 @@ function OverviewInner() {
             </div>
           )}
         </DashboardCard>
+          );
+        })()}
 
         {/* 3) Heuristic Breakdown */}
         <DashboardCard
@@ -1213,6 +1250,7 @@ function DashboardCard({
   title,
   subtitle,
   rightLabel,
+  rightBadge,
   children,
   icon: Icon,
   titleSize = 'lg',
@@ -1220,6 +1258,8 @@ function DashboardCard({
   title: string;
   subtitle?: string | null;
   rightLabel?: string | null;
+  /** Styled top-right element (e.g. the score-trend pts badge). Takes precedence over rightLabel. */
+  rightBadge?: React.ReactNode;
   children: React.ReactNode;
   icon?: React.ElementType;
   titleSize?: 'md' | 'lg';
@@ -1249,9 +1289,11 @@ function DashboardCard({
             )}
           </div>
         </div>
-        {rightLabel && (
+        {rightBadge ? (
+          <div className="flex-shrink-0">{rightBadge}</div>
+        ) : rightLabel ? (
           <span className="text-[11px] flex-shrink-0" style={{ color: 'var(--m-muted)' }}>{rightLabel}</span>
-        )}
+        ) : null}
       </div>
       <div className="flex-1 min-h-0">{children}</div>
     </div>
@@ -1932,6 +1974,7 @@ function AlertOrSummary({
   completedAt,
   totalFindings = 0,
   healthCtx,
+  reAuditFooter = null,
 }: {
   critical: number;
   execSummary: string;
@@ -1940,9 +1983,16 @@ function AlertOrSummary({
   completedAt: string;
   totalFindings?: number;
   healthCtx?: HealthContext;
+  /** Re-audit results row — rendered inside this same card, below a divider,
+   *  so the executive summary and re-audit deltas read as one block (UI only). */
+  reAuditFooter?: React.ReactNode;
 }) {
   const { workspaceSlug: _ws } = useWorkspace();
   const _dp = _ws ? `/dashboard/${_ws}` : '/dashboard';
+  // Shared divider+footer slot appended inside every state's card.
+  const Footer = reAuditFooter
+    ? <div className="px-4 py-2.5" style={{ borderTop: '1px solid var(--rule)' }}>{reAuditFooter}</div>
+    : null;
 
   // Clean audit — no findings at all → success banner (gated by 4 conditions)
   if (totalFindings === 0 && overallScore >= 90) {
@@ -1950,23 +2000,26 @@ function AlertOrSummary({
     const isExcellent = tier === 'excellent';
     return (
       <div
-        className="mb-4 px-4 py-3 rounded-xl flex items-start gap-3"
+        className="mb-4 rounded-xl"
         style={{
           background: `color-mix(in srgb, var(--ok) ${isExcellent ? '7' : '5'}%, transparent)`,
           border: `1px solid color-mix(in srgb, var(--ok) ${isExcellent ? '22' : '15'}%, transparent)`,
         }}
       >
-        <CheckCircle2 size={16} style={{ color: 'var(--ok)' }} className="flex-shrink-0 mt-0.5" />
-        <div className="flex-1 min-w-0">
-          <p className="text-[13px] font-semibold leading-tight" style={{ color: 'var(--ok)' }}>
-            {isExcellent ? 'Excellent — no issues found' : 'Healthy — no issues found'}
-          </p>
-          <p className="text-[11px] mt-1" style={{ color: 'var(--m-muted)' }}>
-            {isExcellent
-              ? `Your site scored ${overallScore}/100 with zero findings across all audited categories. Keep monitoring with regular audits.`
-              : `Your site scored ${overallScore}/100 with zero findings. Coverage or confidence may be limited — a deeper audit could reveal more.`}
-          </p>
+        <div className="px-4 py-3 flex items-start gap-3">
+          <CheckCircle2 size={16} style={{ color: 'var(--ok)' }} className="flex-shrink-0 mt-0.5" />
+          <div className="flex-1 min-w-0">
+            <p className="text-[13px] font-semibold leading-tight" style={{ color: 'var(--ok)' }}>
+              {isExcellent ? 'Excellent — no issues found' : 'Healthy — no issues found'}
+            </p>
+            <p className="text-[11px] mt-1" style={{ color: 'var(--m-muted)' }}>
+              {isExcellent
+                ? `Your site scored ${overallScore}/100 with zero findings across all audited categories. Keep monitoring with regular audits.`
+                : `Your site scored ${overallScore}/100 with zero findings. Coverage or confidence may be limited — a deeper audit could reveal more.`}
+            </p>
+          </div>
         </div>
+        {Footer}
       </div>
     );
   }
@@ -1975,28 +2028,31 @@ function AlertOrSummary({
     return (
       <div
         role="alert"
-        className="mb-4 px-4 py-3 rounded-xl flex items-start gap-3"
+        className="mb-4 rounded-xl"
         style={{
           background: 'color-mix(in srgb, var(--severe) 7%, transparent)',
           border: '1px solid color-mix(in srgb, var(--severe) 22%, transparent)',
         }}
       >
-        <AlertTriangle size={16} style={{ color: 'var(--severe)' }} className="flex-shrink-0 mt-0.5" />
-        <div className="flex-1 min-w-0">
-          <p className="text-[13px] font-semibold leading-tight" style={{ color: 'var(--severe)' }}>
-            {critical} critical issue{critical === 1 ? '' : 's'} need attention
-          </p>
-          <p className="text-[11px] mt-1" style={{ color: 'var(--m-muted)' }}>
-            These have the biggest negative impact on your Website Health Score. Triage them first.
-          </p>
+        <div className="px-4 py-3 flex items-start gap-3">
+          <AlertTriangle size={16} style={{ color: 'var(--severe)' }} className="flex-shrink-0 mt-0.5" />
+          <div className="flex-1 min-w-0">
+            <p className="text-[13px] font-semibold leading-tight" style={{ color: 'var(--severe)' }}>
+              {critical} critical issue{critical === 1 ? '' : 's'} need attention
+            </p>
+            <p className="text-[11px] mt-1" style={{ color: 'var(--m-muted)' }}>
+              These have the biggest negative impact on your Website Health Score. Triage them first.
+            </p>
+          </div>
+          <Link
+            href={`${_dp}/fix?severity=critical`}
+            className="flex-shrink-0 inline-flex items-center gap-1 text-[12px] font-semibold px-3 py-1.5 rounded-lg"
+            style={{ background: 'var(--severe)', color: '#fff' }}
+          >
+            Triage now <ChevronRight size={12} />
+          </Link>
         </div>
-        <Link
-          href={`${_dp}/fix?severity=critical`}
-          className="flex-shrink-0 inline-flex items-center gap-1 text-[12px] font-semibold px-3 py-1.5 rounded-lg"
-          style={{ background: 'var(--severe)', color: '#fff' }}
-        >
-          Triage now <ChevronRight size={12} />
-        </Link>
+        {Footer}
       </div>
     );
   }
@@ -2004,32 +2060,38 @@ function AlertOrSummary({
   if (execSummary) {
     return (
       <div
-        className="mb-4 px-4 py-3 rounded-xl flex items-start gap-3"
+        className="mb-4 rounded-xl"
         style={{ background: 'var(--card)', border: '1px solid var(--rule)' }}
       >
-        <Info size={16} style={{ color: 'var(--m-muted)' }} className="flex-shrink-0 mt-0.5" />
-        <div className="flex-1 min-w-0">
-          <p className="text-[11px] font-semibold uppercase tracking-wide" style={{ color: 'var(--m-muted)' }}>
-            Executive summary · {formatDate(completedAt)}
-          </p>
-          <p className="text-[13px] leading-relaxed mt-1 line-clamp-3" style={{ color: 'var(--ink)' }}>
-            {execSummary}
-          </p>
+        <div className="px-4 py-3 flex items-start gap-3">
+          <Info size={16} style={{ color: 'var(--m-muted)' }} className="flex-shrink-0 mt-0.5" />
+          <div className="flex-1 min-w-0">
+            <p className="text-[11px] font-semibold uppercase tracking-wide" style={{ color: 'var(--m-muted)' }}>
+              Executive summary · {formatDate(completedAt)}
+            </p>
+            <p className="text-[13px] leading-relaxed mt-1 line-clamp-3" style={{ color: 'var(--ink)' }}>
+              {execSummary}
+            </p>
+          </div>
         </div>
+        {Footer}
       </div>
     );
   }
 
   return (
     <div
-      className="mb-4 px-4 py-2.5 rounded-xl flex items-center gap-3"
+      className="mb-4 rounded-xl"
       style={{ background: 'var(--card)', border: '1px solid var(--rule)' }}
     >
-      <Info size={14} style={{ color: 'var(--m-muted)' }} className="flex-shrink-0" />
-      <p className="text-[12px]" style={{ color: 'var(--m-muted)' }}>
-        Latest audit completed {formatDate(completedAt)} ·{' '}
-        <span className="font-semibold" style={{ color: 'var(--ink)' }}>{overallScore}/100</span> Website Health Score
-      </p>
+      <div className="px-4 py-2.5 flex items-center gap-3">
+        <Info size={14} style={{ color: 'var(--m-muted)' }} className="flex-shrink-0" />
+        <p className="text-[12px]" style={{ color: 'var(--m-muted)' }}>
+          Latest audit completed {formatDate(completedAt)} ·{' '}
+          <span className="font-semibold" style={{ color: 'var(--ink)' }}>{overallScore}/100</span> Website Health Score
+        </p>
+      </div>
+      {Footer}
     </div>
   );
 }
