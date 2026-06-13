@@ -183,6 +183,24 @@ const NewAuditInner: React.FC = () => {
     return () => { cancelled = true; clearTimeout(timer); };
   }, [url, user, auditType, depthParam]);
 
+  // Brand DNA comparison runs only when the pipeline resolves to DEEP.
+  // effectiveDepthMode (process-audit.ts) = deep for new-brand initial
+  // audits (no previous findings) and explicit deep/dig-deeper runs, but
+  // BASELINE for a standard re-audit — and the baseline path skips Brand
+  // DNA entirely. So the only case where the toggle is a false promise is
+  // a standard re-audit. Disable + explain it there instead of letting the
+  // user arm it and discover the skip in a post-hoc limitation note.
+  const brandDnaRunsAtThisDepth = !(isReAuditMode && depthMode === 'standard');
+  const brandDnaSelectable = workspaceBrandHasFiles && brandDnaRunsAtThisDepth;
+
+  // Force the toggle off whenever it isn't selectable (e.g. user switches a
+  // re-audit from Deep back to Standard after checking it).
+  useEffect(() => {
+    if (!brandDnaSelectable && includeBrandConsistency) {
+      setIncludeBrandConsistency(false);
+    }
+  }, [brandDnaSelectable, includeBrandConsistency]);
+
   // Auto-add brand_consistency when checkbox is checked; remove when unchecked
   useEffect(() => {
     if (includeBrandConsistency && !selectedModules.includes('brand_consistency')) {
@@ -702,18 +720,20 @@ const NewAuditInner: React.FC = () => {
             )}
           </div>
 
-          {/* Brand DNA comparison — opt-in to compare against uploaded brand guidelines */}
+          {/* Brand DNA comparison — opt-in to compare against uploaded brand guidelines.
+              Selectable only when (a) the workspace has brand files AND (b) the run
+              will be deep — a standard re-audit resolves to baseline, which skips it. */}
           <div className="mb-6">
             <label
-              className={`flex items-center gap-3 px-4 py-3 rounded-xl cursor-pointer transition-all ${
-                workspaceBrandHasFiles ? 'hover:bg-surface' : 'opacity-50 cursor-not-allowed'
+              className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${
+                brandDnaSelectable ? 'cursor-pointer hover:bg-surface' : 'opacity-50 cursor-not-allowed'
               }`}
               style={{ border: '1px solid var(--rule)', background: includeBrandConsistency ? 'color-mix(in srgb, var(--ok) 4%, transparent)' : 'transparent' }}
             >
               <input
                 type="checkbox"
                 checked={includeBrandConsistency}
-                disabled={!workspaceBrandHasFiles}
+                disabled={!brandDnaSelectable}
                 onChange={(e) => setIncludeBrandConsistency(e.target.checked)}
                 className="sr-only"
               />
@@ -727,17 +747,31 @@ const NewAuditInner: React.FC = () => {
                 <span className="text-sm font-medium" style={{ color: 'var(--ink)' }}>
                   Include Brand DNA comparison
                 </span>
-                {workspaceBrandHasFiles ? (
-                  <p className="text-xs mt-0.5" style={{ color: 'var(--m-muted)' }}>
-                    Compare your website against uploaded brand guidelines. Without this, Design Consistency still runs but scores based on the website's own internal visual consistency.
-                  </p>
-                ) : (
+                {!workspaceBrandHasFiles ? (
                   <p className="text-xs mt-0.5" style={{ color: 'var(--m-muted)' }}>
                     Upload brand files on the{' '}
                     <Link href={`${dashPrefix}/brand-dna`} className="font-medium hover:underline" style={{ color: 'var(--ink)' }}>
                       Brand DNA tab
                     </Link>{' '}
                     to enable Brand DNA comparison. Design Consistency will still run based on your website's internal visual consistency.
+                  </p>
+                ) : !brandDnaRunsAtThisDepth ? (
+                  <p className="text-xs mt-0.5" style={{ color: 'var(--m-muted)' }}>
+                    Brand DNA comparison runs in <strong>Deep</strong> analysis only. A Standard re-audit
+                    reuses previous findings for score stability and skips fresh brand analysis.{' '}
+                    <button
+                      type="button"
+                      onClick={() => setDepthMode('deep')}
+                      className="font-medium hover:underline"
+                      style={{ color: 'var(--ink)' }}
+                    >
+                      Switch to Deep
+                    </button>{' '}
+                    to include it. Design Consistency still runs either way.
+                  </p>
+                ) : (
+                  <p className="text-xs mt-0.5" style={{ color: 'var(--m-muted)' }}>
+                    Compare your website against uploaded brand guidelines. Without this, Design Consistency still runs but scores based on the website's own internal visual consistency.
                   </p>
                 )}
               </div>

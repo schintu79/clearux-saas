@@ -1763,28 +1763,32 @@ Return 2-6 findings. Be specific and evidence-based. Reference specific files/co
         }
       })()
 
-      // Run all three in parallel with a 120s master timeout.
-      // Individual checks have their own try/catch, but if Puppeteer
-      // or the PageSpeed API hangs, the Promise.all blocks forever.
-      const SITE_CHECKS_TIMEOUT_MS = 120_000
-      const [responsive, pagespeedResult, wcag] = await Promise.race([
-        Promise.all([
-          responsivePromise,
-          pagespeedPromise,
-          wcagPromise,
-        ]),
-        new Promise<never>((_, reject) =>
-          setTimeout(() => reject(new Error('Parallel site checks exceeded 120s timeout')), SITE_CHECKS_TIMEOUT_MS),
-        ),
-      ]).catch(err => {
-        console.error(`[inngest] Parallel site checks failed or timed out: ${err?.message || err}`)
-        // Return safe defaults so the pipeline can continue
-        return [
-          { summary: '', findingsCount: 0, viewportIssues: [], hasMobileViewport: false },  // responsive
-          null,                                 // pagespeed
-          { summary: '', findingsCount: 0, overallScore: 0 }, // wcag
-        ] as any
-      })
+      // 2026-06-13 — INDEPENDENT PER-CHECK CAPTURE.
+      // The previous design wrapped Promise.all([responsive, pagespeed,
+      // wcag]) in ONE 120s race. When the browser checks ran long (fixpath
+      // deep run: responsive 183s, WCAG 193s), the race rejected and the
+      // .catch returned safe defaults for ALL THREE — discarding PageSpeed's
+      // already-completed result AND, worse, starving the deep analyzer of
+      // the responsive/WCAG summaries (their findings still landed in the DB
+      // via the abandoned promises, but the empty summaries reached the
+      // analysis step → accessibility/responsive graded blind). It also made
+      // checks_executed under-report ('SEO, Schema' when all five ran).
+      //
+      // Now: each check is time-boxed on its OWN with withTimeout (returns
+      // null on its own timeout) and collected with Promise.all — a slow
+      // check can no longer discard a fast one, and whatever completes feeds
+      // both findings and analyzer context. Budget raised to fit real
+      // browser-check latency, well inside the 12-min pipeline deadline.
+      const RESPONSIVE_FALLBACK = { summary: '', findingsCount: 0, viewportIssues: [] as any[], hasMobileViewport: false, ran: false }
+      const WCAG_FALLBACK = { summary: '', findingsCount: 0, overallScore: 0, ran: false }
+      const PER_CHECK_TIMEOUT_MS = 210_000
+      const [responsiveRaw, pagespeedResult, wcagRaw] = await Promise.all([
+        withTimeout(responsivePromise, PER_CHECK_TIMEOUT_MS, 'responsive-check'),
+        withTimeout(pagespeedPromise, PER_CHECK_TIMEOUT_MS, 'pagespeed-check'),
+        withTimeout(wcagPromise, PER_CHECK_TIMEOUT_MS, 'wcag-check'),
+      ])
+      const responsive = responsiveRaw ?? RESPONSIVE_FALLBACK
+      const wcag = wcagRaw ?? WCAG_FALLBACK
 
       // Handle transparency notes
       if (responsive.findingsCount === 0) {
@@ -1805,10 +1809,11 @@ Return 2-6 findings. Be specific and evidence-based. Reference specific files/co
       }
 
       await logStageCompleted(auditId, 'checking', 'Site checks complete')
-      // pagespeedRan: success writes speed_data + findings; null means failed,
-      // skipped (brand_identity), or timed out — feeds checks_executed below.
+      // pagespeedRan retained for logging only — checks_executed is now
+      // computed at report time from audit_logs completion events (ground
+      // truth that survives timeouts/memoization), not from these flags.
       return { responsive, wcag, pagespeedRan: Boolean(pagespeedResult) }
-      }, 150_000, 'parallel-site-checks', { responsive: null as any, wcag: null as any, pagespeedRan: false })
+      }, 230_000, 'parallel-site-checks', { responsive: null as any, wcag: null as any, pagespeedRan: false })
     })
 
     const responsiveCheck = parallelChecks.responsive
@@ -2213,48 +2218,13 @@ Return 2-6 findings. Be specific and evidence-based. Reference specific files/co
     const citationResult = probeResults.citation
     const multiModelResult = probeResults.multiModel
 
-    // ──────────────────────────────────────────────────────────
-    // Persist checks_executed into audits.crawl_summary (2026-06-12).
-    // The 'Checks run' trust strip derived check names from SURVIVING
-    // findings — a check that ran clean (or whose findings deduped away)
-    // vanished from the strip ('Checks run: WCAG' on an audit where
-    // responsive + PageSpeed also ran). computeChecksRun() prefers this
-    // execution metadata; findings-derived detection stays as the
-    // fallback for audits that predate it.
-    // ──────────────────────────────────────────────────────────
-    await step.run('persist-checks-executed', async () => {
-      return withStepTimeout(async () => {
-      // SEO (head-tag/crawler parsing) always runs once a crawl succeeds.
-      const checksExecuted: string[] = ['SEO']
-      if (responsiveCheck?.ran) checksExecuted.push('Responsive')
-      if (parallelChecks.pagespeedRan) checksExecuted.push('Performance')
-      if (wcagCheck?.ran) checksExecuted.push('WCAG')
-      if (structuredDataResult?.ran) checksExecuted.push('Schema')
-
-      const db = getDb()
-      const { data: auditRow, error: fetchError } = await db
-        .from('audits')
-        .select('crawl_summary')
-        .eq('id', auditId)
-        .single()
-      if (fetchError) {
-        await auditLog(auditId, 'checks_executed_persist_failed', 'warning',
-          `Could not read crawl_summary to persist checks_executed: ${fetchError.message}`)
-        return { persisted: false, checksExecuted }
-      }
-      const mergedSummary = { ...((auditRow as any)?.crawl_summary || {}), checks_executed: checksExecuted }
-      const { error: updateError } = await db
-        .from('audits')
-        .update({ crawl_summary: mergedSummary, updated_at: new Date().toISOString() } as any)
-        .eq('id', auditId)
-      if (updateError) {
-        await auditLog(auditId, 'checks_executed_persist_failed', 'warning',
-          `Could not persist checks_executed into crawl_summary: ${updateError.message}`)
-        return { persisted: false, checksExecuted }
-      }
-      return { persisted: true, checksExecuted }
-      }, 15_000, 'persist-checks-executed', { persisted: false, checksExecuted: [] as string[] })
-    })
+    // NOTE: checks_executed is persisted at PIPELINE END (see the 'complete'
+    // step) — NOT here. Computing it now read the in-step `ran` flags, which
+    // are unreliable: when a browser check exceeds the site-checks budget,
+    // the step returns a fallback (ran:false) even though the check completed
+    // and inserted findings moments later. The end-of-pipeline computation
+    // uses ground-truth signals (audit_logs *_check_completed events +
+    // persisted detection_source) that survive timeouts and memoization.
 
     // ──────────────────────────────────────────────────────────
     // STEP 2j: Fix Playbooks (fast, depends on probe results)
@@ -4743,6 +4713,62 @@ RULES FOR RE-AUDIT:
     await step.run('complete', async () => {
       return withStepTimeout(async () => {
       const db = getDb()
+
+      // ── checks_executed (computed at pipeline end — ground truth) ──────
+      // Drives the 'Checks run' trust strip. Computed HERE, not in the
+      // site-checks step, because the in-step `ran` flags are unreliable
+      // under timeout (a browser check that exceeds budget returns a
+      // fallback even though it completed and inserted findings). These
+      // signals survive timeouts and Inngest memoization:
+      //   • audit_logs *_check_completed events — emitted by each check at
+      //     real completion, regardless of what the step returned
+      //   • distinct detection_source on persisted findings
+      //   • SEO always (a successful crawl means head-tag/crawler ran)
+      // computeChecksRun() in the trust layer prefers this list; the
+      // findings-derived path stays as the fallback for older audits.
+      try {
+        const checks = new Set<string>(['SEO'])
+        const { data: completionLogs } = await db
+          .from('audit_logs')
+          .select('event')
+          .eq('audit_id', auditId)
+          .in('event', ['responsive_check_completed', 'wcag_check_completed', 'pagespeed_completed'])
+        for (const row of (completionLogs || []) as any[]) {
+          if (row.event === 'responsive_check_completed') checks.add('Responsive')
+          else if (row.event === 'wcag_check_completed') checks.add('WCAG')
+          else if (row.event === 'pagespeed_completed') checks.add('Performance')
+        }
+        const { data: srcRows } = await db
+          .from('audit_findings')
+          .select('detection_source')
+          .eq('audit_id', auditId)
+        for (const row of (srcRows || []) as any[]) {
+          switch (row.detection_source) {
+            case 'responsive_checker': checks.add('Responsive'); break
+            case 'wcag_checker': checks.add('WCAG'); break
+            case 'pagespeed_api': checks.add('Performance'); break
+            case 'structured_data': checks.add('Schema'); break
+          }
+        }
+        // Structured-data probe returns reliably (not subject to the
+        // site-checks race) — covers a clean schema run with no findings.
+        if (structuredDataResult?.ran) checks.add('Schema')
+
+        const ORDER = ['SEO', 'Responsive', 'Performance', 'WCAG', 'Schema']
+        const checksExecuted = ORDER.filter((c) => checks.has(c))
+        const { data: aRow } = await db.from('audits').select('crawl_summary').eq('id', auditId).single()
+        const mergedSummary = { ...((aRow as any)?.crawl_summary || {}), checks_executed: checksExecuted }
+        const { error: ceErr } = await db
+          .from('audits')
+          .update({ crawl_summary: mergedSummary } as any)
+          .eq('id', auditId)
+        if (ceErr) {
+          await auditLog(auditId, 'checks_executed_persist_failed', 'warning',
+            `Could not persist checks_executed: ${ceErr.message}`)
+        }
+      } catch (ceCatch) {
+        console.error('[inngest] checks_executed computation failed (non-fatal):', ceCatch)
+      }
 
       // ATOMIC: Set status + completed_at in ONE call.
       // Previously these were two separate DB calls — if the second failed,

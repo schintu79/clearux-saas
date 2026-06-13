@@ -201,4 +201,31 @@ Priority order (all pure functions — fast to test, highest blast radius):
 
 ---
 
-*Maintained by: Stefano + Claude. Read alongside `CLAUDE_SESSION_GUIDE.md` at session start. Last full revision: 2026-06-11.*
+---
+
+## 10. Brand Consistency box (APPROVED 2026-06-13 — Phase 1 verified-layer feature)
+
+**What it is:** a dedicated "Brand Consistency" box on the audit that cross-references the customer's uploaded Brand DNA (the `brand_identities` record + files, which otherwise only display on the Brand DNA page) against the **live site**, and surfaces *real, evidenced* mismatches ranked by severity. Not a re-run of the brand audit — a consistency diff. "No speculation, only data that genuinely mismatches and hurts consistency/trust."
+
+**Scoring decision (Stefano, 2026-06-13):** Brand Consistency gets its **own score in its own box — it does NOT fold into the site health score.** Rationale: the health score must mean the same thing for every site regardless of whether brand files were uploaded (cross-site comparability is a core trust principle, §0.1). Folding brand fit into health would make two identical sites score differently based only on whether files exist. **Carve-out:** mismatches that genuinely harm *end-user* trust (e.g. logo/colour scheme that makes a page look unofficial, copy that contradicts stated positioning) ALSO surface as normal findings in Design Consistency / Trust, where they legitimately affect health. So: separate score, trust-harming subset double-surfaces as real findings.
+
+**Data model (confirmed):** `brand_identities` → `description` (text), `brand_voice` (text), `tone_keywords` (text[]), `primary_colors` (text[]), `logo_url` / `logo_file_id`. Plus `brand_identity_files`.
+
+**Provability per attribute (this is the whole game — anything not provable is noise and must not ship):**
+- **Colours** — provable ONLY with a measured live-site palette. There is currently NO deterministic colour extraction in the website pipeline (WCAG extracts contrast *pairs*, not a stored palette). V1 must add a colour-extraction step (dominant rendered colours) and diff declared `primary_colors` vs observed. Without it, colour findings are AI eyeballing = speculation → do not ship colour until the extractor exists.
+- **Voice / tone** — provable via quote-to-critique only: declared `brand_voice`/`tone_keywords` vs **quoted** live copy that contradicts them. The brand-analyzer already enforces this doctrine (bans "could not determine…" non-findings); reuse it, route output into the box.
+- **Logo / visuals** — deferred to V2 (needs vision tooling; presence/obvious-mismatch only, never aesthetic critique).
+
+**V1 scope (Stefano, 2026-06-13): Colours + quoted voice/tone.** Logo/visual comparison → V2.
+
+**Build sequencing (Claude's recommendation):** land the in-flight `report-honesty-batch` work first (Brand DNA toggle gate, site-checks race fix, checks_executed move) — committing a new feature on top of that uncommitted pile makes it unreviewable. Then build V1 on a clean branch, tests-first:
+1. Pure module `src/lib/scoring/brand-consistency.ts` — `compareBrandConsistency(declared, observed) → { mismatches[], score }`, fully unit-tested, no pipeline/UI deps. Colour-delta + quoted voice/tone matcher.
+2. Colour-extraction step feeding `observed` (the one genuinely new capability).
+3. Pipeline wiring (deep path only — gated like Brand DNA enrichment) + persistence.
+4. UI "Brand Consistency" box; double-surface the trust-harming subset as normal findings.
+
+**Acceptance:** on a site with uploaded brand files, the box shows only evidenced mismatches (measured colour deltas; quoted voice/tone contradictions), each with severity; zero "could not determine" entries; the box score never moves the health score; a trust-harming mismatch also appears as a normal finding.
+
+---
+
+*Maintained by: Stefano + Claude. Read alongside `CLAUDE_SESSION_GUIDE.md` at session start. Last full revision: 2026-06-13 (added §10 Brand Consistency box).*
