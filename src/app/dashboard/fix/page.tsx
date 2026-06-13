@@ -856,6 +856,37 @@ function FixPageInner() {
 
   const hasActiveFilters = query.trim() || moduleFilter !== 'all' || sevFilter !== 'all' || statusFilter !== 'all';
 
+  // Export the current fix queue as a Markdown handoff doc. Extracted from an
+  // inline button so it can live in the page heading (black CTA, top-right —
+  // consistent with other pages) and be reused by the Find page.
+  const handleExportFixes = () => {
+    const exportFindings = prepareFindingsForExport(filteredGroups, PHASE1_MODULES);
+    const siteName = workspace?.primary_domain || workspace?.name || 'brand';
+    const siteHostname = workspace?.primary_domain || '';
+    const auditDate = bundle.audit?.completed_at || bundle.audit?.created_at || new Date().toISOString();
+    const auditId = bundle.audit?.id || 'unknown';
+
+    // Run the full export pipeline: dedup → enrich → classify → group
+    const { clusters, originalCount, uniqueCount } = processExportPipeline(exportFindings, siteHostname);
+
+    // Build metadata from the deduplicated findings
+    const dedupedFindings = clusters.flatMap((c) => c.members);
+    const meta = buildExportMeta(dedupedFindings, siteName, auditDate, auditId, { originalCount, uniqueCount });
+    const md = renderMarkdown(dedupedFindings, meta, clusters);
+
+    const blob = new Blob([md], { type: 'text/markdown;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const hostname = workspace?.primary_domain || 'brand';
+    const dateStr = new Date().toISOString().slice(0, 10);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `fixpath-fixes-${hostname}-${dateStr}.md`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  };
+
   return (
     <div>
       <OverviewBreadcrumb current="Fix" />
@@ -863,7 +894,18 @@ function FixPageInner() {
         icon={<Wrench size={18} strokeWidth={1.75} style={{ color: 'var(--ink)' }} />}
         title="Fix"
         subtitle="Your action queue. Select a finding to resolve, deploy, or hand off to your team."
-      />
+      >
+        {groups.length > 0 && (
+          <button
+            onClick={handleExportFixes}
+            className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-[13px] font-semibold transition-opacity hover:opacity-90"
+            style={{ background: 'var(--ink)', color: 'var(--paper)' }}
+          >
+            <Download size={14} strokeWidth={2} />
+            Export fixes
+          </button>
+        )}
+      </PageHeader>
 
       {/* Trust layer — page-level confidence strip */}
       <AuditConfidenceStrip
@@ -871,51 +913,6 @@ function FixPageInner() {
         crawlSummary={(bundle.audit as any)?.crawl_summary as CrawlSummary | null ?? null}
         className="mb-4"
       />
-
-      {groups.length > 0 && (
-        <div className="flex items-center gap-3 mb-4">
-          <button
-            onClick={() => {
-              const exportFindings = prepareFindingsForExport(filteredGroups, PHASE1_MODULES);
-              const siteName = workspace?.primary_domain || workspace?.name || 'brand';
-              const siteHostname = workspace?.primary_domain || '';
-              const auditDate = bundle.audit?.completed_at || bundle.audit?.created_at || new Date().toISOString();
-              const auditId = bundle.audit?.id || 'unknown';
-
-              // Run the full export pipeline: dedup → enrich → classify → group
-              const { clusters, originalCount, uniqueCount } = processExportPipeline(exportFindings, siteHostname);
-
-              // Build metadata from the deduplicated findings
-              const dedupedFindings = clusters.flatMap((c) => c.members);
-              const meta = buildExportMeta(dedupedFindings, siteName, auditDate, auditId, { originalCount, uniqueCount });
-              const md = renderMarkdown(dedupedFindings, meta, clusters);
-
-              const blob = new Blob([md], { type: 'text/markdown;charset=utf-8' });
-              const url = URL.createObjectURL(blob);
-              const hostname = workspace?.primary_domain || 'brand';
-              const dateStr = new Date().toISOString().slice(0, 10);
-              const a = document.createElement('a');
-              a.href = url;
-              a.download = `fixpath-fixes-${hostname}-${dateStr}.md`;
-              document.body.appendChild(a);
-              a.click();
-              document.body.removeChild(a);
-              URL.revokeObjectURL(url);
-            }}
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-[12px] font-medium transition-colors"
-            style={{
-              border: '1px solid var(--rule)',
-              color: 'var(--ink)',
-              background: 'transparent',
-            }}
-            onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(0,0,0,0.04)'; }}
-            onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; }}
-          >
-            <Download size={13} strokeWidth={1.75} />
-            Export fixes
-          </button>
-        </div>
-      )}
 
       {groups.length === 0 ? (
         <div
