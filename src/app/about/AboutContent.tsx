@@ -6,7 +6,7 @@ import { HomeCta } from '@/components/marketing/HomeCta'
 
 export default function AboutContent() {
   return (
-    <main>
+    <main id="main-content">
       {/* Section 00 — Mission */}
       <section className="py-[100px] border-b border-rule max-sm:py-16">
         <div className="max-w-mkt mx-auto px-8 max-sm:px-5 text-center">

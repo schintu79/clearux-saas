@@ -45,7 +45,7 @@ export default function ContactContent() {
   const inputBase = 'w-full bg-paper-2 border border-rule text-ink placeholder:text-m-muted focus:border-ink focus:outline-none font-sans text-[15px] transition-colors'
 
   return (
-    <main>
+    <main id="main-content">
       {/* Hero + Form */}
       <section className="py-[100px] border-b border-rule max-sm:py-16">
         <div className="max-w-mkt mx-auto px-8 max-sm:px-5">

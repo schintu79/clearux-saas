@@ -40,7 +40,7 @@ export default function HomePage() {
     <MarketingBody>
       <HomeJsonLd />
       <Nav />
-      <main>
+      <main id="main-content">
         <HomeHero />
         <HomeTrustStrip />
         <HomeWorkflow />
