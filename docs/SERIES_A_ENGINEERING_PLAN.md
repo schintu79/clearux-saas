@@ -132,7 +132,13 @@ Priority order (all pure functions — fast to test, highest blast radius):
 
 **Goal:** convert episodic audits into a monitoring subscription. This is the revenue heartbeat.
 
-1. **Scheduled re-measurement** on `scheduled_audits` (exists, unused): weekly light run = benchmark interrogation (free models) + crawl-delta of key pages + CWV. Costs cents; runs via Inngest cron with per-workspace fairness.
+1. **Scheduled re-measurement** on `scheduled_audits` (exists, unused). **DESIGN LOCKED 2026-06-13:**
+   - **Cadence is USER-chosen, per brand** (Stefano's call): Off / Weekly / Monthly. Stored in the existing table — `is_active=false` = Off; `is_active=true` + `frequency` ∈ {`weekly`,`monthly`}. Table already has `frequency, is_active, next_run_at, last_run_at, workspace_id, user_id, product_url` → **no migration for the core** (optional: add `brand_identity_id` + a frequency CHECK).
+   - **Control UI** on the Track page ("Monitoring: Off/Weekly/Monthly" per brand) → writes the schedule + computes `next_run_at`.
+   - **Run type (V1): reuse the existing standard re-audit pipeline** — produces a complete, comparable data point and enables alerts immediately. Cost-optimised "light run" (deterministic + free-model interrogation + crawl-delta only) is a fast-follow, not V1.
+   - **Access/billing: paid plans only; scheduled runs are INCLUDED (do NOT consume audit credits).** The cron trigger must start the audit on a monitoring path that bypasses the credit check/deduction (integration point: the audit-start credit logic).
+   - **Mechanism:** daily cron (Vercel cron like the existing stall-sweep, or Inngest cron) finds due brands (`is_active && next_run_at <= now`), triggers a standard re-audit each with **per-workspace fairness** (Inngest concurrency keyed by workspace), rolls `next_run_at` forward by cadence, sets `last_run_at`. Idempotent + must not double-fire.
+   - **Build order:** (a) schedule API + Track "Monitoring" control; (b) cron runner + credit-bypass monitoring trigger + fairness; (c) verify a due schedule fires one audit and rolls forward.
 2. **Regression alerts**: score drop ≥N, new high-severity finding, **AI answer flip** (diff stored benchmark answers vs previous run — "DeepSeek stopped calling you legitimate" is the single most viral alert in this market).
 3. **Weekly digest** (Resend exists; `notifications` table exists): deltas, open-issue aging, "fixes that moved your numbers."
 4. **Track page upgrade**: per-metric trends (accuracy, visibility, score, CWV) from stored runs — read-only over data Phase 0–1 already persists.
