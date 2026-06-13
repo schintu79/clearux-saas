@@ -67,7 +67,6 @@ const NewAuditInner: React.FC = () => {
   // Design consistency — workspace-scoped Brand DNA enrichment check
   const [workspaceBrandId, setWorkspaceBrandId] = useState<string | null>(null);
   const [workspaceBrandHasFiles, setWorkspaceBrandHasFiles] = useState(false);
-  const [includeBrandConsistency, setIncludeBrandConsistency] = useState(false);
 
   // When workspace loads with a primary_domain, auto-fill url if still empty
   useEffect(() => {
@@ -183,32 +182,10 @@ const NewAuditInner: React.FC = () => {
     return () => { cancelled = true; clearTimeout(timer); };
   }, [url, user, auditType, depthParam]);
 
-  // Brand DNA comparison runs only when the pipeline resolves to DEEP.
-  // effectiveDepthMode (process-audit.ts) = deep for new-brand initial
-  // audits (no previous findings) and explicit deep/dig-deeper runs, but
-  // BASELINE for a standard re-audit — and the baseline path skips Brand
-  // DNA entirely. So the only case where the toggle is a false promise is
-  // a standard re-audit. Disable + explain it there instead of letting the
-  // user arm it and discover the skip in a post-hoc limitation note.
-  const brandDnaRunsAtThisDepth = !(isReAuditMode && depthMode === 'standard');
-  const brandDnaSelectable = workspaceBrandHasFiles && brandDnaRunsAtThisDepth;
-
-  // Force the toggle off whenever it isn't selectable (e.g. user switches a
-  // re-audit from Deep back to Standard after checking it).
-  useEffect(() => {
-    if (!brandDnaSelectable && includeBrandConsistency) {
-      setIncludeBrandConsistency(false);
-    }
-  }, [brandDnaSelectable, includeBrandConsistency]);
-
-  // Auto-add brand_consistency when checkbox is checked; remove when unchecked
-  useEffect(() => {
-    if (includeBrandConsistency && !selectedModules.includes('brand_consistency')) {
-      setSelectedModules((prev) => [...prev, 'brand_consistency']);
-    } else if (!includeBrandConsistency && selectedModules.includes('brand_consistency')) {
-      setSelectedModules((prev) => prev.filter((s) => s !== 'brand_consistency'));
-    }
-  }, [includeBrandConsistency]);
+  // Brand DNA control was removed from the audit page (2026-06-13). When the
+  // workspace has a brand with completed DNA, it is attached automatically and
+  // runs in every audit; the only control is the per-brand "Include in audits"
+  // toggle on the Brand DNA page. No audit-page state needed.
 
   if (userLoading) {
     return (
@@ -272,11 +249,7 @@ const NewAuditInner: React.FC = () => {
     if (isCompleteAudit) {
       setSelectedModules([]);
     } else {
-      const next = [...COMPLETE_AUDIT_SLUGS];
-      if (includeBrandConsistency && !next.includes('brand_consistency')) {
-        next.push('brand_consistency');
-      }
-      setSelectedModules(next);
+      setSelectedModules([...COMPLETE_AUDIT_SLUGS]);
     }
   };
 
@@ -422,12 +395,12 @@ const NewAuditInner: React.FC = () => {
         insertPayload.product_url = productUrl;
         insertPayload.depth_mode = (isReAuditMode || isDigDeeperMode) ? depthMode : 'standard';
         insertPayload.selected_modules = selectedModules;
-        // Use workspace brand if design consistency Brand DNA is checked, otherwise
-        // auto-create (or reuse) a brand for this domain so the sidebar
-        // always has a proper brand tab for the user to navigate to.
-        const brandId = (includeBrandConsistency && workspaceBrandId)
-          ? workspaceBrandId
-          : await ensureBrandForWebsite(productUrl);
+        // Always attach the workspace brand when one exists, so its Brand DNA
+        // auto-runs in every audit (2026-06-13 — the opt-in checkbox was
+        // removed; the per-brand "Include in audits" toggle on the Brand DNA
+        // page is the only control now). Otherwise auto-create/reuse a brand
+        // for this domain so the sidebar always has a proper brand tab.
+        const brandId = workspaceBrandId || await ensureBrandForWebsite(productUrl);
         if (brandId) {
           insertPayload.brand_identity_id = brandId;
           resolvedBrandIdRef.current = brandId;
@@ -720,63 +693,24 @@ const NewAuditInner: React.FC = () => {
             )}
           </div>
 
-          {/* Brand DNA comparison — opt-in to compare against uploaded brand guidelines.
-              Selectable only when (a) the workspace has brand files AND (b) the run
-              will be deep — a standard re-audit resolves to baseline, which skips it. */}
-          <div className="mb-6">
-            <label
-              className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${
-                brandDnaSelectable ? 'cursor-pointer hover:bg-surface' : 'opacity-50 cursor-not-allowed'
-              }`}
-              style={{ border: '1px solid var(--rule)', background: includeBrandConsistency ? 'color-mix(in srgb, var(--ok) 4%, transparent)' : 'transparent' }}
+          {/* Brand DNA now runs automatically when the workspace brand has
+              completed files. The control (Include in audits) lives on the
+              Brand DNA page — no audit-page opt-in. */}
+          {workspaceBrandHasFiles && (
+            <div
+              className="mb-6 flex items-start gap-2.5 px-4 py-3 rounded-xl"
+              style={{ border: '1px solid var(--rule)', background: 'color-mix(in srgb, var(--ok) 4%, transparent)' }}
             >
-              <input
-                type="checkbox"
-                checked={includeBrandConsistency}
-                disabled={!brandDnaSelectable}
-                onChange={(e) => setIncludeBrandConsistency(e.target.checked)}
-                className="sr-only"
-              />
-              <div
-                className="w-5 h-5 rounded flex items-center justify-center flex-shrink-0 transition-colors"
-                style={includeBrandConsistency ? { background: 'var(--ok)' } : { border: '2px solid var(--rule)' }}
-              >
-                {includeBrandConsistency && <Check size={12} className="text-white" />}
-              </div>
-              <div className="flex-1 min-w-0">
-                <span className="text-sm font-medium" style={{ color: 'var(--ink)' }}>
-                  Include Brand DNA comparison
-                </span>
-                {!workspaceBrandHasFiles ? (
-                  <p className="text-xs mt-0.5" style={{ color: 'var(--m-muted)' }}>
-                    Upload brand files on the{' '}
-                    <Link href={`${dashPrefix}/brand-dna`} className="font-medium hover:underline" style={{ color: 'var(--ink)' }}>
-                      Brand DNA tab
-                    </Link>{' '}
-                    to enable Brand DNA comparison. Design Consistency will still run based on your website's internal visual consistency.
-                  </p>
-                ) : !brandDnaRunsAtThisDepth ? (
-                  <p className="text-xs mt-0.5" style={{ color: 'var(--m-muted)' }}>
-                    Brand DNA comparison runs in <strong>Deep</strong> analysis only. A Standard re-audit
-                    reuses previous findings for score stability and skips fresh brand analysis.{' '}
-                    <button
-                      type="button"
-                      onClick={() => setDepthMode('deep')}
-                      className="font-medium hover:underline"
-                      style={{ color: 'var(--ink)' }}
-                    >
-                      Switch to Deep
-                    </button>{' '}
-                    to include it. Design Consistency still runs either way.
-                  </p>
-                ) : (
-                  <p className="text-xs mt-0.5" style={{ color: 'var(--m-muted)' }}>
-                    Compare your website against uploaded brand guidelines. Without this, Design Consistency still runs but scores based on the website's own internal visual consistency.
-                  </p>
-                )}
-              </div>
-            </label>
-          </div>
+              <Check size={16} style={{ color: 'var(--ok)' }} className="flex-shrink-0 mt-0.5" />
+              <p className="text-xs" style={{ color: 'var(--m-muted)' }}>
+                Your{' '}
+                <Link href={`${dashPrefix}/brand-dna`} className="font-medium hover:underline" style={{ color: 'var(--ink)' }}>
+                  Brand DNA
+                </Link>{' '}
+                is included in this audit automatically. Turn it off any time from the Brand DNA page.
+              </p>
+            </div>
+          )}
         </>
       )}
 

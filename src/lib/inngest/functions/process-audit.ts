@@ -2710,6 +2710,14 @@ RULES FOR RE-AUDIT:
     // Helper: check if a brand identity has meaningful content beyond auto-populated fields
     async function hasMeaningfulBrandDna(brandIdentityId: string): Promise<boolean> {
       const db = getDb()
+      // Per-brand opt-out (Brand DNA page → "Include in audits"). When off,
+      // Brand DNA is excluded from the audit even if files exist. Defaults on.
+      const { data: flagRow } = await db
+        .from('brand_identities')
+        .select('include_in_audits')
+        .eq('id', brandIdentityId)
+        .single()
+      if (flagRow && (flagRow as any).include_in_audits === false) return false
       // Check for uploaded brand files
       const { count } = await db
         .from('brand_identity_files')
@@ -4740,11 +4748,13 @@ RULES FOR RE-AUDIT:
         if (auditDetails.brandIdentityId) {
           const { data: bi, error: biErr } = await db
             .from('brand_identities')
-            .select('primary_colors, brand_voice, tone_keywords')
+            .select('primary_colors, brand_voice, tone_keywords, include_in_audits')
             .eq('id', auditDetails.brandIdentityId)
             .single()
           if (biErr) {
             console.warn('[brand-consistency] brand_identities fetch failed:', biErr.message)
+          } else if (bi && (bi as any).include_in_audits === false) {
+            // Per-brand opt-out — skip Brand Consistency entirely.
           } else if (bi) {
             const declared = {
               colors: Array.isArray((bi as any).primary_colors) ? (bi as any).primary_colors as string[] : [],

@@ -21,7 +21,7 @@
  */
 
 import React, { useState } from 'react'
-import { ShieldCheck } from 'lucide-react'
+import { ShieldCheck, ChevronDown } from 'lucide-react'
 import type { AuditFinding, CrawlSummary } from '@/types/database'
 import {
   computeAuditTrustSummary,
@@ -57,6 +57,10 @@ export interface BrandConsistencyData {
 }
 
 export function BrandConsistencyPanel({ data, className = '' }: { data: BrandConsistencyData | null; className?: string }) {
+  // Collapsed by default (2026-06-13) to save vertical space — the header
+  // shows the score + issue count; clicking expands the details.
+  const [open, setOpen] = useState(false)
+
   if (!data || !Array.isArray(data.attributesChecked) || data.attributesChecked.length === 0) return null
 
   const sevColor: Record<string, string> = { high: 'var(--severe)', medium: 'var(--warn)', low: 'var(--m-muted)' }
@@ -64,43 +68,55 @@ export function BrandConsistencyPanel({ data, className = '' }: { data: BrandCon
     .map((a) => (a === 'color' ? 'colours' : a === 'voice' ? 'voice & tone' : a))
     .join(' · ')
   const scoreColor = data.score >= 80 ? 'var(--ok)' : data.score >= 60 ? 'var(--warn)' : 'var(--severe)'
+  const issueCount = data.mismatches.length
+  const summary = issueCount === 0 ? 'On brand' : `${issueCount} ${issueCount === 1 ? 'mismatch' : 'mismatches'}`
 
   return (
     <div className={`rounded-xl overflow-hidden ${className}`} style={{ border: '1px dashed color-mix(in srgb, var(--ink) 22%, transparent)', background: 'var(--card)' }}>
-      <div className="px-4 py-3 flex items-start justify-between gap-3" style={{ borderBottom: data.mismatches.length > 0 ? '1px solid var(--rule)' : undefined }}>
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        aria-expanded={open}
+        className="w-full px-4 py-3 flex items-center justify-between gap-3 text-left transition-colors hover:bg-ink/[0.02]"
+      >
         <div className="flex items-start gap-2.5 min-w-0">
           <ShieldCheck size={16} style={{ color: 'var(--m-muted)' }} className="flex-shrink-0 mt-0.5" />
           <div className="min-w-0">
             <h3 className="text-[13px] font-semibold leading-tight" style={{ color: 'var(--ink)' }}>Brand Consistency</h3>
             <p className="text-[11px] mt-0.5" style={{ color: 'var(--m-muted)' }}>
-              Your live site vs your declared Brand DNA · checked: {checkedLabel} · separate score, does not affect your health score
+              {summary} · checked: {checkedLabel} · separate score, does not affect your health score
             </p>
           </div>
         </div>
-        <div className="flex items-baseline gap-1 flex-shrink-0">
-          <span className="text-[20px] font-bold tabular-nums leading-none" style={{ color: scoreColor }}>{data.score}</span>
-          <span className="text-[10px]" style={{ color: 'var(--m-muted)' }}>/100</span>
+        <div className="flex items-center gap-2.5 flex-shrink-0">
+          <div className="flex items-baseline gap-1">
+            <span className="text-[20px] font-bold tabular-nums leading-none" style={{ color: scoreColor }}>{data.score}</span>
+            <span className="text-[10px]" style={{ color: 'var(--m-muted)' }}>/100</span>
+          </div>
+          <ChevronDown size={15} style={{ color: 'var(--m-muted)' }} className={`transition-transform ${open ? 'rotate-180' : ''}`} />
         </div>
-      </div>
+      </button>
 
-      {data.mismatches.length === 0 ? (
-        <div className="px-4 py-2.5 flex items-center gap-2 text-[12px]" style={{ color: 'var(--ok)' }}>
-          <ShieldCheck size={13} />
-          <span>On brand — no mismatches found against your declared Brand DNA.</span>
-        </div>
-      ) : (
-        <ul className="divide-y" style={{ borderColor: 'var(--rule)' }}>
-          {data.mismatches.map((m, i) => (
-            <li key={i} className="px-4 py-3 flex items-start gap-2.5">
-              <span className="w-1.5 h-1.5 rounded-full flex-shrink-0 mt-1.5" style={{ background: sevColor[m.severity] || 'var(--m-muted)' }} />
-              <div className="min-w-0">
-                <p className="text-[12.5px] font-medium leading-tight" style={{ color: 'var(--ink)' }}>{m.title}</p>
-                <p className="text-[11px] mt-0.5 leading-snug" style={{ color: 'var(--m-muted)' }}>{m.detail}</p>
-                <p className="text-[10.5px] mt-1 leading-snug font-mono break-words" style={{ color: 'var(--m-muted)' }}>{m.evidence}</p>
-              </div>
-            </li>
-          ))}
-        </ul>
+      {open && (
+        data.mismatches.length === 0 ? (
+          <div className="px-4 py-2.5 flex items-center gap-2 text-[12px]" style={{ color: 'var(--ok)', borderTop: '1px solid var(--rule)' }}>
+            <ShieldCheck size={13} />
+            <span>On brand — no mismatches found against your declared Brand DNA.</span>
+          </div>
+        ) : (
+          <ul className="divide-y" style={{ borderColor: 'var(--rule)', borderTop: '1px solid var(--rule)' }}>
+            {data.mismatches.map((m, i) => (
+              <li key={i} className="px-4 py-3 flex items-start gap-2.5">
+                <span className="w-1.5 h-1.5 rounded-full flex-shrink-0 mt-1.5" style={{ background: sevColor[m.severity] || 'var(--m-muted)' }} />
+                <div className="min-w-0">
+                  <p className="text-[12.5px] font-medium leading-tight" style={{ color: 'var(--ink)' }}>{m.title}</p>
+                  <p className="text-[11px] mt-0.5 leading-snug" style={{ color: 'var(--m-muted)' }}>{m.detail}</p>
+                  <p className="text-[10.5px] mt-1 leading-snug font-mono break-words" style={{ color: 'var(--m-muted)' }}>{m.evidence}</p>
+                </div>
+              </li>
+            ))}
+          </ul>
+        )
       )}
     </div>
   )

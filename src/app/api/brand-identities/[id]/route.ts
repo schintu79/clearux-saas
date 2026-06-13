@@ -104,6 +104,43 @@ export async function PUT(
   }
 }
 
+/* ── PATCH — toggle "Include in audits" (2026-06-13) ──────────
+ * Focused endpoint for the Brand DNA page toggle. Unlike PUT it does not
+ * require a name, so it's a clean one-field flip. When off, the audit
+ * pipeline excludes this brand's DNA enrichment + Brand Consistency. */
+export async function PATCH(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> },
+) {
+  try {
+    const { id } = await params
+    const supabase = await createServerSupabase()
+    const { data: { user }, error: authError } = await supabase.auth.getUser()
+    if (authError || !user)
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+
+    const body = await request.json().catch(() => ({}))
+    if (typeof body?.include_in_audits !== 'boolean')
+      return NextResponse.json({ error: 'include_in_audits (boolean) required' }, { status: 400 })
+
+    const db = createServiceSupabase()
+    const existing = await safeFetchBrandOwner(db, id)
+    if (!existing || existing.user_id !== user.id)
+      return NextResponse.json({ error: 'Not found' }, { status: 404 })
+
+    const { error } = await db
+      .from('brand_identities')
+      .update({ include_in_audits: body.include_in_audits, updated_at: new Date().toISOString() } as any)
+      .eq('id', id)
+    if (error) throw error
+
+    return NextResponse.json({ ok: true, include_in_audits: body.include_in_audits })
+  } catch (err) {
+    console.error('PATCH /api/brand-identities/[id] error:', err)
+    return NextResponse.json({ error: 'Failed to update' }, { status: 500 })
+  }
+}
+
 /* ── DELETE — soft-delete brand identity ──────────────────── */
 /**
  * Sets `deleted_at` on the brand and all its associated audits.
