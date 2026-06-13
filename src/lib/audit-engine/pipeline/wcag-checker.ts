@@ -936,9 +936,16 @@ async function runAxe(page: Page): Promise<AxeRunResult> {
     return { violations: [], error: `axe.source unavailable (len 0) — import/bundle issue` }
   }
   try {
-    // Inject axe-core into the page context. page.evaluate(string) runs via
-    // CDP Runtime.evaluate, so it is NOT blocked by the page's CSP.
-    await page.evaluate(AXE_SOURCE)
+    // Inject axe-core into the page context. axe.source is a CJS/UMD bundle
+    // that references a bare `exports` — evaluating it raw throws "exports is
+    // not defined". Wrap it with a module/exports shim and promote the result
+    // onto window.axe. page.evaluate(string) runs via CDP Runtime.evaluate, so
+    // it is NOT blocked by the page's CSP.
+    const wrapped =
+      '(function(){var module={exports:{}};var exports=module.exports;\n' +
+      AXE_SOURCE +
+      '\n;window.axe=window.axe||module.exports.axe||module.exports;})();'
+    await page.evaluate(wrapped)
     const result = await page.evaluate(async () => {
       // @ts-expect-error — axe is injected onto window above.
       if (!window.axe) throw new Error('window.axe undefined after inject')
