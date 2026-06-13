@@ -327,9 +327,15 @@ export async function captureAuditScreenshots(
   //    Without: fall back to page-level screenshots so findings still have visuals
   const hasAdvancedCapture = !!(process.env.SCREENSHOTONE_API_KEY || process.env.SCREENSHOT_INTERNAL_KEY)
 
+  // Prioritise findings that carry a selector — those yield crisp
+  // element-highlighted "here's the exact broken element" evidence (axe and
+  // the other deterministic checks). Severity breaks ties within each group.
+  const order: Record<string, number> = { critical: 0, high: 1, medium: 2, low: 3 }
   const prioritized = [...findings]
     .sort((a, b) => {
-      const order: Record<string, number> = { critical: 0, high: 1, medium: 2, low: 3 }
+      const aSel = a.targetElement ? 0 : 1
+      const bSel = b.targetElement ? 0 : 1
+      if (aSel !== bSel) return aSel - bSel
       return (order[a.severity] ?? 4) - (order[b.severity] ?? 4)
     })
     .slice(0, maxFindingScreenshots)

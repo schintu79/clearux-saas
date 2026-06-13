@@ -5346,7 +5346,7 @@ RULES FOR RE-AUDIT:
             findingsToCapture,
             mainUrl,
             auditId,
-            5,
+            8, // 2026-06-13: 5→8 so selector-bearing deterministic findings (axe etc.) reliably get element-highlighted shots
           )
 
           // Batch update page screenshots in parallel
