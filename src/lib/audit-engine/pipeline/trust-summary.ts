@@ -118,7 +118,7 @@ export function evidenceDisplayLabel(type: EvidenceType): 'Verified' | 'AI-asses
 /** Check if detection source is deterministic (parser/validator/checker) */
 function isDeterministicSource(source: string | null): boolean {
   if (!source) return false
-  return ['wcag_checker', 'structured_data', 'head_tag', 'crawler', 'responsive_checker', 'performance_checker', 'pagespeed_api'].includes(source)
+  return ['wcag_checker', 'axe', 'structured_data', 'head_tag', 'crawler', 'responsive_checker', 'performance_checker', 'pagespeed_api'].includes(source)
 }
 
 /**
@@ -133,6 +133,8 @@ export function mapSourceLabel(detectionSource: string | null): string {
       return 'Browser test'
     case 'wcag_checker':
       return 'WCAG checker'
+    case 'axe':
+      return 'Accessibility scan (axe-core)'
     case 'structured_data':
       return 'Schema validator'
     case 'head_tag':
@@ -162,6 +164,7 @@ export function mapVerificationMethod(detectionSource: string | null): Verificat
     case 'responsive_checker':
       return 'browser'
     case 'wcag_checker':
+    case 'axe':
       return 'validator'
     case 'crawler':
     case 'performance_checker':
@@ -321,7 +324,7 @@ export function computeChecksRun(findings: AuditFinding[], executedChecks?: stri
 
   // Map detection sources to user-friendly check names
   if (sources.has('head_tag') || sources.has('crawler')) checks.push('SEO')
-  if (sources.has('wcag_checker')) checks.push('WCAG')
+  if (sources.has('wcag_checker') || sources.has('axe')) checks.push('WCAG')
   if (sources.has('structured_data')) checks.push('Schema')
   if (sources.has('performance_checker') || sources.has('pagespeed_api')) checks.push('Performance')
   if (sources.has('responsive_checker')) checks.push('Responsive')
