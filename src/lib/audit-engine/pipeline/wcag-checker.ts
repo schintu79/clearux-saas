@@ -20,6 +20,8 @@
 
 import puppeteer, { type Browser, type Page } from 'puppeteer-core'
 import { launchAuditBrowser } from '@/lib/audit-engine/browser-launcher'
+import axe from 'axe-core'
+import { mapAxeViolationsToFindings, type AxeMappedFinding, type AxeViolation } from './axe-mapper'
 
 /* ── WCAG 2.1 AA Criteria Taxonomy ─────────────────────────── */
 
@@ -911,6 +913,30 @@ async function extractColorFrequencies(page: Page): Promise<Array<{ key: string;
   })
 }
 
+/* ── axe-core run (Phase 1, item 1) ─────────────────────────────
+ * Injects the axe-core source into the rendered page and runs the WCAG 2.0/
+ * 2.1 A+AA ruleset. Deterministic, instrument-measured accessibility
+ * violations — the lever that lifts the verified evidence mix. The inner
+ * evaluate is self-contained (only references window.axe it just injected)
+ * so webpack minification can't break it. Fully non-fatal. */
+async function runAxe(page: Page): Promise<AxeViolation[]> {
+  try {
+    // Inject the axe-core library into the page context.
+    await page.evaluate(axe.source as string)
+    const result = await page.evaluate(async () => {
+      // @ts-expect-error — axe is injected onto window above.
+      return await window.axe.run(document, {
+        resultTypes: ['violations'],
+        runOnly: { type: 'tag', values: ['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa'] },
+      })
+    })
+    return ((result as any)?.violations || []) as AxeViolation[]
+  } catch (err) {
+    console.warn('[wcag-checker] axe-core run failed (non-fatal):', (err as Error)?.message)
+    return []
+  }
+}
+
 /** "12,34,56" → "#0c2238" */
 function rgbKeyToHex(key: string): string | null {
   const parts = key.split(',').map((n) => parseInt(n, 10))
@@ -926,17 +952,26 @@ export async function checkWcagAutomated(
   heuristicPrompts: Map<string, string>
   /** Top observed site colours (hex), most-frequent first — for Brand Consistency. */
   siteColors: string[]
+  /** Deterministic axe-core accessibility violations mapped to findings (Phase 1). */
+  axeFindings: AxeMappedFinding[]
 }> {
   const automatedResults = new Map<string, WcagCheckResult[]>()
   const heuristicPrompts = new Map<string, string>()
   const colorFreq = new Map<string, number>()
+  const axeFindings: AxeMappedFinding[] = []
   const pagesToCheck = urls.slice(0, maxPages)
 
   let browser: Browser | null = null
   try {
     browser = await launchBrowser()
 
-    for (const url of pagesToCheck) {
+    // axe injects a ~1.3MB script per page; bound it to the first 2 pages to
+    // cap the latency added to this (already slow) browser pass so the
+    // per-check timeout isn't blown. Template issues recur across pages, so
+    // the homepage + one deep page catch the overwhelming majority.
+    const AXE_MAX_PAGES = 2
+    for (let pageIdx = 0; pageIdx < pagesToCheck.length; pageIdx++) {
+      const url = pagesToCheck[pageIdx]
       let page: Page | null = null
       try {
         page = await browser.newPage()
@@ -954,6 +989,15 @@ export async function checkWcagAutomated(
           for (const f of freqs) colorFreq.set(f.key, (colorFreq.get(f.key) || 0) + f.count)
         } catch (palErr) {
           console.warn(`[wcag-checker] palette extraction failed for ${url}:`, (palErr as Error)?.message)
+        }
+
+        // Deterministic axe-core violations (non-fatal) → mapped findings.
+        // Bounded to the first AXE_MAX_PAGES pages to cap added latency.
+        if (pageIdx < AXE_MAX_PAGES) {
+          const axeViolations = await runAxe(page)
+          if (axeViolations.length > 0) {
+            axeFindings.push(...mapAxeViolationsToFindings(axeViolations, url))
+          }
         }
 
         // Get page HTML for heuristic prompt
@@ -978,7 +1022,12 @@ export async function checkWcagAutomated(
     .map(([key]) => rgbKeyToHex(key))
     .filter((c): c is string => c != null)
 
-  return { automatedResults, heuristicPrompts, siteColors }
+  // Cap total axe findings across pages, highest-severity first (the mapper
+  // already caps per page; this bounds the cross-page total).
+  const SEV_RANK: Record<string, number> = { critical: 0, high: 1, medium: 2, low: 3 }
+  axeFindings.sort((a, b) => SEV_RANK[a.severity] - SEV_RANK[b.severity])
+
+  return { automatedResults, heuristicPrompts, siteColors, axeFindings: axeFindings.slice(0, 30) }
 }
 
 

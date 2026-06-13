@@ -1669,7 +1669,7 @@ Return 2-6 findings. Be specific and evidence-based. Reference specific files/co
       const wcagPromise = (async () => {
         try {
           const maxUrls = auditDetails.plan === 'free_preview' ? 1 : 3
-          const { automatedResults, heuristicPrompts, siteColors } = await checkWcagAutomated(crawlResult.crawledUrls, maxUrls)
+          const { automatedResults, heuristicPrompts, siteColors, axeFindings } = await checkWcagAutomated(crawlResult.crawledUrls, maxUrls)
 
           const heuristicResults = new Map<string, WcagCheckResult[]>()
           // LEAN PIPELINE: Skip WCAG heuristic AI calls — automated checks still run.
@@ -1704,7 +1704,14 @@ Return 2-6 findings. Be specific and evidence-based. Reference specific files/co
 
           const wcagResult = buildWcagResults(automatedResults, heuristicResults)
 
-          if (wcagResult.totalFindings > 0) {
+          // axe-core (deterministic) wins over the custom checker for any WCAG
+          // criterion it already covers — drop the custom finding for that
+          // criterion so the same issue isn't reported twice (Phase 1).
+          const axeCriteria = new Set(
+            (axeFindings || []).map((f) => f.wcagCriterion).filter((c): c is string => !!c),
+          )
+
+          if (wcagResult.totalFindings > 0 || (axeFindings && axeFindings.length > 0)) {
             const db = getDb()
             const { data: existingFindings } = await db
               .from('audit_findings')
@@ -1718,6 +1725,8 @@ Return 2-6 findings. Be specific and evidence-based. Reference specific files/co
             const wcagInserts: any[] = []
             for (const page of wcagResult.pages) {
               for (const finding of page.findings) {
+                // Dedup: axe owns this criterion, skip the custom version.
+                if (finding.wcagCriterion && axeCriteria.has(finding.wcagCriterion)) continue
                 const cls = classifyFinding({
                   title: finding.title,
                   description: finding.description,
@@ -1755,6 +1764,41 @@ Return 2-6 findings. Be specific and evidence-based. Reference specific files/co
             }
             if (wcagInserts.length > 0) {
               await insertFindingsChecked(db, auditId, wcagInserts, 'wcag')
+            }
+
+            // ── axe-core deterministic findings (Phase 1, item 1) ──
+            if (axeFindings && axeFindings.length > 0) {
+              const axeInserts = axeFindings.map((f) => {
+                const cls = classifyFinding({
+                  title: f.title, description: f.description,
+                  recommendation: f.recommendation, severity: f.severity,
+                  categoryIndex: f.categoryIndex,
+                })
+                return {
+                  audit_id: auditId,
+                  checklist_item_id: null,
+                  category_index: f.categoryIndex,
+                  finding_type: cls.findingType,
+                  fix_type: cls.fixType,
+                  severity: f.severity,
+                  title: f.title,
+                  description: f.description,
+                  evidence: f.evidence || null,
+                  page_url: f.pageUrl || crawlResult.firstPageUrl,
+                  recommendation: f.recommendation,
+                  estimated_impact: null,
+                  target_element: f.targetElement,
+                  screenshot_url: null,
+                  sort_order: sortOrder++,
+                  confidence_level: 'deterministic',
+                  detection_source: 'axe',
+                  communication: buildCommunicationForGenericFinding({ title: f.title, description: f.description, recommendation: f.recommendation, estimatedImpact: null, severity: f.severity }, siteProfile),
+                  ...computeActionModelFields({ title: f.title, description: f.description, recommendation: f.recommendation, fix_type: cls.fixType, finding_type: cls.findingType }),
+                }
+              })
+              await insertFindingsChecked(db, auditId, axeInserts, 'axe')
+              await auditLog(auditId, 'axe_findings_inserted', 'success',
+                `axe-core: ${axeInserts.length} deterministic accessibility finding(s) inserted`, { count: axeInserts.length })
             }
           }
 
@@ -1825,7 +1869,11 @@ Return 2-6 findings. Be specific and evidence-based. Reference specific files/co
       // browser-check latency, well inside the 12-min pipeline deadline.
       const RESPONSIVE_FALLBACK = { summary: '', findingsCount: 0, viewportIssues: [] as any[], hasMobileViewport: false, ran: false }
       const WCAG_FALLBACK = { summary: '', findingsCount: 0, overallScore: 0, ran: false, siteColors: [] as string[] }
-      const PER_CHECK_TIMEOUT_MS = 210_000
+      // 2026-06-13: raised 210s→250s to absorb axe-core latency on the WCAG
+      // pass (axe injection + run on up to 2 pages) without risking the
+      // fallback-on-timeout that would drop findings. Still well inside the
+      // 12-min pipeline deadline.
+      const PER_CHECK_TIMEOUT_MS = 250_000
       const [responsiveRaw, pagespeedResult, wcagRaw] = await Promise.all([
         withTimeout(responsivePromise, PER_CHECK_TIMEOUT_MS, 'responsive-check'),
         withTimeout(pagespeedPromise, PER_CHECK_TIMEOUT_MS, 'pagespeed-check'),
@@ -1857,7 +1905,7 @@ Return 2-6 findings. Be specific and evidence-based. Reference specific files/co
       // computed at report time from audit_logs completion events (ground
       // truth that survives timeouts/memoization), not from these flags.
       return { responsive, wcag, pagespeedRan: Boolean(pagespeedResult) }
-      }, 230_000, 'parallel-site-checks', { responsive: null as any, wcag: null as any, pagespeedRan: false })
+      }, 270_000, 'parallel-site-checks', { responsive: null as any, wcag: null as any, pagespeedRan: false })
     })
 
     const responsiveCheck = parallelChecks.responsive
@@ -4831,6 +4879,7 @@ RULES FOR RE-AUDIT:
           switch (row.detection_source) {
             case 'responsive_checker': checks.add('Responsive'); break
             case 'wcag_checker': checks.add('WCAG'); break
+            case 'axe': checks.add('WCAG'); break
             case 'pagespeed_api': checks.add('Performance'); break
             case 'structured_data': checks.add('Schema'); break
           }

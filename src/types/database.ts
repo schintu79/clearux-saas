@@ -594,7 +594,7 @@ export interface AuditFinding {
   /** Evidence contract: how certain the detection is */
   confidence_level:    'deterministic' | 'heuristic' | 'interpretive'
   /** Evidence contract: which pipeline stage produced this finding */
-  detection_source:    'analyzer' | 'deep_analyzer' | 'wcag_checker' | 'responsive_checker' | 'structured_data' | 'head_tag' | 'crawler' | 'gap_fill' | 'brand_analyzer' | 'performance_checker' | 'pagespeed_api'
+  detection_source:    'analyzer' | 'deep_analyzer' | 'wcag_checker' | 'axe' | 'responsive_checker' | 'structured_data' | 'head_tag' | 'crawler' | 'gap_fill' | 'brand_analyzer' | 'performance_checker' | 'pagespeed_api'
   /** Evidence contract: proposed replacement value for the current issue */
   proposed_value:      string | null
   /** Evidence contract: CSS selector or XPath targeting the affected element */
