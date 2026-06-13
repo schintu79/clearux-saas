@@ -5356,7 +5356,7 @@ RULES FOR RE-AUDIT:
             findingsToCapture,
             mainUrl,
             auditId,
-            8, // 2026-06-13: 5→8 so selector-bearing deterministic findings (axe etc.) reliably get element-highlighted shots
+            5, // 2026-06-13: reverted 8→5 — 8 pushed capture past the 25s SCREENSHOT_TIMEOUT in enrichment Wave 2, abandoning ALL screenshots. 5 fits the budget. Prioritisation (severity-first) keeps high-severity covered.
           )
 
           // Batch update page screenshots in parallel
