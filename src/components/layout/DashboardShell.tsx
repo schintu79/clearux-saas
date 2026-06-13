@@ -731,7 +731,9 @@ const DashboardShell: React.FC<DashboardShellProps> = ({ children }) => {
 
         {/* Content area — AuditBundleProvider is in [slug]/layout.tsx */}
         <main id="main-content" className="flex-1 overflow-auto">
-          <div className="p-5 sm:p-6 lg:p-8">{children}</div>
+          {/* Content caps at 1480px and centres — stops the dashboard
+              stretching edge-to-edge on wide monitors (2026-06-13). */}
+          <div className="p-5 sm:p-6 lg:p-8 w-full max-w-[1480px] mx-auto">{children}</div>
         </main>
       </div>
 
