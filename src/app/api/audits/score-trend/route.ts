@@ -104,10 +104,28 @@ export async function GET(request: NextRequest) {
         }).overall
       }
 
+      // Per-module RAW means (overview per-category trend deltas). Simple
+      // mean of each module's 4 sub-category scores, -1 sentinels filtered.
+      // Computed identically for every audit so latest-vs-previous deltas are
+      // like-for-like. This is raw category quality (not the capped/composed
+      // card number) — directionally honest for "did this improve?".
+      const PILLAR_RANGES: [number, number][] = [[0, 4], [4, 8], [8, 12], [12, 16], [16, 20], [20, 24], [24, 28]]
+      let pillarScores: (number | null)[] | null = null
+      if (rawJson?.categoryScores && Array.isArray(rawJson.categoryScores)) {
+        const cs = rawJson.categoryScores as Array<{ score: number }>
+        pillarScores = PILLAR_RANGES.map(([s, e]) => {
+          const vals = cs.slice(s, e)
+            .map((c) => c?.score)
+            .filter((n): n is number => typeof n === 'number' && n >= 0)
+          return vals.length ? Math.round(vals.reduce((x, y) => x + y, 0) / vals.length) : null
+        })
+      }
+
       return {
         auditId: a.id,
         date: a.completed_at || a.created_at,
         overallScore,
+        pillarScores,
         uxScore: r?.ux_score ?? null,
         conversionScore: r?.conversion_score ?? null,
         mobileScore: r?.mobile_score ?? null,

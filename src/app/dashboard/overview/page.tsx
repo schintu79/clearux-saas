@@ -163,7 +163,7 @@ function OverviewInner() {
   const { bundle, loading: bundleLoading, invalidate } = useAuditBundle();
   const [creditsBanner, setCreditsBanner] = useState(false);
 
-  const [scoreTrend, setScoreTrend] = useState<Array<{ auditId: string; date: string; overallScore: number }>>([]);
+  const [scoreTrend, setScoreTrend] = useState<Array<{ auditId: string; date: string; overallScore: number; pillarScores?: (number | null)[] | null }>>([]);
   const [competitors, setCompetitors] = useState<Array<{ domain: string; score: number; pillarScores?: Array<{ name: string; score: number }> }>>([]);
   const [categoryScores, setCategoryScores] = useState<Array<{ name: string; score: number; summary: string }>>([]);
   const [findings, setFindings] = useState<AuditFinding[]>([]);
@@ -1076,7 +1076,15 @@ function OverviewInner() {
           )}
         </div>
       )}
-      {pillarScores.length > 0 && (
+      {pillarScores.length > 0 && (() => {
+        // Per-module trend delta vs the previous audit (raw category-quality
+        // movement). latest = last trend entry, prev = the one before — same
+        // computation both sides (score-trend API), so deltas are like-for-
+        // like. Shown only when a real previous score exists (never a
+        // fabricated ±0 on first audit / newly-added module).
+        const latestPillars = scoreTrend.length >= 2 ? scoreTrend[scoreTrend.length - 1]?.pillarScores : null;
+        const prevPillars = scoreTrend.length >= 2 ? scoreTrend[scoreTrend.length - 2]?.pillarScores : null;
+        return (
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-3 mb-4">
           {pillarScores.map((p) => {
             const pillarIdx = PILLAR_NAMES.indexOf(p.name);
@@ -1086,6 +1094,9 @@ function OverviewInner() {
             const tint = MODULE_TINTS[pillarIdx] || MODULE_TINTS[0];
             const PIcon = PILLAR_ICONS[pillarIdx] || Scale;
             const findingCount = findingsByPillarName[p.name]?.length || 0;
+            const cur = latestPillars?.[pillarIdx];
+            const prv = prevPillars?.[pillarIdx];
+            const trendDelta = (typeof cur === 'number' && typeof prv === 'number') ? cur - prv : null;
             return (
               <CategoryModuleCard
                 key={p.name}
@@ -1096,6 +1107,7 @@ function OverviewInner() {
                 findingCount={findingCount}
                 capReason={pillarCapInfo[p.name]?.applied ? pillarCapInfo[p.name].reason : null}
                 rawScore={rawPillarScore[p.name] ?? null}
+                trendDelta={trendDelta}
                 breakdown={pillarCats.slice(0, 4).map((cat, relIdx) => ({
                   name: cat.name,
                   score: cat.score,
@@ -1110,7 +1122,8 @@ function OverviewInner() {
 
           {/* Design Consistency is always included — no "not included" fallback needed */}
         </div>
-      )}
+        );
+      })()}
 
       {/* ── Row 3: Issues · Speed · Brand Intelligence (unified) ─ */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4 auto-rows-fr">
@@ -1370,6 +1383,7 @@ function CategoryModuleCard({
   findingCount,
   capReason = null,
   rawScore = null,
+  trendDelta = null,
   breakdown,
   href,
   expanded,
@@ -1384,6 +1398,8 @@ function CategoryModuleCard({
   capReason?: string | null;
   /** Uncapped module score — struck through beside the capped one so the math is visible */
   rawScore?: number | null;
+  /** Raw category-quality movement vs the previous audit (null = no prior score) */
+  trendDelta?: number | null;
   breakdown: Array<{ name: string; score: number; Icon: React.ElementType }>;
   href: string;
   expanded: boolean;
@@ -1421,6 +1437,15 @@ function CategoryModuleCard({
             <s className="text-[15px] font-semibold tabular-nums" style={{ color: 'var(--m-muted)' }}>{rawScore}</s>
           )}
           <span className={`text-[28px] font-bold tabular-nums leading-none ${scoreColor(score)}`}>{score}</span>
+          {trendDelta != null && (
+            <span
+              className={`inline-flex items-center gap-0.5 text-[11px] font-semibold tabular-nums ${trendDelta > 0 ? 'text-ok' : trendDelta < 0 ? 'text-severe' : ''}`}
+              style={trendDelta === 0 ? { color: 'var(--m-muted)' } : undefined}
+              title="Change in category quality vs your previous audit"
+            >
+              {trendDelta > 0 ? '▲' : trendDelta < 0 ? '▼' : '—'}{trendDelta !== 0 ? Math.abs(trendDelta) : ''}
+            </span>
+          )}
         </div>
         {capReason && (
           <p className="text-[9.5px] leading-tight mt-1.5 font-medium px-1.5 py-0.5 rounded inline-block" style={{ color: 'var(--warn)', background: 'color-mix(in srgb, var(--warn) 9%, transparent)' }}>
