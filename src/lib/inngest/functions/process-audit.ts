@@ -1641,6 +1641,11 @@ Return 2-6 findings. Be specific and evidence-based. Reference specific files/co
               recommendation: f.recommendation,
               severity: f.severity,
               detection_source: 'pagespeed_api',
+              // 2026-06-13: CWV from Google PageSpeed is instrument-measured —
+              // tag it deterministic so it lands in the Verified evidence tier
+              // (it was defaulting to heuristic/AI-assessed, suppressing the
+              // verified mix).
+              confidence_level: 'deterministic' as const,
               performance_metric_type: f.metricType || null,
               status: 'open' as const,
               sort_order: 900 + i,
