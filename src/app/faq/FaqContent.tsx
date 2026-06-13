@@ -162,7 +162,7 @@ export default function FaqContent() {
   const totalQuestions = FAQ_SECTIONS.reduce((sum, s) => sum + s.items.length, 0)
 
   return (
-    <main>
+    <main id="main-content">
       {/* Hero */}
       <section className="py-[100px] border-b border-rule max-sm:py-16">
         <div className="max-w-mkt mx-auto px-8 max-sm:px-5">

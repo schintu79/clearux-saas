@@ -47,16 +47,25 @@ export function Nav() {
   }, [dropdownOpen])
 
   return (
-    <nav className="border-b border-rule sticky top-0 z-50 backdrop-blur-md" style={{ background: 'color-mix(in srgb, var(--paper) 92%, transparent)' }}>
+    <>
+      {/* Skip link — first focusable element; visible only on keyboard focus.
+          Targets the <main id="main-content"> present on every marketing page. */}
+      <a
+        href="#main-content"
+        className="sr-only focus:not-sr-only focus:absolute focus:z-[100] focus:top-3 focus:left-3 focus:px-4 focus:py-2 focus:rounded-lg focus:bg-ink focus:text-paper focus:text-[14px] focus:font-medium"
+      >
+        Skip to main content
+      </a>
+    <nav aria-label="Primary" className="border-b border-rule sticky top-0 z-50 backdrop-blur-md" style={{ background: 'color-mix(in srgb, var(--paper) 92%, transparent)' }}>
       <div className="max-w-mkt mx-auto px-8 max-sm:px-5">
         <div className="flex items-center justify-between gap-6 py-5 max-sm:py-3">
           <Logo height={64} className="max-sm:h-[48px] max-sm:w-auto" />
 
-          {/* Desktop links */}
+          {/* Desktop links — min 44px tap height (WCAG 2.5.5) via inline-flex + py */}
           <ul className="hidden lg:flex gap-[38px] list-none">
             {NAV_LINKS.map((link) => (
               <li key={link.label}>
-                <a href={link.href} className="text-ink-2 no-underline text-[15px] font-medium hover:text-signal transition-colors">
+                <a href={link.href} className="inline-flex items-center min-h-[44px] text-ink-2 no-underline text-[15px] font-medium hover:text-signal transition-colors">
                   {link.label}
                 </a>
               </li>
@@ -205,5 +214,6 @@ export function Nav() {
         </div>
       )}
     </nav>
+    </>
   )
 }

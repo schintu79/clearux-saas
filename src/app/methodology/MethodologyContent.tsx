@@ -87,7 +87,7 @@ function CapTable({ rows }: { rows: Array<{ profile: string; cap: string }> }) {
 
 export default function MethodologyContent() {
   return (
-    <main>
+    <main id="main-content">
       {/* 00 — Intro */}
       <section className="py-[100px] border-b border-rule max-sm:py-16">
         <div className="max-w-mkt mx-auto px-8 max-sm:px-5 text-center">
