@@ -188,6 +188,56 @@ export default function TrackPage() {
   const loading = authLoading || wsLoading || bundleLoading || !bundle;
   const [priorFindings, setPriorFindings] = useState<import('@/types/database').AuditFinding[]>([]);
 
+  // ── Monitoring schedule (Phase 2 #1) ──
+  const monitorUrl = bundle?.audit?.product_url ?? null;
+  const [monitorCadence, setMonitorCadence] = useState<'off' | 'weekly' | 'monthly'>('off');
+  const [monitorNextRun, setMonitorNextRun] = useState<string | null>(null);
+  const [monitorSaving, setMonitorSaving] = useState(false);
+  const [monitorError, setMonitorError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!monitorUrl || !workspace?.id) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await fetch(`/api/scheduled-audits?workspace_id=${workspace.id}`);
+        if (!res.ok) return;
+        const d = await res.json();
+        const norm = (u: string) => (u || '').replace(/\/+$/, '');
+        const match = (d.schedules || []).find((s: any) => s.is_active && norm(s.product_url) === norm(monitorUrl));
+        if (cancelled) return;
+        if (match) { setMonitorCadence(match.frequency === 'weekly' ? 'weekly' : 'monthly'); setMonitorNextRun(match.next_run_at); }
+        else { setMonitorCadence('off'); setMonitorNextRun(null); }
+      } catch { /* leave default off */ }
+    })();
+    return () => { cancelled = true; };
+  }, [monitorUrl, workspace?.id]);
+
+  const setCadence = async (cad: 'off' | 'weekly' | 'monthly') => {
+    if (!monitorUrl || monitorSaving || cad === monitorCadence) return;
+    const prev = monitorCadence;
+    setMonitorSaving(true); setMonitorError(null); setMonitorCadence(cad);
+    try {
+      const res = await fetch('/api/scheduled-audits', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          product_url: monitorUrl,
+          workspace_id: workspace?.id || null,
+          enabled: cad !== 'off',
+          frequency: cad === 'off' ? undefined : cad,
+        }),
+      });
+      const d = await res.json().catch(() => ({}));
+      if (!res.ok) { setMonitorCadence(prev); setMonitorError(d.error || 'Could not update monitoring'); return; }
+      setMonitorNextRun(d.schedule?.next_run_at ?? null);
+    } catch {
+      setMonitorCadence(prev); setMonitorError('Could not update monitoring');
+    } finally {
+      setMonitorSaving(false);
+    }
+  };
+
   // Fetch prior audit findings for diff validation
   useEffect(() => {
     if (!bundle?.prior?.audit?.id) { setPriorFindings([]); return; }
@@ -317,6 +367,44 @@ export default function TrackPage() {
     <div>
       <OverviewBreadcrumb current="Track" />
       <PageHeader icon={<TrendingUp size={18} strokeWidth={1.75} style={{ color: 'var(--ink)' }} />} title="Track" subtitle="Website Health Score and issue trend for this brand. Re-audit to confirm fixes landed." />
+
+      {/* Monitoring — user-chosen cadence for automatic re-audits (Phase 2 #1) */}
+      <DashCard padding="lg" className="mb-6">
+        <div className="flex items-center justify-between gap-4 flex-wrap">
+          <div className="min-w-0">
+            <div className="flex items-center gap-2">
+              <RefreshCw size={14} style={{ color: 'var(--ink)' }} />
+              <span className="text-[14px] font-semibold" style={{ color: 'var(--ink)' }}>Monitoring</span>
+            </div>
+            <p className="text-[12px] mt-1" style={{ color: 'var(--m-muted)' }}>
+              {monitorCadence === 'off'
+                ? 'Re-audit this brand automatically and track changes over time.'
+                : monitorNextRun
+                  ? `Auto re-audit ${monitorCadence} · next run ${new Date(monitorNextRun).toLocaleDateString()}`
+                  : `Auto re-audit ${monitorCadence}`}
+              {monitorError ? <span style={{ color: 'var(--severe)' }}> · {monitorError}</span> : null}
+            </p>
+          </div>
+          <div className="inline-flex rounded-lg overflow-hidden flex-shrink-0" style={{ border: '1px solid var(--rule)', opacity: monitorSaving ? 0.6 : 1 }}>
+            {(['off', 'weekly', 'monthly'] as const).map((opt, i) => (
+              <button
+                key={opt}
+                type="button"
+                onClick={() => setCadence(opt)}
+                disabled={monitorSaving}
+                className="px-3.5 py-1.5 text-[12px] font-medium transition-colors"
+                style={{
+                  background: monitorCadence === opt ? 'var(--ink)' : 'transparent',
+                  color: monitorCadence === opt ? 'var(--paper)' : 'var(--m-muted)',
+                  borderLeft: i === 0 ? undefined : '1px solid var(--rule)',
+                }}
+              >
+                {opt === 'off' ? 'Off' : opt === 'weekly' ? 'Weekly' : 'Monthly'}
+              </button>
+            ))}
+          </div>
+        </div>
+      </DashCard>
 
       <div className="grid grid-cols-1 lg:grid-cols-[2fr_1fr] gap-4 mb-6">
         <DashCard padding="lg">

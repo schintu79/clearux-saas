@@ -6,6 +6,7 @@
 
 import { NextRequest, NextResponse } from 'next/server'
 import { createServerSupabase, createServiceSupabase } from '@/lib/supabase-server'
+import { getAuditUsage } from '@/lib/audit-usage'
 
 function getNextRunDate(frequency: string): string {
   const now = new Date()
@@ -88,5 +89,82 @@ export async function POST(request: NextRequest) {
   } catch (err) {
     console.error('POST /api/scheduled-audits error:', err)
     return NextResponse.json({ error: 'Failed to create schedule' }, { status: 500 })
+  }
+}
+
+/* ── PUT — set monitoring cadence for a brand (Phase 2 #1) ────────
+ * Upsert-style: enabled=false turns monitoring Off (deactivates any
+ * existing schedule); enabled=true sets the cadence (weekly|monthly),
+ * reactivating/creating the row and computing next_run_at. Gated to paid
+ * plans (scheduled runs are an included subscription perk). Idempotent. */
+export async function PUT(request: NextRequest) {
+  try {
+    const supabase = await createServerSupabase()
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+
+    const body = await request.json()
+    const { product_url, workspace_id, frequency, enabled, language } = body || {}
+    if (!product_url) return NextResponse.json({ error: 'URL is required' }, { status: 400 })
+
+    const db = createServiceSupabase()
+    const normalizedUrl = product_url.startsWith('http') ? product_url : `https://${product_url}`
+
+    // Find any existing schedule (active or not) for this url + workspace.
+    let existQ = db
+      .from('scheduled_audits')
+      .select('id')
+      .eq('user_id', user.id)
+      .eq('product_url', normalizedUrl)
+    existQ = workspace_id ? existQ.eq('workspace_id', workspace_id) : existQ.is('workspace_id', null)
+    const { data: existing } = await existQ.maybeSingle()
+
+    // ── Turn Off ──
+    if (!enabled) {
+      if (existing) {
+        await db.from('scheduled_audits')
+          .update({ is_active: false, next_run_at: null, updated_at: new Date().toISOString() } as any)
+          .eq('id', (existing as any).id)
+      }
+      return NextResponse.json({ schedule: null, enabled: false })
+    }
+
+    // ── Turn On / change cadence — paid plans only ──
+    if (!['weekly', 'monthly'].includes(frequency))
+      return NextResponse.json({ error: 'Invalid frequency' }, { status: 400 })
+
+    const usage = await getAuditUsage(user.id, db)
+    if (usage.subscription_status !== 'active') {
+      return NextResponse.json({ error: 'Scheduled monitoring is available on paid plans.' }, { status: 403 })
+    }
+
+    const next_run_at = getNextRunDate(frequency)
+    if (existing) {
+      const { data, error } = await db.from('scheduled_audits')
+        .update({ frequency, is_active: true, next_run_at, language: language || 'en', updated_at: new Date().toISOString() } as any)
+        .eq('id', (existing as any).id)
+        .select()
+        .single()
+      if (error) throw error
+      return NextResponse.json({ schedule: data, enabled: true })
+    }
+
+    const { data, error } = await db.from('scheduled_audits')
+      .insert({
+        user_id: user.id,
+        product_url: normalizedUrl,
+        frequency,
+        language: language || 'en',
+        is_active: true,
+        next_run_at,
+        workspace_id: workspace_id || null,
+      } as any)
+      .select()
+      .single()
+    if (error) throw error
+    return NextResponse.json({ schedule: data, enabled: true })
+  } catch (err) {
+    console.error('PUT /api/scheduled-audits error:', err)
+    return NextResponse.json({ error: 'Failed to update schedule' }, { status: 500 })
   }
 }
