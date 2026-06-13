@@ -877,15 +877,59 @@ function calculateScore(results: WcagCheckResult[]): number {
  * Returns the automated results; AI heuristic prompt is built
  * separately so the caller can run it through their AI pipeline.
  */
+/* ── Observed colour palette (Brand Consistency §10, slice 2) ──────
+ * Collects the live site's actually-rendered colours so Brand DNA's
+ * declared palette can be checked against reality (deterministic — measured,
+ * not guessed). Reuses the WCAG browser pass (no extra launch). The
+ * page.evaluate is fully self-contained (no outer-scope refs) so webpack
+ * minification can't break it — the TDZ lesson from process-audit applies. */
+async function extractColorFrequencies(page: Page): Promise<Array<{ key: string; count: number }>> {
+  return await page.evaluate(() => {
+    const freq: Record<string, number> = {}
+    const els = document.querySelectorAll('*')
+    let scanned = 0
+    for (let i = 0; i < els.length; i++) {
+      if (scanned > 4000) break
+      scanned++
+      const cs = window.getComputedStyle(els[i])
+      const props = [cs.backgroundColor, cs.color, cs.borderColor]
+      for (let p = 0; p < props.length; p++) {
+        const val = props[p]
+        if (!val) continue
+        const m = val.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)(?:,\s*([\d.]+))?\)/)
+        if (!m) continue
+        const alpha = m[4] !== undefined ? parseFloat(m[4]) : 1
+        if (alpha < 0.5) continue // skip (near-)transparent
+        const key = m[1] + ',' + m[2] + ',' + m[3]
+        freq[key] = (freq[key] || 0) + 1
+      }
+    }
+    return Object.keys(freq)
+      .map((key) => ({ key, count: freq[key] }))
+      .sort((a, b) => b.count - a.count)
+      .slice(0, 40)
+  })
+}
+
+/** "12,34,56" → "#0c2238" */
+function rgbKeyToHex(key: string): string | null {
+  const parts = key.split(',').map((n) => parseInt(n, 10))
+  if (parts.length !== 3 || parts.some((n) => Number.isNaN(n))) return null
+  return '#' + parts.map((n) => Math.max(0, Math.min(255, n)).toString(16).padStart(2, '0')).join('')
+}
+
 export async function checkWcagAutomated(
   urls: string[],
   maxPages: number = 3,
 ): Promise<{
   automatedResults: Map<string, WcagCheckResult[]>
   heuristicPrompts: Map<string, string>
+  /** Top observed site colours (hex), most-frequent first — for Brand Consistency. */
+  siteColors: string[]
 }> {
   const automatedResults = new Map<string, WcagCheckResult[]>()
   const heuristicPrompts = new Map<string, string>()
+  const colorFreq = new Map<string, number>()
   const pagesToCheck = urls.slice(0, maxPages)
 
   let browser: Browser | null = null
@@ -904,6 +948,14 @@ export async function checkWcagAutomated(
         const results = await runAutomatedChecks(page, url)
         automatedResults.set(url, results)
 
+        // Accumulate the rendered colour palette (non-fatal)
+        try {
+          const freqs = await extractColorFrequencies(page)
+          for (const f of freqs) colorFreq.set(f.key, (colorFreq.get(f.key) || 0) + f.count)
+        } catch (palErr) {
+          console.warn(`[wcag-checker] palette extraction failed for ${url}:`, (palErr as Error)?.message)
+        }
+
         // Get page HTML for heuristic prompt
         const html = await page.evaluate(() => document.documentElement.outerHTML)
         const prompt = buildHeuristicPrompt(url, html, results)
@@ -919,7 +971,14 @@ export async function checkWcagAutomated(
     if (browser) await browser.close().catch(() => {})
   }
 
-  return { automatedResults, heuristicPrompts }
+  // Top observed colours as hex, most-frequent first.
+  const siteColors = Array.from(colorFreq.entries())
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 24)
+    .map(([key]) => rgbKeyToHex(key))
+    .filter((c): c is string => c != null)
+
+  return { automatedResults, heuristicPrompts, siteColors }
 }
 
 

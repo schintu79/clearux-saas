@@ -15,6 +15,7 @@ import { inngest } from '../client'
 import * as Sentry from '@sentry/nextjs'
 import { filterRowsToContract } from '@/lib/db/insert-contracts'
 import { keywordModuleIndexFor, correctedCategoryIndexFor } from '@/lib/scoring/module-map'
+import { compareBrandConsistency, type BrandConsistencyResult, type VoiceContradiction } from '@/lib/scoring/brand-consistency'
 import { applySeverityCap, capSummarySentence } from '@/lib/scoring/severity-cap'
 import { createServiceSupabase } from '@/lib/supabase-server'
 import { crawlPages, formatHeadTagsForAnalysis, type HeadTagData } from '@/lib/audit-engine/crawler'
@@ -110,6 +111,48 @@ function withTimeout<T>(promise: Promise<T>, ms: number, label: string): Promise
 
 function getDb() {
   return createServiceSupabase()
+}
+
+/**
+ * Brand Consistency §10 — detect voice/tone contradictions in live copy.
+ * Quote-grounded ONLY: the model must return verbatim quotes, and we KEEP a
+ * contradiction only if its quote literally appears in the crawled copy
+ * (anti-fabrication guard — a hallucinated quote can never surface).
+ * Fully non-fatal: any failure returns []. The deterministic colour check
+ * does not depend on this.
+ */
+async function detectVoiceContradictions(
+  declared: { voice: string | null; toneKeywords: string[] },
+  pageContent: string,
+): Promise<VoiceContradiction[]> {
+  try {
+    const declaredDesc = [declared.voice, (declared.toneKeywords || []).join(', ')].filter(Boolean).join(' | ').trim()
+    const sample = (pageContent || '').slice(0, 6000)
+    if (!declaredDesc || sample.length < 100) return []
+    const Anthropic = (await import('@anthropic-ai/sdk')).default
+    const anthropic = new Anthropic({ timeout: 20_000 })
+    const prompt = `A brand's declared voice/tone is: "${declaredDesc}".\n\nBelow is copy from the live website. Identify up to 3 passages whose tone CLEARLY contradicts that declared voice (e.g. flippant or casual where the brand is authoritative). For each, return the EXACT verbatim quote copied character-for-character from the text — never paraphrase. If nothing clearly contradicts, return an empty array.\n\nReturn ONLY JSON: {"contradictions":[{"quote":"..."}]}\n\nWEBSITE COPY:\n${sample}`
+    const msg = await Promise.race([
+      anthropic.messages.create({ model: 'claude-haiku-4-5-20251001', max_tokens: 700, messages: [{ role: 'user', content: prompt }] }),
+      new Promise<never>((_, reject) => setTimeout(() => reject(new Error('voice check timed out')), 22_000)),
+    ])
+    const text = (msg as any).content?.find((b: any) => b.type === 'text')?.text || ''
+    const jsonMatch = text.match(/\{[\s\S]*\}/)
+    if (!jsonMatch) return []
+    const parsed = JSON.parse(jsonMatch[0])
+    const out: VoiceContradiction[] = []
+    for (const c of (parsed?.contradictions || [])) {
+      const quote = String(c?.quote || '').trim()
+      // TRUST GUARD: only surface a quote that is genuinely on the site.
+      if (quote.length >= 8 && pageContent.includes(quote)) {
+        out.push({ quote, conflictsWith: `brand voice (${declaredDesc})`, severity: 'medium' })
+      }
+    }
+    return out.slice(0, 3)
+  } catch (e) {
+    console.warn('[brand-consistency] voice check failed (non-fatal):', (e as Error)?.message)
+    return []
+  }
 }
 
 async function setStatus(auditId: string, status: string, progressPercent?: number) {
@@ -1626,7 +1669,7 @@ Return 2-6 findings. Be specific and evidence-based. Reference specific files/co
       const wcagPromise = (async () => {
         try {
           const maxUrls = auditDetails.plan === 'free_preview' ? 1 : 3
-          const { automatedResults, heuristicPrompts } = await checkWcagAutomated(crawlResult.crawledUrls, maxUrls)
+          const { automatedResults, heuristicPrompts, siteColors } = await checkWcagAutomated(crawlResult.crawledUrls, maxUrls)
 
           const heuristicResults = new Map<string, WcagCheckResult[]>()
           // LEAN PIPELINE: Skip WCAG heuristic AI calls — automated checks still run.
@@ -1754,12 +1797,13 @@ Return 2-6 findings. Be specific and evidence-based. Reference specific files/co
             findingsCount: wcagResult.totalFindings,
             overallScore: wcagResult.overallScore,
             ran: true,
+            siteColors,
           }
         } catch (err) {
           console.error('[inngest] WCAG check failed (non-fatal):', err)
           await auditLog(auditId, 'wcag_check_failed', 'warning',
             `WCAG check failed: ${err instanceof Error ? err.message : String(err)}. Continuing with text-based analysis.`)
-          return { summary: '', findingsCount: 0, overallScore: 0, ran: false }
+          return { summary: '', findingsCount: 0, overallScore: 0, ran: false, siteColors: [] as string[] }
         }
       })()
 
@@ -1780,7 +1824,7 @@ Return 2-6 findings. Be specific and evidence-based. Reference specific files/co
       // both findings and analyzer context. Budget raised to fit real
       // browser-check latency, well inside the 12-min pipeline deadline.
       const RESPONSIVE_FALLBACK = { summary: '', findingsCount: 0, viewportIssues: [] as any[], hasMobileViewport: false, ran: false }
-      const WCAG_FALLBACK = { summary: '', findingsCount: 0, overallScore: 0, ran: false }
+      const WCAG_FALLBACK = { summary: '', findingsCount: 0, overallScore: 0, ran: false, siteColors: [] as string[] }
       const PER_CHECK_TIMEOUT_MS = 210_000
       const [responsiveRaw, pagespeedResult, wcagRaw] = await Promise.all([
         withTimeout(responsivePromise, PER_CHECK_TIMEOUT_MS, 'responsive-check'),
@@ -4626,6 +4670,46 @@ RULES FOR RE-AUDIT:
       // Override the AI discoverability score with the real AI Visibility Score
       reportData.aiDiscoverabilityScore = aiVisibility.overall
 
+      // ── Brand Consistency (§10) — declared Brand DNA vs observed site ──
+      // Own score, stored in raw_json.brandConsistency (NO migration — JSONB).
+      // Colours are deterministic (measured palette from the WCAG pass vs the
+      // declared primary_colors); voice/tone is quote-grounded + verified.
+      // It NEVER feeds the health score. (Double-surfacing trust-harming
+      // mismatches into the health-affecting findings stream is a v1.1
+      // follow-up — needs a detection_source migration + pre-scoring placement.)
+      let brandConsistency: BrandConsistencyResult | null = null
+      try {
+        if (auditDetails.brandIdentityId) {
+          const { data: bi, error: biErr } = await db
+            .from('brand_identities')
+            .select('primary_colors, brand_voice, tone_keywords')
+            .eq('id', auditDetails.brandIdentityId)
+            .single()
+          if (biErr) {
+            console.warn('[brand-consistency] brand_identities fetch failed:', biErr.message)
+          } else if (bi) {
+            const declared = {
+              colors: Array.isArray((bi as any).primary_colors) ? (bi as any).primary_colors as string[] : [],
+              voice: (bi as any).brand_voice || null,
+              toneKeywords: Array.isArray((bi as any).tone_keywords) ? (bi as any).tone_keywords as string[] : [],
+            }
+            const hasVoiceDecl = !!(declared.voice && declared.voice.trim()) || declared.toneKeywords.length > 0
+            const voiceContradictions = hasVoiceDecl
+              ? await detectVoiceContradictions(declared, crawlResult.pageContent)
+              : []
+            brandConsistency = compareBrandConsistency(declared, {
+              colors: wcagCheck?.siteColors || [],
+              voiceContradictions,
+            })
+            await auditLog(auditId, 'brand_consistency_computed', 'info',
+              `Brand Consistency: ${brandConsistency.score}/100 · ${brandConsistency.mismatches.length} mismatch(es) · checked: ${brandConsistency.attributesChecked.join(', ') || 'none'}`,
+              { score: brandConsistency.score, mismatches: brandConsistency.mismatches.length, observed_colors: (wcagCheck?.siteColors || []).length })
+          }
+        }
+      } catch (bcErr) {
+        console.error('[inngest] Brand Consistency computation failed (non-fatal):', bcErr)
+      }
+
       // Preserve original category scores as baseline for future recalculations
       // (when user marks findings as fixed/dismissed, scores recalculate from this baseline)
       const reportJsonWithBaseline = {
@@ -4638,6 +4722,7 @@ RULES FOR RE-AUDIT:
         reconciliationSummary: reconciliationData?.summary || null,
         canonicalScoring: canonicalScoring || null,
         canonicalReconciliation: canonicalScoring?.summary || null,
+        brandConsistency: brandConsistency || undefined,
       }
 
       // Insert report
