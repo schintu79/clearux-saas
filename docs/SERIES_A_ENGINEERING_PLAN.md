@@ -58,6 +58,7 @@ What we STOP doing: adding dashboard surfaces, speculative features, "nice to ha
 | D12 | RLS/permissions never formally audited; restart route is unauthenticated (service-role, no user check). | `restart/route.ts` + RLS policies | MEDIUM (HIGH pre-launch) |
 | D13 | Brand DNA comparison only runs in deep mode (now disclosed, not solved). | pipeline | LOW |
 | D14 | "AI Agent Readiness" category is text-only vibes. | `analyzer.ts` UX_CATEGORIES | LOW (Phase 4 opportunity) |
+| D15 | **Dashboard "false empty / needs refresh".** Pages fall through to the *empty* state while the single client-side bundle fetch is in flight — there's a `loading` flag but it's not checked before the empty state, so a slow fetch shows "No audit yet" then swaps to data. Worse, `AuditBundleContext` ends every fetch in a silent `.catch(()=>{})`, so a transient network/timeout failure leaves the page empty with no retry until manual refresh. **Quick fixes (small, do first in the perf pass):** loading-guard before the empty state on overview/find/fix; retry-with-backoff on fetch error instead of silent catch. **Bigger (Phase 2 perf):** slim the per-page bundle so each page loads only what it needs (+ parallelize), instead of one heavy `loadLatestAuditBundle` after the auth→workspace→bundle serial chain. | `src/context/AuditBundleContext.tsx`; `overview/find/fix/page.tsx` (empty-state checks ~L571 overview) | MEDIUM (HIGH for perceived reliability) |
 
 ### 1.3 Recurring failure patterns (institutional memory — test for these)
 
