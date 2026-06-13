@@ -114,6 +114,57 @@ function ScoreLine({ points }: { points: Array<{ score: number; date: string }> 
   );
 }
 
+/* ── Per-metric trend cards (Phase 2 #4) ─────────────────────────
+ * Read-only sparklines over the audit history already persisted. Each card
+ * shows the latest value, the delta vs the previous audit (coloured by
+ * whether that direction is good for the metric), and a sparkline. */
+function MetricSparkline({ values, color }: { values: number[]; color: string }) {
+  if (values.length < 2) return null;
+  const W = 140, H = 34, P = 3;
+  const min = Math.min(...values), max = Math.max(...values);
+  const range = (max - min) || 1;
+  const pts = values.map((v, i) => {
+    const x = P + (i / (values.length - 1)) * (W - 2 * P);
+    const y = H - P - ((v - min) / range) * (H - 2 * P);
+    return `${x.toFixed(1)},${y.toFixed(1)}`;
+  });
+  return (
+    <svg viewBox={`0 0 ${W} ${H}`} className="w-full" style={{ height: 34 }} preserveAspectRatio="none">
+      <polyline points={pts.join(' ')} fill="none" stroke={color} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" vectorEffect="non-scaling-stroke" />
+      {(() => { const [lx, ly] = pts[pts.length - 1].split(','); return <circle cx={lx} cy={ly} r="2" fill={color} />; })()}
+    </svg>
+  );
+}
+
+interface MetricSeriesPoint { value: number; date: string }
+function MetricTrendCard({ label, series, suffix, higherBetter }: { label: string; series: MetricSeriesPoint[]; suffix: string; higherBetter: boolean }) {
+  if (series.length === 0) return null;
+  const current = series[series.length - 1].value;
+  const prev = series.length >= 2 ? series[series.length - 2].value : null;
+  const rawDelta = prev != null ? current - prev : null;
+  const improved = rawDelta == null || rawDelta === 0 ? null : higherBetter ? rawDelta > 0 : rawDelta < 0;
+  const deltaColor = improved == null ? 'var(--m-muted)' : improved ? 'var(--ok)' : 'var(--severe)';
+  return (
+    <div className="rounded-xl p-4" style={{ background: 'var(--card)', border: '1px solid var(--rule)' }}>
+      <div className="flex items-center justify-between mb-1">
+        <span className="text-[10.5px] font-semibold uppercase tracking-wider" style={{ color: 'var(--m-muted)' }}>{label}</span>
+        {rawDelta != null && rawDelta !== 0 && (
+          <span className="text-[11px] font-semibold tabular-nums" style={{ color: deltaColor }}>
+            {improved ? '▲' : '▼'} {Math.abs(rawDelta)}
+          </span>
+        )}
+      </div>
+      <div className="flex items-baseline gap-1 mb-2">
+        <span className="text-[22px] font-bold tabular-nums leading-none" style={{ color: 'var(--ink)' }}>{current}</span>
+        {suffix && <span className="text-[11px]" style={{ color: 'var(--m-muted)' }}>{suffix}</span>}
+      </div>
+      {series.length >= 2
+        ? <MetricSparkline values={series.map((s) => s.value)} color="var(--signal)" />
+        : <p className="text-[10px]" style={{ color: 'var(--m-muted)' }}>Trend appears after your next audit</p>}
+    </div>
+  );
+}
+
 const moduleNames = ['Foundation', 'Human experience', 'Inclusive design', 'Future readiness', 'SEO structure', 'Accessibility readiness', 'Design consistency'];
 
 function getModuleScores(report: any): Record<string, number> {
@@ -206,6 +257,22 @@ export default function TrackPage() {
     }
     deltas.sort((a, b) => Math.abs(b.delta) - Math.abs(a.delta));
     return deltas.filter(d => d.delta !== 0).slice(0, 3);
+  }, [scopedHistory]);
+
+  // Per-metric trends over the persisted history (Phase 2 #4).
+  const metricTrends = useMemo(() => {
+    const build = (get: (h: { audit: any; report: any }) => number | null): MetricSeriesPoint[] =>
+      scopedHistory
+        .map((h) => ({ value: get(h), date: h.audit.completed_at || h.audit.created_at }))
+        .filter((p): p is MetricSeriesPoint => typeof p.value === 'number');
+    const defs = [
+      { label: 'Health score', suffix: '/100', higherBetter: true, series: build((h) => h.report?.overall_score ?? null) },
+      { label: 'AI visibility', suffix: '/100', higherBetter: true, series: build((h) => h.report?.raw_json?.aiVisibilityBreakdown?.overall ?? h.report?.ai_visibility_breakdown?.overall ?? h.report?.ai_discoverability_score ?? null) },
+      { label: 'Open issues', suffix: '', higherBetter: false, series: build((h) => h.report?.total_issues ?? null) },
+      { label: 'Brand consistency', suffix: '/100', higherBetter: true, series: build((h) => h.report?.raw_json?.brandConsistency?.score ?? null) },
+      { label: 'Performance (mobile)', suffix: '/100', higherBetter: true, series: build((h) => h.audit?.speed_data?.mobile?.score ?? null) },
+    ];
+    return defs.filter((d) => d.series.length > 0);
   }, [scopedHistory]);
 
   if (loading) {
@@ -320,6 +387,18 @@ export default function TrackPage() {
           </ActionLink>
         </DashCard>
       </div>
+
+      {/* Metric trends — per-metric movement over the audit history (Phase 2 #4) */}
+      {metricTrends.length > 0 && (
+        <div className="mb-6">
+          <SectionHeader title="Metric trends" />
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 mt-1">
+            {metricTrends.map((m) => (
+              <MetricTrendCard key={m.label} label={m.label} series={m.series} suffix={m.suffix} higherBetter={m.higherBetter} />
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Fix validation — proof of improvement on re-audit */}
       {diff && (validatedFixes.length > 0 || persistedOnly.length > 0 || regressed.length > 0) && (
