@@ -28,9 +28,14 @@ export function ScoreOverTimeChart({ trend }: {
 
   if (trend.length === 0) return null;
 
-  const W = 320, H = 160, PAD_L = 32, PAD_R = 16, PAD_T = 24, PAD_B = 28;
+  // 2026-06-13 polish: taller canvas (more breathing room above the line so
+  // the card reads bottom-weighted), fewer gridlines, and a richer hover —
+  // a vertical guide line + a dark "date · score/100" tooltip. Pure
+  // presentation; the data and the points plotted are unchanged.
+  const W = 340, H = 188, PAD_L = 26, PAD_R = 14, PAD_T = 18, PAD_B = 26;
   const chartW = W - PAD_L - PAD_R;
   const chartH = H - PAD_T - PAD_B;
+  const baseY = PAD_T + chartH;
 
   const minScore = Math.max(0, Math.min(...trend.map(t => t.overallScore)) - 10);
   const maxScore = Math.min(100, Math.max(...trend.map(t => t.overallScore)) + 10);
@@ -45,21 +50,27 @@ export function ScoreOverTimeChart({ trend }: {
   }));
 
   const pathD = points.map((p, i) => `${i === 0 ? 'M' : 'L'} ${p.x} ${p.y}`).join(' ');
-  const areaD = `${pathD} L ${points[points.length - 1].x} ${PAD_T + chartH} L ${points[0].x} ${PAD_T + chartH} Z`;
+  const areaD = `${pathD} L ${points[points.length - 1].x} ${baseY} L ${points[0].x} ${baseY} Z`;
 
-  const gridLines = 4;
+  // Fewer, lighter gridlines — 3 bands keeps it clean (was 5 labels).
+  const gridLines = 3;
   const gridScores = Array.from({ length: gridLines + 1 }, (_, i) => Math.round(minScore + (range * i) / gridLines));
+
+  const fmtDate = (iso: string) => {
+    const d = new Date(iso);
+    return `${d.toLocaleString('en-US', { month: 'short' })} ${d.getDate()}`;
+  };
 
   return (
     <div className="flex-1 min-w-0">
       <svg viewBox={`0 0 ${W} ${H}`} className="w-full h-auto" preserveAspectRatio="xMidYMid meet">
-        {/* Grid */}
+        {/* Grid — lighter, fewer lines */}
         {gridScores.map((s, i) => {
           const y = PAD_T + chartH - ((s - minScore) / range) * chartH;
           return (
             <g key={i}>
-              <line x1={PAD_L} y1={y} x2={W - PAD_R} y2={y} stroke="var(--border)" strokeWidth="0.5" strokeDasharray="3,3" opacity="0.5" />
-              <text x={PAD_L - 6} y={y + 3} textAnchor="end" fontSize="7" fill="var(--muted)" fontFamily="var(--font-inter)">{s}</text>
+              <line x1={PAD_L} y1={y} x2={W - PAD_R} y2={y} stroke="var(--border)" strokeWidth="0.5" strokeDasharray="2,4" opacity="0.45" />
+              <text x={PAD_L - 6} y={y + 3} textAnchor="end" fontSize="7" fill="var(--muted)" fontFamily="var(--font-inter)" opacity="0.8">{s}</text>
             </g>
           );
         })}
@@ -67,24 +78,32 @@ export function ScoreOverTimeChart({ trend }: {
         {/* Area fill */}
         <defs>
           <linearGradient id="scoreAreaGradOlive" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stopColor="var(--signal)" stopOpacity="0.12" />
+            <stop offset="0%" stopColor="var(--signal)" stopOpacity="0.14" />
             <stop offset="100%" stopColor="var(--signal)" stopOpacity="0.02" />
           </linearGradient>
         </defs>
         <path d={areaD} fill="url(#scoreAreaGradOlive)" />
 
+        {/* Hover guide line */}
+        {hoveredIdx != null && points[hoveredIdx] && (
+          <line
+            x1={points[hoveredIdx].x} y1={PAD_T - 2}
+            x2={points[hoveredIdx].x} y2={baseY}
+            stroke="var(--ink)" strokeWidth="0.5" opacity="0.18"
+            style={{ pointerEvents: 'none' }}
+          />
+        )}
+
         {/* Line */}
-        <path d={pathD} fill="none" stroke="var(--signal)" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round" />
+        <path d={pathD} fill="none" stroke="var(--signal)" strokeWidth="1.25" strokeLinecap="round" strokeLinejoin="round" />
 
         {/* Hover hit areas + points */}
         {points.map((p, i) => {
           const isHovered = hoveredIdx === i;
-          const isLast = i === points.length - 1;
-          const showLabel = isHovered || isLast;
           return (
             <g key={i}>
               <circle
-                cx={p.x} cy={p.y} r="14" fill="transparent"
+                cx={p.x} cy={p.y} r="16" fill="transparent"
                 onMouseEnter={() => setHoveredIdx(i)}
                 onMouseLeave={() => setHoveredIdx(null)}
                 onClick={() => router.push(`${dashPrefix}/audits/${p.auditId}`)}
@@ -92,30 +111,58 @@ export function ScoreOverTimeChart({ trend }: {
               />
               <circle
                 cx={p.x} cy={p.y}
-                r={isHovered ? 3 : 2}
+                r={isHovered ? 3.5 : 2.5}
                 fill={isHovered ? 'var(--signal)' : 'var(--paper)'}
                 stroke="var(--signal)"
-                strokeWidth="1"
+                strokeWidth="1.25"
                 className="transition-all duration-150"
                 style={{ pointerEvents: 'none' }}
               />
-              {showLabel && (
-                <g style={{ pointerEvents: 'none' }}>
-                  <rect x={p.x - 12} y={p.y - 18} width="24" height="13" rx="3.5" fill="var(--signal)" />
-                  <text x={p.x} y={p.y - 9.5} textAnchor="middle" fontSize="7.5" fontWeight="500" fill="white" fontFamily="var(--font-inter)">{p.score}</text>
-                </g>
-              )}
             </g>
           );
         })}
 
+        {/* Last-point score pill (only when nothing is hovered) */}
+        {hoveredIdx == null && points.length > 0 && (() => {
+          const p = points[points.length - 1];
+          const label = String(p.score);
+          const w = label.length * 6 + 12;
+          const x = Math.min(W - PAD_R - w, p.x - w / 2);
+          const y = Math.max(PAD_T - 2, p.y - 22);
+          return (
+            <g style={{ pointerEvents: 'none' }}>
+              <rect x={x} y={y} width={w} height="16" rx="4" fill="var(--ink)" />
+              <text x={x + w / 2} y={y + 11} textAnchor="middle" fontSize="9" fontWeight="600" fill="var(--paper)" fontFamily="var(--font-inter)">{label}</text>
+            </g>
+          );
+        })()}
+
+        {/* Hover tooltip — date · score/100 */}
+        {hoveredIdx != null && points[hoveredIdx] && (() => {
+          const p = points[hoveredIdx];
+          const label = `${fmtDate(p.date)}  ${p.score}/100`;
+          const w = label.length * 4.7 + 14;
+          const x = Math.max(PAD_L, Math.min(W - PAD_R - w, p.x - w / 2));
+          const y = Math.max(PAD_T - 4, p.y - 24);
+          return (
+            <g style={{ pointerEvents: 'none' }}>
+              <rect x={x} y={y} width={w} height="17" rx="4.5" fill="var(--ink)" />
+              <text x={x + w / 2} y={y + 11.5} textAnchor="middle" fontSize="8.5" fontWeight="500" fill="var(--paper)" fontFamily="var(--font-inter)">{label}</text>
+            </g>
+          );
+        })()}
+
         {/* X-axis date labels */}
         {points.map((p, i) => {
           if (trend.length > 5 && i !== 0 && i !== trend.length - 1 && i !== Math.floor(trend.length / 2)) return null;
-          const d = new Date(p.date);
-          const label = `${d.toLocaleString('en-US', { month: 'short' })} ${d.getDate()}`;
+          const isActive = hoveredIdx === i;
           return (
-            <text key={i} x={p.x} y={H - 4} textAnchor="middle" fontSize="6.5" fill="var(--muted)" fontFamily="var(--font-inter)">{label}</text>
+            <text
+              key={i} x={p.x} y={H - 4} textAnchor="middle"
+              fontSize="7" fontWeight={isActive ? 600 : 400}
+              fill={isActive ? 'var(--ink)' : 'var(--muted)'}
+              fontFamily="var(--font-inter)"
+            >{fmtDate(p.date)}</text>
           );
         })}
       </svg>
