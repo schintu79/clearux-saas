@@ -33,7 +33,14 @@ import {
   Lightbulb,
   Search as SearchIcon,
   X,
+  Download,
 } from 'lucide-react';
+import {
+  prepareFindingsForExport,
+  buildExportMeta,
+  renderMarkdown,
+  processExportPipeline,
+} from '@/lib/export/findings-formatter';
 import {
   severityColor,
   severityLabel,
@@ -338,6 +345,31 @@ function FindPageInner() {
 
   const hasActive = moduleFilter !== 'all' || sevFilter !== 'all';
 
+  // Same Markdown handoff export as the Fix page (identical pipeline + file).
+  const allGroups = buckets.flatMap((b) => b.groups);
+  const handleExportFindings = () => {
+    const exportFindings = prepareFindingsForExport(allGroups, PHASE1_MODULES);
+    const siteName = workspace?.primary_domain || workspace?.name || 'brand';
+    const siteHostname = workspace?.primary_domain || '';
+    const auditDate = bundle.audit?.completed_at || bundle.audit?.created_at || new Date().toISOString();
+    const auditId = bundle.audit?.id || 'unknown';
+    const { clusters, originalCount, uniqueCount } = processExportPipeline(exportFindings, siteHostname);
+    const dedupedFindings = clusters.flatMap((c) => c.members);
+    const meta = buildExportMeta(dedupedFindings, siteName, auditDate, auditId, { originalCount, uniqueCount });
+    const md = renderMarkdown(dedupedFindings, meta, clusters);
+    const blob = new Blob([md], { type: 'text/markdown;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const hostname = workspace?.primary_domain || 'brand';
+    const dateStr = new Date().toISOString().slice(0, 10);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `fixpath-fixes-${hostname}-${dateStr}.md`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  };
+
   return (
     <div>
       <OverviewBreadcrumb current="Find" />
@@ -345,7 +377,18 @@ function FindPageInner() {
         icon={<SearchIcon size={18} style={{ color: 'var(--ink)' }} />}
         title="Find"
         subtitle="What is hurting your site right now, ranked by impact."
-      />
+      >
+        {allGroups.length > 0 && (
+          <button
+            onClick={handleExportFindings}
+            className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-[13px] font-semibold transition-opacity hover:opacity-90"
+            style={{ background: 'var(--ink)', color: 'var(--paper)' }}
+          >
+            <Download size={14} strokeWidth={2} />
+            Export fixes
+          </button>
+        )}
+      </PageHeader>
 
       {/* Trust layer — page-level confidence strip */}
       <AuditConfidenceStrip

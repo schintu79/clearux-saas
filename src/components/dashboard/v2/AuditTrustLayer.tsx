@@ -21,6 +21,7 @@
  */
 
 import React, { useState } from 'react'
+import { ShieldCheck } from 'lucide-react'
 import type { AuditFinding, CrawlSummary } from '@/types/database'
 import {
   computeAuditTrustSummary,
@@ -53,8 +54,22 @@ export function AuditConfidenceStrip({ findings, crawlSummary, className = '' }:
 
   if (findings.length === 0) return null
 
+  // 2026-06-13: elevated from a quiet footer row to a labelled trust band —
+  // this is the evidence behind every finding and deserves to be seen. The
+  // header frames the four cards as "why you can trust this"; the cards
+  // themselves are enlarged (see AuditConfidenceCard).
   return (
-    <div className={`grid grid-cols-2 lg:grid-cols-4 gap-2 ${className}`}>
+    <div className={className}>
+      <div className="flex items-center gap-2 mb-2">
+        <ShieldCheck size={15} style={{ color: 'var(--ok)' }} className="flex-shrink-0" />
+        <h3 className="text-[12px] font-semibold tracking-[-0.005em]" style={{ color: 'var(--ink)' }}>
+          How this audit was verified
+        </h3>
+        <span className="text-[11px]" style={{ color: 'var(--m-muted)' }}>
+          · coverage, evidence mix, and the independent checks behind every finding
+        </span>
+      </div>
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-2">
       <AuditConfidenceCard
         label="Crawl coverage"
         value={trust.crawl_coverage_text}
@@ -79,6 +94,7 @@ export function AuditConfidenceStrip({ findings, crawlSummary, className = '' }:
         subvalue="Independent checks completed"
         tone="neutral"
       />
+      </div>
     </div>
   )
 }
@@ -102,15 +118,15 @@ function AuditConfidenceCard({ label, value, subvalue, tone = 'neutral' }: Audit
   return (
     // White card background (2026-06-10): the paper/cream background made the
     // strip blend into the page — white gives the trust data clear separation.
-    <div className={`px-3 py-2.5 rounded-lg border bg-white dark:bg-white/[0.04] ${toneColors[tone]}`}>
-      <div className="text-[10px] font-medium uppercase tracking-wider text-ink/60 mb-1">
+    <div className={`px-3.5 py-3 rounded-lg border bg-white dark:bg-white/[0.04] ${toneColors[tone]}`}>
+      <div className="text-[10px] font-semibold uppercase tracking-wider text-ink/55 mb-1.5">
         {label}
       </div>
-      <div className="text-[12px] font-medium text-ink/80 leading-tight">
+      <div className="text-[14px] font-semibold text-ink/90 leading-tight">
         {value}
       </div>
       {subvalue && (
-        <div className="text-[10px] text-ink/60 mt-0.5 leading-tight">
+        <div className="text-[11px] text-ink/55 mt-1 leading-tight">
           {subvalue}
         </div>
       )}
