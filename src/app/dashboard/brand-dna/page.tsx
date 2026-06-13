@@ -80,6 +80,8 @@ interface BrandIdentity {
   logo_file_id: string | null;
   brand_guide_file_id: string | null;
   brand_promise: string | null;
+  /** Per-brand opt-out: when false, this Brand DNA is excluded from audits. Defaults true. */
+  include_in_audits?: boolean | null;
   created_at: string;
   updated_at: string;
   brand_identity_files: BrandFile[];
@@ -578,6 +580,30 @@ function BrandDnaPage() {
     } finally { setSaving(false); }
   };
 
+  /* ── Include-in-audits toggle (persisted opt-out) ── */
+  const [savingInclude, setSavingInclude] = useState(false);
+  const includeInAudits = identity?.include_in_audits !== false; // default ON
+  const toggleIncludeInAudits = async () => {
+    if (!identity || savingInclude) return;
+    const next = !includeInAudits;
+    setSavingInclude(true);
+    // Optimistic update
+    setIdentity(prev => prev ? { ...prev, include_in_audits: next } : prev);
+    try {
+      const res = await fetch(`/api/brand-identities/${identity.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ include_in_audits: next }),
+      });
+      if (!res.ok) throw new Error('toggle failed');
+    } catch {
+      // Revert on failure
+      setIdentity(prev => prev ? { ...prev, include_in_audits: !next } : prev);
+    } finally {
+      setSavingInclude(false);
+    }
+  };
+
   /* ── File upload ── */
   const uploadFiles = async (files: FileList | File[]) => {
     if (!identity) return;
@@ -954,11 +980,34 @@ function BrandDnaPage() {
               style={{ background: 'var(--card)', border: '1px solid var(--rule)' }}
             >
               <p className="text-[13px] font-semibold mb-1" style={{ color: 'var(--ink)' }}>
-                Design consistency check
+                Include in audits
               </p>
               <p className="text-[11px] leading-relaxed mb-3" style={{ color: 'var(--m-muted)' }}>
-                When enabled, your next website audit will include a Design Consistency module that checks your live site against these brand standards.
+                When on, every website audit automatically checks your live site against this Brand DNA (colours, voice &amp; tone) and shows a Brand Consistency score. Turn it off to exclude it.
               </p>
+
+              {/* Persisted opt-out toggle (replaces the old audit-page checkbox) */}
+              <button
+                type="button"
+                onClick={toggleIncludeInAudits}
+                disabled={savingInclude}
+                className="w-full flex items-center justify-between gap-3 rounded-lg p-2.5 mb-3 transition-colors"
+                style={{ background: 'var(--paper-2)', border: '1px solid var(--rule)', opacity: savingInclude ? 0.6 : 1 }}
+                aria-pressed={includeInAudits}
+              >
+                <span className="text-[12px] font-medium" style={{ color: 'var(--ink)' }}>
+                  {includeInAudits ? 'Included in audits' : 'Excluded from audits'}
+                </span>
+                <span
+                  className="relative inline-flex items-center flex-shrink-0 rounded-full transition-colors"
+                  style={{ width: 34, height: 20, background: includeInAudits ? 'var(--ok)' : 'var(--rule)' }}
+                >
+                  <span
+                    className="absolute rounded-full bg-white transition-all"
+                    style={{ width: 16, height: 16, top: 2, left: includeInAudits ? 16 : 2 }}
+                  />
+                </span>
+              </button>
 
               {/* Readiness status */}
               <div className="rounded-lg p-2.5 mb-3" style={{ background: 'var(--paper-2)', border: '1px solid var(--rule)' }}>
