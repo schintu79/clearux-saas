@@ -20,8 +20,15 @@
 
 import puppeteer, { type Browser, type Page } from 'puppeteer-core'
 import { launchAuditBrowser } from '@/lib/audit-engine/browser-launcher'
-import axe from 'axe-core'
+import * as axeCore from 'axe-core'
 import { mapAxeViolationsToFindings, type AxeMappedFinding, type AxeViolation } from './axe-mapper'
+
+// Robust against webpack/esModuleInterop quirks: axe-core's source string may
+// hang off the namespace, its .default, or require() — try all.
+const AXE_SOURCE: string = (() => {
+  const ns = axeCore as any
+  return ns?.source || ns?.default?.source || ''
+})()
 
 /* ── WCAG 2.1 AA Criteria Taxonomy ─────────────────────────── */
 
@@ -919,21 +926,33 @@ async function extractColorFrequencies(page: Page): Promise<Array<{ key: string;
  * violations — the lever that lifts the verified evidence mix. The inner
  * evaluate is self-contained (only references window.axe it just injected)
  * so webpack minification can't break it. Fully non-fatal. */
-async function runAxe(page: Page): Promise<AxeViolation[]> {
+interface AxeRunResult {
+  violations: AxeViolation[]
+  error: string | null
+}
+
+async function runAxe(page: Page): Promise<AxeRunResult> {
+  if (!AXE_SOURCE) {
+    return { violations: [], error: `axe.source unavailable (len 0) — import/bundle issue` }
+  }
   try {
-    // Inject the axe-core library into the page context.
-    await page.evaluate(axe.source as string)
+    // Inject axe-core into the page context. page.evaluate(string) runs via
+    // CDP Runtime.evaluate, so it is NOT blocked by the page's CSP.
+    await page.evaluate(AXE_SOURCE)
     const result = await page.evaluate(async () => {
       // @ts-expect-error — axe is injected onto window above.
+      if (!window.axe) throw new Error('window.axe undefined after inject')
+      // @ts-expect-error
       return await window.axe.run(document, {
         resultTypes: ['violations'],
         runOnly: { type: 'tag', values: ['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa'] },
       })
     })
-    return ((result as any)?.violations || []) as AxeViolation[]
+    return { violations: ((result as any)?.violations || []) as AxeViolation[], error: null }
   } catch (err) {
-    console.warn('[wcag-checker] axe-core run failed (non-fatal):', (err as Error)?.message)
-    return []
+    const msg = (err as Error)?.message || String(err)
+    console.warn('[wcag-checker] axe-core run failed (non-fatal):', msg)
+    return { violations: [], error: msg.slice(0, 300) }
   }
 }
 
@@ -954,11 +973,14 @@ export async function checkWcagAutomated(
   siteColors: string[]
   /** Deterministic axe-core accessibility violations mapped to findings (Phase 1). */
   axeFindings: AxeMappedFinding[]
+  /** Diagnostic so we can see why axe produced nothing (source len, pages, error). */
+  axeDiagnostic: { sourceLen: number; pagesRun: number; violations: number; error: string | null }
 }> {
   const automatedResults = new Map<string, WcagCheckResult[]>()
   const heuristicPrompts = new Map<string, string>()
   const colorFreq = new Map<string, number>()
   const axeFindings: AxeMappedFinding[] = []
+  const axeDiag = { sourceLen: AXE_SOURCE.length, pagesRun: 0, violations: 0, error: null as string | null }
   const pagesToCheck = urls.slice(0, maxPages)
 
   let browser: Browser | null = null
@@ -994,9 +1016,12 @@ export async function checkWcagAutomated(
         // Deterministic axe-core violations (non-fatal) → mapped findings.
         // Bounded to the first AXE_MAX_PAGES pages to cap added latency.
         if (pageIdx < AXE_MAX_PAGES) {
-          const axeViolations = await runAxe(page)
-          if (axeViolations.length > 0) {
-            axeFindings.push(...mapAxeViolationsToFindings(axeViolations, url))
+          const axeRun = await runAxe(page)
+          axeDiag.pagesRun++
+          axeDiag.violations += axeRun.violations.length
+          if (axeRun.error && !axeDiag.error) axeDiag.error = axeRun.error
+          if (axeRun.violations.length > 0) {
+            axeFindings.push(...mapAxeViolationsToFindings(axeRun.violations, url))
           }
         }
 
@@ -1027,7 +1052,7 @@ export async function checkWcagAutomated(
   const SEV_RANK: Record<string, number> = { critical: 0, high: 1, medium: 2, low: 3 }
   axeFindings.sort((a, b) => SEV_RANK[a.severity] - SEV_RANK[b.severity])
 
-  return { automatedResults, heuristicPrompts, siteColors, axeFindings: axeFindings.slice(0, 30) }
+  return { automatedResults, heuristicPrompts, siteColors, axeFindings: axeFindings.slice(0, 30), axeDiagnostic: axeDiag }
 }
 
 

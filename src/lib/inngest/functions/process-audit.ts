@@ -1669,7 +1669,12 @@ Return 2-6 findings. Be specific and evidence-based. Reference specific files/co
       const wcagPromise = (async () => {
         try {
           const maxUrls = auditDetails.plan === 'free_preview' ? 1 : 3
-          const { automatedResults, heuristicPrompts, siteColors, axeFindings } = await checkWcagAutomated(crawlResult.crawledUrls, maxUrls)
+          const { automatedResults, heuristicPrompts, siteColors, axeFindings, axeDiagnostic } = await checkWcagAutomated(crawlResult.crawledUrls, maxUrls)
+          // Visibility into axe (it silently produced nothing on first runs):
+          // source length, pages run, raw violations, and any run error.
+          await auditLog(auditId, 'axe_debug', axeDiagnostic.error ? 'warning' : 'info',
+            `axe: sourceLen=${axeDiagnostic.sourceLen} pagesRun=${axeDiagnostic.pagesRun} violations=${axeDiagnostic.violations} mapped=${axeFindings.length}${axeDiagnostic.error ? ` error=${axeDiagnostic.error}` : ''}`,
+            axeDiagnostic as any)
 
           const heuristicResults = new Map<string, WcagCheckResult[]>()
           // LEAN PIPELINE: Skip WCAG heuristic AI calls — automated checks still run.
