@@ -37,6 +37,75 @@ import {
   type FindingTrustMeta,
 } from '@/lib/audit-engine/pipeline/trust-summary'
 
+/* ── Brand Consistency panel (§10) ──────────────────────────────
+ * Read-only "Brand Consistency" group for the Find/Fix pages. Renders the
+ * grouped brand mismatches from report.raw_json.brandConsistency. These are
+ * intentionally NOT audit_findings — the Brand Consistency score is separate
+ * and never affects the site health score. Renders nothing when no brand
+ * data was checked. */
+export interface BrandConsistencyData {
+  score: number
+  attributesChecked: string[]
+  mismatches: Array<{
+    attribute: 'color' | 'voice' | 'tone'
+    severity: 'high' | 'medium' | 'low'
+    title: string
+    detail: string
+    evidence: string
+    trustHarming: boolean
+  }>
+}
+
+export function BrandConsistencyPanel({ data, className = '' }: { data: BrandConsistencyData | null; className?: string }) {
+  if (!data || !Array.isArray(data.attributesChecked) || data.attributesChecked.length === 0) return null
+
+  const sevColor: Record<string, string> = { high: 'var(--severe)', medium: 'var(--warn)', low: 'var(--m-muted)' }
+  const checkedLabel = data.attributesChecked
+    .map((a) => (a === 'color' ? 'colours' : a === 'voice' ? 'voice & tone' : a))
+    .join(' · ')
+  const scoreColor = data.score >= 80 ? 'var(--ok)' : data.score >= 60 ? 'var(--warn)' : 'var(--severe)'
+
+  return (
+    <div className={`rounded-xl overflow-hidden ${className}`} style={{ border: '1px dashed color-mix(in srgb, var(--ink) 22%, transparent)', background: 'var(--card)' }}>
+      <div className="px-4 py-3 flex items-start justify-between gap-3" style={{ borderBottom: data.mismatches.length > 0 ? '1px solid var(--rule)' : undefined }}>
+        <div className="flex items-start gap-2.5 min-w-0">
+          <ShieldCheck size={16} style={{ color: 'var(--m-muted)' }} className="flex-shrink-0 mt-0.5" />
+          <div className="min-w-0">
+            <h3 className="text-[13px] font-semibold leading-tight" style={{ color: 'var(--ink)' }}>Brand Consistency</h3>
+            <p className="text-[11px] mt-0.5" style={{ color: 'var(--m-muted)' }}>
+              Your live site vs your declared Brand DNA · checked: {checkedLabel} · separate score, does not affect your health score
+            </p>
+          </div>
+        </div>
+        <div className="flex items-baseline gap-1 flex-shrink-0">
+          <span className="text-[20px] font-bold tabular-nums leading-none" style={{ color: scoreColor }}>{data.score}</span>
+          <span className="text-[10px]" style={{ color: 'var(--m-muted)' }}>/100</span>
+        </div>
+      </div>
+
+      {data.mismatches.length === 0 ? (
+        <div className="px-4 py-2.5 flex items-center gap-2 text-[12px]" style={{ color: 'var(--ok)' }}>
+          <ShieldCheck size={13} />
+          <span>On brand — no mismatches found against your declared Brand DNA.</span>
+        </div>
+      ) : (
+        <ul className="divide-y" style={{ borderColor: 'var(--rule)' }}>
+          {data.mismatches.map((m, i) => (
+            <li key={i} className="px-4 py-3 flex items-start gap-2.5">
+              <span className="w-1.5 h-1.5 rounded-full flex-shrink-0 mt-1.5" style={{ background: sevColor[m.severity] || 'var(--m-muted)' }} />
+              <div className="min-w-0">
+                <p className="text-[12.5px] font-medium leading-tight" style={{ color: 'var(--ink)' }}>{m.title}</p>
+                <p className="text-[11px] mt-0.5 leading-snug" style={{ color: 'var(--m-muted)' }}>{m.detail}</p>
+                <p className="text-[10.5px] mt-1 leading-snug font-mono break-words" style={{ color: 'var(--m-muted)' }}>{m.evidence}</p>
+              </div>
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
+  )
+}
+
 /* ── 1. AuditConfidenceStrip ────────────────────────────────── */
 
 interface AuditConfidenceStripProps {

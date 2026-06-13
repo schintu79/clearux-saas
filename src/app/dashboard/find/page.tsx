@@ -76,6 +76,7 @@ import {
   FindingSourceLabel,
   FindingSurfaceScope,
   FindingEvidencePanel,
+  BrandConsistencyPanel,
 } from '@/components/dashboard/v2/AuditTrustLayer';
 import { computeCoverageLabel } from '@/lib/audit-engine/pipeline/trust-summary';
 import { applySeverityCap, composeModuleScores } from '@/lib/scoring/severity-cap';
@@ -396,6 +397,9 @@ function FindPageInner() {
         crawlSummary={(bundle.audit as any)?.crawl_summary as CrawlSummary | null ?? null}
         className="mb-4"
       />
+
+      {/* Brand Consistency — read-only group (§10), separate from health score */}
+      <BrandConsistencyPanel data={(bundle.report?.raw_json as any)?.brandConsistency ?? null} className="mb-4" />
 
       {/* Tab navigation */}
       <div className="flex items-center gap-0 mb-5" style={{ borderBottom: '2px solid var(--rule)' }}>
