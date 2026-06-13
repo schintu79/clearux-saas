@@ -394,21 +394,42 @@ export function FindingEvidencePanel({ finding }: FindingEvidencePanelProps) {
   if (trust.evidence_summary) parts.push({ label: 'Result', value: truncate(trust.evidence_summary, 90) })
   else if (finding.proposed_value) parts.push({ label: 'Proposed fix', value: truncate(finding.proposed_value, 90) })
 
-  if (parts.length === 0) return null
+  const screenshot = (finding as { screenshot_url?: string | null }).screenshot_url || null
+
+  if (parts.length === 0 && !screenshot) return null
 
   // Pill style (2026-06-10): each evidence item sits in its own pill for
   // visibility. Text at ink/70+ for WCAG AA contrast (ink/50 failed ~4:1).
   return (
-    <div className="border-t border-ink/10 mt-3 pt-2.5 flex flex-wrap items-center gap-1.5 text-[11px] leading-relaxed">
-      <span className="font-semibold text-ink/80 mr-1">Evidence</span>
-      {parts.map((p) => (
-        <span
-          key={p.label}
-          className="inline-flex items-baseline gap-1 px-2.5 py-1 rounded-full border border-ink/10 bg-ink/[0.04] text-ink/80"
-        >
-          <span className="font-medium text-ink/60">{p.label}:</span> {p.value}
-        </span>
-      ))}
+    <div className="border-t border-ink/10 mt-3 pt-2.5">
+      {parts.length > 0 && (
+        <div className="flex flex-wrap items-center gap-1.5 text-[11px] leading-relaxed">
+          <span className="font-semibold text-ink/80 mr-1">Evidence</span>
+          {parts.map((p) => (
+            <span
+              key={p.label}
+              className="inline-flex items-baseline gap-1 px-2.5 py-1 rounded-full border border-ink/10 bg-ink/[0.04] text-ink/80"
+            >
+              <span className="font-medium text-ink/60">{p.label}:</span> {p.value}
+            </span>
+          ))}
+        </div>
+      )}
+      {/* Visual evidence (2026-06-13, Phase 1 item 4): element-highlighted
+          screenshot for deterministic findings that carry a selector. */}
+      {screenshot && (
+        <div className="mt-2.5">
+          <span className="block text-[10px] font-semibold uppercase tracking-wider text-ink/55 mb-1.5">Visual evidence</span>
+          <a href={screenshot} target="_blank" rel="noopener noreferrer" className="inline-block">
+            <img
+              src={screenshot}
+              alt="Visual evidence for this finding"
+              loading="lazy"
+              className="rounded-lg border border-ink/10 max-h-[160px] w-auto object-contain hover:opacity-90 transition-opacity"
+            />
+          </a>
+        </div>
+      )}
     </div>
   )
 }
