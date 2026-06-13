@@ -1121,6 +1121,7 @@ function OverviewInner() {
         // fabricated ±0 on first audit / newly-added module).
         const latestPillars = scoreTrend.length >= 2 ? scoreTrend[scoreTrend.length - 1]?.pillarScores : null;
         const prevPillars = scoreTrend.length >= 2 ? scoreTrend[scoreTrend.length - 2]?.pillarScores : null;
+        const brandData = (report?.raw_json as any)?.brandConsistency ?? null;
         return (
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-3 mb-4">
           {pillarScores.map((p) => {
@@ -1157,13 +1158,20 @@ function OverviewInner() {
             );
           })}
 
+          {/* Brand Consistency — 8th tile, greyed to signal it is a separate
+              check (its own score; does NOT feed the health score). Details +
+              grouped findings live in Find/Fix. */}
+          {brandData && Array.isArray(brandData.attributesChecked) && brandData.attributesChecked.length > 0 && (
+            <BrandConsistencyTile
+              score={brandData.score}
+              issueCount={Array.isArray(brandData.mismatches) ? brandData.mismatches.length : 0}
+              href={`${dashPrefix}/find?view=brand`}
+            />
+          )}
           {/* Design Consistency is always included — no "not included" fallback needed */}
         </div>
         );
       })()}
-
-      {/* ── Brand Consistency (§10) — declared Brand DNA vs the live site ── */}
-      <BrandConsistencyCard data={(report?.raw_json as any)?.brandConsistency ?? null} />
 
       {/* ── Row 3: Issues · Speed · Brand Intelligence (unified) ─ */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4 auto-rows-fr">
@@ -1418,74 +1426,42 @@ function IssuesByImportance({
   );
 }
 
-/* ── Row 3 — Priority recommendations ────────────────── */
-/* ── Row 2 — Category module card with collapsible breakdown ── */
-/* ── Brand Consistency card (§10) ───────────────────────────────
- * Renders raw_json.brandConsistency: the live site cross-referenced against
- * the customer's declared Brand DNA. Own score, visually separate from the
- * health score. Renders nothing when there was no brand data to check
- * (attributesChecked empty) — never a fabricated empty verdict. */
-interface BrandConsistencyData {
-  score: number
-  attributesChecked: string[]
-  mismatches: Array<{
-    attribute: 'color' | 'voice' | 'tone'
-    severity: 'high' | 'medium' | 'low'
-    title: string
-    detail: string
-    evidence: string
-    trustHarming: boolean
-  }>
-}
-
-function BrandConsistencyCard({ data }: { data: BrandConsistencyData | null }) {
-  if (!data || !Array.isArray(data.attributesChecked) || data.attributesChecked.length === 0) return null
-
-  const sevDot: Record<string, string> = { high: 'var(--severe)', medium: 'var(--warn)', low: 'var(--m-muted)' }
-  const checkedLabel = data.attributesChecked
-    .map((a) => (a === 'color' ? 'colours' : a === 'voice' ? 'voice & tone' : a))
-    .join(' · ')
-
+/* ── Brand Consistency tile (§10) — compact, greyed; 8th card in the grid.
+ * Own score, separate from health. Details + grouped findings live in
+ * Find/Fix (BrandConsistencyPanel). */
+function BrandConsistencyTile({ score, issueCount, href }: { score: number; issueCount: number; href: string }) {
   return (
-    <div className="mb-4">
-      <div className="mb-2 flex items-center gap-2">
-        <ShieldCheck size={14} style={{ color: 'var(--ok)' }} />
-        <h2 className="text-[15px] font-semibold tracking-[-0.005em]" style={{ color: 'var(--ink)' }}>Brand Consistency</h2>
-        <p className="text-[11px]" style={{ color: 'var(--m-muted)' }}>
-          · your live site vs your declared Brand DNA — a separate score, it does not affect your health score
-        </p>
-      </div>
-      <div className="rounded-xl p-4 sm:p-5" style={{ background: 'var(--card)', border: '1px solid var(--rule)' }}>
-        <div className="flex items-start justify-between gap-4">
-          <div className="min-w-0">
-            <div className="flex items-baseline gap-2">
-              <span className={`text-[28px] font-bold tabular-nums leading-none ${scoreColor(data.score)}`}>{data.score}</span>
-              <span className="text-[12px]" style={{ color: 'var(--m-muted)' }}>/100</span>
-            </div>
-            <p className="text-[11px] mt-1.5" style={{ color: 'var(--m-muted)' }}>Checked: {checkedLabel}</p>
-          </div>
-          <Sparkles size={18} style={{ color: 'var(--m-muted)', opacity: 0.5 }} className="flex-shrink-0" />
+    <div
+      className="rounded-xl overflow-hidden flex flex-col"
+      // Grey/white + dashed border: deliberately distinct from the coloured
+      // health-module tiles — Brand Consistency is a separate check.
+      style={{ background: 'var(--card)', border: '1px dashed color-mix(in srgb, var(--ink) 22%, transparent)' }}
+    >
+      <div className="flex items-start gap-2 px-3 pt-3 pb-2">
+        <div className="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0" style={{ background: 'color-mix(in srgb, var(--ink) 5%, transparent)' }}>
+          <ShieldCheck size={14} style={{ color: 'var(--m-muted)' }} />
         </div>
-
-        {data.mismatches.length === 0 ? (
-          <div className="mt-3 pt-3 flex items-center gap-2 text-[12px]" style={{ borderTop: '1px solid var(--rule)', color: 'var(--ok)' }}>
-            <ShieldCheck size={13} />
-            <span>On brand — no mismatches found against your declared Brand DNA.</span>
-          </div>
-        ) : (
-          <ul className="mt-3 pt-3 space-y-2.5" style={{ borderTop: '1px solid var(--rule)' }}>
-            {data.mismatches.map((m, i) => (
-              <li key={i} className="flex items-start gap-2.5">
-                <span className="w-1.5 h-1.5 rounded-full flex-shrink-0 mt-1.5" style={{ background: sevDot[m.severity] || 'var(--m-muted)' }} />
-                <div className="min-w-0">
-                  <p className="text-[12.5px] font-medium leading-tight" style={{ color: 'var(--ink)' }}>{m.title}</p>
-                  <p className="text-[11px] mt-0.5 leading-snug" style={{ color: 'var(--m-muted)' }}>{m.detail}</p>
-                  <p className="text-[10.5px] mt-1 leading-snug font-mono" style={{ color: 'var(--m-muted)' }}>{m.evidence}</p>
-                </div>
-              </li>
-            ))}
-          </ul>
-        )}
+        <div className="flex-1 min-w-0">
+          <h3 className="font-sans font-semibold text-[12.5px] leading-tight truncate" style={{ color: 'var(--ink)' }} title="Brand Consistency">
+            Brand Consistency
+          </h3>
+          <p className="text-[10px] leading-tight mt-0.5" style={{ color: 'var(--m-muted)' }}>
+            {issueCount} issue{issueCount !== 1 ? 's' : ''} · separate score
+          </p>
+        </div>
+      </div>
+      <div className="px-3 pb-2">
+        <span className={`text-[28px] font-bold tabular-nums leading-none ${scoreColor(score)}`}>{score}</span>
+      </div>
+      <div
+        className="mt-auto px-3 py-1.5 flex items-center justify-between gap-1 text-[10px] font-medium"
+        style={{ borderTop: '1px dashed color-mix(in srgb, var(--ink) 18%, transparent)', color: 'var(--m-muted)' }}
+      >
+        <Link href={href} className="inline-flex items-center gap-1 hover:gap-1.5 transition-all">
+          <span>View findings</span>
+          <ArrowRight size={10} />
+        </Link>
+        <span className="uppercase tracking-wider text-[9px]">Brand DNA</span>
       </div>
     </div>
   )

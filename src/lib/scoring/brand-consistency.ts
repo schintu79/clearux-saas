@@ -146,50 +146,59 @@ export function compareBrandConsistency(
     .map((c) => parseColor(c))
     .filter((c): c is [number, number, number] => c != null)
 
+  // Colours are ONE grouped issue — "colour" is a single consistency concern
+  // even when several declared colours are missing (Stefano, 2026-06-13). The
+  // score still reflects magnitude (per-missing-colour deduction); only the
+  // surfaced finding is grouped, listing every missing colour as evidence.
+  const missingColors: string[] = []
   if (declaredColors.length > 0 && observedColors.length > 0) {
     attributesChecked.push('color')
     for (const dc of declaredColors) {
       const present = observedColors.some((oc) => colorDistance(dc.rgb, oc) <= tolerance)
-      if (!present) {
-        mismatches.push({
-          attribute: 'color',
-          severity: 'medium',
-          title: 'Declared brand colour not found on the live site',
-          detail: `Your Brand DNA lists ${normalizeHex(dc.rgb)} as a brand colour, but no matching colour appears in the live site's styling.`,
-          evidence: `Declared ${dc.raw} (${normalizeHex(dc.rgb)}); nearest observed colour is beyond the consistency tolerance.`,
-          // Off-palette is brand fidelity, not directly end-user trust.
-          trustHarming: false,
-        })
-      }
+      if (!present) missingColors.push(normalizeHex(dc.rgb))
+    }
+    if (missingColors.length > 0) {
+      const many = missingColors.length > 1
+      mismatches.push({
+        attribute: 'color',
+        severity: 'medium',
+        title: many ? 'Declared brand colours not found on the live site' : 'Declared brand colour not found on the live site',
+        detail: `Your Brand DNA lists ${missingColors.length} brand colour${many ? 's that do' : ' that does'} not appear in the live site's styling.`,
+        evidence: `Declared but not observed (beyond consistency tolerance): ${missingColors.join(', ')}.`,
+        // Off-palette is brand fidelity, not directly end-user trust.
+        trustHarming: false,
+      })
     }
   }
 
-  // ── Voice / tone (quote-grounded only) ──
+  // ── Voice / tone (quote-grounded only) — ONE grouped issue ──
   const hasVoiceSignal = !!(declared.voice && declared.voice.trim()) || (declared.toneKeywords || []).length > 0
+  const voiceQuotes = (observed.voiceContradictions || []).filter((vc) => vc.quote && vc.quote.trim())
   if (hasVoiceSignal) {
     attributesChecked.push('voice')
-    for (const vc of observed.voiceContradictions || []) {
-      if (!vc.quote || !vc.quote.trim()) continue // never emit a quote-less voice finding
-      const severity = vc.severity ?? 'medium'
+    if (voiceQuotes.length > 0) {
+      const many = voiceQuotes.length > 1
+      const severity: BrandMismatchSeverity = voiceQuotes.some((q) => q.severity === 'high') ? 'high' : 'medium'
       mismatches.push({
         attribute: 'voice',
         severity,
         title: 'Site copy conflicts with declared brand voice',
-        detail: `A passage on the live site reads in a way that conflicts with your declared ${vc.conflictsWith}.`,
-        evidence: `"${vc.quote.trim()}"${vc.pageUrl ? ` — ${vc.pageUrl}` : ''} (declared: ${vc.conflictsWith})`,
+        detail: `${voiceQuotes.length} passage${many ? 's' : ''} on the live site read in a way that conflicts with your declared ${voiceQuotes[0].conflictsWith}.`,
+        evidence: voiceQuotes.map((q) => `"${q.quote.trim()}"${q.pageUrl ? ` — ${q.pageUrl}` : ''}`).join('  |  '),
         // Voice that contradicts positioning erodes end-user trust.
         trustHarming: true,
       })
     }
   }
 
-  // ── Score (own metric, floored at 0) ──
+  // ── Score (own metric, floored at 0) — driven by underlying magnitude,
+  //    not by the grouped-mismatch count. ──
   let score = 100
-  for (const m of mismatches) {
-    if (m.attribute === 'color') score -= DEDUCTION.colorMissing
-    else if (m.severity === 'high') score -= DEDUCTION.voiceHigh
-    else if (m.severity === 'medium') score -= DEDUCTION.voiceMedium
-    else score -= DEDUCTION.voiceLow
+  score -= DEDUCTION.colorMissing * missingColors.length
+  for (const q of voiceQuotes) {
+    if (q.severity === 'high') score -= DEDUCTION.voiceHigh
+    else if (q.severity === 'low') score -= DEDUCTION.voiceLow
+    else score -= DEDUCTION.voiceMedium
   }
   score = Math.max(0, Math.min(100, score))
 

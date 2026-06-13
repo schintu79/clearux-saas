@@ -52,6 +52,7 @@ import {
   FindingSourceLabel,
   FindingSurfaceScope,
   FindingEvidencePanel,
+  BrandConsistencyPanel,
 } from '@/components/dashboard/v2/AuditTrustLayer';
 
 const STATUS_META: Record<string, { label: string; color: string; bg: string; dot: string }> = {
@@ -913,6 +914,9 @@ function FixPageInner() {
         crawlSummary={(bundle.audit as any)?.crawl_summary as CrawlSummary | null ?? null}
         className="mb-4"
       />
+
+      {/* Brand Consistency — read-only group (§10), separate from health score */}
+      <BrandConsistencyPanel data={(bundle.report?.raw_json as any)?.brandConsistency ?? null} className="mb-4" />
 
       {groups.length === 0 ? (
         <div
