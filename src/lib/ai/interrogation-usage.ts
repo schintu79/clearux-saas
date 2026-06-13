@@ -75,14 +75,17 @@ export async function getInterrogationUsage(
     ? adminOverride
     : planLimit > 0 ? planLimit : profileLegacy
 
-  // 2. Count completed/partial interrogations for this workspace in period
+  // 2. Count completed/partial interrogations for this USER in period.
+  //    ACCOUNT-LEVEL (2026-06-13, Stefano): the plan's AI-check allowance is
+  //    shared across ALL of the user's workspaces — it is NOT granted per
+  //    workspace. So count by user_id only and do NOT scope to workspaceId
+  //    (previously each workspace got the full allowance, e.g. 500 each).
   let checksUsed = 0
 
   if (hasActiveSub || checksLimit > 0) {
     let query = db
       .from('workspace_ai_interrogations')
       .select('id', { count: 'exact', head: true })
-      .eq('workspace_id', workspaceId)
       .eq('user_id', userId)
       .in('status', ['completed', 'partial'])
 
