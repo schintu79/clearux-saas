@@ -385,7 +385,11 @@ function AuditAnimation() {
   ]
 
   return (
-    <div ref={containerRef} className="mt-16 max-sm:mt-8 -mx-8 max-sm:-mx-5">
+    // Decorative animated preview with illustrative (fake) audit data. Hidden
+    // from assistive tech — a screen reader announcing fabricated "Critical 2 /
+    // Missing H1" numbers is misleading — and excluded from contrast/responsive
+    // measurement (it's a miniature UI, not readable content).
+    <div ref={containerRef} aria-hidden="true" className="mt-16 max-sm:mt-8 -mx-8 max-sm:-mx-5">
       <div
         className="rounded-2xl overflow-hidden"
         style={{

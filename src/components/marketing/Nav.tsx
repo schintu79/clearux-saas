@@ -75,7 +75,7 @@ export function Nav() {
           <div className="flex gap-3 items-center">
             <button
               onClick={toggleTheme}
-              className="w-[38px] h-[38px] bg-transparent rounded-full inline-flex items-center justify-center text-ink hover:bg-paper-2 hover:text-signal transition-all shrink-0"
+              className="w-11 h-11 bg-transparent rounded-full inline-flex items-center justify-center text-ink hover:bg-paper-2 hover:text-signal transition-all shrink-0"
               aria-label={`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`}
             >
               {theme === 'dark' ? <SunIcon /> : <MoonIcon />}
