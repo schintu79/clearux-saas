@@ -19,6 +19,7 @@ import {
   CheckCircle2,
   AlertTriangle,
   ExternalLink,
+  ChevronDown,
 } from 'lucide-react';
 import { useWorkspace } from '@/context/WorkspaceContext';
 import { computeAuditDiff } from '@/lib/audit-engine/audit-diff';
@@ -197,6 +198,8 @@ export default function TrackPage() {
   // Until the saved schedule is fetched, we don't know the real cadence — gate
   // the control on this so it never flashes "Off" before showing the truth.
   const [monitorLoaded, setMonitorLoaded] = useState(false);
+  // Explanation is collapsed by default — heading + status + control stay visible.
+  const [monitorExpanded, setMonitorExpanded] = useState(false);
 
   useEffect(() => {
     if (!monitorUrl || !workspace?.id) return;
@@ -374,23 +377,30 @@ export default function TrackPage() {
 
       {/* Monitoring — user-chosen cadence for automatic re-audits (Phase 2 #1) */}
       <DashCard padding="lg" className="mb-6">
-        <div className="flex items-start justify-between gap-6 flex-wrap">
-          <div className="min-w-0 max-w-[600px]">
-            <div className="flex items-center gap-2">
+        <div className="flex items-center justify-between gap-6">
+          <div className="min-w-0 flex-1">
+            {/* Heading row — click to expand the explanation */}
+            <button
+              type="button"
+              onClick={() => setMonitorExpanded((v) => !v)}
+              aria-expanded={monitorExpanded}
+              className="flex items-center gap-2 text-left"
+            >
               <RefreshCw size={14} style={{ color: 'var(--ink)' }} />
               <span className="text-[14px] font-semibold" style={{ color: 'var(--ink)' }}>Automatic monitoring</span>
-              {monitorLoaded && monitorCadence !== 'off' && (
+              {monitorLoaded && (
                 <span className="text-[10px] font-semibold uppercase tracking-[0.06em] px-1.5 py-0.5 rounded"
-                  style={{ background: 'color-mix(in srgb, var(--ok) 14%, transparent)', color: 'var(--ok)' }}>On</span>
+                  style={monitorCadence !== 'off'
+                    ? { background: 'color-mix(in srgb, var(--ok) 14%, transparent)', color: 'var(--ok)' }
+                    : { background: 'color-mix(in srgb, var(--ink) 7%, transparent)', color: 'var(--m-muted)' }}>
+                  {monitorCadence !== 'off' ? 'On' : 'Off'}
+                </span>
               )}
-            </div>
-            {/* What it does + why it's worth turning on */}
-            <p className="text-[12.5px] mt-1.5 leading-[1.55]" style={{ color: 'var(--m-muted)' }}>
-              We re-audit this brand on the schedule you choose and add each result to your trend — so a score drop or a
-              new critical issue shows up here on its own, between your manual audits. Included in your plan; it never uses audit credits.
-            </p>
-            {/* Live status — never shows a guessed state before the saved schedule loads */}
-            <p className="text-[12px] mt-2.5 font-medium" style={{ color: monitorLoaded && monitorCadence !== 'off' ? 'var(--ink)' : 'var(--m-muted)' }}>
+              <ChevronDown size={14} style={{ color: 'var(--m-muted)' }}
+                className={`transition-transform ${monitorExpanded ? 'rotate-180' : ''}`} />
+            </button>
+            {/* Live status — always visible; never a guessed state before load */}
+            <p className="text-[12px] mt-1.5 font-medium" style={{ color: monitorLoaded && monitorCadence !== 'off' ? 'var(--ink)' : 'var(--m-muted)' }}>
               {!monitorLoaded
                 ? 'Checking your schedule…'
                 : monitorCadence === 'off'
@@ -400,6 +410,13 @@ export default function TrackPage() {
                     : `Running ${monitorCadence === 'weekly' ? 'weekly' : 'monthly'}.`}
               {monitorError ? <span style={{ color: 'var(--severe)' }}> · {monitorError}</span> : null}
             </p>
+            {/* Expandable explanation */}
+            {monitorExpanded && (
+              <p className="text-[12.5px] mt-2 leading-[1.55] max-w-[620px]" style={{ color: 'var(--m-muted)' }}>
+                We re-audit this brand on the schedule you choose and add each result to your trend — so a score drop or a
+                new critical issue shows up here on its own, between your manual audits. Included in your plan; it never uses audit credits.
+              </p>
+            )}
           </div>
           <div className="flex flex-col items-end gap-1.5 flex-shrink-0">
             {!monitorLoaded ? (
