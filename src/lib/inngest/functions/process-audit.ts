@@ -47,6 +47,7 @@ import {
   classifyStructuralOwnership,
   enforceSeverityEvidenceInvariant,
   verifyFindingsAgainstDomByUrl,
+  formatDomFactsForPrompt,
   identifyUngroundedFindings,
   UNGROUNDED_CONFIDENCE,
 } from '@/lib/audit-engine/pipeline'
@@ -2652,7 +2653,15 @@ RULES FOR RE-AUDIT:
       // Append WCAG check results so the AI analyzer has real compliance data
       const wcagContext = wcagCheck.summary || ''
 
-      const fullContext = siteMap + userContext + responsiveContext + llmProbeContext + wcagContext
+      // P3 — feed the verified DOM structure to the analyzer as ground truth so
+      // it never guesses the absence of landmarks/labels/links in the first
+      // place. Prevention ahead of the P0/P1 detection gates.
+      const domFactsContext = formatDomFactsForPrompt(
+        (wcagCheck as any)?.domFacts as Record<string, DomFacts> | undefined,
+        crawlResult.crawledUrls?.[0] || null,
+      )
+
+      const fullContext = siteMap + userContext + responsiveContext + llmProbeContext + wcagContext + domFactsContext
 
       await auditLog(auditId, 'site_context_built', 'success',
         `Site context built from ${lines.length} pages${userContext ? ' + user notes' : ''} | depth: ${effectiveDepthMode}`)
@@ -4909,6 +4918,9 @@ RULES FOR RE-AUDIT:
         canonicalScoring: canonicalScoring || null,
         canonicalReconciliation: canonicalScoring?.summary || null,
         brandConsistency: brandConsistency || undefined,
+        // P3 — persist the verified DOM snapshot (JSONB, no migration) for the
+        // trend, debugging, and future model grounding.
+        domFacts: (wcagCheck as any)?.domFacts || undefined,
       }
 
       // Insert report
