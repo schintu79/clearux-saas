@@ -98,6 +98,16 @@ export type { Severity, SeverityClamp } from './evidence-severity'
 export { verifyFindingsAgainstDom, verifyFindingsAgainstDomByUrl } from './dom-verification'
 export type { DomFacts, FindingForDomCheck, DomVerificationResult } from './dom-verification'
 
+// ── Step 2g: Evidence Binding (P1 — grounding required) ─────
+export {
+  identifyUngroundedFindings,
+  isGrounded,
+  hasVerbatimQuote,
+  hasSelector,
+  UNGROUNDED_CONFIDENCE,
+} from './evidence-binding'
+export type { FindingForBinding, EvidenceBindingResult } from './evidence-binding'
+
 // ── Step 3: Prompt Rules ────────────────────────────────────
 export {
   composePromptRules,
