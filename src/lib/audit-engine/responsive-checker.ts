@@ -119,6 +119,9 @@ async function runChecks({ page, viewport, url }: PageCheckInput): Promise<Viewp
     if (overflow > 10) {
       const all = document.querySelectorAll('body *')
       for (const el of all) {
+        // Skip decorative / aria-hidden subtrees (e.g. animated UI mockups) —
+        // they are illustrative, not content, and must not generate findings.
+        if (el.closest('[aria-hidden="true"],[data-audit-ignore="true"]')) continue
         const rect = el.getBoundingClientRect()
         if (rect.right > viewportWidth + 5 && rect.width > 0) {
           const tag = el.tagName.toLowerCase()
@@ -159,6 +162,8 @@ async function runChecks({ page, viewport, url }: PageCheckInput): Promise<Viewp
       const tooSmall: Array<{ tag: string; width: number; height: number; text: string }> = []
 
       for (const el of interactive) {
+        // Skip decorative / aria-hidden subtrees (illustrative UI mockups).
+        if (el.closest('[aria-hidden="true"],[data-audit-ignore="true"]')) continue
         const rect = el.getBoundingClientRect()
         // Skip hidden or zero-size elements
         if (rect.width === 0 || rect.height === 0) continue
@@ -213,6 +218,8 @@ async function runChecks({ page, viewport, url }: PageCheckInput): Promise<Viewp
 
       for (const el of all) {
         if (checked.has(el)) continue
+        // Skip decorative / aria-hidden subtrees (illustrative UI mockups).
+        if (el.closest('[aria-hidden="true"],[data-audit-ignore="true"]')) continue
         const rect = (el as HTMLElement).getBoundingClientRect()
         // Skip invisible or off-screen
         if (rect.width === 0 || rect.height === 0 || rect.top > 3000) continue
@@ -269,6 +276,8 @@ async function runChecks({ page, viewport, url }: PageCheckInput): Promise<Viewp
       const all = document.querySelectorAll('div, section, main, article, aside, table, img')
 
       for (const el of all) {
+        // Skip decorative / aria-hidden subtrees (illustrative UI mockups).
+        if (el.closest('[aria-hidden="true"],[data-audit-ignore="true"]')) continue
         const rect = el.getBoundingClientRect()
         if (rect.width === 0) continue
 
@@ -316,6 +325,8 @@ async function runChecks({ page, viewport, url }: PageCheckInput): Promise<Viewp
     const overflowing: Array<{ tag: string; naturalWidth: number; renderedWidth: number }> = []
 
     for (const el of images) {
+      // Skip decorative / aria-hidden subtrees (illustrative UI mockups).
+      if (el.closest('[aria-hidden="true"],[data-audit-ignore="true"]')) continue
       const rect = el.getBoundingClientRect()
       if (rect.width === 0) continue
       if (rect.right > vw + 5) {
@@ -478,6 +489,8 @@ async function runChecks({ page, viewport, url }: PageCheckInput): Promise<Viewp
       const tooLong: Array<{ tag: string; chars: number; text: string }> = []
 
       for (const el of textElements) {
+        // Skip decorative / aria-hidden subtrees (illustrative UI mockups).
+        if (el.closest('[aria-hidden="true"],[data-audit-ignore="true"]')) continue
         const rect = (el as HTMLElement).getBoundingClientRect()
         if (rect.width === 0 || rect.height === 0 || rect.top > 3000) continue
 
@@ -535,6 +548,8 @@ async function runChecks({ page, viewport, url }: PageCheckInput): Promise<Viewp
       const crampedExamples: Array<{ tag: string; marginBottom: string }> = []
 
       for (const el of contentBlocks) {
+        // Skip decorative / aria-hidden subtrees (illustrative UI mockups).
+        if (el.closest('[aria-hidden="true"],[data-audit-ignore="true"]')) continue
         const rect = (el as HTMLElement).getBoundingClientRect()
         if (rect.width === 0 || rect.height === 0 || rect.top > 3000) continue
 
@@ -594,6 +609,8 @@ async function runChecks({ page, viewport, url }: PageCheckInput): Promise<Viewp
 
       for (const el of bodyElements) {
         if (checked.has(el)) continue
+        // Skip decorative / aria-hidden subtrees (illustrative UI mockups).
+        if (el.closest('[aria-hidden="true"],[data-audit-ignore="true"]')) continue
         const rect = (el as HTMLElement).getBoundingClientRect()
         if (rect.width === 0 || rect.height === 0 || rect.top > 3000) continue
 
