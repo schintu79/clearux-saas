@@ -94,6 +94,10 @@ export {
 } from './evidence-severity'
 export type { Severity, SeverityClamp } from './evidence-severity'
 
+// ── Step 2f: DOM Verification Gate (P1 — the durable moat) ──
+export { verifyFindingsAgainstDom, verifyFindingsAgainstDomByUrl } from './dom-verification'
+export type { DomFacts, FindingForDomCheck, DomVerificationResult } from './dom-verification'
+
 // ── Step 3: Prompt Rules ────────────────────────────────────
 export {
   composePromptRules,
