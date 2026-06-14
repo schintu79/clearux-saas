@@ -1,5 +1,6 @@
 import {
   verifyFindingsAgainstDom,
+  formatDomFactsForPrompt,
   type DomFacts,
   type FindingForDomCheck,
 } from '../pipeline/dom-verification'
@@ -84,5 +85,28 @@ describe('verifyFindingsAgainstDom — does not over-refute', () => {
   it('is a no-op when no DOM snapshot is available (never drop without evidence)', () => {
     const f = llm('main', 'Every page lacks a <main> element')
     expect(verifyFindingsAgainstDom([f], null).refutedIds).toHaveLength(0)
+  })
+})
+
+describe('formatDomFactsForPrompt — P3 ground-truth block', () => {
+  it('returns empty string when no snapshot is available', () => {
+    expect(formatDomFactsForPrompt(null)).toBe('')
+    expect(formatDomFactsForPrompt({})).toBe('')
+  })
+
+  it('states present elements and the do-not-claim-missing instruction', () => {
+    const out = formatDomFactsForPrompt({ 'https://x/': FULL_DOM }, 'https://x/')
+    expect(out).toMatch(/VERIFIED PAGE STRUCTURE/)
+    expect(out).toMatch(/Do NOT report/)
+    expect(out).toMatch(/<main> landmark: present/)
+    expect(out).toMatch(/all labeled/)
+    expect(out).toMatch(/lang>: "en"/)
+    expect(out).toMatch(/Contact/)
+  })
+
+  it('marks genuinely absent elements as ABSENT (not a false reassurance)', () => {
+    const noMain: DomFacts = { ...FULL_DOM, landmarks: { ...FULL_DOM.landmarks, main: false } }
+    const out = formatDomFactsForPrompt({ 'https://x/': noMain })
+    expect(out).toMatch(/<main> landmark: ABSENT/)
   })
 })

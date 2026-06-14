@@ -156,6 +156,45 @@ export interface DomVerificationResult {
   reasons: Record<string, string>
 }
 
+/**
+ * Render a DOM-facts snapshot as a ground-truth block for the analyzer prompt
+ * (P3). Feeding the model what's verifiably PRESENT stops it from guessing the
+ * absence of structure in the first place — the prevention layer ahead of the
+ * P0/P1 detection gates. Returns '' if no snapshot is available.
+ */
+export function formatDomFactsForPrompt(
+  domByUrl: Record<string, DomFacts> | null | undefined,
+  primaryUrl?: string | null,
+): string {
+  if (!domByUrl) return ''
+  const keys = Object.keys(domByUrl)
+  if (keys.length === 0) return ''
+  const d = (primaryUrl && domByUrl[primaryUrl]) || domByUrl[keys[0]]
+  if (!d) return ''
+
+  const yn = (b: boolean) => (b ? 'present' : 'ABSENT')
+  const labelCoverage =
+    d.forms.totalControls === 0
+      ? 'no form controls'
+      : `${d.forms.labeledControls}/${d.forms.totalControls} controls labeled${d.forms.labeledControls >= d.forms.totalControls ? ' (all labeled)' : ''}`
+  const linkSample = d.links.slice(0, 8).map((l) => l.text || l.href).filter(Boolean).slice(0, 8).join(', ')
+
+  const lines = [
+    'VERIFIED PAGE STRUCTURE — measured from the rendered DOM. Treat as ground truth.',
+    'Do NOT report any element listed as "present" here as missing, unmarked, or unlabeled:',
+    `- <main> landmark: ${yn(d.landmarks.main)}`,
+    `- <nav> landmarks: ${d.landmarks.nav}`,
+    `- <header>: ${yn(d.landmarks.header)} · <footer>: ${yn(d.landmarks.footer)}`,
+    `- Skip-to-content link: ${yn(d.landmarks.skipLink)}`,
+    `- Headings present: ${d.headings.length > 0 ? d.headings.map((h) => 'h' + h).join(', ') : 'none'}`,
+    `- Form labels: ${labelCoverage}`,
+    `- <html lang>: ${d.langAttr ? `"${d.langAttr}"` : 'ABSENT'}`,
+    `- Viewport meta tag: ${yn(d.viewportMeta)}`,
+  ]
+  if (linkSample) lines.push(`- Links found include: ${linkSample}`)
+  return '\n\n' + lines.join('\n')
+}
+
 /** Run every absence-check against one finding; returns the refutation reason, or null. */
 function refuteAgainst(finding: FindingForDomCheck, domFacts: DomFacts): string | null {
   if (!isLlmSource(finding.detection_source)) return null
