@@ -194,6 +194,9 @@ export default function TrackPage() {
   const [monitorNextRun, setMonitorNextRun] = useState<string | null>(null);
   const [monitorSaving, setMonitorSaving] = useState(false);
   const [monitorError, setMonitorError] = useState<string | null>(null);
+  // Until the saved schedule is fetched, we don't know the real cadence — gate
+  // the control on this so it never flashes "Off" before showing the truth.
+  const [monitorLoaded, setMonitorLoaded] = useState(false);
 
   useEffect(() => {
     if (!monitorUrl || !workspace?.id) return;
@@ -209,6 +212,7 @@ export default function TrackPage() {
         if (match) { setMonitorCadence(match.frequency === 'weekly' ? 'weekly' : 'monthly'); setMonitorNextRun(match.next_run_at); }
         else { setMonitorCadence('off'); setMonitorNextRun(null); }
       } catch { /* leave default off */ }
+      finally { if (!cancelled) setMonitorLoaded(true); }
     })();
     return () => { cancelled = true; };
   }, [monitorUrl, workspace?.id]);
@@ -370,38 +374,63 @@ export default function TrackPage() {
 
       {/* Monitoring — user-chosen cadence for automatic re-audits (Phase 2 #1) */}
       <DashCard padding="lg" className="mb-6">
-        <div className="flex items-center justify-between gap-4 flex-wrap">
-          <div className="min-w-0">
+        <div className="flex items-start justify-between gap-6 flex-wrap">
+          <div className="min-w-0 max-w-[600px]">
             <div className="flex items-center gap-2">
               <RefreshCw size={14} style={{ color: 'var(--ink)' }} />
-              <span className="text-[14px] font-semibold" style={{ color: 'var(--ink)' }}>Monitoring</span>
+              <span className="text-[14px] font-semibold" style={{ color: 'var(--ink)' }}>Automatic monitoring</span>
+              {monitorLoaded && monitorCadence !== 'off' && (
+                <span className="text-[10px] font-semibold uppercase tracking-[0.06em] px-1.5 py-0.5 rounded"
+                  style={{ background: 'color-mix(in srgb, var(--ok) 14%, transparent)', color: 'var(--ok)' }}>On</span>
+              )}
             </div>
-            <p className="text-[12px] mt-1" style={{ color: 'var(--m-muted)' }}>
-              {monitorCadence === 'off'
-                ? 'Re-audit this brand automatically and track changes over time.'
-                : monitorNextRun
-                  ? `Auto re-audit ${monitorCadence} · next run ${new Date(monitorNextRun).toLocaleDateString()}`
-                  : `Auto re-audit ${monitorCadence}`}
+            {/* What it does + why it's worth turning on */}
+            <p className="text-[12.5px] mt-1.5 leading-[1.55]" style={{ color: 'var(--m-muted)' }}>
+              We re-audit this brand on the schedule you choose and add each result to your trend — so a score drop or a
+              new critical issue shows up here on its own, between your manual audits. Included in your plan; it never uses audit credits.
+            </p>
+            {/* Live status — never shows a guessed state before the saved schedule loads */}
+            <p className="text-[12px] mt-2.5 font-medium" style={{ color: monitorLoaded && monitorCadence !== 'off' ? 'var(--ink)' : 'var(--m-muted)' }}>
+              {!monitorLoaded
+                ? 'Checking your schedule…'
+                : monitorCadence === 'off'
+                  ? 'Off — pick Weekly or Monthly to start tracking automatically.'
+                  : monitorNextRun
+                    ? `Next automatic re-audit: ${new Date(monitorNextRun).toLocaleDateString(undefined, { weekday: 'long', day: 'numeric', month: 'long' })} · then every ${monitorCadence === 'weekly' ? 'week' : 'month'}.`
+                    : `Running ${monitorCadence === 'weekly' ? 'weekly' : 'monthly'}.`}
               {monitorError ? <span style={{ color: 'var(--severe)' }}> · {monitorError}</span> : null}
             </p>
           </div>
-          <div className="inline-flex rounded-lg overflow-hidden flex-shrink-0" style={{ border: '1px solid var(--rule)', opacity: monitorSaving ? 0.6 : 1 }}>
-            {(['off', 'weekly', 'monthly'] as const).map((opt, i) => (
-              <button
-                key={opt}
-                type="button"
-                onClick={() => setCadence(opt)}
-                disabled={monitorSaving}
-                className="px-3.5 py-1.5 text-[12px] font-medium transition-colors"
-                style={{
-                  background: monitorCadence === opt ? 'var(--ink)' : 'transparent',
-                  color: monitorCadence === opt ? 'var(--paper)' : 'var(--m-muted)',
-                  borderLeft: i === 0 ? undefined : '1px solid var(--rule)',
-                }}
-              >
-                {opt === 'off' ? 'Off' : opt === 'weekly' ? 'Weekly' : 'Monthly'}
-              </button>
-            ))}
+          <div className="flex flex-col items-end gap-1.5 flex-shrink-0">
+            {!monitorLoaded ? (
+              // Skeleton while the saved cadence loads — prevents the "Off" flash.
+              <div className="h-[34px] w-[186px] rounded-lg" aria-hidden="true"
+                style={{ background: 'var(--paper-2)', border: '1px solid var(--rule)', opacity: 0.6 }} />
+            ) : (
+              <div role="group" aria-label="How often to re-audit this brand"
+                className="inline-flex rounded-lg overflow-hidden" style={{ border: '1px solid var(--rule)', opacity: monitorSaving ? 0.6 : 1 }}>
+                {(['off', 'weekly', 'monthly'] as const).map((opt, i) => (
+                  <button
+                    key={opt}
+                    type="button"
+                    onClick={() => setCadence(opt)}
+                    disabled={monitorSaving}
+                    aria-pressed={monitorCadence === opt}
+                    className="px-3.5 py-1.5 text-[12px] font-medium transition-colors"
+                    style={{
+                      background: monitorCadence === opt ? 'var(--ink)' : 'transparent',
+                      color: monitorCadence === opt ? 'var(--paper)' : 'var(--m-muted)',
+                      borderLeft: i === 0 ? undefined : '1px solid var(--rule)',
+                    }}
+                  >
+                    {opt === 'off' ? 'Off' : opt === 'weekly' ? 'Weekly' : 'Monthly'}
+                  </button>
+                ))}
+              </div>
+            )}
+            <span className="text-[10.5px]" style={{ color: 'var(--m-muted)' }}>
+              {monitorSaving ? 'Saving…' : 'Re-audit frequency'}
+            </span>
           </div>
         </div>
       </DashCard>
