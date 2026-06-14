@@ -13,6 +13,10 @@ The market has two crowded halves: AI-visibility monitoring (Profound, Peec, Ott
 We already hold every piece of that loop. Nobody else holds all four. Every engineering decision below serves one of:
 
 1. **Trust** — every number on screen is derived, capped, evidenced, and reproducible. We never fabricate. If we have nothing, we say so and refund.
+   - **Accuracy moat / LLM-noise elimination (Stefano's #1, 2026-06-13).** Dogfooding proved the deterministic tier is 11/11 truthful while the LLM ships false claims of *absence* in domains instruments already own. Full plan: `docs/LLM_NOISE_ELIMINATION_PLAN.md`; evidence ledger: `docs/DETECTION_SOURCE_ACCURACY.md`.
+     - **P0 — DONE (2026-06-14):** structural-ownership gate (`pipeline/structural-ownership.ts`) drops LLM findings that trespass on a deterministic domain, scoped to LLM sources so instrument findings survive; severity≤evidence invariant (`pipeline/evidence-severity.ts`) so "Not enough evidence" can never be HIGH or cap the score. Both wired into `process-audit.ts` (gates 2d + 4b), 22 regression tests. No schema change.
+     - **P1 (next):** claim→DOM verification gate (generalize the contradiction-checker) + mandatory evidence binding (quote/selector required, else demote).
+     - **P2:** labeled truth-set + per-source false-positive metric, deploy-gated. **P3:** feed DOM structure to the model as facts; dismissal telemetry.
 2. **The loop** — find → fix → track must be closed, instrumented, and provable.
 3. **The dataset** — every deployed fix + re-measurement accrues into the only dataset linking site changes to AI-perception deltas. This is the moat.
 4. **Scale-ready** — built so growth means turning dials (concurrency, quotas, pool sizes), never rebuilding logic.

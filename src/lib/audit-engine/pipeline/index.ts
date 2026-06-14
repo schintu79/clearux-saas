@@ -77,6 +77,23 @@ export type { FindingForContradiction, ResponsiveEvidence, PageContentEvidence, 
 export { applyFixHistoryGate } from './fix-history-gate'
 export type { FindingForHistoryGate, FixedIssueFamily, FindingState, FixHistoryGateResult } from './fix-history-gate'
 
+// ── Step 2d: Structural Ownership Gate (P0 — LLM noise) ─────
+export {
+  classifyStructuralOwnership,
+  isLlmSource,
+  LLM_DETECTION_SOURCES,
+  STRUCTURAL_OWNERSHIP,
+} from './structural-ownership'
+export type { FindingForOwnership, StructuralOwnershipResult, StructuralDomain } from './structural-ownership'
+
+// ── Step 2e: Severity ≤ Evidence Invariant (P0 — LLM noise) ─
+export {
+  clampSeverityToEvidence,
+  enforceSeverityEvidenceInvariant,
+  MAX_SEVERITY_BY_EVIDENCE,
+} from './evidence-severity'
+export type { Severity, SeverityClamp } from './evidence-severity'
+
 // ── Step 3: Prompt Rules ────────────────────────────────────
 export {
   composePromptRules,

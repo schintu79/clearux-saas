@@ -44,6 +44,8 @@ import {
   filterSimpleSiteFindings,
   softenInterpretiveLanguage,
   identifyStaleFindings,
+  classifyStructuralOwnership,
+  enforceSeverityEvidenceInvariant,
 } from '@/lib/audit-engine/pipeline'
 import { identifyStarvedCategories, generateFindingsForStarvedCategories } from '@/lib/audit-engine/pipeline/minimum-findings'
 import { enrichWithCommunication, buildCommunicationForGenericFinding } from '@/lib/audit-engine/pipeline/communication-layer'
@@ -4117,6 +4119,31 @@ RULES FOR RE-AUDIT:
         }
       }
 
+      // ── 2d. Structural ownership gate (P0 — LLM noise moat) ───
+      // Deterministic instruments own structural truth (landmarks, form
+      // labels, contrast, target size, headings, alt names, link/meta
+      // presence). Drop LLM-sourced findings that trespass on those domains —
+      // if the defect were real, axe/parser/responsive would have caught it.
+      // Scoped to LLM sources ONLY, so instrument findings are never touched.
+      // See docs/LLM_NOISE_ELIMINATION_PLAN.md.
+      if (findings.length > 0) {
+        const ownership = classifyStructuralOwnership(
+          findings.map(f => ({
+            id: f.id, title: f.title, description: f.description,
+            detection_source: f.detection_source || null,
+          })),
+        )
+        if (ownership.dropIds.length > 0) {
+          for (const id of ownership.dropIds) idsToDelete.add(id)
+          findings = findings.filter(f => !idsToDelete.has(f.id))
+          await auditLog(auditId, 'structural_ownership_filtered', 'info',
+            `Removed ${ownership.dropIds.length} LLM finding${ownership.dropIds.length > 1 ? 's' : ''} that claimed a structural issue owned by a deterministic check (landmark/label/contrast/target/heading/alt/link/meta)`)
+          for (const [id, reason] of Object.entries(ownership.reasons)) {
+            console.log(`[inngest] Structural ownership: dropped ${id} — ${reason}`)
+          }
+        }
+      }
+
       // ── 3. Soften interpretive language (in-memory) ───
       if (findings.length > 0) {
         const languageFixes = softenInterpretiveLanguage(findings)
@@ -4147,6 +4174,24 @@ RULES FOR RE-AUDIT:
           await auditLog(auditId, 'stale_findings_removed', 'info',
             `Removed ${staleResults.length} stale finding${staleResults.length > 1 ? 's' : ''} that reference content no longer present`)
           console.log(`[inngest] Stale check: removed ${staleResults.length} stale gap_fill findings`)
+        }
+
+        // ── 4b. Severity ≤ evidence invariant (P0 — LLM noise moat) ───
+        // Runs LAST, after every demotion, so it sees final severities. A
+        // finding can never outrank its evidence tier — in particular a
+        // "Not enough evidence" (undetermined) finding can never be HIGH/
+        // critical or drive the score cap. Fixes the fixpath.ai case where a
+        // low-confidence finding shipped as a score-capping HIGH.
+        const sevClamps = enforceSeverityEvidenceInvariant(findings as any)
+        if (sevClamps.length > 0) {
+          for (const c of sevClamps) {
+            const f = findings.find(ff => ff.id === c.id)
+            if (f) f.severity = c.to
+            batchUpdates.push({ id: c.id, updates: { severity: c.to } })
+            console.log(`[inngest] Severity≤evidence: ${c.id} ${c.from}→${c.to} (evidence: ${c.evidence})`)
+          }
+          await auditLog(auditId, 'severity_evidence_clamped', 'info',
+            `Clamped ${sevClamps.length} finding${sevClamps.length > 1 ? 's' : ''} whose severity exceeded its evidence tier (e.g. "Not enough evidence" can't be HIGH)`)
         }
       }
 
