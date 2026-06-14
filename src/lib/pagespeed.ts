@@ -305,6 +305,20 @@ export interface SpeedFinding {
 }
 
 /**
+ * Severity for a PageSpeed OPPORTUNITY / diagnostic (unused JS, render-blocking,
+ * redirects, etc.). These are optimizations, not failures, so they are capped at
+ * MEDIUM — never high/critical. Rationale (2026-06-14): PSI's estimated savingsMs
+ * wobbles run-to-run with network variance; the old logic flipped a finding to
+ * "high" when savings crossed 1000ms, which silently moved a site's score 7
+ * points with no actual change (Unused JS medium→high tripped the 6-high cap).
+ * Real, user-perceived performance FAILURES are the CWV-poor findings
+ * (LCP/CLS/INP), which remain high and are threshold-bucketed (stable).
+ */
+export function opportunitySeverity(savingsMs?: number | null): 'medium' | 'low' {
+  return savingsMs != null && savingsMs > 300 ? 'medium' : 'low'
+}
+
+/**
  * Map PageSpeed diagnostics to actionable speed findings.
  * Split into Category 1 (fixable from console) and Category 2 (advisory).
  */
@@ -312,14 +326,6 @@ export function generateSpeedFindings(speedData: SpeedData): SpeedFinding[] {
   const findings: SpeedFinding[] = []
   const result = speedData.mobile || speedData.desktop
   if (!result) return findings
-
-  // Determine base severity from overall score
-  const baseSeverity = (score: number): 'critical' | 'high' | 'medium' | 'low' => {
-    if (score < 30) return 'critical'
-    if (score < 50) return 'high'
-    if (score < 90) return 'medium'
-    return 'low'
-  }
 
   // ── Category 1: Fixable from console ──
   const fixableDiagnostics: Record<string, { title: string; desc: string; rec: string; metric: string }> = {
@@ -404,11 +410,7 @@ export function generateSpeedFindings(speedData: SpeedData): SpeedFinding[] {
   for (const diag of result.diagnostics) {
     const fixable = fixableDiagnostics[diag.id]
     if (fixable) {
-      const severity = diag.savingsMs && diag.savingsMs > 1000
-        ? 'high'
-        : diag.savingsMs && diag.savingsMs > 300
-          ? 'medium'
-          : baseSeverity(result.score)
+      const severity = opportunitySeverity(diag.savingsMs)
       findings.push({
         title: fixable.title,
         description: fixable.desc,
@@ -426,7 +428,7 @@ export function generateSpeedFindings(speedData: SpeedData): SpeedFinding[] {
         title: advisory.title,
         description: advisory.desc,
         recommendation: advisory.rec,
-        severity: baseSeverity(result.score),
+        severity: opportunitySeverity(diag.savingsMs),
         fixableFromConsole: false,
         metricType: advisory.metric,
         ownerTeam: diag.id === 'server-response-time' ? 'engineering' : 'engineering',
