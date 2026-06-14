@@ -47,6 +47,8 @@ import {
   classifyStructuralOwnership,
   enforceSeverityEvidenceInvariant,
   verifyFindingsAgainstDomByUrl,
+  identifyUngroundedFindings,
+  UNGROUNDED_CONFIDENCE,
 } from '@/lib/audit-engine/pipeline'
 import { identifyStarvedCategories, generateFindingsForStarvedCategories } from '@/lib/audit-engine/pipeline/minimum-findings'
 import { enrichWithCommunication, buildCommunicationForGenericFinding } from '@/lib/audit-engine/pipeline/communication-layer'
@@ -3766,7 +3768,7 @@ RULES FOR RE-AUDIT:
       // ══════════════════════════════════════════════════════════
       const { data: allQGFindings } = await db
         .from('audit_findings')
-        .select('id, title, description, recommendation, severity, page_url, sort_order, category_index, confidence_level, detection_source, finding_type, fix_type, fix_payload, target_element')
+        .select('id, title, description, recommendation, severity, page_url, sort_order, category_index, confidence_level, confidence_score, detection_source, finding_type, fix_type, fix_payload, target_element, evidence, viewport')
         .eq('audit_id', auditId)
         .order('sort_order', { ascending: true })
 
@@ -3794,11 +3796,14 @@ RULES FOR RE-AUDIT:
         sort_order: (f.sort_order ?? 0) as number,
         category_index: (f.category_index ?? null) as number | null,
         confidence_level: (f.confidence_level || 'heuristic') as ConfidenceLevel,
+        confidence_score: (f.confidence_score ?? 0.5) as number,
         detection_source: (f.detection_source || 'analyzer') as DetectionSource,
         finding_type: (f.finding_type || 'fixable') as string,
         fix_type: (f.fix_type || null) as string | null,
         fix_payload: f.fix_payload,
         target_element: (f.target_element || null) as string | null,
+        evidence: (f.evidence ?? null) as string | null,
+        viewport: (f.viewport ?? null) as string | null,
       }))
 
       const idsToDelete = new Set<string>()
@@ -4182,6 +4187,33 @@ RULES FOR RE-AUDIT:
         }
       }
 
+      // ── 2f. Evidence binding (P1 — grounding required) ───
+      // Enforce the /methodology promise: an LLM finding with no verbatim quote
+      // and no DOM selector is ungrounded. Demote it into the "Not enough
+      // evidence" tier (lower confidence below the undetermined threshold); the
+      // severity≤evidence invariant (4b, below) then caps it at LOW and off the
+      // score cap. Visible but never inflated. See LLM_NOISE_ELIMINATION_PLAN.md.
+      if (findings.length > 0) {
+        const binding = identifyUngroundedFindings(
+          findings.map(f => ({
+            id: f.id, title: f.title, description: f.description,
+            evidence: f.evidence ?? null, target_element: f.target_element ?? null,
+            detection_source: f.detection_source || null,
+          })),
+        )
+        if (binding.ungroundedIds.length > 0) {
+          for (const f of findings) {
+            if (binding.ungroundedIds.includes(f.id)) {
+              f.confidence_score = UNGROUNDED_CONFIDENCE
+              f.confidence_level = 'heuristic'
+              batchUpdates.push({ id: f.id, updates: { confidence_score: UNGROUNDED_CONFIDENCE, confidence_level: 'heuristic' } })
+            }
+          }
+          await auditLog(auditId, 'evidence_binding_demoted', 'info',
+            `Demoted ${binding.ungroundedIds.length} ungrounded LLM finding${binding.ungroundedIds.length > 1 ? 's' : ''} to "Not enough evidence" (no verbatim quote or DOM selector)`)
+        }
+      }
+
       // ── 3. Soften interpretive language (in-memory) ───
       if (findings.length > 0) {
         const languageFixes = softenInterpretiveLanguage(findings)
@@ -4333,6 +4365,9 @@ RULES FOR RE-AUDIT:
             fix_type: (rf.fix_type || null) as string | null,
             fix_payload: rf.fix_payload,
             target_element: (rf.target_element || null) as string | null,
+            confidence_score: (rf.confidence_score ?? 0.5) as number,
+            evidence: (rf.evidence ?? null) as string | null,
+            viewport: (rf.viewport ?? null) as string | null,
           })
         }
 
