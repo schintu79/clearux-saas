@@ -22,6 +22,7 @@ import puppeteer, { type Browser, type Page } from 'puppeteer-core'
 import { launchAuditBrowser } from '@/lib/audit-engine/browser-launcher'
 import * as axeCore from 'axe-core'
 import { mapAxeViolationsToFindings, type AxeMappedFinding, type AxeViolation } from './axe-mapper'
+import type { DomFacts } from './dom-verification'
 
 // Robust against webpack/esModuleInterop quirks: axe-core's source string may
 // hang off the namespace, its .default, or require() — try all.
@@ -970,6 +971,51 @@ function rgbKeyToHex(key: string): string | null {
   return '#' + parts.map((n) => Math.max(0, Math.min(255, n)).toString(16).padStart(2, '0')).join('')
 }
 
+/**
+ * Capture a compact structural DOM snapshot for the rendered page — the
+ * ground truth the P1 DOM-verification gate checks LLM absence-claims against.
+ * Runs in the browser so it sees the real, JS-rendered DOM (not stripped text).
+ */
+async function captureDomFacts(page: Page): Promise<DomFacts> {
+  return await page.evaluate(() => {
+    const qa = (s: string) => Array.from(document.querySelectorAll(s))
+    const controls = qa(
+      'input:not([type="hidden"]):not([type="submit"]):not([type="button"]), select, textarea',
+    )
+    let labeled = 0
+    let required = 0
+    for (const c of controls) {
+      const id = c.getAttribute('id')
+      const hasLabel =
+        (!!id && !!document.querySelector(`label[for="${(window as any).CSS?.escape ? CSS.escape(id) : id}"]`)) ||
+        !!c.getAttribute('aria-label') ||
+        !!c.getAttribute('aria-labelledby') ||
+        !!c.closest('label')
+      if (hasLabel) labeled++
+      if (c.hasAttribute('required') || c.getAttribute('aria-required') === 'true') required++
+    }
+    const skipLink = qa('a[href^="#"]').some(
+      (a) => /skip/i.test(a.textContent || '') || /content|main/i.test(a.getAttribute('href') || ''),
+    )
+    return {
+      landmarks: {
+        main: !!document.querySelector('main, [role="main"]'),
+        nav: qa('nav, [role="navigation"]').length,
+        header: !!document.querySelector('header, [role="banner"]'),
+        footer: !!document.querySelector('footer, [role="contentinfo"]'),
+        skipLink,
+      },
+      headings: qa('h1,h2,h3,h4,h5,h6').map((h) => parseInt(h.tagName.charAt(1), 10)),
+      forms: { totalControls: controls.length, labeledControls: labeled, requiredMarked: required },
+      links: qa('a[href]')
+        .slice(0, 200)
+        .map((a) => ({ text: (a.textContent || '').trim().slice(0, 60), href: a.getAttribute('href') || '' })),
+      langAttr: document.documentElement.getAttribute('lang'),
+      viewportMeta: !!document.querySelector('meta[name="viewport"]'),
+    } as DomFacts
+  })
+}
+
 export async function checkWcagAutomated(
   urls: string[],
   maxPages: number = 3,
@@ -982,10 +1028,13 @@ export async function checkWcagAutomated(
   axeFindings: AxeMappedFinding[]
   /** Diagnostic so we can see why axe produced nothing (source len, pages, error). */
   axeDiagnostic: { sourceLen: number; pagesRun: number; violations: number; error: string | null }
+  /** Per-page structural DOM snapshots — ground truth for the P1 verification gate. */
+  domFactsByUrl: Map<string, DomFacts>
 }> {
   const automatedResults = new Map<string, WcagCheckResult[]>()
   const heuristicPrompts = new Map<string, string>()
   const colorFreq = new Map<string, number>()
+  const domFactsByUrl = new Map<string, DomFacts>()
   const axeFindings: AxeMappedFinding[] = []
   const axeDiag = { sourceLen: AXE_SOURCE.length, pagesRun: 0, violations: 0, error: null as string | null }
   const pagesToCheck = urls.slice(0, maxPages)
@@ -1011,6 +1060,13 @@ export async function checkWcagAutomated(
         // Run automated DOM checks
         const results = await runAutomatedChecks(page, url)
         automatedResults.set(url, results)
+
+        // Capture the structural DOM snapshot for the P1 verification gate (non-fatal)
+        try {
+          domFactsByUrl.set(url, await captureDomFacts(page))
+        } catch (domErr) {
+          console.warn(`[wcag-checker] DOM facts capture failed for ${url}:`, (domErr as Error)?.message)
+        }
 
         // Accumulate the rendered colour palette (non-fatal)
         try {
@@ -1059,7 +1115,7 @@ export async function checkWcagAutomated(
   const SEV_RANK: Record<string, number> = { critical: 0, high: 1, medium: 2, low: 3 }
   axeFindings.sort((a, b) => SEV_RANK[a.severity] - SEV_RANK[b.severity])
 
-  return { automatedResults, heuristicPrompts, siteColors, axeFindings: axeFindings.slice(0, 30), axeDiagnostic: axeDiag }
+  return { automatedResults, heuristicPrompts, siteColors, axeFindings: axeFindings.slice(0, 30), axeDiagnostic: axeDiag, domFactsByUrl }
 }
 
 

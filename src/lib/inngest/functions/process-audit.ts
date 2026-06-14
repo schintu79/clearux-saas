@@ -46,6 +46,7 @@ import {
   identifyStaleFindings,
   classifyStructuralOwnership,
   enforceSeverityEvidenceInvariant,
+  verifyFindingsAgainstDomByUrl,
 } from '@/lib/audit-engine/pipeline'
 import { identifyStarvedCategories, generateFindingsForStarvedCategories } from '@/lib/audit-engine/pipeline/minimum-findings'
 import { enrichWithCommunication, buildCommunicationForGenericFinding } from '@/lib/audit-engine/pipeline/communication-layer'
@@ -66,6 +67,7 @@ import { generatePredictiveRecommendations } from '@/lib/audit-engine/predictive
 import { runBrandIntelligenceAnalysis } from '@/lib/audit-engine/brand-intelligence'
 import { runFullSpeedTest, generateSpeedFindings } from '@/lib/pagespeed'
 import { checkWcagAutomated, buildWcagResults, parseHeuristicResponse, formatWcagForPrompt, type WcagCheckResult, type WcagAuditResult } from '@/lib/audit-engine/pipeline/wcag-checker'
+import type { DomFacts } from '@/lib/audit-engine/pipeline/dom-verification'
 import type { AuditFinding } from '@/types/database'
 import { resolveCapability, inferDeployableType } from '@/lib/fix-action-model'
 import { reconcileFindings, type ReconciliationResult } from '@/lib/audit-engine/pipeline/reconciliation'
@@ -1676,7 +1678,7 @@ Return 2-6 findings. Be specific and evidence-based. Reference specific files/co
       const wcagPromise = (async () => {
         try {
           const maxUrls = auditDetails.plan === 'free_preview' ? 1 : 3
-          const { automatedResults, heuristicPrompts, siteColors, axeFindings, axeDiagnostic } = await checkWcagAutomated(crawlResult.crawledUrls, maxUrls)
+          const { automatedResults, heuristicPrompts, siteColors, axeFindings, axeDiagnostic, domFactsByUrl } = await checkWcagAutomated(crawlResult.crawledUrls, maxUrls)
           // Visibility into axe (it silently produced nothing on first runs):
           // source length, pages run, raw violations, and any run error.
           await auditLog(auditId, 'axe_debug', axeDiagnostic.error ? 'warning' : 'info',
@@ -1854,12 +1856,15 @@ Return 2-6 findings. Be specific and evidence-based. Reference specific files/co
             overallScore: wcagResult.overallScore,
             ran: true,
             siteColors,
+            // Plain object (Map → JSON-safe across the step boundary) — ground
+            // truth for the P1 DOM-verification gate.
+            domFacts: Object.fromEntries(domFactsByUrl) as Record<string, DomFacts>,
           }
         } catch (err) {
           console.error('[inngest] WCAG check failed (non-fatal):', err)
           await auditLog(auditId, 'wcag_check_failed', 'warning',
             `WCAG check failed: ${err instanceof Error ? err.message : String(err)}. Continuing with text-based analysis.`)
-          return { summary: '', findingsCount: 0, overallScore: 0, ran: false, siteColors: [] as string[] }
+          return { summary: '', findingsCount: 0, overallScore: 0, ran: false, siteColors: [] as string[], domFacts: {} as Record<string, DomFacts> }
         }
       })()
 
@@ -1880,7 +1885,7 @@ Return 2-6 findings. Be specific and evidence-based. Reference specific files/co
       // both findings and analyzer context. Budget raised to fit real
       // browser-check latency, well inside the 12-min pipeline deadline.
       const RESPONSIVE_FALLBACK = { summary: '', findingsCount: 0, viewportIssues: [] as any[], hasMobileViewport: false, ran: false }
-      const WCAG_FALLBACK = { summary: '', findingsCount: 0, overallScore: 0, ran: false, siteColors: [] as string[] }
+      const WCAG_FALLBACK = { summary: '', findingsCount: 0, overallScore: 0, ran: false, siteColors: [] as string[], domFacts: {} as Record<string, DomFacts> }
       // 2026-06-13: raised 210s→250s to absorb axe-core latency on the WCAG
       // pass (axe injection + run on up to 2 pages) without risking the
       // fallback-on-timeout that would drop findings. Still well inside the
@@ -4140,6 +4145,39 @@ RULES FOR RE-AUDIT:
             `Removed ${ownership.dropIds.length} LLM finding${ownership.dropIds.length > 1 ? 's' : ''} that claimed a structural issue owned by a deterministic check (landmark/label/contrast/target/heading/alt/link/meta)`)
           for (const [id, reason] of Object.entries(ownership.reasons)) {
             console.log(`[inngest] Structural ownership: dropped ${id} — ${reason}`)
+          }
+        }
+      }
+
+      // ── 2e. DOM verification gate (P1 — the durable moat) ───
+      // Evidence-based version of 2d: any LLM finding asserting an element is
+      // MISSING is checked against the rendered-DOM snapshot captured in the
+      // browser pass. Drop it only if the DOM positively proves the element is
+      // present (the LLM proposes, the DOM disposes). Per-page: a /contact
+      // claim is checked against /contact's DOM. Never drops without positive
+      // contradicting evidence. See docs/LLM_NOISE_ELIMINATION_PLAN.md.
+      if (findings.length > 0) {
+        const domFactsObj = (wcagCheck as any)?.domFacts as Record<string, DomFacts> | undefined
+        const domByUrl = domFactsObj && Object.keys(domFactsObj).length > 0
+          ? new Map<string, DomFacts>(Object.entries(domFactsObj))
+          : null
+        if (domByUrl) {
+          const domVer = verifyFindingsAgainstDomByUrl(
+            findings.map(f => ({
+              id: f.id, title: f.title, description: f.description,
+              detection_source: f.detection_source || null, page_url: f.page_url,
+            })),
+            domByUrl,
+            crawlResult.crawledUrls?.[0] || null,
+          )
+          if (domVer.refutedIds.length > 0) {
+            for (const id of domVer.refutedIds) idsToDelete.add(id)
+            findings = findings.filter(f => !idsToDelete.has(f.id))
+            await auditLog(auditId, 'dom_verification_filtered', 'info',
+              `Removed ${domVer.refutedIds.length} LLM finding${domVer.refutedIds.length > 1 ? 's' : ''} whose "missing element" claim was refuted by the rendered DOM`)
+            for (const [id, reason] of Object.entries(domVer.reasons)) {
+              console.log(`[inngest] DOM verification: dropped ${id} — ${reason}`)
+            }
           }
         }
       }
