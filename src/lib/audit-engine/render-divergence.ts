@@ -86,6 +86,23 @@ export function headingsMateriallyDiffer(
   return headingSimilarity(rawHeading, renderedHeading) < HEADING_DIVERGENCE_THRESHOLD
 }
 
+/**
+ * Heuristic: does this raw HTML come from a client-hydrated framework (Next.js,
+ * React, Nuxt, etc.)? Such pages can serve a COMPLETE but STALE static build,
+ * so when we can't get a rendered acquisition we should escalate to a real
+ * browser render rather than trust the raw HTML. Site-agnostic markers only.
+ */
+export function looksClientHydrated(html: string | null | undefined): boolean {
+  if (!html) return false
+  return (
+    /__NEXT_DATA__|self\.__next_f|id=["']__next["']/.test(html) || // Next.js
+    /data-reactroot|id=["']root["'][^>]*>\s*<\/div>/.test(html) ||  // React (incl. empty root shell)
+    /__NUXT__|id=["']__nuxt["']/.test(html) ||                      // Nuxt
+    /ng-version=|<app-root/.test(html) ||                            // Angular
+    /data-sveltekit/.test(html)                                      // SvelteKit
+  )
+}
+
 /** Min rendered-content length before the absence check is trusted (avoid thin/blocked pages). */
 const MIN_RENDERED_LEN_FOR_ABSENCE = 200
 

@@ -1110,7 +1110,18 @@ export async function checkWcagAutomated(
       try {
         page = await browser.newPage()
         await page.setViewport({ width: 1440, height: 900 })
-        await page.goto(url, { waitUntil: 'networkidle2', timeout: 20000 })
+        // Resilient navigation (2026-06-15): heavy JS/SPA pages (raseed /en,
+        // /signup) never reach networkidle2 within 20s, so the whole page check
+        // threw and produced NO domFacts — leaving the DOM gates blind on exactly
+        // the pages that matter. Mirror browser-renderer.ts: try networkidle2,
+        // fall back to domcontentloaded + a settle delay so heavy pages still
+        // render enough to snapshot.
+        try {
+          await page.goto(url, { waitUntil: 'networkidle2', timeout: 20000 })
+        } catch {
+          await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 20000 })
+          await new Promise(resolve => setTimeout(resolve, 2500)) // extra settle for JS hydration
+        }
         await new Promise(resolve => setTimeout(resolve, 1000)) // Let JS settle
 
         // Run automated DOM checks

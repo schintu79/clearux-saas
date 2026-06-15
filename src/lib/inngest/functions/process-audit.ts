@@ -21,6 +21,7 @@ import { createServiceSupabase } from '@/lib/supabase-server'
 import { crawlPages, formatHeadTagsForAnalysis, type HeadTagData } from '@/lib/audit-engine/crawler'
 import { prioritizePagesForChecks } from '@/lib/audit-engine/page-relevance'
 import { classifyInputRelevance } from '@/lib/audit-engine/pipeline/input-relevance-gate'
+import { classifySpeculativeUx } from '@/lib/audit-engine/pipeline/speculative-ux-gate'
 import { pageContentChanged, type PageContentFacts } from '@/lib/audit-engine/content-change'
 import { runCrawlPreflight } from '@/lib/audit-engine/crawl-preflight'
 import { probeAIDiscovery, formatAIDiscoveryForAnalysis } from '@/lib/audit-engine/ai-discovery-probe'
@@ -4241,6 +4242,31 @@ RULES FOR RE-AUDIT:
             `Removed ${relevance.offRelevanceIds.length} label/instruction finding${relevance.offRelevanceIds.length > 1 ? 's' : ''} on non-input pages (no genuine user-entry form there)`)
           for (const [id, reason] of Object.entries(relevance.reasons)) {
             console.log(`[inngest] Input relevance: dropped ${id} — ${reason}`)
+          }
+        }
+      }
+
+      // ── 2d-ter. Speculative-UX noise gate ────────────────────
+      // The LLM invents "user confusion" about self-evident UI (e.g. "two
+      // confusing CTAs with unclear purpose" for clearly-labelled distinct
+      // buttons). A CTA prompts action; it need not pre-narrate its destination.
+      // Drop LLM speculative CTA-clarity findings — but KEEP any that cite
+      // concrete evidence of genuine ambiguity (identical labels, misleading
+      // text). Never touches deterministic findings.
+      if (findings.length > 0) {
+        const spec = classifySpeculativeUx(
+          findings.map(f => ({
+            id: f.id, title: f.title, description: f.description,
+            detection_source: f.detection_source || null,
+          })),
+        )
+        if (spec.dropIds.length > 0) {
+          for (const id of spec.dropIds) idsToDelete.add(id)
+          findings = findings.filter(f => !idsToDelete.has(f.id))
+          await auditLog(auditId, 'speculative_ux_filtered', 'info',
+            `Removed ${spec.dropIds.length} speculative CTA-clarity finding${spec.dropIds.length > 1 ? 's' : ''} (unclear purpose/destination of self-evident controls, no evidence of genuine ambiguity)`)
+          for (const [id, reason] of Object.entries(spec.reasons)) {
+            console.log(`[inngest] Speculative-UX: dropped ${id} — ${reason}`)
           }
         }
       }

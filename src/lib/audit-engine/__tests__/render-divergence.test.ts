@@ -5,8 +5,23 @@ import {
   headingsMateriallyDiffer,
   rawHeadingAbsentFromRendered,
   shouldPreferRendered,
+  looksClientHydrated,
   HEADING_DIVERGENCE_THRESHOLD,
 } from '../render-divergence'
+
+describe('looksClientHydrated', () => {
+  it('detects Next.js / React / Nuxt / Angular / SvelteKit markers', () => {
+    expect(looksClientHydrated('<div id="__next"></div><script>self.__next_f=[]</script>')).toBe(true)
+    expect(looksClientHydrated('<script id="__NEXT_DATA__" type="application/json">{}</script>')).toBe(true)
+    expect(looksClientHydrated('<div data-reactroot></div>')).toBe(true)
+    expect(looksClientHydrated('<div id="__nuxt"></div>')).toBe(true)
+    expect(looksClientHydrated('<app-root ng-version="17"></app-root>')).toBe(true)
+  })
+  it('does not flag plain static HTML', () => {
+    expect(looksClientHydrated('<html><body><h1>Hello</h1><p>static site</p></body></html>')).toBe(false)
+    expect(looksClientHydrated(null)).toBe(false)
+  })
+})
 
 // The real raseedinvest.com divergence that triggered this work (2026-06-15):
 const RAW_H1 = 'Trade 14,000+ US Stocks & ETFs — Built for the GCC'
