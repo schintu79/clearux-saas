@@ -56,6 +56,59 @@ export function applySeverityCapFromCounts(
   return { overall, capInfo: { applied: false, cap: null, reason: null } }
 }
 
+/* ── Scoring-severity rule (2026-06-15, Stefano's call) ─────────
+ * The HEADLINE score must be driven by problems we can PROVE, and it must agree
+ * with what the dashboard shows. Two rules, one place:
+ *   1. Strategic findings are advisory, not defects → never drive the cap.
+ *   2. AI-assessed (not instrument-Verified) findings cap at MEDIUM for scoring
+ *      — unverified interpretation can't push the cap into "high" territory and
+ *      swing the headline. The finding is still SHOWN at its nominal severity
+ *      with a confidence label; this governs the SCORE only.
+ * Verified findings keep their full severity. This is also the single source the
+ * dashboard card and the cap both derive from, so they can never disagree.
+ */
+export interface ScorableFinding {
+  severity: string
+  confidence_level?: string | null
+  confidence_score?: number | null
+  finding_type?: string | null
+}
+
+const SEV_RANK: Record<string, number> = { low: 0, medium: 1, high: 2, critical: 3 }
+
+/** Verified = instrument-measured (deterministic) and not low-confidence.
+ *  Mirrors trust-summary.mapEvidenceType's 'verified' tier without importing it
+ *  (this module must stay dependency-free for client components). */
+export function isVerifiedEvidence(f: ScorableFinding): boolean {
+  return f.confidence_level === 'deterministic' && (f.confidence_score ?? 1) >= 0.3
+}
+
+/** Severity counts that drive the score cap: strategic excluded, AI-assessed
+ *  capped at medium, Verified kept at full severity. */
+export function scoringSeverityCounts(
+  findings: ReadonlyArray<ScorableFinding>,
+): { critical: number; high: number; medium: number } {
+  let critical = 0, high = 0, medium = 0
+  for (const f of findings) {
+    if (f.finding_type === 'strategic') continue
+    let rank = SEV_RANK[f.severity] ?? SEV_RANK.medium
+    if (!isVerifiedEvidence(f) && rank > SEV_RANK.medium) rank = SEV_RANK.medium
+    if (rank === SEV_RANK.critical) critical++
+    else if (rank === SEV_RANK.high) high++
+    else if (rank === SEV_RANK.medium) medium++
+  }
+  return { critical, high, medium }
+}
+
+/** Cap an overall score using the scoring-severity rule. Use this everywhere
+ *  the score is (re)computed from a finding list. */
+export function applyScoringSeverityCap(
+  overall: number,
+  findings: ReadonlyArray<ScorableFinding>,
+): { overall: number; capInfo: ScoreCapInfo } {
+  return applySeverityCapFromCounts(overall, scoringSeverityCounts(findings))
+}
+
 /**
  * Module-scale severity cap (2026-06-11). A module spans 4 of 28
  * categories — the site-wide thresholds (6 highs → 65) are far too

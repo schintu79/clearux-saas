@@ -74,7 +74,7 @@ import {
   type LatestAuditBundle,
 } from '@/lib/dashboard/latest-audit';
 import { healthLabel, type HealthContext } from '@/lib/audit-findings-presentation';
-import { applySeverityCap, composeModuleScores } from '@/lib/scoring/severity-cap';
+import { applyScoringSeverityCap, composeModuleScores } from '@/lib/scoring/severity-cap';
 import { moduleIndexFor } from '@/lib/scoring/module-map';
 import { useWorkspace } from '@/context/WorkspaceContext';
 import { useAuditProgress } from '@/hooks/useAuditProgress';
@@ -657,7 +657,20 @@ function OverviewInner() {
   // 65 for the same audit. Cap counts only OPEN findings, so fixing the
   // high-severity issues lifts the cap in real time.
   const uncappedOverallScore = overallScore; // shown struck-through so the cap math is visible
-  const { overall: cappedOverallScore, capInfo: scoreCapInfo } = applySeverityCap(overallScore, openFindings);
+  // 2026-06-15: cap uses the scoring-severity rule (strategic excluded, AI-assessed
+  // capped at medium) so the headline is driven by VERIFIED problems and agrees
+  // with the dashboard counts. Pass full findings; the rule excludes strategic
+  // internally (previously openFindings incl. strategic over-counted highs → the
+  // card showed 5 high while the score capped on 8).
+  const { overall: cappedOverallScore, capInfo: scoreCapInfo } = applyScoringSeverityCap(
+    overallScore,
+    openFindings.map((f) => ({
+      severity: f.severity,
+      confidence_level: (f as any).confidence_level ?? null,
+      confidence_score: (f as any).confidence_score ?? null,
+      finding_type: (f as any).finding_type ?? null,
+    })),
+  );
   overallScore = cappedOverallScore;
 
   // Findings per pillar (used by Row 2 audit-style category cards).

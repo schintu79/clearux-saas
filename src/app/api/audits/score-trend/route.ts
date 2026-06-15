@@ -5,7 +5,6 @@
 
 import { NextRequest, NextResponse } from 'next/server'
 import { createServerSupabase, createServiceSupabase } from '@/lib/supabase-server'
-import { applySeverityCapFromCounts } from '@/lib/scoring/severity-cap'
 
 export async function GET(request: NextRequest) {
   try {
@@ -94,14 +93,14 @@ export async function GET(request: NextRequest) {
       // Score model v2 (2026-06-11): the recompute above exists only to strip
       // -1 sentinels, but it was OVERWRITING the stored capped score with the
       // raw category mean — the trend showed 89 while the health score showed
-      // the true capped 65. Re-apply the severity cap from the report's own
-      // severity counts so the trend always matches the verdict.
-      if (overallScore != null && r) {
-        overallScore = applySeverityCapFromCounts(overallScore, {
-          critical: r.critical_count ?? 0,
-          high: r.high_count ?? 0,
-          medium: r.medium_count ?? 0,
-        }).overall
+      // the true capped 65.
+      // 2026-06-15: the stored overall_score is now authoritatively capped by
+      // the scoring-severity rule (Verified drives; AI capped at medium) at
+      // write time. So cap the -1-stripped recompute to the stored score rather
+      // than re-deriving from nominal counts (which would re-introduce the old
+      // over-cap and disagree with the dashboard).
+      if (overallScore != null && r?.overall_score != null) {
+        overallScore = Math.min(overallScore, r.overall_score)
       }
 
       // Per-module RAW means (overview per-category trend deltas). Simple
