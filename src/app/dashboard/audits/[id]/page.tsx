@@ -88,7 +88,7 @@ import { CHECKPOINT_LABELS } from '@/lib/audit-checkpoints';
 import BrandAuditDetail from '@/components/dashboard/BrandAuditDetail';
 import { type CockpitSeverity, type ModuleScore } from '@/components/dashboard/AuditCockpit';
 import { groupFindingsForDisplay, reconciliationAwareSort, groupByReconciliationStatus, isBrandScorePartial, type GroupedFinding, type ReconciliationGroup } from '@/lib/audit-findings-presentation';
-import { applySeverityCap } from '@/lib/scoring/severity-cap';
+import { applyScoringSeverityCap } from '@/lib/scoring/severity-cap';
 import { PHASE1_MODULES } from '@/lib/dashboard/latest-audit';
 import { prepareFindingsForExport, buildExportMeta, renderMarkdown, processExportPipeline } from '@/lib/export/findings-formatter';
 import clsx from 'clsx';
@@ -1757,7 +1757,7 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
 
   // Score model v2: apply the same severity cap as the engine + overview,
   // counting only ACTIVE findings so fixes lift the cap in real time.
-  const { overall: calculatedOverallScore } = applySeverityCap(rawCalculatedOverallScore, activeFindings);
+  const { overall: calculatedOverallScore } = applyScoringSeverityCap(rawCalculatedOverallScore, activeFindings as any);
   const severityCounts = {
     critical: activeFindings.filter((f) => f.severity === 'critical').length,
     high: activeFindings.filter((f) => f.severity === 'high').length,
