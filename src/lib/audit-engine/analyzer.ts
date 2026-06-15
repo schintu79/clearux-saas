@@ -129,7 +129,7 @@ export interface SiteProfile {
  * into the client bundle. Re-exported here for engine-side callers.
  */
 export { applySeverityCap, capSummarySentence, type ScoreCapInfo } from '@/lib/scoring/severity-cap'
-import { applySeverityCap, capSummarySentence, type ScoreCapInfo } from '@/lib/scoring/severity-cap'
+import { applyScoringSeverityCap, capSummarySentence, type ScoreCapInfo } from '@/lib/scoring/severity-cap'
 
 export interface ReportData {
   executiveSummary: string
@@ -1415,7 +1415,7 @@ export async function generateReport(
       ? Math.round(allScores.reduce((s, v) => s + v, 0) / allScores.length)
       : prev.previousOverallScore
     // Score model v2: cap by open severity profile (consistent with deep mode)
-    const { overall: overallScore, capInfo: baselineCapInfo } = applySeverityCap(overallScoreRaw, findings)
+    const { overall: overallScore, capInfo: baselineCapInfo } = applyScoringSeverityCap(overallScoreRaw, findings as any)
 
     // Build executive summary — deterministic, no AI, language-aware
     const executiveSummary = getBaselineSummary(
@@ -1631,7 +1631,7 @@ export async function generateReport(
   // Score model v2: cap the overall by the open severity profile. The
   // category average alone could not drop below ~80 even with 7 open
   // high-severity issues (zero-finding categories at 95-99 drown them out).
-  const { overall: calculatedOverall, capInfo } = applySeverityCap(calculatedOverallRaw, findings)
+  const { overall: calculatedOverall, capInfo } = applyScoringSeverityCap(calculatedOverallRaw, findings as any)
   if (capInfo.applied) {
     console.log(`[generateReport] SEVERITY CAP: ${calculatedOverallRaw} → ${calculatedOverall} (${capInfo.reason})`)
   }
@@ -1975,7 +1975,7 @@ export function calculateScoresFromFindings(findings: AuditFinding[], language: 
   // Fallback 50 = neutral/unknown, not a reward. Same as clampScore() default.
   const overallRaw = analyzedScores.length > 0 ? Math.round(analyzedScores.reduce((a, b) => a + b, 0) / analyzedScores.length) : 50
   // Score model v2: same severity cap as generateReport — fallback path included
-  const { overall, capInfo: fallbackCapInfo } = applySeverityCap(overallRaw, findings)
+  const { overall, capInfo: fallbackCapInfo } = applyScoringSeverityCap(overallRaw, findings as any)
 
   const pillarAvg = (start: number, end: number) => {
     const cats = categoryScores.slice(start, Math.min(end, categoryScores.length)).filter(c => c.score >= 0)
