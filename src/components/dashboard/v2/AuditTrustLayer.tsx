@@ -155,7 +155,7 @@ export function AuditConfidenceStrip({ findings, crawlSummary, className = '' }:
           · coverage, evidence mix, and the checks behind every finding
         </span>
       </div>
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-px" style={{ background: 'color-mix(in srgb, var(--ink) 8%, transparent)' }}>
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5 px-4 pb-3.5">
       <AuditConfidenceCard
         label="Crawl coverage"
         value={trust.crawl_coverage_text}
@@ -195,10 +195,6 @@ export function AuditConfidenceStrip({ findings, crawlSummary, className = '' }:
           <span className="font-semibold" style={{ color: 'var(--signal)' }}>AI-assessed</span>
           {' '}— expert AI judgment from your page content; shown and ranked, but capped at medium for scoring. Double-check before acting.
         </span>
-        <span>
-          <span className="font-semibold">Not enough evidence</span>
-          {' '}— flagged for awareness; doesn’t affect your score.
-        </span>
       </div>
       </div>
     </div>
@@ -221,7 +217,10 @@ function AuditConfidenceCard({ label, value, subvalue, tone = 'neutral' }: Audit
   // mix / confidence) still reads at a glance.
   const valueColor = tone === 'good' ? 'var(--ok)' : tone === 'warning' ? 'var(--warn)' : 'var(--ink)'
   return (
-    <div className="px-3.5 py-2.5 bg-white dark:bg-white/[0.04]">
+    <div
+      className="px-3.5 py-2.5 rounded-lg"
+      style={{ background: 'var(--paper-2)', border: '0.5px solid color-mix(in srgb, var(--ink) 9%, transparent)' }}
+    >
       <div className="text-[9.5px] font-semibold uppercase tracking-wider text-ink/50 mb-1">
         {label}
       </div>
