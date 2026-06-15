@@ -119,6 +119,10 @@ const DashboardShell: React.FC<DashboardShellProps> = ({ children }) => {
     first_audit_free: boolean;
   } | null>(null);
   const [unreadNotifications, setUnreadNotifications] = useState(0);
+  // Open-findings count for the Find/Fix nav pills. The nav sits above the
+  // AuditBundleProvider, so it can't read the bundle — fetch the latest audit's
+  // finding count for the current workspace directly.
+  const [findingsCount, setFindingsCount] = useState<number | null>(null);
 
   // Workspace list for the workspace switcher dropdown
   const [workspaces, setWorkspaces] = useState<Array<{
@@ -146,6 +150,25 @@ const DashboardShell: React.FC<DashboardShellProps> = ({ children }) => {
     () => workspaces.find((w) => w.slug === workspaceSlug) || null,
     [workspaces, workspaceSlug],
   );
+
+  // Latest audit's finding count for the Find/Fix nav pills.
+  useEffect(() => {
+    const wsId = currentWorkspace?.id;
+    if (!wsId) { setFindingsCount(null); return; }
+    let cancelled = false;
+    fetch(`/api/audits?workspace_id=${wsId}`)
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => {
+        if (cancelled) return;
+        const audits = (d?.audits ?? d ?? []) as any[];
+        const latest = Array.isArray(audits) ? audits[0] : null;
+        const report = Array.isArray(latest?.reports) ? latest.reports[0] : latest?.reports;
+        const n = report?.total_issues;
+        setFindingsCount(typeof n === 'number' ? n : null);
+      })
+      .catch(() => { if (!cancelled) setFindingsCount(null); });
+    return () => { cancelled = true; };
+  }, [currentWorkspace?.id]);
 
   // Fetch credits and notifications
   useEffect(() => {
@@ -213,6 +236,7 @@ const DashboardShell: React.FC<DashboardShellProps> = ({ children }) => {
     href: string;
     icon: React.ElementType;
     badge?: boolean;
+    count?: number;
     matchPaths?: string[];
   };
   type NavGroup = { label: string | null; items: NavItem[] };
@@ -236,8 +260,8 @@ const DashboardShell: React.FC<DashboardShellProps> = ({ children }) => {
     {
       label: 'Actions',
       items: [
-        { label: 'Find', href: `${navBase}/find`, icon: Search, matchPaths: [`${navBase}/audits`] },
-        { label: 'Fix', href: `${navBase}/fix`, icon: Wrench },
+        { label: 'Find', href: `${navBase}/find`, icon: Search, matchPaths: [`${navBase}/audits`], count: findingsCount ?? undefined },
+        { label: 'Fix', href: `${navBase}/fix`, icon: Wrench, count: findingsCount ?? undefined },
         { label: 'Track', href: `${navBase}/track`, icon: LineChart },
         { label: 'Connect site', href: `${navBase}/connect`, icon: Server },
       ],
@@ -507,6 +531,18 @@ const DashboardShell: React.FC<DashboardShellProps> = ({ children }) => {
                           style={{ color: disabled ? 'var(--m-muted)' : active ? 'var(--ink)' : 'var(--m-muted)' }}
                         />
                         {!collapsed && <span className="truncate">{item.label}</span>}
+                        {!collapsed && typeof item.count === 'number' && item.count > 0 && !disabled && (
+                          <span
+                            className="ml-auto inline-flex items-center justify-center text-[10.5px] tabular-nums font-semibold rounded-full px-1.5 min-w-[18px] h-[18px]"
+                            style={{
+                              background: active ? 'var(--paper)' : 'color-mix(in srgb, var(--ink) 8%, transparent)',
+                              color: active ? 'var(--ink)' : 'var(--m-muted)',
+                              border: active ? '1px solid var(--rule)' : 'none',
+                            }}
+                          >
+                            {item.count}
+                          </span>
+                        )}
                       </Link>
                     </li>
                   );
