@@ -34,6 +34,29 @@ const LOCAL_CHROME_PATHS = [
   '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',
 ]
 
+// ── ETXTBSY race guard (2026-06-15) ─────────────────────────
+// @sparticuz/chromium.executablePath() extracts the brotli-packed binary to
+// /tmp on first call, then puppeteer execs it. The audit launches TWO browsers
+// in parallel (responsive + WCAG via Promise.all). If both extract to the same
+// path at once, one is still WRITING the binary while the other tries to EXEC
+// it → `spawn ETXTBSY` (text file busy). Fix: extract exactly once (shared
+// promise) and serialize the launch() exec, with a short ETXTBSY retry.
+let cachedExecPath: Promise<string> | null = null
+let launchLock: Promise<void> = Promise.resolve()
+const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms))
+
+export async function serializeLaunch<T>(fn: () => Promise<T>): Promise<T> {
+  const prev = launchLock
+  let release!: () => void
+  launchLock = new Promise<void>((r) => (release = r))
+  await prev.catch(() => {})
+  try {
+    return await fn()
+  } finally {
+    release()
+  }
+}
+
 export async function launchAuditBrowser(opts: LaunchOptions = {}): Promise<Browser> {
   const viewport = opts.viewport === undefined ? { width: 1440, height: 900 } : opts.viewport
   let serverlessError: unknown = null
@@ -41,15 +64,37 @@ export async function launchAuditBrowser(opts: LaunchOptions = {}): Promise<Brow
   // 1) Serverless (Vercel) — @sparticuz/chromium
   try {
     const chromium = await import('@sparticuz/chromium')
-    const executablePath = await chromium.default.executablePath()
-    return await puppeteer.launch({
+    // Extract the binary ONCE; concurrent callers await the same extraction
+    // rather than each writing the file (the ETXTBSY trigger).
+    if (!cachedExecPath) cachedExecPath = Promise.resolve(chromium.default.executablePath())
+    const executablePath = await cachedExecPath
+    const launchArgs = {
       args: [...chromium.default.args, ...(opts.extraArgs ?? [])],
       defaultViewport: viewport,
       executablePath,
-      headless: true,
+      headless: true as const,
+    }
+    // Serialize the exec so two parallel passes can't spawn the binary while
+    // it's mid-write; retry briefly if ETXTBSY still slips through.
+    return await serializeLaunch(async () => {
+      for (let attempt = 0; ; attempt++) {
+        try {
+          return await puppeteer.launch(launchArgs)
+        } catch (e) {
+          const m = e instanceof Error ? e.message : String(e)
+          if (m.includes('ETXTBSY') && attempt < 2) {
+            await sleep(200 * (attempt + 1))
+            continue
+          }
+          throw e
+        }
+      }
     })
   } catch (err) {
     serverlessError = err
+    // A failed/rejected extraction must not poison every future launch — reset
+    // the cache so the next audit re-extracts.
+    cachedExecPath = null
     // On Vercel this is the ONLY viable path — make the real reason loud.
     if (process.env.VERCEL) {
       const msg = err instanceof Error ? err.message : String(err)
