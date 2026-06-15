@@ -421,8 +421,11 @@ function FindPageInner() {
             {tab.label}
             {tab.count > 0 && (
               <span
-                className="ml-1.5 text-[11px] tabular-nums font-medium"
-                style={{ color: activeTab === tab.key ? 'var(--ink-2)' : 'var(--m-muted)' }}
+                className="ml-1.5 inline-flex items-center text-[10.5px] tabular-nums font-semibold px-1.5 py-0.5 rounded-full align-middle"
+                style={{
+                  background: activeTab === tab.key ? 'color-mix(in srgb, var(--ink) 10%, transparent)' : 'color-mix(in srgb, var(--ink) 6%, transparent)',
+                  color: activeTab === tab.key ? 'var(--ink)' : 'var(--m-muted)',
+                }}
               >
                 {tab.count}
               </span>

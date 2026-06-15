@@ -145,16 +145,17 @@ export function AuditConfidenceStrip({ findings, crawlSummary, className = '' }:
   // themselves are enlarged (see AuditConfidenceCard).
   return (
     <div className={className}>
-      <div className="flex items-center gap-2 mb-2">
-        <ShieldCheck size={15} style={{ color: 'var(--ok)' }} className="flex-shrink-0" />
+      <div className="rounded-xl border overflow-hidden bg-white dark:bg-white/[0.04]" style={{ borderColor: 'color-mix(in srgb, var(--ink) 10%, transparent)' }}>
+      <div className="flex items-center gap-2 px-4 pt-3 pb-2.5 flex-wrap">
+        <ShieldCheck size={14} style={{ color: 'var(--ok)' }} className="flex-shrink-0" />
         <h3 className="text-[12px] font-semibold tracking-[-0.005em]" style={{ color: 'var(--ink)' }}>
           How this audit was verified
         </h3>
         <span className="text-[11px]" style={{ color: 'var(--m-muted)' }}>
-          · coverage, evidence mix, and the independent checks behind every finding
+          · coverage, evidence mix, and the checks behind every finding
         </span>
       </div>
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-2">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-px" style={{ background: 'color-mix(in srgb, var(--ink) 8%, transparent)' }}>
       <AuditConfidenceCard
         label="Crawl coverage"
         value={trust.crawl_coverage_text}
@@ -184,7 +185,7 @@ export function AuditConfidenceStrip({ findings, crawlSummary, className = '' }:
       {/* Legend — what the per-finding labels mean and how they affect the score.
           2026-06-15: makes the Verified-vs-AI distinction explicit so users know
           how seriously to take each finding (and why the score is driven by Verified). */}
-      <div className="mt-2.5 flex flex-wrap items-center gap-x-4 gap-y-1.5 text-[11px] leading-snug" style={{ color: 'var(--m-muted)' }}>
+      <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 px-4 py-2.5 text-[11px] leading-snug" style={{ color: 'var(--m-muted)', borderTop: '0.5px solid color-mix(in srgb, var(--ink) 8%, transparent)' }}>
         <span className="font-semibold" style={{ color: 'var(--ink)' }}>What the labels mean:</span>
         <span>
           <span className="font-semibold" style={{ color: 'var(--ok)' }}>Verified</span>
@@ -198,6 +199,7 @@ export function AuditConfidenceStrip({ findings, crawlSummary, className = '' }:
           <span className="font-semibold">Not enough evidence</span>
           {' '}— flagged for awareness; doesn’t affect your score.
         </span>
+      </div>
       </div>
     </div>
   )
@@ -213,24 +215,21 @@ interface AuditConfidenceCardProps {
 }
 
 function AuditConfidenceCard({ label, value, subvalue, tone = 'neutral' }: AuditConfidenceCardProps) {
-  const toneColors = {
-    good: 'border-green-200 dark:border-green-900/40',
-    neutral: 'border-ink/10 dark:border-ink/10',
-    warning: 'border-amber-200 dark:border-amber-900/40',
-  }
-
+  // Compact cell inside the single trust card (2026-06-15). Borderless — the
+  // outer card frames the group, and the gap-px over a ruled bg draws the thin
+  // dividers between cells. Tone colours the value so the key metric (evidence
+  // mix / confidence) still reads at a glance.
+  const valueColor = tone === 'good' ? 'var(--ok)' : tone === 'warning' ? 'var(--warn)' : 'var(--ink)'
   return (
-    // White card background (2026-06-10): the paper/cream background made the
-    // strip blend into the page — white gives the trust data clear separation.
-    <div className={`px-3.5 py-3 rounded-lg border bg-white dark:bg-white/[0.04] ${toneColors[tone]}`}>
-      <div className="text-[10px] font-semibold uppercase tracking-wider text-ink/55 mb-1.5">
+    <div className="px-3.5 py-2.5 bg-white dark:bg-white/[0.04]">
+      <div className="text-[9.5px] font-semibold uppercase tracking-wider text-ink/50 mb-1">
         {label}
       </div>
-      <div className="text-[14px] font-semibold text-ink/90 leading-tight">
+      <div className="text-[13.5px] font-semibold leading-tight" style={{ color: valueColor }}>
         {value}
       </div>
       {subvalue && (
-        <div className="text-[11px] text-ink/55 mt-1 leading-tight">
+        <div className="text-[10.5px] text-ink/55 mt-0.5 leading-tight">
           {subvalue}
         </div>
       )}
