@@ -56,7 +56,7 @@ import PageHeader from '@/components/dashboard/v2/PageHeader';
 import FindingText from '@/components/dashboard/v2/FindingText';
 import DashCard from '@/components/dashboard/v2/DashCard';
 import ActionLink from '@/components/dashboard/v2/ActionLink';
-import { hostOf } from '@/components/dashboard/v2/score-utils';
+import { pagePathOf } from '@/components/dashboard/v2/score-utils';
 import OverviewBreadcrumb from '@/components/dashboard/OverviewBreadcrumb';
 import CustomSelect from '@/components/ui/CustomSelect';
 import { groupFindingsForDisplay, type GroupedFinding } from '@/lib/audit-findings-presentation';
@@ -588,7 +588,7 @@ function FindPageInner() {
                   <ul style={{ borderTop: tint ? `1px solid ${tint.border}` : '1px solid var(--rule)', background: 'var(--card)' }}>
                     {b.groups.map((g) => {
                       const f = g.primary;
-                      const host = hostOf(f.page_url);
+                      const pagePath = pagePathOf(f.page_url);
                       const moduleNames = g.affectedModuleIndices.filter((i) => i >= 0).map((i) => PHASE1_MODULES[i]);
                       const multiModule = moduleNames.length > 1;
                       const isExpanded = !!expanded[f.id];
@@ -638,13 +638,28 @@ function FindPageInner() {
                                     <span>{g.members.length} similar</span>
                                   </>
                                 )}
-                                {host && (
+                                {pagePath && (
                                   <>
                                     <span aria-hidden>·</span>
-                                    <span className="inline-flex items-center gap-1 truncate max-w-[280px]">
-                                      <ExternalLink size={9} />
-                                      {host}
-                                    </span>
+                                    {f.page_url ? (
+                                      <a
+                                        href={f.page_url}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        onClick={(e) => e.stopPropagation()}
+                                        title={f.page_url}
+                                        className="inline-flex items-center gap-1 truncate max-w-[320px] hover:underline"
+                                        style={{ color: 'var(--m-muted)' }}
+                                      >
+                                        <ExternalLink size={9} />
+                                        {pagePath}
+                                      </a>
+                                    ) : (
+                                      <span className="inline-flex items-center gap-1 truncate max-w-[320px]">
+                                        <ExternalLink size={9} />
+                                        {pagePath}
+                                      </span>
+                                    )}
                                   </>
                                 )}
                               </div>
@@ -788,7 +803,7 @@ function FindPageInner() {
           <DashCard padding="none" className="overflow-hidden">
             <ul>
               {strategicFindings.map((f, i) => {
-                const host = hostOf(f.page_url);
+                const pagePath = pagePathOf(f.page_url);
                 return (
                   <li
                     key={f.id}
@@ -825,13 +840,28 @@ function FindPageInner() {
                           >
                             Strategic
                           </span>
-                          {host && (
+                          {pagePath && (
                             <>
                               <span aria-hidden>·</span>
-                              <span className="inline-flex items-center gap-1 truncate max-w-[280px]">
-                                <ExternalLink size={9} />
-                                {host}
-                              </span>
+                              {f.page_url ? (
+                                <a
+                                  href={f.page_url}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  onClick={(e) => e.stopPropagation()}
+                                  title={f.page_url}
+                                  className="inline-flex items-center gap-1 truncate max-w-[320px] hover:underline"
+                                  style={{ color: 'var(--m-muted)' }}
+                                >
+                                  <ExternalLink size={9} />
+                                  {pagePath}
+                                </a>
+                              ) : (
+                                <span className="inline-flex items-center gap-1 truncate max-w-[320px]">
+                                  <ExternalLink size={9} />
+                                  {pagePath}
+                                </span>
+                              )}
                             </>
                           )}
                         </div>

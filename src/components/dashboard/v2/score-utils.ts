@@ -25,3 +25,27 @@ export function hostOf(url: string | null | undefined): string | null {
     return null
   }
 }
+
+/**
+ * Human-readable page label: host + pathname (no protocol, no trailing slash,
+ * no leading www). Used on finding cards so the user always knows WHICH page a
+ * finding refers to — not just the bare domain. Returns null for empty/invalid
+ * URLs (caller renders a "site-wide" fallback).
+ *
+ * Examples:
+ *   https://raseedinvest.com/en/signup  -> raseedinvest.com/en/signup
+ *   https://www.example.com/            -> example.com
+ */
+export function pagePathOf(url: string | null | undefined): string | null {
+  if (!url) return null
+  try {
+    const u = new URL(url)
+    const host = u.hostname.replace(/^www\./, '')
+    let path = u.pathname || ''
+    if (path === '/') path = ''
+    else path = path.replace(/\/$/, '') // strip a single trailing slash
+    return `${host}${path}`
+  } catch {
+    return null
+  }
+}

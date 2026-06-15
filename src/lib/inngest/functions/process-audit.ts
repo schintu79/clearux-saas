@@ -19,6 +19,9 @@ import { compareBrandConsistency, type BrandConsistencyResult, type VoiceContrad
 import { applyScoringSeverityCap, capSummarySentence } from '@/lib/scoring/severity-cap'
 import { createServiceSupabase } from '@/lib/supabase-server'
 import { crawlPages, formatHeadTagsForAnalysis, type HeadTagData } from '@/lib/audit-engine/crawler'
+import { prioritizePagesForChecks } from '@/lib/audit-engine/page-relevance'
+import { classifyInputRelevance } from '@/lib/audit-engine/pipeline/input-relevance-gate'
+import { pageContentChanged, type PageContentFacts } from '@/lib/audit-engine/content-change'
 import { runCrawlPreflight } from '@/lib/audit-engine/crawl-preflight'
 import { probeAIDiscovery, formatAIDiscoveryForAnalysis } from '@/lib/audit-engine/ai-discovery-probe'
 import { validateStructuredData, formatValidationForAnalysis } from '@/lib/audit-engine/structured-data-validator'
@@ -1684,7 +1687,13 @@ Return 2-6 findings. Be specific and evidence-based. Reference specific files/co
       const wcagPromise = (async () => {
         try {
           const maxUrls = auditDetails.plan === 'free_preview' ? 1 : 3
-          const { automatedResults, heuristicPrompts, siteColors, axeFindings, axeDiagnostic, domFactsByUrl } = await checkWcagAutomated(crawlResult.crawledUrls, maxUrls)
+          // Prioritize the budget-limited browser/WCAG/domFacts pass so genuine
+          // input pages (signup, login, contact…) are ALWAYS snapshotted — not
+          // just the first N by crawl order. Without this, /signup was never
+          // DOM-captured, so the gates could not verify label/form findings
+          // against the page they're about (2026-06-15).
+          const wcagTargetUrls = prioritizePagesForChecks(crawlResult.crawledUrls, maxUrls)
+          const { automatedResults, heuristicPrompts, siteColors, axeFindings, axeDiagnostic, domFactsByUrl } = await checkWcagAutomated(wcagTargetUrls, maxUrls)
           // Visibility into axe (it silently produced nothing on first runs):
           // source length, pages run, raw violations, and any run error.
           await auditLog(auditId, 'axe_debug', axeDiagnostic.error ? 'warning' : 'info',
@@ -2805,12 +2814,55 @@ RULES FOR RE-AUDIT:
         let sortOrder = 0
         let droppedFixed = 0
         let droppedDismissed = 0
+        let droppedStalePage = 0
+
+        // ── Carry-forward content-change guard (2026-06-15) ──
+        // Baseline re-audits copy previous findings VERBATIM. If a page's content
+        // changed since the previous audit, a carried finding can quote text that
+        // no longer exists (an old H1, a removed section). Build per-page content
+        // maps (previous vs current) so we can SKIP carrying a finding whose page
+        // materially changed — it must be re-derived, not recycled. Best-effort:
+        // if either map is unavailable, we carry as before (safe degradation).
+        const buildPageMap = async (aid: string | null): Promise<Map<string, PageContentFacts>> => {
+          const map = new Map<string, PageContentFacts>()
+          if (!aid) return map
+          try {
+            const { data } = await db.from('audit_pages')
+              .select('url, h1, title, meta_description')
+              .eq('audit_id', aid)
+            for (const p of (data as any[]) || []) {
+              if (p?.url) map.set(p.url, { h1: p.h1, title: p.title, metaDescription: p.meta_description })
+            }
+          } catch (e) {
+            console.warn('[inngest] carry-forward page map fetch failed:', (e as Error)?.message)
+          }
+          return map
+        }
+        const [prevPageMap, currPageMap] = await Promise.all([
+          buildPageMap(siteContext.previousAuditId),
+          buildPageMap(auditId),
+        ])
+        const pageChangedForUrl = (rawUrl: string | null | undefined): boolean => {
+          if (!rawUrl) return false
+          const prev = prevPageMap.get(rawUrl)
+          const curr = currPageMap.get(rawUrl)
+          if (!prev || !curr) return false // can't compare → carry as before
+          return pageContentChanged(prev, curr)
+        }
 
         // Build batch insert array — was individual INSERT loop
         const batchInserts: any[] = []
         for (const pf of prevFindings) {
           if (pf.dismissed) { droppedDismissed++; continue }
           if (pf.status === 'fixed') { droppedFixed++; continue }
+          // Page content changed since last audit → the verbatim copy may be
+          // stale (quoting text that no longer exists). Drop it rather than
+          // recycle a finding the page no longer supports.
+          if (pageChangedForUrl(pf.page_url)) {
+            droppedStalePage++
+            console.log(`[inngest] Carry-forward: dropped stale finding "${String(pf.title).slice(0, 80)}" — page ${pf.page_url} changed since last audit`)
+            continue
+          }
           const pfFindingType = (pf as any).finding_type || 'fixable'
           const pfFixType = (pf as any).fix_type || null
           batchInserts.push({
@@ -2853,14 +2905,15 @@ RULES FOR RE-AUDIT:
 
         const copiedCount = batchInserts.length
         await auditLog(auditId, 'baseline_findings_copied', 'success',
-          `Baseline: ${copiedCount} findings carried forward, ${droppedFixed} fixed, ${droppedDismissed} dismissed`, {
+          `Baseline: ${copiedCount} findings carried forward, ${droppedFixed} fixed, ${droppedDismissed} dismissed, ${droppedStalePage} dropped (page changed)`, {
             copied: copiedCount,
             dropped_fixed: droppedFixed,
             dropped_dismissed: droppedDismissed,
+            dropped_stale_page: droppedStalePage,
             total_previous: prevFindings.length,
           })
 
-        return { copiedCount, droppedFixed, droppedDismissed }
+        return { copiedCount, droppedFixed, droppedDismissed, droppedStalePage }
         }, 30_000, 'baseline-copy-findings')
       })
 
@@ -4162,6 +4215,32 @@ RULES FOR RE-AUDIT:
             `Removed ${ownership.dropIds.length} LLM finding${ownership.dropIds.length > 1 ? 's' : ''} that claimed a structural issue owned by a deterministic check (landmark/label/contrast/target/heading/alt/link/meta)`)
           for (const [id, reason] of Object.entries(ownership.reasons)) {
             console.log(`[inngest] Structural ownership: dropped ${id} — ${reason}`)
+          }
+        }
+      }
+
+      // ── 2d-bis. Input-relevance gate ─────────────────────────
+      // axe/wcag fire "Labels or Instructions" on ANY unlabeled <input>,
+      // including decorative search/newsletter/autofill fields on content pages.
+      // A label/instruction defect is only relevant where the user must enter
+      // real data (signup, login, contact, checkout…). Drop label/instruction
+      // findings that landed on a non-input page (e.g. the raseed /en homepage).
+      // Conservative: only the label/instruction class, only non-input pages,
+      // broad input-page allowlist so genuine forms are never suppressed.
+      if (findings.length > 0) {
+        const relevance = classifyInputRelevance(
+          findings.map(f => ({
+            id: f.id, title: f.title, description: f.description, page_url: f.page_url,
+            detection_source: f.detection_source || null,
+          })),
+        )
+        if (relevance.offRelevanceIds.length > 0) {
+          for (const id of relevance.offRelevanceIds) idsToDelete.add(id)
+          findings = findings.filter(f => !idsToDelete.has(f.id))
+          await auditLog(auditId, 'input_relevance_filtered', 'info',
+            `Removed ${relevance.offRelevanceIds.length} label/instruction finding${relevance.offRelevanceIds.length > 1 ? 's' : ''} on non-input pages (no genuine user-entry form there)`)
+          for (const [id, reason] of Object.entries(relevance.reasons)) {
+            console.log(`[inngest] Input relevance: dropped ${id} — ${reason}`)
           }
         }
       }
