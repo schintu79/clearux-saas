@@ -52,11 +52,11 @@ What we STOP doing: adding dashboard surfaces, speculative features, "nice to ha
 | D1 | **Zero automated tests.** The trust engine is untested. | whole repo (jest + ts-jest installed, `jest.config.ts` exists, ~no specs) | CRITICAL |
 | D2 | **No error tracking.** Production errors vanish unless someone greps Vercel logs within retention. | nowhere | CRITICAL |
 | D3 | **No CI gates.** Broken builds reach main (happened 2026-06-11: bee740f). | no GitHub Actions | CRITICAL |
-| D4 | **Chromium broken in production.** Every audit logs "No Chromium binary found" → responsive checks, WCAG checks, screenshots silently skipped. Evidence mix is 0% verified / 100% heuristic — our own trust strip admits it. | `responsive-checker.ts`, `browser-renderer.ts`, `screenshots.ts` runtime | CRITICAL |
+| D4 | ~~**Chromium broken in production.**~~ **RESOLVED (2026-06-12 bundle fix; ETXTBSY launch race fixed 2026-06-15).** axe/responsive/WCAG/screenshots now fire; evidence mix is real (~33% verified on the clean fixpath deep run). | `browser-launcher.ts`, `responsive-checker.ts`, `wcag-checker.ts` | DONE |
 | D5 | Remaining unchecked `.insert()` calls (the 6-incident pattern). | repo-wide sweep needed; known: `audit-engine/index.ts:209`, brand-processor, others | HIGH |
-| D6 | Remaining uncapped/uncomposed score displays. | `audits/[id]/page.tsx` module sections (~L1820, 1871, 2217), `audits/site/[domain]`, `audits/brand/[name]`, `track/page.tsx` L126, `latest-audit.ts moduleScoresFromReport` fallback | HIGH |
+| D6 | Remaining uncapped/uncomposed score displays. **PARTIAL (2026-06-15):** overview + process-audit + score-trend now use `applyScoringSeverityCap` (Verified-drives rule); the OTHER audit views still use the old cap → they now disagree with the overview. **Next: sweep them onto the same rule.** | `audits/[id]/page.tsx` (~L1820, 1871, 2217), `audits/site/[domain]`, `audits/brand/[name]`, `track/page.tsx` L126, `latest-audit.ts moduleScoresFromReport` | HIGH |
 | D7 | `process-audit.ts` is ~5,000 lines. Unreviewable, unownable. | `src/lib/inngest/functions/process-audit.ts` | HIGH |
-| D8 | PageSpeed API failing every run ("continuing without real CWV data"). | `process-audit.ts` site-checks; API key/quota | HIGH |
+| D8 | ~~PageSpeed API failing every run.~~ **RESOLVED.** CWV live; PSI *opportunity* severities capped at medium (`pagespeed.ts opportunitySeverity`) so savings variance can't swing the score. | `process-audit.ts`, `pagespeed.ts` | DONE |
 | D9 | Score model unvalidated (cap table + jitter constants are first calibration; no external validation; no public methodology). | `severity-cap.ts`, `analyzer.ts` | MEDIUM |
 | D10 | "Track" pillar thin: `scheduled_audits` table exists, nothing built on it. No alerts, no digests. | DB + nothing | MEDIUM (HIGH for retention) |
 | D11 | Lean-pipeline flag silently disables features; per-audit LLM cost not stored on the audit row. | `feature-flags.ts`, pipeline | MEDIUM |
@@ -72,6 +72,32 @@ What we STOP doing: adding dashboard surfaces, speculative features, "nice to ha
 3. **Recompute divergence**: same metric computed in 2+ places with different formulas (87 vs 65; 81 vs 48). Cure: shared modules (`scoring/*`) + rule: any new score display imports from them — enforced in review.
 4. **Generation-time filters miss carried findings**: baseline re-audits recycle findings verbatim; nets must run at quality gates (the chokepoint), not only at generation.
 5. **Fire-and-forget async in Vercel routes**: lambda freezes on response; unawaited promises die. Always await side effects.
+
+---
+
+## 1.4 Shipped this cycle (2026-06-13 → 06-15) — the accuracy/trust moat
+
+The dogfood truth-check of fixpath.ai exposed that the deterministic tier is accurate while the LLM tier ships **false claims of absence** ("no `<main>`", "labels not connected", "no Contact link") in domains instruments already own. That became Stefano's #1 priority: eliminate LLM noise and make accuracy *measurable* — the market moat. Full plan: `docs/LLM_NOISE_ELIMINATION_PLAN.md`; living evidence ledger: `docs/DETECTION_SOURCE_ACCURACY.md`.
+
+**The LLM-noise moat — layered defense (the LLM proposes, the DOM disposes):**
+- **P0 — structural ownership** (`pipeline/structural-ownership.ts`): drops LLM findings that trespass on a deterministic domain (landmark/form-label/contrast/target/heading/alt/link/meta), scoped to LLM sources so instrument findings are never touched. Plus the **severity≤evidence invariant** (`pipeline/evidence-severity.ts`): "Not enough evidence" can never be HIGH/cap the score.
+- **P1 — DOM verification** (`pipeline/dom-verification.ts`): per-page rendered-DOM snapshot (`DomFacts`, captured in `wcag-checker.captureDomFacts`); refutes LLM absence-claims the DOM disproves; never drops without positive evidence. Plus **evidence binding**: an LLM finding with no quote/selector is demoted to "Not enough evidence."
+- **P2 — measured precision** (`eval/truth-set.ts` + `eval/precision.ts` + deploy-gate test): labeled truth-set, per-source false-positive metric, CI-gated at 100% FP-elimination / 0% false-drop. Turns "most accurate" into a published number.
+- **P3 — prevention + field signal**: `formatDomFactsForPrompt` feeds verified DOM structure to the analyzer so it never guesses absence; `DomFacts` persisted to `report.raw_json`; `eval/dismissal-telemetry.ts` classifies dismissal reasons (only *inaccurate* = noise) into a live per-source/tier precision signal.
+
+Verified live on fixpath.ai: gates fire (structural-ownership removed 5, DOM-verify 1, evidence-binding demoted 2 in one deep run); the confirmed false positives are gone; remaining findings are instrument-verified or quote-grounded.
+
+**Scoring made honest + coherent (Stefano's "Verified drives the score" call):**
+- **`scoringSeverityCounts` / `applyScoringSeverityCap`** (`scoring/severity-cap.ts`): one rule — Verified findings keep severity, **AI-assessed cap at medium**, strategic excluded. Drives the cap on the **overview, process-audit, and score-trend** off a single source. Fixed the card-vs-cap mismatch (card showed 5 high while the cap counted 8). ⚠️ **Other audit views (`audits/[id]`, `site/[domain]`, `brand/[name]`, Track fallback) still use the old cap → D6 sweep needed for consistency.**
+- **Score stability** (`pagespeed.ts` `opportunitySeverity`): PSI opportunity findings capped at medium so savings-estimate variance can't flip severity into high and swing the score (it moved fixpath 72→65 with no site change). CWV-poor findings stay high.
+
+**Trust UX:** condensed "How this audit was verified" into one card (Find + Fix); per-finding evidence badge tooltips + legend; **verified/AI split pills** on the severity cards; **findings-count pills** on the sidebar nav + Find tabs.
+
+**Reliability:** **ETXTBSY browser-launch race fixed** (`browser-launcher.ts`: extract Chromium once + serialize parallel launches + regression test) — D4-adjacent. Marketing-site a11y fixes + responsive-checker `aria-hidden` decorative-skip (don't audit decorative mockups).
+
+**Track (Phase 2 #1 + #4):** user-chosen monitoring cadence + cron runner (credit-free) shipped; per-metric trends shipped. ⚠️ **#1c open:** the cron rolls `next_run_at` forward *before* dispatch, so a run skipped due to a concurrent in-progress audit loses the whole cycle — fix: advance only on successful dispatch.
+
+Test count grew to **240+** (scoring, structural-ownership, dom-verification, evidence-severity/binding, precision harness, dismissal telemetry, serializeLaunch regression).
 
 ---
 
