@@ -79,7 +79,7 @@ import {
   BrandConsistencyPanel,
 } from '@/components/dashboard/v2/AuditTrustLayer';
 import { computeCoverageLabel } from '@/lib/audit-engine/pipeline/trust-summary';
-import { applySeverityCap, composeModuleScores } from '@/lib/scoring/severity-cap';
+import { applyScoringSeverityCap, composeModuleScores } from '@/lib/scoring/severity-cap';
 import type { CrawlSummary } from '@/types/database';
 
 const SEVERITY_RANK: Record<string, number> = { critical: 4, high: 3, medium: 2, low: 1 };
@@ -240,7 +240,7 @@ function FindPageInner() {
     }
 
     const rawOverall = Math.round(allCatScores.reduce((s, v) => s + v, 0) / allCatScores.length);
-    const { overall: cappedOverall, capInfo } = applySeverityCap(rawOverall, openAll);
+    const { overall: cappedOverall, capInfo } = applyScoringSeverityCap(rawOverall, openAll as any);
     const composed = composeModuleScores(rawModules, byModule, cappedOverall, capInfo.applied);
     const out: Record<string, number> = {};
     for (const m of composed) out[m.name] = m.score;
