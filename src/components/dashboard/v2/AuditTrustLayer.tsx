@@ -180,6 +180,25 @@ export function AuditConfidenceStrip({ findings, crawlSummary, className = '' }:
         tone="neutral"
       />
       </div>
+
+      {/* Legend — what the per-finding labels mean and how they affect the score.
+          2026-06-15: makes the Verified-vs-AI distinction explicit so users know
+          how seriously to take each finding (and why the score is driven by Verified). */}
+      <div className="mt-2.5 flex flex-wrap items-center gap-x-4 gap-y-1.5 text-[11px] leading-snug" style={{ color: 'var(--m-muted)' }}>
+        <span className="font-semibold" style={{ color: 'var(--ink)' }}>What the labels mean:</span>
+        <span>
+          <span className="font-semibold" style={{ color: 'var(--ok)' }}>Verified</span>
+          {' '}— an instrument measured it; drives your score.
+        </span>
+        <span>
+          <span className="font-semibold" style={{ color: 'var(--signal)' }}>AI-assessed</span>
+          {' '}— expert AI judgment from your page content; shown and ranked, but capped at medium for scoring. Double-check before acting.
+        </span>
+        <span>
+          <span className="font-semibold">Not enough evidence</span>
+          {' '}— flagged for awareness; doesn’t affect your score.
+        </span>
+      </div>
     </div>
   )
 }
@@ -291,7 +310,7 @@ export function FindingEvidenceBadge({ finding }: FindingEvidenceBadgeProps) {
   const { label, className } = evidenceBadgeStyle(evidenceType)
 
   return (
-    <span className={`inline-flex items-center text-[10px] font-medium px-1.5 py-0.5 rounded ${className}`}>
+    <span title={evidenceTooltip(evidenceType)} className={`inline-flex items-center text-[10px] font-medium px-1.5 py-0.5 rounded ${className}`}>
       {label}
     </span>
   )
@@ -301,10 +320,24 @@ export function FindingEvidenceBadge({ finding }: FindingEvidenceBadgeProps) {
 export function EvidenceBadge({ type }: { type: EvidenceType }) {
   const { label, className } = evidenceBadgeStyle(type)
   return (
-    <span className={`inline-flex items-center text-[10px] font-medium px-1.5 py-0.5 rounded ${className}`}>
+    <span title={evidenceTooltip(type)} className={`inline-flex items-center text-[10px] font-medium px-1.5 py-0.5 rounded ${className}`}>
       {label}
     </span>
   )
+}
+
+/** Hover text spelling out how seriously to take each tier — and how it affects
+ *  the score. Keeps the badge tiny but immediately clear on hover. */
+export function evidenceTooltip(type: EvidenceType): string {
+  switch (type) {
+    case 'verified':
+      return 'Verified — an instrument measured this. Counts fully toward your score.'
+    case 'observed':
+    case 'heuristic':
+      return 'AI-assessed — expert AI judgment grounded in your page content. We think it is real, but could not verify it 100% — double-check before acting. Capped at medium for scoring.'
+    case 'undetermined':
+      return 'Not enough evidence — flagged for awareness; low confidence, so it does not affect your score.'
+  }
 }
 
 // 2026-06-12 unified evidence vocabulary: labels come from

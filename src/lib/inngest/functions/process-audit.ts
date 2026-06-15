@@ -16,7 +16,7 @@ import * as Sentry from '@sentry/nextjs'
 import { filterRowsToContract } from '@/lib/db/insert-contracts'
 import { keywordModuleIndexFor, correctedCategoryIndexFor } from '@/lib/scoring/module-map'
 import { compareBrandConsistency, type BrandConsistencyResult, type VoiceContradiction } from '@/lib/scoring/brand-consistency'
-import { applySeverityCap, capSummarySentence } from '@/lib/scoring/severity-cap'
+import { applyScoringSeverityCap, capSummarySentence } from '@/lib/scoring/severity-cap'
 import { createServiceSupabase } from '@/lib/supabase-server'
 import { crawlPages, formatHeadTagsForAnalysis, type HeadTagData } from '@/lib/audit-engine/crawler'
 import { runCrawlPreflight } from '@/lib/audit-engine/crawl-preflight'
@@ -4782,20 +4782,23 @@ RULES FOR RE-AUDIT:
       // The DB is the single source of truth for counts and the cap.
       const { data: dbFindingRows } = await db
         .from('audit_findings')
-        .select('severity')
+        .select('severity, confidence_level, confidence_score, finding_type')
         .eq('audit_id', auditId)
         .eq('dismissed', false)
         .in('status', ['open', 'in_progress'])
-      const scoringFindings: Array<{ severity: string }> =
-        (dbFindingRows as Array<{ severity: string }> | null) ?? findings
+      const scoringFindings: Array<{ severity: string; confidence_level?: string | null; confidence_score?: number | null; finding_type?: string | null }> =
+        (dbFindingRows as any[] | null) ?? findings
+      // Nominal severity counts (what findings exist) — match the dashboard card.
       const severityCount = {
         critical: scoringFindings.filter((f) => f.severity === 'critical').length,
         high: scoringFindings.filter((f) => f.severity === 'high').length,
         medium: scoringFindings.filter((f) => f.severity === 'medium').length,
         low: scoringFindings.filter((f) => f.severity === 'low').length,
       }
-      // Re-apply the severity cap against DB truth (can only lower the score)
-      const dbCapResult = applySeverityCap(reportData.overallScore, scoringFindings)
+      // Score cap uses the scoring-severity rule (Verified drives; AI-assessed
+      // capped at medium; strategic excluded) — same source as the overview, so
+      // the stored score agrees with the live dashboard. Can only lower the score.
+      const dbCapResult = applyScoringSeverityCap(reportData.overallScore, scoringFindings)
       if (dbCapResult.overall < reportData.overallScore) {
         console.log(`[inngest] Score re-capped from DB findings: ${reportData.overallScore} → ${dbCapResult.overall} (${dbCapResult.capInfo.reason})`)
         reportData.overallScore = dbCapResult.overall
