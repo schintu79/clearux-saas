@@ -80,6 +80,51 @@ interface PageCheckInput {
   url: string
 }
 
+/* ── Desktop-nav-hidden decision (pure, testable) ─────────── */
+
+/** Minimum viewport width at which hiding primary nav behind a hamburger is a
+ * real desktop problem. Below this (e.g. the 1024px "Small Desktop" / tablet
+ * landscape band) a hamburger is a legitimate responsive pattern, so we never
+ * flag it. raseedinvest.com starts its hamburger at 1024px by design. */
+export const DESKTOP_NAV_MIN_WIDTH = 1280
+
+/** The browser-collected facts the desktop-nav-hidden decision is made from. */
+export interface DesktopNavData {
+  hasHamburger: boolean
+  hamburgerVisible: boolean
+  visibleNavLinks: number
+  totalNavLinks: number
+}
+
+/**
+ * Decide whether to emit the "primary navigation hidden behind hamburger on
+ * desktop" finding. Pure so it can be unit-tested without a browser.
+ *
+ * Guards against the raseedinvest 1440px false positive — where a clear header
+ * with visible links was reported as "0 visible navigation links". A count of
+ * ZERO visible links is treated as a DETECTION FAILURE (selector missed the nav,
+ * links rendered outside the header band, late hydration), NOT as proof the nav
+ * is hidden. We only flag when:
+ *  - the viewport is a true desktop width (>= DESKTOP_NAV_MIN_WIDTH),
+ *  - a hamburger toggle is present AND visible at that viewport,
+ *  - between 1 and 2 nav links are visible (0 = detection failure → never flag),
+ *  - and there are genuinely MORE total links than visible ones (real hiding).
+ */
+export function shouldFlagDesktopNavHidden(
+  data: DesktopNavData,
+  viewportWidth: number,
+): boolean {
+  if (viewportWidth < DESKTOP_NAV_MIN_WIDTH) return false
+  if (!data.hasHamburger || !data.hamburgerVisible) return false
+  // Zero visible links is not strong evidence of hiding — it is far more likely
+  // the detector failed to see the header. Require at least one visible link so
+  // we KNOW the nav rendered, yet too few are shown to be a real desktop bar.
+  if (data.visibleNavLinks < 1 || data.visibleNavLinks > 2) return false
+  // There must actually be more links hidden behind the toggle than shown.
+  if (data.totalNavLinks <= data.visibleNavLinks) return false
+  return true
+}
+
 /**
  * Run all layout checks on a page at a specific viewport.
  * Each check runs inside page.evaluate() for DOM access.
@@ -460,10 +505,12 @@ async function runChecks({ page, viewport, url }: PageCheckInput): Promise<Viewp
       }
     })
 
-    // Flag when desktop viewport shows a visible hamburger with very few visible nav links.
-    // This is the Bible's core navigation rule: mainstream sites should show primary
-    // navigation directly, not hide it behind a toggle on screens ≥1024px.
-    if (desktopNavData.hasHamburger && desktopNavData.hamburgerVisible && desktopNavData.visibleNavLinks <= 2) {
+    // Flag when a TRUE desktop viewport shows a visible hamburger that genuinely
+    // hides primary nav. The decision is delegated to a pure, unit-tested guard
+    // that rejects the raseedinvest false-positive class (0 visible links = the
+    // detector missed the header, not a real hidden-nav state) and the legitimate
+    // <1280px hamburger band.
+    if (shouldFlagDesktopNavHidden(desktopNavData, viewport.width)) {
       issues.push({
         viewport: viewport.name,
         width: viewport.width,

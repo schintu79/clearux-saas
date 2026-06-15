@@ -66,6 +66,111 @@ async function withRetry<T>(
   throw lastError
 }
 
+/**
+ * Maximum characters of audit content sent to the model per category call.
+ *
+ * Replaces a historical hard-coded `substring(0, 6000)` that silently truncated
+ * the analyzer's view of the site. The cap exists to bound input-token cost
+ * (Haiku 4.5, temperature 0); raising it without a ceiling would let large
+ * multi-page sites blow up per-audit cost. 18 000 chars (~4.5k tokens) keeps a
+ * comfortable margin under the model context while leaving room for the cached
+ * system instructions and the 3 000-token completion.
+ *
+ * IMPORTANT: this is the budget for the COMBINED preamble + page bodies. The
+ * preamble (site map, WCAG/responsive/DOM-facts summaries, previous-findings
+ * baseline) is prepended upstream in process-audit.ts and, on multi-page sites
+ * and re-audits, can be large enough to starve the real page bodies entirely.
+ * `buildAnalysisContent` guarantees the page bodies get a fair share.
+ */
+export const MAX_ANALYSIS_CHARS = 18_000
+
+/**
+ * Reserved minimum share of the budget for actual page body content, so a large
+ * preamble can never push every real `URL:`/`Content:` block out of the window.
+ * Expressed as a fraction of MAX_ANALYSIS_CHARS.
+ */
+const PAGE_BODY_MIN_FRACTION = 0.6
+
+/**
+ * Build the exact audit content string sent to the model, within MAX_ANALYSIS_CHARS.
+ *
+ * The upstream `pageContent` is `<preamble>\n\n<page bodies>`, where each page
+ * body block starts with a line `URL: <url>` and blocks are `\n---\n`-delimited.
+ * A naive head-truncation (the old `substring(0, 6000)`) spends the whole budget
+ * on the preamble and drops the page bodies — the model then "reads" only site-map
+ * previews and instrument summaries, producing credible-but-incomplete findings.
+ *
+ * Strategy:
+ *  - If the whole thing fits the budget, return it unchanged.
+ *  - Otherwise split at the first `URL:` page-body marker. Guarantee the page
+ *    bodies at least PAGE_BODY_MIN_FRACTION of the budget; give the preamble the
+ *    remainder (capped). This ensures real page content is never fully starved
+ *    while preserving as much preamble (cross-page awareness) as fits.
+ *  - If there is no detectable page-body marker, fall back to a head slice.
+ *
+ * The returned string is what BOTH the prompt and the symmetric `contradictsContent`
+ * validation must use — the model and the contradiction net must judge the same text.
+ */
+export function buildAnalysisContent(
+  pageContent: string,
+  maxChars: number = MAX_ANALYSIS_CHARS,
+): string {
+  const { preamble, pageBodies } = splitBudgetedContent(pageContent, maxChars)
+  return preamble + pageBodies
+}
+
+/**
+ * Same budgeting as `buildAnalysisContent`, but returns the two regions separately:
+ *  - `preamble`: site map, previous-findings baseline, instrument summaries
+ *    (WCAG/responsive/DOM facts). This is CONTEXT — it may contain text from a
+ *    PRIOR audit (e.g. a headline that has since been replaced). It must NOT be
+ *    treated as current page evidence.
+ *  - `pageBodies`: the `URL:`-delimited blocks freshly crawled THIS run. This is
+ *    the only valid source of CURRENT evidence.
+ *
+ * Splitting lets the prompt label each region so the model cannot quote a stale
+ * baseline headline as if it were on the live page (the raseedinvest #6 class),
+ * and so content/clarity findings are anchored in the current page body.
+ *
+ * `hasPageBodies` is false only when no `URL:` marker exists (e.g. brand-file
+ * analysis, which passes raw materials with no crawl structure) — callers then
+ * fall back to treating the whole thing as analyzable content.
+ */
+export function splitBudgetedContent(
+  pageContent: string,
+  maxChars: number = MAX_ANALYSIS_CHARS,
+): { preamble: string; pageBodies: string; hasPageBodies: boolean } {
+  // First page-body block starts at a line beginning with "URL: ".
+  const markerIdx = pageContent.search(/(^|\n)URL: /)
+  if (markerIdx < 0) {
+    // No page-body structure detected (e.g. brand materials). Treat the whole
+    // budgeted slice as page bodies so nothing is mislabeled as stale context.
+    const sliced = pageContent.length <= maxChars ? pageContent : pageContent.slice(0, maxChars)
+    return { preamble: '', pageBodies: sliced, hasPageBodies: false }
+  }
+
+  // Normalize so the body starts exactly at "URL: " even if the match began at the newline.
+  const bodyStart = pageContent.startsWith('URL: ', markerIdx) ? markerIdx : markerIdx + 1
+  const preambleFull = pageContent.slice(0, bodyStart)
+  const bodiesFull = pageContent.slice(bodyStart)
+
+  if (pageContent.length <= maxChars) {
+    return { preamble: preambleFull, pageBodies: bodiesFull, hasPageBodies: true }
+  }
+
+  const minBodyBudget = Math.floor(maxChars * PAGE_BODY_MIN_FRACTION)
+  // Page bodies get the larger of (their natural length capped at budget) and the
+  // reserved minimum — but never more than the whole budget.
+  const bodyBudget = Math.min(maxChars, Math.max(minBodyBudget, maxChars - preambleFull.length))
+  const preambleBudget = Math.max(0, maxChars - bodyBudget)
+
+  return {
+    preamble: preambleFull.slice(0, preambleBudget),
+    pageBodies: bodiesFull.slice(0, bodyBudget),
+    hasPageBodies: true,
+  }
+}
+
 export interface AnalysisFinding {
   severity: FindingSeverity
   title: string
@@ -930,6 +1035,18 @@ EVIDENCE RULES — ZERO SPECULATION:
 - Before finalizing, check for CONTRADICTORY evidence — if the page contradicts your claim, DROP the finding.
 - A finding CANNOT be surfaced from category expectations alone — it must have specific evidence FROM THE PROVIDED CONTENT.
 
+CURRENT EVIDENCE ONLY — REFERENCE CONTEXT IS NOT EVIDENCE (TRUST-CRITICAL):
+The content may be split into "CURRENT PAGE CONTENT" and "REFERENCE CONTEXT". Only the CURRENT PAGE CONTENT (the URL: blocks crawled this run) is valid evidence for what is on the live site today.
+- The REFERENCE CONTEXT (site map previews, PREVIOUS FINDINGS baseline, instrument summaries) describes prior audits or condensed summaries. Text there may be STALE — a headline, title, or copy listed in a previous finding may have already been changed or removed on the live site.
+- NEVER quote a headline, title, or copy as current evidence unless that exact text ALSO appears in the CURRENT PAGE CONTENT. If a string appears only in a PREVIOUS FINDING or the site map but NOT in the current page body, treat it as already changed — do NOT report it as a current issue.
+- Before flagging any heading/headline/copy issue, locate the SAME text verbatim in the CURRENT PAGE CONTENT for the relevant URL. If you cannot, drop the finding.
+
+SECTION CONTEXT — READ AROUND THE HEADING, NOT JUST THE HEADING (TRUST-CRITICAL):
+A heading, H1, or section title is NEVER sufficient evidence on its own for a content/clarity finding (e.g. "headline doesn't explain X", "FAQ answers are generic", "section doesn't mention Y").
+- Before claiming a heading/section fails to convey something, READ the surrounding body in the SAME page: the subtitle, the paragraphs, bullet/list items, cards, table cells, and FAQ answer text that follow it in the CURRENT PAGE CONTENT.
+- If the nearby body copy already answers the concern (e.g. a pricing H1 "Trade smarter. Pay less." followed by fee boxes that state the fees; an FAQ title followed by detailed answers), the concern is RESOLVED — DROP the finding, or at most lower it to LOW and explicitly acknowledge the supporting content.
+- Judge messaging on the WHOLE local section (heading + its siblings), not the heading string in isolation. Marketing headlines are intentionally short; the explanation lives in the copy beneath.
+
 MISSING vs WEAK — NEVER CLAIM ABSENT WHAT EXISTS (TRUST-CRITICAL):
 Claiming something is "missing" when it exists on the site instantly destroys the client's trust in the entire report. Before ANY "missing/no/lacks X" claim, search ALL provided page content for X.
 - If X exists but is WEAK, the finding must ACKNOWLEDGE it exists and critique its quality. Example: NOT "The site has no testimonials" but "You have testimonials with student names, but they are not linked to any trusted platform (Google Reviews, Trustpilot) or tied to verifiable results, which limits their persuasive power."
@@ -1086,6 +1203,33 @@ You MUST evaluate this site against the standards, norms, and expectations of it
 - A finding is only valid if it would be a REAL problem for THIS specific audience. "A professional designer visiting Sketch.com" has different expectations than "a first-time visitor to a random SaaS."
 ` : ''
 
+  // Budget the content ONCE, split into CONTEXT (preamble: site map, previous-
+  // findings baseline, instrument summaries) and CURRENT EVIDENCE (freshly crawled
+  // page bodies). `analysisContent` is the flat concatenation — it is the exact text
+  // the contradiction net judges against, so the model and the net stay symmetric.
+  const { preamble, pageBodies, hasPageBodies } = splitBudgetedContent(pageContent)
+  const analysisContent = preamble + pageBodies
+
+  // Present the two regions with explicit labels so the model cannot quote stale
+  // baseline/site-map text as if it were on the live page, and so content findings
+  // are anchored in the current page body (raseedinvest #2/#3/#6 class). When there
+  // is no crawl structure (brand-file analysis), present a single content block.
+  const contentBlock = hasPageBodies
+    ? `CURRENT PAGE CONTENT — THE ONLY VALID SOURCE OF EVIDENCE (freshly crawled this run; each page starts with "URL:"):
+---
+${pageBodies}
+---
+${preamble.trim() ? `REFERENCE CONTEXT — NOT CURRENT EVIDENCE (site map, prior-audit baseline, and browser-verified instrument summaries; use ONLY for cross-page awareness and re-audit comparison, NEVER quote as proof of what is on the live page today):
+---
+${preamble}
+---
+` : ''}`
+    : `WEBSITE CONTENT (text extracted from the provided materials):
+---
+${analysisContent}
+---
+`
+
   // Variable part — category-specific content that changes per call
   const userPrompt = `${languageInstruction}
 ${profileBlock}CATEGORY: ${displayCategoryName}
@@ -1093,11 +1237,7 @@ ${focusBlock}${pageUrlIndex}
 EVALUATION CRITERIA:
 ${itemsToCheck}
 
-WEBSITE CONTENT (text extracted from MULTIPLE PAGES — each page starts with "URL:" followed by the page address):
----
-${pageContent.substring(0, 6000)}
----
-${pageContent.includes('PREVIOUS FINDINGS') ? `
+${contentBlock}${analysisContent.includes('PREVIOUS FINDINGS') ? `
 RE-AUDIT CONSISTENCY:
 A PREVIOUS AUDIT BASELINE is provided above. You MUST be consistent:
 - Do NOT invent new issues for content that hasn't changed since the previous audit.
@@ -1148,7 +1288,9 @@ Analyze this category and return the JSON array now.`
     return findings
       .filter((f) => f.severity && f.title && f.description && f.recommendation)
       .filter((f) => !isSpeculativeFinding(f))
-      .filter((f) => !contradictsContent(f, pageContent))
+      // Symmetric with the prompt: judge contradictions against the SAME budgeted
+      // content the model received, not the full original pageContent.
+      .filter((f) => !contradictsContent(f, analysisContent))
       .map((f) => ({
         ...f,
         targetElement: f.targetElement || null,
