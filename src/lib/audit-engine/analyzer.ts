@@ -1047,6 +1047,13 @@ A heading, H1, or section title is NEVER sufficient evidence on its own for a co
 - If the nearby body copy already answers the concern (e.g. a pricing H1 "Trade smarter. Pay less." followed by fee boxes that state the fees; an FAQ title followed by detailed answers), the concern is RESOLVED — DROP the finding, or at most lower it to LOW and explicitly acknowledge the supporting content.
 - Judge messaging on the WHOLE local section (heading + its siblings), not the heading string in isolation. Marketing headlines are intentionally short; the explanation lives in the copy beneath.
 
+SELF-EVIDENT CONTROLS — DO NOT INVENT USER CONFUSION (TRUST-CRITICAL):
+A call-to-action's job is to prompt an action, NOT to pre-explain what happens after the click. Clearly-labelled, distinct controls are not a defect.
+- NEVER flag standard, self-evident CTAs/buttons/links as "unclear purpose", "ambiguous", "confusing", "users won't know what happens / where it leads", or "unclear which is the primary action". Labels like "Start Trading", "Get Started", "Explore Markets", "Sign Up", "Learn More", "Contact Sales" are self-explanatory by convention.
+- Two DIFFERENT CTAs side by side (a primary action + a secondary explore/learn path) is normal, good design — not confusion.
+- You may ONLY raise a CTA-clarity finding with CONCRETE, QUOTED evidence of genuine ambiguity: two or more controls with IDENTICAL labels, a label whose text MISREPRESENTS its destination, or competing primary actions with the same wording. Absent such evidence, do NOT raise it.
+- Do not speculate about what a hypothetical "beginner" or "user" might find confusing. Report observable defects, not imagined mental states.
+
 MISSING vs WEAK — NEVER CLAIM ABSENT WHAT EXISTS (TRUST-CRITICAL):
 Claiming something is "missing" when it exists on the site instantly destroys the client's trust in the entire report. Before ANY "missing/no/lacks X" claim, search ALL provided page content for X.
 - If X exists but is WEAK, the finding must ACKNOWLEDGE it exists and critique its quality. Example: NOT "The site has no testimonials" but "You have testimonials with student names, but they are not linked to any trusted platform (Google Reviews, Trustpilot) or tied to verifiable results, which limits their persuasive power."

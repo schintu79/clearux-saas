@@ -8,7 +8,8 @@
 import type { AuditPage } from '@/types/database'
 import { isFirecrawlConfigured, firecrawlScrape, firecrawlMap } from '@/lib/crawl/firecrawl-client'
 import { getFeatureFlags } from '@/lib/feature-flags'
-import { extractMarkdownH1, shouldPreferRendered, rawHeadingAbsentFromRendered } from '@/lib/audit-engine/render-divergence'
+import { extractMarkdownH1, shouldPreferRendered, rawHeadingAbsentFromRendered, looksClientHydrated } from '@/lib/audit-engine/render-divergence'
+import { browserRenderPage } from '@/lib/audit-engine/browser-renderer'
 
 /* ── Hostname normalization ───────────────────────────────── */
 
@@ -797,6 +798,16 @@ async function firecrawlFetch(url: string): Promise<CrawledPage | null> {
 
 const PAGE_FETCH_TIMEOUT_MS = 30_000 // 30s hard budget per page fetch
 
+// Bounded browser-render escalations per crawl. Browser render is the last-resort
+// way to get rendered content when Jina is unavailable for a hydration-suspect
+// page; cap it so a global Jina outage can't trigger a Chromium launch per page.
+const MAX_BROWSER_ESCALATIONS_PER_CRAWL = 4
+let browserEscalationsUsed = 0
+/** Reset the per-crawl browser-escalation budget. Called at crawl start. */
+export function resetBrowserEscalationBudget(): void {
+  browserEscalationsUsed = 0
+}
+
 async function fetchPageRobust(url: string): Promise<CrawledPage | null> {
   // Strategy priority: Firecrawl (when configured) → direct + Jina (parallel fallback).
   // Wrapped in a hard timeout to prevent any single page from blocking the crawl.
@@ -816,7 +827,13 @@ async function fetchPageRobust(url: string): Promise<CrawledPage | null> {
 
   // Fallback: Run direct fetch and Jina in PARALLEL
   const directPromise = directFetch(url).catch(() => null)
-  const jinaPromise = jinaFetch(url).catch(() => null)
+  // Jina (free tier) intermittently fails / rate-limits — on raseed deep runs it
+  // failed for the homepage specifically, silently reverting that page to stale
+  // raw HTML. Retry once so a transient failure doesn't lose the rendered view.
+  const jinaPromise = jinaFetch(url).catch(() => null).then(async (r) => {
+    if (r && r.contentText && r.contentText.length >= 50) return r
+    return await jinaFetch(url).catch(() => null)
+  })
 
   // Wait for both in parallel
   const [directResult, jinaResult] = await Promise.all([directPromise, jinaPromise])
@@ -859,6 +876,44 @@ async function fetchPageRobust(url: string): Promise<CrawledPage | null> {
       )
       return merged
     }
+
+    // Rendered (Jina) acquisition unusable, but the raw HTML looks client-hydrated
+    // — its static build may be stale. Escalate to a real browser render (bounded)
+    // rather than silently trusting raw HTML. This is what catches the homepage
+    // when Jina is down for that page. Wrapped so it can never break the crawl.
+    if (
+      !renderedUsable &&
+      browserEscalationsUsed < MAX_BROWSER_ESCALATIONS_PER_CRAWL &&
+      looksClientHydrated(directResult.rawHtml)
+    ) {
+      browserEscalationsUsed++
+      try {
+        const br = await browserRenderPage(url)
+        if (br && br.contentText && br.contentText.length >= 50 && !br.blockedByBot) {
+          if (shouldPreferRendered({ rawH1: directResult.h1, renderedH1: br.h1, renderedContent: br.contentText })) {
+            const rawH1Stale = rawHeadingAbsentFromRendered(directResult.h1, br.contentText)
+            console.warn(`[crawler] STALE raw HTML for ${url} (Jina unavailable) — used browser render; raw H1 "${directResult.h1}" vs rendered "${br.h1}"`)
+            return {
+              ...directResult,
+              contentText: br.contentText,
+              title: br.title || directResult.title,
+              metaDescription: br.metaDescription ?? directResult.metaDescription,
+              h1: br.h1 || (rawH1Stale ? null : directResult.h1),
+              rawHtml: br.rawHtml || directResult.rawHtml,
+              headTags: br.headTags || directResult.headTags,
+              discoveredUrls: Array.from(new Set([
+                ...(directResult.discoveredUrls || []),
+                ...(br.discoveredUrls || []),
+              ])),
+              fetchStrategy: 'direct+browser',
+            }
+          }
+        }
+      } catch (e) {
+        console.warn(`[crawler] browser-render escalation failed for ${url}:`, (e as Error)?.message)
+      }
+    }
+
     console.log(`[crawler] Direct fetch succeeded for ${url} (${directResult.contentText.length} chars)`)
     directResult.fetchStrategy = 'direct'
     return directResult
@@ -1258,6 +1313,7 @@ export async function crawlPages(
   maxPages: number = 5,
   onProgress?: (pct: number, stage: string) => Promise<void>,
 ): Promise<{ pages: CrawledPage[]; stats: CrawlStats }> {
+  resetBrowserEscalationBudget() // fresh browser-render budget for this crawl
   const pages: CrawledPage[] = []
   const visited = new Set<string>()
   const crawlStartedAt = new Date().toISOString()
@@ -1708,7 +1764,7 @@ export async function crawlPages(
     console.log(`[crawler] Finished: ${pages.length} pages crawled for ${url}`)
 
     // Final counts — authoritative from all pages
-    jsPagesDetected = pages.filter(p => p.fetchStrategy === 'jina' || p.fetchStrategy === 'google_cache' || p.fetchStrategy === 'direct+rendered').length
+    jsPagesDetected = pages.filter(p => p.fetchStrategy === 'jina' || p.fetchStrategy === 'google_cache' || p.fetchStrategy === 'direct+rendered' || p.fetchStrategy === 'direct+browser').length
     pagesBlocked = pages.filter(p => p.blockedByBot).length
 
     const crawlCompletedAt = new Date().toISOString()
