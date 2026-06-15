@@ -11,8 +11,11 @@
 // manual audit-start, which we skip), and refundCredit() is a no-op when no
 // payment row exists, so a failed monitoring run can't mint a free credit.
 //
-// IDEMPOTENT: next_run_at is rolled forward BEFORE dispatch, so a double cron
-// fire (or overlap with the Inngest path) can't double-trigger a brand.
+// IDEMPOTENT + NO LOST CYCLES (2026-06-15): next_run_at is rolled forward after
+// the skip checks but BEFORE dispatch. A double cron fire still can't
+// double-trigger a brand, AND a run skipped because another audit is already in
+// progress is NOT lost — it retries on the next cron tick instead of waiting a
+// full cadence. Only a committed run (audit row created) advances the schedule.
 // ============================================================
 
 import { createServiceSupabase } from '@/lib/supabase-server'
@@ -45,12 +48,6 @@ export async function runScheduledMonitoring(): Promise<{ checked: number; trigg
   let skipped = 0
 
   for (const s of rows) {
-    // Roll the schedule forward FIRST — guards against double-fire even if the
-    // dispatch below fails (that brand just waits for the next cycle).
-    await db.from('scheduled_audits')
-      .update({ last_run_at: nowIso, next_run_at: nextRunFrom(s.frequency), updated_at: nowIso } as any)
-      .eq('id', s.id)
-
     // Skip archived/deleted workspaces (product rule: deleted workspaces must
     // not influence live processing).
     if (s.workspace_id) {
@@ -102,6 +99,14 @@ export async function runScheduledMonitoring(): Promise<{ checked: number; trigg
       skipped++
       continue
     }
+
+    // Commit the schedule forward now that the audit row exists — BEFORE
+    // dispatch (idempotent vs. a double cron fire), and only AFTER the skip
+    // checks (a run skipped for an in-progress audit retries next tick instead
+    // of losing a whole cadence).
+    await db.from('scheduled_audits')
+      .update({ last_run_at: nowIso, next_run_at: nextRunFrom(s.frequency), updated_at: nowIso } as any)
+      .eq('id', s.id)
 
     try {
       await inngest.send({ name: 'audit/process', data: { auditId: (audit as any).id } })
