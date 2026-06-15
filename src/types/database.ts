@@ -544,6 +544,23 @@ export interface FindingCommunication {
   fix_technical: string | null
 }
 
+// Phase 2 #2 — monitoring regression alerts (per-user/workspace).
+export type AuditAlertType = 'score_drop' | 'new_critical' | 'new_high' | 'ai_answer_flip'
+export interface AuditAlert {
+  id:           string
+  user_id:      string
+  workspace_id: string | null
+  audit_id:     string | null
+  product_url:  string | null
+  type:         AuditAlertType
+  level:        'critical' | 'warning'
+  title:        string
+  body:         string
+  meta:         Record<string, unknown> | null
+  read_at:      string | null
+  created_at:   string
+}
+
 export interface AuditFinding {
   id:                string
   audit_id:          string
