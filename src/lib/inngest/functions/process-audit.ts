@@ -71,6 +71,7 @@ import { runBrandIntelligenceAnalysis } from '@/lib/audit-engine/brand-intellige
 import { runFullSpeedTest, generateSpeedFindings } from '@/lib/pagespeed'
 import { checkWcagAutomated, buildWcagResults, parseHeuristicResponse, formatWcagForPrompt, type WcagCheckResult, type WcagAuditResult } from '@/lib/audit-engine/pipeline/wcag-checker'
 import type { DomFacts } from '@/lib/audit-engine/pipeline/dom-verification'
+import { validateFindingsInPageContext, type ValidatorModelCaller } from '@/lib/audit-engine/pipeline/finding-context-validator'
 import { persistRegressionAlerts } from '@/lib/alerts/persist-regression-alerts'
 import type { AuditFinding } from '@/types/database'
 import { resolveCapability, inferDeployableType } from '@/lib/fix-action-model'
@@ -4195,6 +4196,88 @@ RULES FOR RE-AUDIT:
               console.log(`[inngest] DOM verification: dropped ${id} — ${reason}`)
             }
           }
+        }
+      }
+
+      // ── 2e-bis. Page-level contextual validation (Phase 1) ───
+      // The deterministic moats above remove cheap false positives. This gate
+      // catches the ones that need READING THE WHOLE PAGE: a finding that judged
+      // a heading without reading the copy beneath it, a stale baseline headline
+      // quoted as current, a "missing X" answered by a nearby section. Per page:
+      // build full current-page context (body + DOM facts + industry/region) and
+      // re-judge every finding. SUBTRACTIVE/SOFTENING ONLY — keep, lower, suppress,
+      // or demote to needs-evidence; never invent, never raise. One model call per
+      // page, prefiltered to skip all-verified-deterministic pages. Non-fatal:
+      // on any error the findings pass through unchanged.
+      if (findings.length > 0) {
+        try {
+          const cvDomFacts = (wcagCheck as any)?.domFacts as Record<string, DomFacts> | undefined
+          const cvDomByUrl = cvDomFacts && Object.keys(cvDomFacts).length > 0
+            ? new Map<string, DomFacts>(Object.entries(cvDomFacts))
+            : null
+          const contextValidatorCaller: ValidatorModelCaller = async ({ system, user }) => {
+            const Anthropic = (await import('@anthropic-ai/sdk')).default
+            const anthropic = new Anthropic({ timeout: 25_000 })
+            const msg = await Promise.race([
+              anthropic.beta.promptCaching.messages.create({
+                model: 'claude-haiku-4-5-20251001',
+                max_tokens: 1500,
+                temperature: 0,
+                system: [{ type: 'text', text: system, cache_control: { type: 'ephemeral' } }],
+                messages: [{ role: 'user', content: user }],
+              }),
+              new Promise<never>((_, reject) => setTimeout(() => reject(new Error('context validation timed out')), 27_000)),
+            ])
+            return (msg as any).content
+              ?.filter((b: any) => b.type === 'text')
+              .map((b: any) => b.text)
+              .join('') || ''
+          }
+          const cv = await validateFindingsInPageContext({
+            findings: findings.map(f => ({
+              id: f.id, title: f.title, description: f.description, severity: f.severity,
+              page_url: f.page_url, confidence_level: f.confidence_level, detection_source: f.detection_source,
+            })),
+            pageContent: crawlResult?.pageContent || '',
+            domByUrl: cvDomByUrl,
+            profile: siteProfile,
+            callModel: contextValidatorCaller,
+          })
+
+          // Suppress findings the model judged false in context.
+          if (cv.idsToSuppress.length > 0) {
+            for (const id of cv.idsToSuppress) idsToDelete.add(id)
+            findings = findings.filter(f => !idsToDelete.has(f.id))
+          }
+          // Apply severity lowerings (already validated as strict downgrades).
+          for (const { id, severity } of cv.severityUpdates) {
+            const f = findings.find(ff => ff.id === id)
+            if (f) {
+              f.severity = severity
+              batchUpdates.push({ id, updates: { severity } })
+            }
+          }
+          // Demote unconfirmed findings to the "needs evidence" tier (never delete);
+          // the severity≤evidence invariant below then caps them at LOW.
+          for (const id of cv.confidenceDemotions) {
+            const f = findings.find(ff => ff.id === id)
+            if (f) {
+              f.confidence_score = UNGROUNDED_CONFIDENCE
+              f.confidence_level = 'heuristic'
+              batchUpdates.push({ id, updates: { confidence_score: UNGROUNDED_CONFIDENCE, confidence_level: 'heuristic' } })
+            }
+          }
+          if (cv.idsToSuppress.length > 0 || cv.severityUpdates.length > 0 || cv.confidenceDemotions.length > 0) {
+            await auditLog(auditId, 'context_validation_applied', 'info',
+              `Contextual validation across ${cv.pagesValidated} page(s): suppressed ${cv.idsToSuppress.length}, lowered ${cv.severityUpdates.length}, demoted ${cv.confidenceDemotions.length} (skipped ${cv.pagesSkipped} page(s) needing no judgment).`)
+            for (const e of cv.auditTrail) {
+              if (e.action !== 'kept') {
+                console.log(`[context-validation] ${e.action} ${e.id}${e.fromSeverity ? ` ${e.fromSeverity}→${e.toSeverity}` : ''} — ${e.reason}`)
+              }
+            }
+          }
+        } catch (cvErr) {
+          console.error('[quality-gates] Context validation error (non-fatal):', cvErr)
         }
       }
 

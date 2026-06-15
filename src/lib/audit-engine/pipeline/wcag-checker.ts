@@ -31,6 +31,45 @@ const AXE_SOURCE: string = (() => {
   return ns?.source || ns?.default?.source || ''
 })()
 
+/* ── Form-control actionability (pure, testable) ───────────── */
+
+/** Attribute snapshot of a form control, as read in the browser. Lets the
+ * label-check decision be unit-tested without a real DOM. */
+export interface ControlActionability {
+  disabled: boolean
+  readOnly: boolean
+  ariaHidden: boolean
+  hidden: boolean
+  /** computed `display === 'none'` */
+  displayNone: boolean
+  /** computed `visibility === 'hidden' | 'collapse'` */
+  visibilityHidden: boolean
+  /** ARIA role that removes it from the interactive accessibility tree */
+  role: string | null
+}
+
+/**
+ * A WCAG 3.3.2 / 1.3.1 "input needs a visible label" finding is only meaningful
+ * for controls the USER can actually type into or operate. This excludes the
+ * raseedinvest false-positive class: auto-populated / display-only fields that
+ * are disabled or read-only (and hidden/aria-hidden controls that no AT exposes).
+ * Flagging those as "missing label" is a false positive — the user can neither
+ * edit them nor is a label remediable/expected.
+ *
+ * Returns true when the control is NON-actionable and must be SKIPPED by the
+ * label check.
+ */
+export function isNonActionableControl(c: ControlActionability): boolean {
+  if (c.disabled) return true        // cannot be operated
+  if (c.readOnly) return true        // display-only / auto-populated value
+  if (c.hidden) return true          // HTML hidden attribute
+  if (c.ariaHidden) return true      // removed from the accessibility tree
+  if (c.displayNone) return true     // not rendered
+  if (c.visibilityHidden) return true
+  if (c.role === 'presentation' || c.role === 'none') return true
+  return false
+}
+
 /* ── WCAG 2.1 AA Criteria Taxonomy ─────────────────────────── */
 
 export type WcagPrinciple = 'perceivable' | 'operable' | 'understandable' | 'robust'
@@ -233,6 +272,23 @@ async function runAutomatedChecks(page: Page, url: string): Promise<WcagCheckRes
     const inputs = document.querySelectorAll('input:not([type="hidden"]):not([type="submit"]):not([type="button"]), select, textarea')
     let unlabeled = 0
     for (const input of inputs) {
+      // Skip controls the USER cannot operate / that no AT exposes. A "missing
+      // label" finding on a disabled/readOnly/hidden/auto-populated field is a
+      // false positive (mirrors isNonActionableControl — kept in sync). The
+      // value is display-only, so a visible label is neither remediable nor
+      // expected.
+      const el = input as HTMLElement
+      const cs = window.getComputedStyle(el)
+      const role = el.getAttribute('role')
+      const nonActionable =
+        (input as HTMLInputElement).disabled ||
+        (input as HTMLInputElement).readOnly ||
+        el.hasAttribute('hidden') ||
+        el.getAttribute('aria-hidden') === 'true' ||
+        cs.display === 'none' ||
+        cs.visibility === 'hidden' || cs.visibility === 'collapse' ||
+        role === 'presentation' || role === 'none'
+      if (nonActionable) continue
       const id = input.getAttribute('id')
       const hasLabel = id ? document.querySelector(`label[for="${id}"]`) : false
       const hasAriaLabel = input.getAttribute('aria-label') || input.getAttribute('aria-labelledby')
