@@ -17,6 +17,10 @@
     "columns": ["id", "audit_id", "event", "status", "message", "metadata", "created_at"],
     "required": ["audit_id", "event"]
   },
+  "audit_alerts": {
+    "columns": ["id", "user_id", "workspace_id", "audit_id", "product_url", "type", "level", "title", "body", "meta", "read_at", "created_at"],
+    "required": ["user_id", "type", "level", "title", "body"]
+  },
   "audits": {
     "columns": ["id", "user_id", "status", "product_url", "product_type", "target_user", "ux_concern", "notes", "pages_crawled", "crawl_error", "delivery_deadline", "completed_at", "created_at", "updated_at", "plan", "language", "white_label_company_name", "white_label_logo_url", "is_free_preview", "claimed_by", "free_audit_email", "share_token", "share_enabled", "depth_mode", "selected_pillars", "brand_identity_id", "selected_modules", "audit_type", "previous_audit_id", "detected_industry", "progress_percent", "crawl_summary", "crawl_started_at", "crawl_completed_at", "performance_summary", "role_summaries", "speed_data", "speed_tested_at", "brand_name", "sentiment_data", "human_perception_data", "deleted_at", "audit_stage", "workspace_id", "pipeline_version", "audit_run_type", "trigger_source", "coverage_summary_json", "score_version", "reconciliation_summary"],
     "required": ["product_type", "ux_concern"]

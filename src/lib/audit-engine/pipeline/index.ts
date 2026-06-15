@@ -98,6 +98,10 @@ export type { Severity, SeverityClamp } from './evidence-severity'
 export { verifyFindingsAgainstDom, verifyFindingsAgainstDomByUrl, formatDomFactsForPrompt } from './dom-verification'
 export type { DomFacts, FindingForDomCheck, DomVerificationResult } from './dom-verification'
 
+// ── Phase 2 #2: Regression Alerts ──────────────────────────
+export { detectRegressions } from './regression-alerts'
+export type { RegressionAlert, RegressionAlertType, RegressionInput, RegressionConfig, AlertFinding, BenchmarkVerdict } from './regression-alerts'
+
 // ── Step 2g: Evidence Binding (P1 — grounding required) ─────
 export {
   identifyUngroundedFindings,

@@ -71,6 +71,7 @@ import { runBrandIntelligenceAnalysis } from '@/lib/audit-engine/brand-intellige
 import { runFullSpeedTest, generateSpeedFindings } from '@/lib/pagespeed'
 import { checkWcagAutomated, buildWcagResults, parseHeuristicResponse, formatWcagForPrompt, type WcagCheckResult, type WcagAuditResult } from '@/lib/audit-engine/pipeline/wcag-checker'
 import type { DomFacts } from '@/lib/audit-engine/pipeline/dom-verification'
+import { persistRegressionAlerts } from '@/lib/alerts/persist-regression-alerts'
 import type { AuditFinding } from '@/types/database'
 import { resolveCapability, inferDeployableType } from '@/lib/fix-action-model'
 import { reconcileFindings, type ReconciliationResult } from '@/lib/audit-engine/pipeline/reconciliation'
@@ -571,6 +572,7 @@ export const processAuditFn = inngest.createFunction(
       const brandIdentityId: string | null = (audit as any).brand_identity_id || null
 
       return {
+        userId: (audit as any).user_id as string,
         userEmail: (audit as any).profiles?.email || '',
         productUrl: (audit as any).product_url as string,
         plan: (audit as any).plan as string,
@@ -4989,6 +4991,47 @@ RULES FOR RE-AUDIT:
       }
       }, 180_000, 'generate-report')
     })
+
+    // ──────────────────────────────────────────────────────────
+    // Phase 2 #2 — Regression alerts (MONITORING runs only).
+    // A scheduled re-audit compares to the previous run and records what got
+    // WORSE (score drop / new high+critical / AI answer flip) into audit_alerts
+    // for the in-app feed + email. Gated on the monitoring marker so manual
+    // audits the user is already watching don't generate alert noise.
+    // ──────────────────────────────────────────────────────────
+    if (auditDetails.userFocus === 'Scheduled monitoring re-audit') {
+      await step.run('monitoring-alerts', async () => {
+        return withStepTimeout(async () => {
+          const db = getDb()
+          const { data: curRows } = await db
+            .from('audit_findings')
+            .select('title, severity')
+            .eq('audit_id', auditId)
+            .eq('dismissed', false)
+            .in('status', ['open', 'in_progress'])
+          const { data: rep } = await db
+            .from('reports')
+            .select('overall_score')
+            .eq('audit_id', auditId)
+            .single()
+          const res = await persistRegressionAlerts(db, {
+            userId: auditDetails.userId,
+            workspaceId: auditDetails.workspaceId,
+            auditId,
+            productUrl: auditDetails.productUrl,
+            previousScore: siteContext.previousOverallScore || null,
+            currentScore: (rep as any)?.overall_score ?? 0,
+            previousFindings: siteContext.previousRawFindings.map((f: any) => ({ title: f.title, severity: f.severity })),
+            currentFindings: ((curRows as any[]) || []).map((f) => ({ title: f.title, severity: f.severity })),
+          })
+          if (res.created > 0) {
+            await auditLog(auditId, 'monitoring_alerts_created', 'info',
+              `${res.created} regression alert${res.created > 1 ? 's' : ''}: ${res.alerts.map((a) => a.type).join(', ')}`)
+          }
+          return res.created
+        }, 20_000, 'monitoring-alerts')
+      })
+    }
 
     // ──────────────────────────────────────────────────────────
     // STEP 10: COMPLETE AUDIT — runs BEFORE enrichment
