@@ -201,6 +201,26 @@ export default function TrackPage() {
   // Explanation is collapsed by default — heading + status + control stay visible.
   const [monitorExpanded, setMonitorExpanded] = useState(false);
 
+  // ── Monitoring alerts feed (Phase 2 #2) ──
+  const [alerts, setAlerts] = useState<Array<{ id: string; type: string; level: string; title: string; body: string; created_at: string; read_at: string | null }>>([]);
+  useEffect(() => {
+    const wsId = workspace?.id;
+    if (!wsId) return;
+    let cancelled = false;
+    fetch(`/api/alerts?workspace_id=${wsId}`)
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => { if (!cancelled && Array.isArray(d?.alerts)) setAlerts(d.alerts); })
+      .catch(() => {});
+    return () => { cancelled = true; };
+  }, [workspace?.id]);
+
+  const markAlertRead = async (id: string) => {
+    setAlerts((prev) => prev.map((a) => (a.id === id ? { ...a, read_at: new Date().toISOString() } : a)));
+    try {
+      await fetch('/api/alerts', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id }) });
+    } catch { /* optimistic; non-fatal */ }
+  };
+
   useEffect(() => {
     if (!monitorUrl || !workspace?.id) return;
     let cancelled = false;
@@ -451,6 +471,50 @@ export default function TrackPage() {
           </div>
         </div>
       </DashCard>
+
+      {/* Monitoring alerts — regressions caught by scheduled re-audits (Phase 2 #2) */}
+      {alerts.length > 0 && (
+        <DashCard padding="lg" className="mb-6">
+          <SectionHeader title="Monitoring alerts" />
+          <div className="flex flex-col gap-2 mt-1">
+            {alerts.slice(0, 8).map((a) => (
+              <div
+                key={a.id}
+                className="flex items-start gap-3 rounded-lg px-3 py-2.5"
+                style={{
+                  background: a.read_at ? 'transparent' : 'var(--paper-2)',
+                  border: '0.5px solid var(--rule)',
+                  opacity: a.read_at ? 0.6 : 1,
+                }}
+              >
+                <span
+                  className="w-1.5 h-1.5 rounded-full mt-[7px] flex-shrink-0"
+                  style={{ background: a.level === 'critical' ? 'var(--severe)' : 'var(--warn)' }}
+                />
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className="text-[13px] font-semibold" style={{ color: 'var(--ink)' }}>{a.title}</span>
+                    <span className="text-[10.5px]" style={{ color: 'var(--m-muted)' }}>
+                      {new Date(a.created_at).toLocaleDateString(undefined, { day: 'numeric', month: 'short' })}
+                    </span>
+                  </div>
+                  <p className="text-[12px] mt-0.5 leading-snug" style={{ color: 'var(--m-muted)' }}>{a.body}</p>
+                </div>
+                {!a.read_at && (
+                  <button
+                    type="button"
+                    onClick={() => markAlertRead(a.id)}
+                    className="text-[11px] font-medium flex-shrink-0 hover:opacity-80"
+                    style={{ color: 'var(--signal)' }}
+                  >
+                    Mark read
+                  </button>
+                )}
+              </div>
+            ))}
+          </div>
+        </DashCard>
+      )}
 
       <div className="grid grid-cols-1 lg:grid-cols-[2fr_1fr] gap-4 mb-6">
         <DashCard padding="lg">

@@ -427,6 +427,49 @@ export async function sendAuditTimedOut(
   )
 }
 
+/* ═══════════════════════════════════════════════════════════════
+   6. MONITORING REGRESSION ALERT — sent when a scheduled re-audit
+      finds something that got worse (Phase 2 #2).
+   ═══════════════════════════════════════════════════════════════ */
+
+export async function sendRegressionAlertEmail(
+  email: string,
+  productUrl: string,
+  alerts: Array<{ level: string; title: string; body: string }>,
+): Promise<{ success: boolean; error?: string }> {
+  if (!email || alerts.length === 0) return { success: false, error: 'no recipient or alerts' }
+
+  let displayName = productUrl || 'your site'
+  try { displayName = new URL(productUrl).hostname.replace(/^www\./, '') } catch {}
+
+  const hasCritical = alerts.some((a) => a.level === 'critical')
+  const dashboardUrl = `${APP_URL}/dashboard`
+
+  const items = alerts.map((a) => `
+    <div class="info-box" style="border-left:3px solid ${a.level === 'critical' ? '#dc2626' : '#d97706'};margin:12px 0">
+      <h2 style="margin:0 0 6px;font-size:15px">${a.title}</h2>
+      <p style="margin:0;font-size:14px;line-height:1.6;color:#3f3f46">${a.body}</p>
+    </div>`).join('')
+
+  const content = `
+    <h1>${hasCritical ? 'Monitoring alert' : 'Heads up'}: ${displayName}</h1>
+    <!--HEADER-->
+    <p>Your automatic re-audit of <strong>${displayName}</strong> flagged ${alerts.length} change${alerts.length > 1 ? 's' : ''} since the previous run:</p>
+    ${items}
+    <a href="${dashboardUrl}" class="btn">Review in your dashboard</a>
+    <div class="divider"></div>
+    <p style="font-size:13px;color:#71717a">You're receiving this because automatic monitoring is on for this brand. Manage cadence in Track.</p>
+    <!--FOOTER-->
+  `
+
+  return send(
+    'Fixpath <audits@fixpath.ai>',
+    email,
+    `${displayName}: ${alerts.length} monitoring alert${alerts.length > 1 ? 's' : ''}${hasCritical ? ' (action needed)' : ''}`,
+    emailLayout(content, `${displayName}: ${alerts[0]?.title}`),
+  )
+}
+
 export async function sendFreeAuditReady(
   email: string,
   auditId: string,

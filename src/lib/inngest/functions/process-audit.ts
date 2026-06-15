@@ -25,7 +25,7 @@ import { validateStructuredData, formatValidationForAnalysis } from '@/lib/audit
 import { analyzeCategory, generateReport, verifyFindings, UX_CATEGORIES, detectSiteProfile, calculateScoresFromFindings, contradictsContent } from '@/lib/audit-engine/analyzer'
 import type { SiteProfile } from '@/lib/audit-engine/analyzer'
 import { generatePdfReport } from '@/lib/audit-engine/pdf'
-import { sendAuditComplete, sendFreeAuditReady } from '@/lib/audit-engine/email'
+import { sendAuditComplete, sendFreeAuditReady, sendRegressionAlertEmail } from '@/lib/audit-engine/email'
 import { captureAuditScreenshots } from '@/lib/audit-engine/screenshots'
 import {
   identifyDuplicates,
@@ -5027,6 +5027,18 @@ RULES FOR RE-AUDIT:
           if (res.created > 0) {
             await auditLog(auditId, 'monitoring_alerts_created', 'info',
               `${res.created} regression alert${res.created > 1 ? 's' : ''}: ${res.alerts.map((a) => a.type).join(', ')}`)
+            // Email the user (best-effort; non-fatal if Resend is unconfigured).
+            if (auditDetails.userEmail) {
+              try {
+                await sendRegressionAlertEmail(
+                  auditDetails.userEmail,
+                  auditDetails.productUrl,
+                  res.alerts.map((a) => ({ level: a.level, title: a.title, body: a.body })),
+                )
+              } catch (mailErr) {
+                console.error('[monitoring-alerts] email send failed (non-fatal):', mailErr)
+              }
+            }
           }
           return res.created
         }, 20_000, 'monitoring-alerts')

@@ -95,7 +95,9 @@ Verified live on fixpath.ai: gates fire (structural-ownership removed 5, DOM-ver
 
 **Reliability:** **ETXTBSY browser-launch race fixed** (`browser-launcher.ts`: extract Chromium once + serialize parallel launches + regression test) — D4-adjacent. Marketing-site a11y fixes + responsive-checker `aria-hidden` decorative-skip (don't audit decorative mockups).
 
-**Track (Phase 2 #1 + #4):** user-chosen monitoring cadence + cron runner (credit-free) shipped; per-metric trends shipped. ⚠️ **#1c open:** the cron rolls `next_run_at` forward *before* dispatch, so a run skipped due to a concurrent in-progress audit loses the whole cycle — fix: advance only on successful dispatch.
+**Track (Phase 2 #1 + #4):** user-chosen monitoring cadence + cron runner (credit-free) shipped; per-metric trends shipped. **#1c DONE (2026-06-15):** runner now advances `next_run_at` only on a committed dispatch (after skip checks) — a run skipped for a concurrent in-progress audit retries next tick instead of losing a cycle.
+
+**Phase 2 #2 — Regression alerts DONE (2026-06-15):** `pipeline/regression-alerts.ts` (pure detector: score_drop / new_critical / new_high / ai_answer_flip — the "DeepSeek stopped vouching" wedge; 8 tests) → `audit_alerts` table (migration `20260615_audit_alerts.sql` applied + snapshot + RLS + `AuditAlert` type) ← persisted by `alerts/persist-regression-alerts.ts` from a **monitoring-only** pipeline step. Surfaced via `/api/alerts` (GET/PATCH, RLS) + a "Monitoring alerts" feed on the Track page (mark-read) + email via Resend (`email.ts sendRegressionAlertEmail`). **Score consistency (D6) PARTIAL→done across recompute sites:** overview/find/audit-detail/analyzer(×3)/process-audit/score-trend all on `applyScoringSeverityCap`; stored-score readers show the capped stored value. Trust header condensed to one card with verified/AI split pills + sidebar findings-count pills.
 
 Test count grew to **240+** (scoring, structural-ownership, dom-verification, evidence-severity/binding, precision harness, dismissal telemetry, serializeLaunch regression).
 
