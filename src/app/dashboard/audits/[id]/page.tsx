@@ -697,13 +697,13 @@ function FindingCard({ finding, pillarColor, categoryName, pillarName, pillarInd
             )}
           </div>
           {finding.page_url && (
-            <span className="inline-flex items-center gap-1 text-[11px] text-m-muted mt-1 max-w-full truncate">
+            <span className="inline-flex items-center gap-1 text-[11px] text-m-muted mt-1 max-w-full truncate" title={finding.page_url}>
               <ExternalLink size={9} className="flex-shrink-0" />
               {(() => {
                 try {
                   const u = new URL(finding.page_url);
                   const path = u.pathname + u.search;
-                  return u.hostname + (path === '/' ? '' : path);
+                  return u.hostname.replace(/^www\./, '') + (path === '/' ? '' : path);
                 } catch { return finding.page_url; }
               })()}
             </span>

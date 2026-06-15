@@ -8,6 +8,7 @@
 import type { AuditPage } from '@/types/database'
 import { isFirecrawlConfigured, firecrawlScrape, firecrawlMap } from '@/lib/crawl/firecrawl-client'
 import { getFeatureFlags } from '@/lib/feature-flags'
+import { extractMarkdownH1, shouldPreferRendered, rawHeadingAbsentFromRendered } from '@/lib/audit-engine/render-divergence'
 
 /* ── Hostname normalization ───────────────────────────────── */
 
@@ -559,7 +560,10 @@ async function jinaFetch(url: string, timeoutMs: number = 10000): Promise<Crawle
 
     const headers: Record<string, string> = {
       Accept: 'application/json',
-      'X-Return-Format': 'text',
+      // Markdown (not plain text) so the rendered H1 ("# Heading") is parseable —
+      // we use it to detect when the raw-HTTP page is stale vs the rendered page.
+      // The cleaning step below strips markdown, so analyzer-facing text is unchanged.
+      'X-Return-Format': 'markdown',
       'X-No-Cache': 'true',
       'Cache-Control': 'no-cache',
       'X-With-Links': 'true', // Get rendered navigation links (critical for SPAs)
@@ -607,6 +611,10 @@ async function jinaFetch(url: string, timeoutMs: number = 10000): Promise<Crawle
       return null
     }
 
+    // Extract the rendered H1 from the RAW markdown BEFORE cleaning strips it.
+    // This is the JS-executed heading — the ground truth for divergence detection.
+    const renderedH1 = extractMarkdownH1(contentText)
+
     // Extract links from the RAW markdown BEFORE cleaning (critical for discovery)
     const rawLinks = extractLinksFromText(contentText, url)
     const discoveredUrls = rawLinks.map((l) => l.toString())
@@ -644,7 +652,7 @@ async function jinaFetch(url: string, timeoutMs: number = 10000): Promise<Crawle
     return {
       url,
       title,
-      h1: null, // Jina doesn't reliably return H1 separately
+      h1: renderedH1, // rendered (JS-executed) H1, parsed from Jina markdown
       metaDescription: description,
       contentText,
       rawHtml: null, // Jina returns text, not HTML
@@ -813,8 +821,44 @@ async function fetchPageRobust(url: string): Promise<CrawledPage | null> {
   // Wait for both in parallel
   const [directResult, jinaResult] = await Promise.all([directPromise, jinaPromise])
 
-  // Prefer direct fetch (gives us rawHtml for link extraction)
+  // Prefer direct fetch (gives us rawHtml for link extraction) — UNLESS the
+  // rendered (Jina) acquisition proves the raw HTML is STALE. For client-hydrated
+  // / stale-SSR sites (e.g. raseedinvest.com) the raw HTTP HTML is a complete but
+  // outdated build, so the analyzer would judge a page the world never sees.
+  // When the raw <h1> diverges from the rendered <h1> (or is absent from rendered
+  // content), trust the rendered CONTENT for analysis while keeping direct's
+  // rawHtml/headTags for link extraction + structured-data. Static sites — where
+  // raw and rendered agree — are unaffected (no regression).
   if (directResult && directResult.contentText && directResult.contentText.length >= 100) {
+    const renderedUsable = !!(jinaResult && jinaResult.contentText && jinaResult.contentText.length >= 50)
+    if (
+      renderedUsable &&
+      shouldPreferRendered({
+        rawH1: directResult.h1,
+        renderedH1: jinaResult!.h1,
+        renderedContent: jinaResult!.contentText,
+      })
+    ) {
+      const mergedDiscovered = Array.from(new Set([
+        ...(directResult.discoveredUrls || []),
+        ...(jinaResult!.discoveredUrls || []),
+      ]))
+      // Never propagate a confirmed-stale raw H1; prefer the rendered one.
+      const rawH1Stale = rawHeadingAbsentFromRendered(directResult.h1, jinaResult!.contentText)
+      const merged: CrawledPage = {
+        ...directResult,
+        contentText: jinaResult!.contentText,
+        title: jinaResult!.title || directResult.title,
+        metaDescription: jinaResult!.metaDescription ?? directResult.metaDescription,
+        h1: jinaResult!.h1 || (rawH1Stale ? null : directResult.h1),
+        discoveredUrls: mergedDiscovered,
+        fetchStrategy: 'direct+rendered',
+      }
+      console.warn(
+        `[crawler] STALE raw HTML for ${url}: raw H1 "${directResult.h1}" diverges from rendered H1 "${jinaResult!.h1}" — using rendered content for analysis`,
+      )
+      return merged
+    }
     console.log(`[crawler] Direct fetch succeeded for ${url} (${directResult.contentText.length} chars)`)
     directResult.fetchStrategy = 'direct'
     return directResult
@@ -1664,7 +1708,7 @@ export async function crawlPages(
     console.log(`[crawler] Finished: ${pages.length} pages crawled for ${url}`)
 
     // Final counts — authoritative from all pages
-    jsPagesDetected = pages.filter(p => p.fetchStrategy === 'jina' || p.fetchStrategy === 'google_cache').length
+    jsPagesDetected = pages.filter(p => p.fetchStrategy === 'jina' || p.fetchStrategy === 'google_cache' || p.fetchStrategy === 'direct+rendered').length
     pagesBlocked = pages.filter(p => p.blockedByBot).length
 
     const crawlCompletedAt = new Date().toISOString()
