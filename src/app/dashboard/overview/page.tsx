@@ -74,7 +74,7 @@ import {
   type LatestAuditBundle,
 } from '@/lib/dashboard/latest-audit';
 import { healthLabel, type HealthContext } from '@/lib/audit-findings-presentation';
-import { applyScoringSeverityCap, composeModuleScores } from '@/lib/scoring/severity-cap';
+import { applyScoringSeverityCap, isVerifiedEvidence, composeModuleScores } from '@/lib/scoring/severity-cap';
 import { moduleIndexFor } from '@/lib/scoring/module-map';
 import { useWorkspace } from '@/context/WorkspaceContext';
 import { useAuditProgress } from '@/hooks/useAuditProgress';
@@ -615,6 +615,23 @@ function OverviewInner() {
     high: fixableOpen.filter((f) => f.severity === 'high').length,
     medium: fixableOpen.filter((f) => f.severity === 'medium').length,
     low: fixableOpen.filter((f) => f.severity === 'low').length,
+  };
+  // Verified-vs-AI split per severity — shown as a small pill on each tile so
+  // users see how much of the count is instrument-Verified vs AI-assessed.
+  const splitVerifiedAi = (sev: string) => {
+    const rows = fixableOpen.filter((f) => f.severity === sev);
+    const verified = rows.filter((f) => isVerifiedEvidence({
+      severity: f.severity,
+      confidence_level: (f as any).confidence_level ?? null,
+      confidence_score: (f as any).confidence_score ?? null,
+    })).length;
+    return { verified, ai: rows.length - verified };
+  };
+  const severityBreakdown = {
+    critical: splitVerifiedAi('critical'),
+    high: splitVerifiedAi('high'),
+    medium: splitVerifiedAi('medium'),
+    low: splitVerifiedAi('low'),
   };
 
   // Pillar/module scores for radar + Brand Health module dots.
@@ -1190,6 +1207,7 @@ function OverviewInner() {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4 auto-rows-fr">
         <IssuesByImportance
           severityCounts={severityCounts}
+          severityBreakdown={severityBreakdown}
           onCardClick={handleStatCardClick}
         />
         <WebsiteSpeedCard
@@ -1329,9 +1347,11 @@ function DashboardCard({
 /* ── Row 3 — Issues by importance: 2×2 grid of soft tinted cards (dot + label, big number, helper, chevron) ── */
 function IssuesByImportance({
   severityCounts,
+  severityBreakdown,
   onCardClick,
 }: {
   severityCounts: { critical: number; high: number; medium: number; low: number };
+  severityBreakdown?: Record<string, { verified: number; ai: number }>;
   onCardClick?: (filter: string) => void;
 }) {
   const total =
@@ -1408,12 +1428,43 @@ function IssuesByImportance({
                     {t.label} Issues
                   </span>
                 </div>
-                <p
-                  className="text-[28px] leading-none font-bold tabular-nums mt-0.5"
-                  style={{ color: `var(${t.colorVar})` }}
-                >
-                  {t.count}
-                </p>
+                <div className="flex items-baseline gap-2 mt-0.5 flex-wrap">
+                  <p
+                    className="text-[28px] leading-none font-bold tabular-nums"
+                    style={{ color: `var(${t.colorVar})` }}
+                  >
+                    {t.count}
+                  </p>
+                  {(() => {
+                    const b = severityBreakdown?.[t.key];
+                    if (!b || t.count === 0) return null;
+                    // Verified/AI split as small background pills, so users see
+                    // how much of the count is instrument-measured vs AI-assessed
+                    // (the score is driven by Verified; AI is advisory).
+                    return (
+                      <span className="inline-flex items-center gap-1">
+                        {b.verified > 0 && (
+                          <span
+                            title="Instrument-measured — drives your score"
+                            className="inline-flex items-center text-[9.5px] font-semibold leading-none px-1.5 py-1 rounded-full"
+                            style={{ color: 'var(--ok)', background: 'color-mix(in srgb, var(--ok) 15%, transparent)' }}
+                          >
+                            {b.verified} verified
+                          </span>
+                        )}
+                        {b.ai > 0 && (
+                          <span
+                            title="AI-assessed — shown & ranked, capped at medium for scoring; double-check"
+                            className="inline-flex items-center text-[9.5px] font-semibold leading-none px-1.5 py-1 rounded-full"
+                            style={{ color: 'var(--signal)', background: 'color-mix(in srgb, var(--signal) 15%, transparent)' }}
+                          >
+                            {b.ai} AI
+                          </span>
+                        )}
+                      </span>
+                    );
+                  })()}
+                </div>
                 <div className="flex items-center justify-between gap-2 mt-1">
                   <p
                     className="text-[10px] leading-snug truncate"
