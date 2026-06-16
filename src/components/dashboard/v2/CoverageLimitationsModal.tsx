@@ -44,7 +44,7 @@ export default function CoverageLimitationsModal({ auditId, open, onClose }: Pro
   const [limitations, setLimitations] = useState<Limitation[]>([])
   const [dismissedCount, setDismissedCount] = useState(0)
   const [busy, setBusy] = useState<string | null>(null) // `${page_url}::${action}`
-  const [recheck, setRecheck] = useState<Record<string, string>>({})
+  const [recheck, setRecheck] = useState<Record<string, { verdict: string; healthy: boolean }>>({})
 
   const load = useCallback(async () => {
     setLoading(true); setError(null)
@@ -70,9 +70,9 @@ export default function CoverageLimitationsModal({ auditId, open, onClose }: Pro
       })
       const d = await r.json()
       if (!r.ok) throw new Error(d.error || 'Action failed')
-      if (action === 'recheck') setRecheck((m) => ({ ...m, [lim.page_url]: d.verdict }))
+      if (action === 'recheck') setRecheck((m) => ({ ...m, [lim.page_url]: { verdict: d.verdict, healthy: d.still_failing === false } }))
       else await load() // dismiss/promote → refresh (memory applied)
-    } catch (e) { setRecheck((m) => ({ ...m, [lim.page_url]: `Error: ${(e as Error).message}` })) }
+    } catch (e) { setRecheck((m) => ({ ...m, [lim.page_url]: { verdict: `Error: ${(e as Error).message}`, healthy: false } })) }
     finally { setBusy(null) }
   }
 
@@ -151,35 +151,54 @@ export default function CoverageLimitationsModal({ auditId, open, onClose }: Pro
                       </pre>
                     )}
                     {recheck[lim.page_url] && (
-                      <p className="text-[12px] mt-1.5 font-medium" style={{ color: 'var(--ink)' }}>↳ {recheck[lim.page_url]}</p>
+                      <p className="text-[12px] mt-1.5 font-medium" style={{ color: recheck[lim.page_url].healthy ? 'var(--ok,#0a0)' : 'var(--ink)' }}>↳ {recheck[lim.page_url].verdict}</p>
+                    )}
+                    {recheck[lim.page_url]?.healthy && lim.status !== 'promoted' && (
+                      <p className="text-[11px] mt-1" style={{ color: 'var(--m-muted)' }}>
+                        Re-checked healthy — this looks transient. Dismissing is recommended over promoting it to a finding.
+                      </p>
                     )}
 
-                    <div className="flex items-center gap-2 mt-2.5">
-                      <button onClick={() => act(lim, 'recheck')} disabled={!!busy}
-                        className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-[11px] font-medium disabled:opacity-50"
-                        style={{ border: '1px solid var(--rule)', color: 'var(--ink)' }}>
-                        <RefreshCw size={12} className={busy === `${lim.page_url}::recheck` ? 'animate-spin' : ''} /> Re-check live
-                      </button>
-                      {lim.status === 'promoted' ? (
-                        <span className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-[11px] font-medium opacity-60 cursor-default"
-                          style={{ border: '1px solid var(--rule)', color: 'var(--m-muted)' }}>
-                          <Flag size={12} /> Promoted
-                        </span>
-                      ) : (
-                        <button onClick={() => act(lim, 'promote')} disabled={!!busy}
-                          className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-[11px] font-medium disabled:opacity-50"
-                          style={{ background: 'var(--ink)', color: 'var(--paper,#fff)' }}>
-                          <Flag size={12} /> Promote to finding
-                        </button>
-                      )}
-                      {lim.status !== 'promoted' && (
-                        <button onClick={() => act(lim, 'dismiss')} disabled={!!busy}
-                          className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-[11px] font-medium disabled:opacity-50"
-                          style={{ border: '1px solid var(--rule)', color: 'var(--m-muted)' }}>
-                          <Check size={12} /> Dismiss
-                        </button>
-                      )}
-                    </div>
+                    {(() => {
+                      const healthy = recheck[lim.page_url]?.healthy === true
+                      return (
+                        <div className="flex items-center gap-2 mt-2.5">
+                          <button onClick={() => act(lim, 'recheck')} disabled={!!busy}
+                            className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-[11px] font-medium disabled:opacity-50"
+                            style={{ border: '1px solid var(--rule)', color: 'var(--ink)' }}>
+                            <RefreshCw size={12} className={busy === `${lim.page_url}::recheck` ? 'animate-spin' : ''} /> Re-check live
+                          </button>
+                          {lim.status === 'promoted' ? (
+                            <span className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-[11px] font-medium opacity-60 cursor-default"
+                              style={{ border: '1px solid var(--rule)', color: 'var(--m-muted)' }}>
+                              <Flag size={12} /> Promoted
+                            </span>
+                          ) : healthy ? (
+                            // Re-checked healthy → don't let a transient blip become a permanent finding.
+                            <span title="Re-checked healthy — looks transient; dismiss instead"
+                              className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-[11px] font-medium opacity-40 cursor-not-allowed"
+                              style={{ border: '1px solid var(--rule)', color: 'var(--m-muted)' }}>
+                              <Flag size={12} /> Promote to finding
+                            </span>
+                          ) : (
+                            <button onClick={() => act(lim, 'promote')} disabled={!!busy}
+                              className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-[11px] font-medium disabled:opacity-50"
+                              style={{ background: 'var(--ink)', color: 'var(--paper,#fff)' }}>
+                              <Flag size={12} /> Promote to finding
+                            </button>
+                          )}
+                          {lim.status !== 'promoted' && (
+                            <button onClick={() => act(lim, 'dismiss')} disabled={!!busy}
+                              className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-[11px] font-medium disabled:opacity-50"
+                              style={healthy
+                                ? { background: 'var(--ink)', color: 'var(--paper,#fff)' }
+                                : { border: '1px solid var(--rule)', color: 'var(--m-muted)' }}>
+                              <Check size={12} /> Dismiss
+                            </button>
+                          )}
+                        </div>
+                      )
+                    })()}
                   </li>
                 ))}
               </ul>
