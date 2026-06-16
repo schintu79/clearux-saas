@@ -19,6 +19,7 @@ import { createServerSupabase, createServiceSupabase } from '@/lib/supabase-serv
 import { getFeatureFlags } from '@/lib/feature-flags'
 import { loadCaptureBucket, captureToPageContent } from '@/lib/audit-engine/capture/capture-bucket'
 import { analyzeCategory, detectSiteProfile, UX_CATEGORIES, type SiteProfile } from '@/lib/audit-engine/analyzer'
+import { composeFindings, type FindingForCompose } from '@/lib/audit-engine/compose/compose'
 
 export async function POST(request: NextRequest) {
   try {
@@ -83,6 +84,42 @@ export async function POST(request: NextRequest) {
       siteProfile,
     )
 
+    // ── Phase 3: optionally run COMPOSE over the candidates (compose=true) ──
+    // The general definition-of-done judge — keeps real/evidenced/relevant
+    // findings, drops speculation — judged against the captured page content.
+    let compose: unknown = undefined
+    if (body.compose) {
+      const forCompose: FindingForCompose[] = (findings || []).map((f: any, i: number) => ({
+        id: String(i),
+        title: f.title,
+        description: f.description,
+        recommendation: f.recommendation,
+        severity: f.severity,
+        detection_source: 'analyzer',
+        page_url: f.pageUrl ?? f.page_url ?? null,
+      }))
+      const byId = new Map(forCompose.map((f) => [f.id, f]))
+      const pageContentByUrl: Record<string, string> = {}
+      for (const p of bucket.pages) if (p.page_url) pageContentByUrl[p.page_url] = p.extracted_text || ''
+
+      const Anthropic = (await import('@anthropic-ai/sdk')).default
+      const anthropic = new Anthropic({ timeout: 20_000 })
+      const judge = async (prompt: string): Promise<string> => {
+        const msg = await anthropic.messages.create({
+          model: 'claude-haiku-4-5-20251001',
+          max_tokens: 200,
+          messages: [{ role: 'user', content: prompt }],
+        })
+        return (msg.content.find((b: any) => b.type === 'text') as any)?.text || ''
+      }
+      const res = await composeFindings(forCompose, pageContentByUrl, judge)
+      compose = {
+        kept: res.keptIds.map((id) => byId.get(id)?.title),
+        dropped: res.droppedIds.map((id) => ({ title: byId.get(id)?.title, reason: res.reasons[id] })),
+        adjusted: Object.entries(res.adjusted).map(([id, sev]) => ({ title: byId.get(id)?.title, severity: sev, reason: res.reasons[id] })),
+      }
+    }
+
     return NextResponse.json({
       audit_id: auditId,
       category,
@@ -95,6 +132,7 @@ export async function POST(request: NextRequest) {
         description: f.description,
         recommendation: f.recommendation,
       })),
+      compose,
       note: 'Replay over stored capture — no crawl performed. Read-only; nothing was written.',
     })
   } catch (err) {
