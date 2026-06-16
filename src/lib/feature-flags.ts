@@ -25,6 +25,13 @@ export interface FeatureFlags {
    * See docs/pipeline-v1.5-analysis.md for the full design rationale.
    */
   leanPipeline: boolean
+  /**
+   * Capture→Analyze→Compose Phase 1 — write immutable PageCapture artifacts in
+   * SHADOW MODE alongside the current pipeline (paid audits only, enforced at
+   * the call site). OFF by default: nothing is written, no behavior changes.
+   * See docs/AUDIT_PIPELINE_ARCHITECTURE.md.
+   */
+  captureShadow: boolean
 }
 
 /**
@@ -37,5 +44,6 @@ export function getFeatureFlags(): FeatureFlags {
     acquisitionDiagnostics: process.env.FEATURE_ACQUISITION_DIAGNOSTICS === 'true',
     politeCrawler: process.env.FEATURE_POLITE_CRAWLER === 'true',
     leanPipeline: process.env.FEATURE_LEAN_PIPELINE !== 'false', // ON by default
+    captureShadow: process.env.FEATURE_CAPTURE_SHADOW === 'true', // OFF by default
   }
 }

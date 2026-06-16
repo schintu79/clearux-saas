@@ -23,6 +23,7 @@ import { prioritizePagesForChecks } from '@/lib/audit-engine/page-relevance'
 import { classifyInputRelevance } from '@/lib/audit-engine/pipeline/input-relevance-gate'
 import { classifySpeculativeUx } from '@/lib/audit-engine/pipeline/speculative-ux-gate'
 import { pageContentChanged, type PageContentFacts } from '@/lib/audit-engine/content-change'
+import { buildPageCaptureRows, writePageCaptures, CAPTURE_SCHEMA_VERSION } from '@/lib/audit-engine/capture/page-capture'
 import { runCrawlPreflight } from '@/lib/audit-engine/crawl-preflight'
 import { probeAIDiscovery, formatAIDiscoveryForAnalysis } from '@/lib/audit-engine/ai-discovery-probe'
 import { validateStructuredData, formatValidationForAnalysis } from '@/lib/audit-engine/structured-data-validator'
@@ -1943,6 +1944,50 @@ Return 2-6 findings. Be specific and evidence-based. Reference specific files/co
 
     const responsiveCheck = parallelChecks.responsive
     const wcagCheck = parallelChecks.wcag
+
+    // ──────────────────────────────────────────────────────────
+    // SHADOW CAPTURE (Capture→Analyze→Compose, Phase 1)
+    // Persist immutable per-page PageCapture artifacts ALONGSIDE the current
+    // flow. Paid audits only + behind FEATURE_CAPTURE_SHADOW (OFF by default).
+    // Reads already-persisted audit_pages + this run's DOM facts — adds NO new
+    // crawl/render cost. Fully non-fatal: any failure is logged loudly via the
+    // checked write but can NEVER affect the audit. Nothing reads this yet.
+    // See docs/AUDIT_PIPELINE_ARCHITECTURE.md.
+    // ──────────────────────────────────────────────────────────
+    try {
+      const isPaidAudit = auditDetails.plan !== 'free_preview'
+      if (getFeatureFlags().captureShadow && isPaidAudit) {
+        await step.run('shadow-capture', async () => {
+          return withStepTimeout(async () => {
+            const db = getDb()
+            const { data: capturePages, error: captureReadErr } = await db.from('audit_pages')
+              .select('url, title, h1, meta_description, content_text, status_code, crawl_status, fetch_strategy, screenshot_url, canonical_url, viewport_meta, has_structured_data, crawled_at')
+              .eq('audit_id', auditId)
+            if (captureReadErr) {
+              await auditLog(auditId, 'shadow_capture_skipped', 'warning',
+                `Shadow capture: could not read audit_pages — ${captureReadErr.message}`)
+              return { ok: false, saved: 0 }
+            }
+            const domFactsObj = (wcagCheck as any)?.domFacts as Record<string, any> | undefined
+            const rows = buildPageCaptureRows({
+              auditId,
+              workspaceId: auditDetails.workspaceId ?? null,
+              userId: auditDetails.userId ?? null,
+              pages: (capturePages as any[]) || [],
+              domFactsByUrl: domFactsObj || {},
+            })
+            const res = await writePageCaptures(db, rows, auditId)
+            await auditLog(auditId, 'shadow_capture_written', res.ok ? 'info' : 'warning',
+              `Shadow capture: ${res.saved}/${rows.length} page capture(s) stored${res.ok ? '' : ` — ${res.errorMessage || 'write failed'}`}`,
+              { saved: res.saved, attempted: rows.length, schema_version: CAPTURE_SCHEMA_VERSION })
+            return res
+          }, 30_000, 'shadow-capture', { ok: false, saved: 0 })
+        })
+      }
+    } catch (captureErr) {
+      // Shadow capture must never affect the audit — swallow after logging.
+      console.warn('[process-audit] shadow capture failed (non-fatal):', (captureErr as Error)?.message)
+    }
 
     // ──────────────────────────────────────────────────────────
     // STEP 2c-2i COMBINED: Run all probe steps in parallel

@@ -65,6 +65,14 @@ export const INSERT_CONTRACTS = {
     'token_output', 'estimated_cost_cents', 'error_message', 'accuracy',
     'accuracy_note',
   ],
+  // Capture→Analyze→Compose Phase 1 — immutable PageCapture (shadow mode).
+  page_captures: [
+    'audit_id', 'workspace_id', 'user_id', 'page_url', 'page_status', 'http_status',
+    'capture_schema_version', 'capture_renderer_version', 'fetch_strategy',
+    'rendered_html_key', 'screenshot_keys', 'axe_raw_key',
+    'title', 'h1', 'headings', 'links', 'form_presence', 'lang', 'meta',
+    'dom_facts', 'extracted_text', 'viewport_results', 'captured_at',
+  ],
 } as const
 
 /** Keys our writers are allowed to put in .update() payloads, per table.
