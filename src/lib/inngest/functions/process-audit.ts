@@ -24,6 +24,7 @@ import { classifyInputRelevance } from '@/lib/audit-engine/pipeline/input-releva
 import { classifySpeculativeUx } from '@/lib/audit-engine/pipeline/speculative-ux-gate'
 import { pageContentChanged, type PageContentFacts } from '@/lib/audit-engine/content-change'
 import { buildPageCaptureRows, writePageCaptures, CAPTURE_SCHEMA_VERSION } from '@/lib/audit-engine/capture/page-capture'
+import { captureInputParity } from '@/lib/audit-engine/capture/capture-bucket'
 import { runCrawlPreflight } from '@/lib/audit-engine/crawl-preflight'
 import { probeAIDiscovery, formatAIDiscoveryForAnalysis } from '@/lib/audit-engine/ai-discovery-probe'
 import { validateStructuredData, formatValidationForAnalysis } from '@/lib/audit-engine/structured-data-validator'
@@ -1980,6 +1981,20 @@ Return 2-6 findings. Be specific and evidence-based. Reference specific files/co
             await auditLog(auditId, 'shadow_capture_written', res.ok ? 'info' : 'warning',
               `Shadow capture: ${res.saved}/${rows.length} page capture(s) stored${res.ok ? '' : ` — ${res.errorMessage || 'write failed'}`}`,
               { saved: res.saved, attempted: rows.length, schema_version: CAPTURE_SCHEMA_VERSION })
+
+            // ── Phase 2c shadow-compare (deterministic, read-only) ──
+            // Prove the capture is a FAITHFUL, SUFFICIENT source for analysis:
+            // reconstruct the analyzer input from the captures and compare page
+            // coverage to the live crawl input. No analyzer is run, no LLM call,
+            // no behavior change — this just records parity so we know the
+            // capture can feed Stage 2 before we point an analyzer at it.
+            try {
+              const parity = captureInputParity(crawlResult?.pageContent || '', rows as unknown as Parameters<typeof captureInputParity>[1])
+              await auditLog(auditId, 'shadow_capture_parity', parity.coversAllLivePages ? 'info' : 'warning',
+                `Capture input parity: covers ${parity.captureUrls}/${parity.liveUrls} live page(s)${parity.coversAllLivePages ? ' (full)' : ` — missing ${parity.missingFromCapture.length}`}`,
+                { live_urls: parity.liveUrls, capture_urls: parity.captureUrls, covers_all: parity.coversAllLivePages, missing: parity.missingFromCapture.slice(0, 20), capture_chars: parity.captureChars })
+            } catch { /* parity logging is best-effort, never affects the audit */ }
+
             return res
           }, 30_000, 'shadow-capture', { ok: false, saved: 0 })
         })

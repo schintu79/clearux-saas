@@ -58,6 +58,48 @@ export function captureToPageContent(captures: CaptureBucketPage[]): string {
     .join('\n---\n')
 }
 
+/** Page URLs present in a live `pageContent` block string (lines `URL: ...`). */
+export function urlsInPageContent(pageContent: string): string[] {
+  return (pageContent || '')
+    .split('\n')
+    .filter((l) => l.startsWith('URL: '))
+    .map((l) => l.replace('URL: ', '').trim())
+    .filter(Boolean)
+}
+
+export interface CaptureInputParity {
+  liveUrls: number
+  captureUrls: number
+  /** URLs the live input has that the capture-derived input does NOT cover. */
+  missingFromCapture: string[]
+  /** True when the capture covers every page the live analyzer saw. */
+  coversAllLivePages: boolean
+  captureChars: number
+}
+
+/**
+ * PURE: compare the live analyzer input against the input the capture would
+ * produce — the deterministic Phase 2 shadow-compare. Proves the capture is a
+ * faithful, sufficient source for analysis (same pages covered) WITHOUT running
+ * the analyzer twice or spending an LLM call.
+ */
+export function captureInputParity(
+  livePageContent: string,
+  captureRows: CaptureBucketPage[],
+): CaptureInputParity {
+  const live = new Set(urlsInPageContent(livePageContent).map((u) => u.replace(/\/+$/, '')))
+  const captureInput = captureToPageContent(captureRows)
+  const cap = new Set(urlsInPageContent(captureInput).map((u) => u.replace(/\/+$/, '')))
+  const missing = [...live].filter((u) => !cap.has(u))
+  return {
+    liveUrls: live.size,
+    captureUrls: cap.size,
+    missingFromCapture: missing,
+    coversAllLivePages: missing.length === 0,
+    captureChars: captureInput.length,
+  }
+}
+
 type AnyDb = {
   from: (table: string) => {
     select: (cols: string) => {

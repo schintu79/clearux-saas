@@ -1,4 +1,4 @@
-import { captureToPageContent, analyzableCaptures, type CaptureBucketPage } from '../capture-bucket'
+import { captureToPageContent, analyzableCaptures, captureInputParity, urlsInPageContent, type CaptureBucketPage } from '../capture-bucket'
 
 const pages: CaptureBucketPage[] = [
   {
@@ -65,5 +65,30 @@ describe('captureToPageContent', () => {
 
   it('produces empty string when nothing is analyzable', () => {
     expect(captureToPageContent([{ page_url: 'https://x.com/f', page_status: 'failed', extracted_text: 'x' }])).toBe('')
+  })
+})
+
+describe('captureInputParity (Phase 2 shadow-compare)', () => {
+  const live =
+    'URL: https://x.com/en\nTitle: Home\nContent:\nbody\n\n---\n' +
+    'URL: https://x.com/en/pricing\nTitle: Pricing\nContent:\nplans\n'
+
+  it('reports full coverage when captures match the live pages', () => {
+    const p = captureInputParity(live, pages)
+    expect(p.liveUrls).toBe(2)
+    expect(p.captureUrls).toBe(2)
+    expect(p.coversAllLivePages).toBe(true)
+    expect(p.missingFromCapture).toEqual([])
+    expect(p.captureChars).toBeGreaterThan(0)
+  })
+
+  it('flags pages the capture is missing (trailing-slash tolerant)', () => {
+    const p = captureInputParity(live, [pages[0]]) // only /en captured
+    expect(p.coversAllLivePages).toBe(false)
+    expect(p.missingFromCapture).toEqual(['https://x.com/en/pricing'])
+  })
+
+  it('urlsInPageContent extracts the URL lines', () => {
+    expect(urlsInPageContent(live)).toEqual(['https://x.com/en', 'https://x.com/en/pricing'])
   })
 })
