@@ -12,6 +12,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createServerSupabase, createServiceSupabase } from '@/lib/supabase-server'
 import { isUpstreamErrorBody } from '@/lib/audit-engine/error-body'
+import { buildCommunicationForGenericFinding } from '@/lib/audit-engine/pipeline/communication-layer'
 import {
   buildLimitations,
   type CaptureForLimitation,
@@ -116,17 +117,48 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
         partial_capture: `Page only partially loads: ${pageUrl}`,
         thin_content: `Page loads with almost no content: ${pageUrl}`,
       }
+      const descByReason: Record<LimitationReason, string> = {
+        upstream_error: `During the audit, this page returned a server/proxy error ("upstream connect error") instead of its content, so it could not be analyzed. It may be a persistent outage or a transient blip — re-check confirms which.`,
+        unreachable: `During the audit, no content came back for this page at all — it failed to load, timed out, was blocked, or is fully JavaScript-rendered. It could not be analyzed.`,
+        partial_capture: `During the audit, only part of this page's content loaded, so its analysis is incomplete.`,
+        thin_content: `During the audit, only this page's title loaded — almost none of its body content rendered, so any analysis of its content is unreliable.`,
+      }
+      const impactByReason: Record<LimitationReason, string> = {
+        upstream_error: `If real visitors hit this error, they can't use the page at all. On a key page (pricing, signup, a product page) that is lost conversions and eroded trust, and search engines that see an error can drop the page from results.`,
+        unreachable: `If the page doesn't load for visitors or crawlers, it can't convert or be found. On an important page this is severe; verify it loads reliably for real users.`,
+        partial_capture: `Content that didn't load can't convince, convert, or be indexed — and you can't see what's missing without inspecting the page directly.`,
+        thin_content: `If the main content doesn't render for visitors or crawlers, the page can't convert or rank on its actual content, and AI/search engines may treat it as thin or empty.`,
+      }
+      const recByReason: Record<LimitationReason, string> = {
+        upstream_error: `Open the page in a browser and check your hosting/CDN/proxy logs for the 5xx/upstream error. Resolve the routing or gateway issue, then re-run the audit so the page can be analyzed.`,
+        unreachable: `Open the page in a browser. If it loads, the failure was likely transient or bot-blocking — re-run the audit. If it doesn't, fix the load/timeout/blocking issue first.`,
+        partial_capture: `Open the page and confirm all sections render. If content is JavaScript-gated or slow, ensure it is server-rendered or loads quickly, then re-run the audit.`,
+        thin_content: `Confirm the page's body renders without JavaScript (or quickly with it). If the content is client-only, add server rendering so crawlers and the audit can read it, then re-run the audit.`,
+      }
+      const title = titleByReason[reason]
+      const description = descByReason[reason]
+      const estimatedImpact = impactByReason[reason]
+      const recommendation = recByReason[reason]
+      const severity = reason === 'upstream_error' || reason === 'unreachable' ? 'high' : 'medium'
+      // Full communication layer so the finding is first-class (WHY IT MATTERS,
+      // What we found, Fix) — same as every analyzer/instrument finding.
+      const communication = buildCommunicationForGenericFinding(
+        { title, description, recommendation, estimatedImpact, severity } as any,
+        null,
+      )
       // Insert the finding and read back its DB-generated id. (We do NOT set id
       // ourselves — the insert contract strips it, which previously left the
       // decision pointing at a non-existent finding → FK violation.)
       const { data: inserted, error: findErr } = await db.from('audit_findings').insert({
         audit_id: auditId,
         category_index: null,
-        severity: reason === 'upstream_error' || reason === 'unreachable' ? 'high' : 'medium',
-        title: titleByReason[reason],
-        description: `Promoted from a coverage limitation. The crawler could not analyze this page (${reason.replace('_', ' ')}). Verify the page is reachable and serving real content; if it is genuinely failing, this is an infrastructure issue to investigate.`,
+        severity,
+        title,
+        description,
+        estimated_impact: estimatedImpact,
         page_url: pageUrl,
-        recommendation: 'Check the page in a browser and your hosting/CDN logs. Resolve the server/proxy error or routing issue, then re-run the audit so the page can be analyzed.',
+        recommendation,
+        communication,
         detection_source: 'crawler',
         confidence_level: 'deterministic',
         finding_type: 'manual',
