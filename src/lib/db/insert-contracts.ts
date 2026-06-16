@@ -73,6 +73,11 @@ export const INSERT_CONTRACTS = {
     'title', 'h1', 'headings', 'links', 'form_presence', 'lang', 'meta',
     'dom_facts', 'extracted_text', 'viewport_results', 'captured_at',
   ],
+  // Coverage-limitation decisions — workspace memory (dismiss/promote).
+  coverage_limitation_decisions: [
+    'workspace_id', 'user_id', 'audit_id', 'page_url', 'reason', 'decision',
+    'finding_id', 'updated_at',
+  ],
 } as const
 
 /** Keys our writers are allowed to put in .update() payloads, per table.

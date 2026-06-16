@@ -10,6 +10,7 @@ import { isFirecrawlConfigured, firecrawlScrape, firecrawlMap } from '@/lib/craw
 import { getFeatureFlags } from '@/lib/feature-flags'
 import { extractMarkdownH1, shouldPreferRendered, rawHeadingAbsentFromRendered, looksClientHydrated } from '@/lib/audit-engine/render-divergence'
 import { browserRenderPage } from '@/lib/audit-engine/browser-renderer'
+import { isUpstreamErrorBody } from '@/lib/audit-engine/error-body'
 
 /* ── Hostname normalization ───────────────────────────────── */
 
@@ -518,6 +519,14 @@ async function directFetch(url: string, timeoutMs: number = 8000): Promise<Crawl
     const contentText = extractTextContent(html)
     const { count: linksFound } = extractLinks(html, url)
 
+    // An HTTP 200 can still carry a proxy/upstream ERROR body (envoy "upstream
+    // connect error", 502/503/504 stubs). That is not page content — never feed
+    // it to analysis. Treat as a failed fetch so a fallback strategy can try.
+    if (isUpstreamErrorBody(contentText)) {
+      console.warn(`[crawler] Direct fetch got an upstream/proxy error body for ${url} — treating as failed`)
+      return null
+    }
+
     // If we got a response but content is suspiciously empty, flag it
     if (!contentText || contentText.length < 100) {
       console.warn(`[crawler] Direct fetch returned very little content for ${url} (${contentText?.length || 0} chars)`)
@@ -609,6 +618,14 @@ async function jinaFetch(url: string, timeoutMs: number = 10000): Promise<Crawle
 
     if (!contentText || contentText.length < 50) {
       console.warn(`[crawler] Jina returned too little content for ${url}`)
+      return null
+    }
+
+    // Jina renders, but a rendered proxy/upstream error body is still not page
+    // content (e.g. raseed /ar/options → "upstream connect error..."). Reject it
+    // so it is never stored as a page or fed to analysis.
+    if (isUpstreamErrorBody(contentText)) {
+      console.warn(`[crawler] Jina got an upstream/proxy error body for ${url} — treating as failed`)
       return null
     }
 
