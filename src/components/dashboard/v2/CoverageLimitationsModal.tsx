@@ -108,68 +108,83 @@ export default function CoverageLimitationsModal({ auditId, open, onClose }: Pro
             </p>
           )}
 
-          <ul className="space-y-3">
-            {limitations.map((lim) => (
-              <li key={`${lim.page_url}-${lim.reason}`} className="rounded-lg p-3"
-                style={{ border: '1px solid var(--rule, #eee)', background: 'var(--paper-2, #fafafa)' }}>
-                <div className="flex items-start justify-between gap-3">
-                  <div className="min-w-0">
+          {/* Grouped by reason so the same error isn't repeated as separate cards. */}
+          {Array.from(
+            limitations.reduce((m, lim) => {
+              const arr = m.get(lim.reason) || []
+              arr.push(lim); m.set(lim.reason, arr); return m
+            }, new Map<string, Limitation[]>())
+          ).map(([reason, items]) => (
+            <div key={reason} className="rounded-lg mb-3"
+              style={{ border: '1px solid var(--rule, #eee)', background: 'var(--paper-2, #fafafa)' }}>
+              <div className="px-3 pt-3">
+                <h3 className="text-[13px] font-semibold" style={{ color: 'var(--ink)' }}>
+                  {items[0].label}
+                  <span className="font-normal" style={{ color: 'var(--m-muted)' }}> · {items.length} page{items.length > 1 ? 's' : ''}</span>
+                </h3>
+                <p className="text-[12px] mt-1 leading-relaxed" style={{ color: 'var(--ink-2, #444)' }}>{items[0].detail}</p>
+              </div>
+              <ul className="px-3 pb-3 mt-2 space-y-2">
+                {items.map((lim) => (
+                  <li key={lim.page_url} className="rounded-md p-2.5"
+                    style={{ border: '1px solid var(--rule, #eee)', background: 'var(--card, #fff)' }}>
                     <div className="flex items-center gap-2 flex-wrap">
-                      <span className="text-[13px] font-medium" style={{ color: 'var(--ink)' }}>{lim.label}</span>
+                      <a href={lim.page_url} target="_blank" rel="noopener noreferrer"
+                        className="inline-flex items-center gap-1 text-[12px] hover:underline truncate max-w-[420px]" style={{ color: 'var(--ink)' }}>
+                        <ExternalLink size={11} /> {lim.page_url}
+                      </a>
                       {lim.status === 'promoted' && (
                         <span className="text-[10px] px-1.5 py-0.5 rounded font-medium" style={{ background: 'color-mix(in srgb, var(--signal,#36c) 12%, transparent)', color: 'var(--signal,#36c)' }}>Promoted</span>
                       )}
                     </div>
-                    <a href={lim.page_url} target="_blank" rel="noopener noreferrer"
-                      className="inline-flex items-center gap-1 text-[12px] mt-0.5 hover:underline" style={{ color: 'var(--m-muted)' }}>
-                      <ExternalLink size={11} /> {lim.page_url}
-                    </a>
-                  </div>
-                </div>
 
-                <p className="text-[12.5px] mt-2 leading-relaxed" style={{ color: 'var(--ink-2, #444)' }}>{lim.detail}</p>
+                    <div className="mt-1.5 text-[11px] flex flex-wrap gap-x-4 gap-y-1" style={{ color: 'var(--m-muted)' }}>
+                      {lim.evidence.http_status != null && <span>HTTP {lim.evidence.http_status}</span>}
+                      {lim.evidence.fetch_strategy && <span>Method: {lim.evidence.fetch_strategy}</span>}
+                      <span>{lim.evidence.text_length} chars captured</span>
+                      {lim.evidence.captured_at && <span>Captured {new Date(lim.evidence.captured_at).toLocaleString()}</span>}
+                    </div>
+                    {lim.evidence.text_excerpt && (
+                      <pre className="mt-1.5 text-[11px] whitespace-pre-wrap rounded p-2 overflow-x-auto"
+                        style={{ background: 'var(--paper-2,#fafafa)', border: '1px solid var(--rule,#eee)', color: 'var(--ink-2,#444)' }}>
+                        {lim.evidence.text_excerpt}
+                      </pre>
+                    )}
+                    {recheck[lim.page_url] && (
+                      <p className="text-[12px] mt-1.5 font-medium" style={{ color: 'var(--ink)' }}>↳ {recheck[lim.page_url]}</p>
+                    )}
 
-                {/* Evidence */}
-                <div className="mt-2 text-[11px] flex flex-wrap gap-x-4 gap-y-1" style={{ color: 'var(--m-muted)' }}>
-                  {lim.evidence.http_status != null && <span>HTTP {lim.evidence.http_status}</span>}
-                  {lim.evidence.fetch_strategy && <span>Method: {lim.evidence.fetch_strategy}</span>}
-                  <span>{lim.evidence.text_length} chars captured</span>
-                  {lim.evidence.captured_at && <span>Captured {new Date(lim.evidence.captured_at).toLocaleString()}</span>}
-                </div>
-                {lim.evidence.text_excerpt && (
-                  <pre className="mt-2 text-[11px] whitespace-pre-wrap rounded p-2 overflow-x-auto"
-                    style={{ background: 'var(--card,#fff)', border: '1px solid var(--rule,#eee)', color: 'var(--ink-2,#444)' }}>
-                    {lim.evidence.text_excerpt}
-                  </pre>
-                )}
-
-                {recheck[lim.page_url] && (
-                  <p className="text-[12px] mt-2 font-medium" style={{ color: 'var(--ink)' }}>↳ {recheck[lim.page_url]}</p>
-                )}
-
-                {/* Actions */}
-                <div className="flex items-center gap-2 mt-3">
-                  <button onClick={() => act(lim, 'recheck')} disabled={!!busy}
-                    className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-[11px] font-medium"
-                    style={{ border: '1px solid var(--rule)', color: 'var(--ink)' }}>
-                    <RefreshCw size={12} className={busy === `${lim.page_url}::recheck` ? 'animate-spin' : ''} /> Re-check live
-                  </button>
-                  {lim.status !== 'promoted' && (
-                    <button onClick={() => act(lim, 'promote')} disabled={!!busy}
-                      className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-[11px] font-medium"
-                      style={{ background: 'var(--ink)', color: 'var(--paper,#fff)' }}>
-                      <Flag size={12} /> Promote to finding
-                    </button>
-                  )}
-                  <button onClick={() => act(lim, 'dismiss')} disabled={!!busy}
-                    className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-[11px] font-medium"
-                    style={{ border: '1px solid var(--rule)', color: 'var(--m-muted)' }}>
-                    <Check size={12} /> Dismiss
-                  </button>
-                </div>
-              </li>
-            ))}
-          </ul>
+                    <div className="flex items-center gap-2 mt-2.5">
+                      <button onClick={() => act(lim, 'recheck')} disabled={!!busy}
+                        className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-[11px] font-medium disabled:opacity-50"
+                        style={{ border: '1px solid var(--rule)', color: 'var(--ink)' }}>
+                        <RefreshCw size={12} className={busy === `${lim.page_url}::recheck` ? 'animate-spin' : ''} /> Re-check live
+                      </button>
+                      {lim.status === 'promoted' ? (
+                        <span className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-[11px] font-medium opacity-60 cursor-default"
+                          style={{ border: '1px solid var(--rule)', color: 'var(--m-muted)' }}>
+                          <Flag size={12} /> Promoted
+                        </span>
+                      ) : (
+                        <button onClick={() => act(lim, 'promote')} disabled={!!busy}
+                          className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-[11px] font-medium disabled:opacity-50"
+                          style={{ background: 'var(--ink)', color: 'var(--paper,#fff)' }}>
+                          <Flag size={12} /> Promote to finding
+                        </button>
+                      )}
+                      {lim.status !== 'promoted' && (
+                        <button onClick={() => act(lim, 'dismiss')} disabled={!!busy}
+                          className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-[11px] font-medium disabled:opacity-50"
+                          style={{ border: '1px solid var(--rule)', color: 'var(--m-muted)' }}>
+                          <Check size={12} /> Dismiss
+                        </button>
+                      )}
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ))}
         </div>
       </div>
     </div>

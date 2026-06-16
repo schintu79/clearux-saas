@@ -77,21 +77,21 @@ export function classifyLimitation(c: CaptureForLimitation): LimitationReason | 
 
 const REASON_LABEL: Record<LimitationReason, string> = {
   upstream_error: 'Page returned a server/proxy error',
-  unreachable: 'Page could not be reached',
+  unreachable: 'Page returned no content at all',
   partial_capture: 'Page captured only partially',
-  thin_content: 'Page loaded with almost no content',
+  thin_content: 'Only the page title loaded — its main content did not',
 }
 
 function reasonDetail(reason: LimitationReason, c: CaptureForLimitation): string {
   switch (reason) {
     case 'upstream_error':
-      return `This page returned an upstream/proxy error instead of content, so it was excluded from analysis. Verify it is reachable; if it is genuinely down, this is an infrastructure issue to investigate.`
+      return `Why: instead of the page, the server returned a proxy/gateway error (e.g. "upstream connect error"), so there was nothing to analyze. This is the WHOLE page failing, not a section. If it is genuinely down this is an infrastructure issue to investigate — and on an important page (pricing, signup, a product page) that is severe. Re-check to confirm whether it is still failing or was transient.`
     case 'unreachable':
-      return `The crawler could not load this page at all (no content returned). It was excluded from analysis. Re-check to see if it is reachable now.`
+      return `Why: no content came back for this page at all — it likely failed to load, timed out, was blocked, or is rendered entirely by JavaScript the crawler could not execute. This is the WHOLE page, not a section. On an important page this is severe — verify it loads for real visitors. Re-check to see if it is reachable now.`
     case 'partial_capture':
-      return `This page was captured only partially, so analysis of it may be incomplete.`
+      return `Why: only part of this page's content was captured, so analysis of it is incomplete. The visible parts may be fine; the missing section was not read.`
     case 'thin_content':
-      return `This page loaded but returned almost no content (${(c.extracted_text || '').trim().length} chars) — often a JS-gated page or an empty shell. Analysis of it is unreliable.`
+      return `Why: we captured this page's title but almost none of its body (${(c.extracted_text || '').trim().length} chars). This is most likely a SPECIFIC SECTION — the main content — that did not render (commonly JavaScript-gated), NOT the whole page. The page may look fine to visitors; we simply could not read its body, so any analysis of this page's content is unreliable. Re-check, or treat it as a rendering issue on that section.`
   }
 }
 

@@ -84,6 +84,7 @@ import BrandIntelligenceCard from '@/components/dashboard/v2/BrandIntelligenceCa
 import type { BrandIntelligenceSummary } from '@/lib/audit-engine/brand-intelligence';
 import type { Audit, Report, AuditFinding, SpeedDataSummary, Workspace } from '@/types/database';
 import SiteFavicon from '@/components/ui/SiteFavicon';
+import CoverageLimitationsModal from '@/components/dashboard/v2/CoverageLimitationsModal';
 
 
 /* ── Pillar / module config (mirrors audit detail page) ─── */
@@ -162,6 +163,7 @@ function OverviewInner() {
 
   const { bundle, loading: bundleLoading, invalidate } = useAuditBundle();
   const [creditsBanner, setCreditsBanner] = useState(false);
+  const [limitationsOpen, setLimitationsOpen] = useState(false);
 
   const [scoreTrend, setScoreTrend] = useState<Array<{ auditId: string; date: string; overallScore: number; pillarScores?: (number | null)[] | null }>>([]);
   const [competitors, setCompetitors] = useState<Array<{ domain: string; score: number; pillarScores?: Array<{ name: string; score: number }> }>>([]);
@@ -735,6 +737,10 @@ function OverviewInner() {
   return (
     <div className="w-full">
 
+      {audit?.id && (
+        <CoverageLimitationsModal auditId={audit.id} open={limitationsOpen} onClose={() => setLimitationsOpen(false)} />
+      )}
+
       {creditsBanner && <CreditsBanner onClose={() => setCreditsBanner(false)} />}
 
       {/* ── Re-audit progress banner ──
@@ -1209,6 +1215,7 @@ function OverviewInner() {
           severityCounts={severityCounts}
           severityBreakdown={severityBreakdown}
           onCardClick={handleStatCardClick}
+          onReviewLimitations={() => setLimitationsOpen(true)}
         />
         <WebsiteSpeedCard
           speedData={(latestCompleted as any)?.speed_data ?? null}
@@ -1349,10 +1356,12 @@ function IssuesByImportance({
   severityCounts,
   severityBreakdown,
   onCardClick,
+  onReviewLimitations,
 }: {
   severityCounts: { critical: number; high: number; medium: number; low: number };
   severityBreakdown?: Record<string, { verified: number; ai: number }>;
   onCardClick?: (filter: string) => void;
+  onReviewLimitations?: () => void;
 }) {
   const total =
     severityCounts.critical + severityCounts.high + severityCounts.medium + severityCounts.low;
@@ -1381,6 +1390,16 @@ function IssuesByImportance({
       subtitle={total === 0 ? 'No open issues — nice.' : `${total} open issue${total === 1 ? '' : 's'}`}
       icon={AlertTriangle}
       titleSize="lg"
+      rightBadge={onReviewLimitations ? (
+        <button
+          onClick={onReviewLimitations}
+          title="Pages we couldn't fully analyze"
+          className="inline-flex items-center gap-1 px-2 py-1 rounded-md text-[10px] font-medium transition-colors"
+          style={{ border: '1px solid var(--rule)', color: 'var(--m-muted)' }}
+        >
+          <Info size={11} /> Coverage
+        </button>
+      ) : undefined}
     >
       {total === 0 ? (
         <div className="flex flex-col items-center justify-center py-6">
