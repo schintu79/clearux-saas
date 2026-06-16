@@ -11,7 +11,6 @@
 
 import { NextRequest, NextResponse } from 'next/server'
 import { createServerSupabase, createServiceSupabase } from '@/lib/supabase-server'
-import { insertChecked } from '@/lib/db/checked-write'
 import { isUpstreamErrorBody } from '@/lib/audit-engine/error-body'
 import {
   buildLimitations,
@@ -117,9 +116,10 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
         partial_capture: `Page only partially loads: ${pageUrl}`,
         thin_content: `Page loads with almost no content: ${pageUrl}`,
       }
-      const newId = crypto.randomUUID()
-      const res = await insertChecked(db, 'audit_findings', [{
-        id: newId,
+      // Insert the finding and read back its DB-generated id. (We do NOT set id
+      // ourselves — the insert contract strips it, which previously left the
+      // decision pointing at a non-existent finding → FK violation.)
+      const { data: inserted, error: findErr } = await db.from('audit_findings').insert({
         audit_id: auditId,
         category_index: null,
         severity: reason === 'upstream_error' || reason === 'unreachable' ? 'high' : 'medium',
@@ -131,9 +131,11 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
         confidence_level: 'deterministic',
         finding_type: 'manual',
         status: 'open',
-      }], { label: 'promote coverage limitation', auditId })
-      if (!res.ok) return NextResponse.json({ error: `Could not create finding: ${res.errorMessage}` }, { status: 500 })
-      findingId = newId
+      }).select('id').single()
+      if (findErr || !inserted) {
+        return NextResponse.json({ error: `Could not create finding: ${findErr?.message || 'no row returned'}` }, { status: 500 })
+      }
+      findingId = inserted.id
     }
 
     // ── Persist the decision (workspace memory) ──

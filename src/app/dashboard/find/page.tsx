@@ -34,6 +34,7 @@ import {
   Search as SearchIcon,
   X,
   Download,
+  Info,
 } from 'lucide-react';
 import {
   prepareFindingsForExport,
@@ -49,6 +50,7 @@ import {
   PHASE1_MODULES,
 } from '@/lib/dashboard/latest-audit';
 import { useAuditBundle } from '@/context/AuditBundleContext';
+import CoverageLimitationsModal from '@/components/dashboard/v2/CoverageLimitationsModal';
 import { useWorkspace } from '@/context/WorkspaceContext';
 import EmptyAudit from '@/components/dashboard/v2/EmptyAudit';
 import PriorityRecommendations, { derivePriorityRecs } from '@/components/dashboard/v2/PriorityRecommendations';
@@ -135,6 +137,7 @@ function FindPageInner() {
   const { workspace, workspaceSlug, loading: wsLoading } = useWorkspace();
   const dashPrefix = workspaceSlug ? `/dashboard/${workspaceSlug}` : '/dashboard';
   const { bundle, loading: bundleLoading } = useAuditBundle();
+  const [limitationsOpen, setLimitationsOpen] = useState(false);
   const searchParams = useSearchParams();
   const loading = authLoading || wsLoading || bundleLoading || !bundle;
   const [collapsed, setCollapsed] = useState<Record<number, boolean>>({});
@@ -379,17 +382,30 @@ function FindPageInner() {
         title="Find"
         subtitle="What is hurting your site right now, ranked by impact."
       >
-        {allGroups.length > 0 && (
+        <div className="flex items-center gap-2">
           <button
-            onClick={handleExportFindings}
-            className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-[13px] font-semibold transition-opacity hover:opacity-90"
-            style={{ background: 'var(--ink)', color: 'var(--paper)' }}
+            onClick={() => setLimitationsOpen(true)}
+            className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg text-[12px] font-medium transition-colors"
+            style={{ border: '1px solid var(--rule)', color: 'var(--ink)' }}
           >
-            <Download size={14} strokeWidth={2} />
-            Export fixes
+            <Info size={13} strokeWidth={2} />
+            Coverage limitations
           </button>
-        )}
+          {allGroups.length > 0 && (
+            <button
+              onClick={handleExportFindings}
+              className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-[13px] font-semibold transition-opacity hover:opacity-90"
+              style={{ background: 'var(--ink)', color: 'var(--paper)' }}
+            >
+              <Download size={14} strokeWidth={2} />
+              Export fixes
+            </button>
+          )}
+        </div>
       </PageHeader>
+      {(bundle.audit as any)?.id && (
+        <CoverageLimitationsModal auditId={(bundle.audit as any).id} open={limitationsOpen} onClose={() => setLimitationsOpen(false)} />
+      )}
 
       {/* Trust layer — page-level confidence strip */}
       <AuditConfidenceStrip
