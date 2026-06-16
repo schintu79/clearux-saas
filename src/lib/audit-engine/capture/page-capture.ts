@@ -18,6 +18,7 @@
 
 import type { DomFacts } from '@/lib/audit-engine/pipeline/dom-verification'
 import { insertChecked, type InsertCheckedResult } from '@/lib/db/checked-write'
+import { isUpstreamErrorBody } from '@/lib/audit-engine/error-body'
 
 /** Bump when the capture row SHAPE changes. Analyzers declare which they support. */
 export const CAPTURE_SCHEMA_VERSION = 'v1'
@@ -107,12 +108,16 @@ export function buildPageCaptureRows(args: {
     .filter((p) => p && typeof p.url === 'string' && p.url.length > 0)
     .map((p) => {
       const dom = domByKey.get(urlKey(p.url)) || null
+      // Defense in depth: if a proxy/upstream error body slipped through as
+      // content, the capture is not a real page — mark it failed so no analyzer
+      // ever treats it as content.
+      const isErrorBody = isUpstreamErrorBody(p.content_text)
       return {
         audit_id: auditId,
         workspace_id: workspaceId,
         user_id: userId,
         page_url: p.url,
-        page_status: captureStatusFromCrawl(p.crawl_status),
+        page_status: isErrorBody ? 'failed' : captureStatusFromCrawl(p.crawl_status),
         http_status: p.status_code ?? null,
         capture_schema_version: CAPTURE_SCHEMA_VERSION,
         capture_renderer_version: CAPTURE_RENDERER_VERSION,

@@ -96,6 +96,7 @@ import { matchFindingToCategory } from '@/lib/audit-engine/pipeline/category-key
 import { WcagOverview } from '@/components/dashboard/v2/WcagChecklist';
 import { ACCURACY_TOOLTIP, AccuracyTooltip } from '@/components/dashboard/AIXRayComparison';
 import AuditActivityFeed from '@/components/dashboard/AuditActivityFeed';
+import CoverageLimitationsModal from '@/components/dashboard/v2/CoverageLimitationsModal';
 
 /* ── Helpers ─────────────────────────────────────────────── */
 
@@ -1126,6 +1127,7 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
   const [retrying, setRetrying] = useState(false);
   const [restarting, setRestarting] = useState(false);
   const [verifying, setVerifying] = useState(false);
+  const [limitationsOpen, setLimitationsOpen] = useState(false);
   type AuditTab = 'overview' | 'summary' | 'findings' | 'pages' | 'responsive' | 'technical_health' | 'wcag' | 'ai_xray' | 'intelligence' | 'brand_identity' | 'brand_audit';
   const VALID_TABS: AuditTab[] = ['overview', 'summary', 'findings', 'pages', 'responsive', 'technical_health', 'wcag', 'ai_xray', 'intelligence', 'brand_identity', 'brand_audit'];
   const initialTabFromHash = ((): AuditTab => {
@@ -2584,6 +2586,19 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
                   ))}
                 </div>
               )}
+
+              {/* Coverage limitations — inspect pages we couldn't fully analyze,
+                  re-check live, dismiss or promote to a finding. */}
+              <div className="mb-4">
+                <button
+                  type="button"
+                  onClick={() => setLimitationsOpen(true)}
+                  className="inline-flex items-center gap-2 border border-ink/20 text-ink text-[11px] font-semibold tracking-[0.03em] uppercase px-4 py-2 rounded-lg hover:bg-paper-2 transition-colors"
+                >
+                  <Info size={14} /> Review coverage limitations
+                </button>
+              </div>
+              <CoverageLimitationsModal auditId={auditId} open={limitationsOpen} onClose={() => setLimitationsOpen(false)} />
 
               {/* Top Priority Recommendations — shown first for immediate actionability */}
               {(rawJson?.topRecommendations?.length > 0 || rawJson?.keyRecommendation) && (

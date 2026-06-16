@@ -13,6 +13,8 @@
 // Additive + offline: nothing here is wired into the live pipeline yet.
 // ============================================================
 
+import { isUpstreamErrorBody } from '@/lib/audit-engine/error-body'
+
 /** A capture row as analysis consumes it (subset of public.page_captures). */
 export interface CaptureBucketPage {
   page_url: string
@@ -26,7 +28,7 @@ export interface CaptureBucketPage {
 /** Capture lifecycle states whose evidence is usable for analysis. */
 const ANALYZABLE_STATES = new Set(['complete', 'partial'])
 
-/** Keep only captures with enough evidence to analyze (skip failed/empty). */
+/** Keep only captures with enough evidence to analyze (skip failed/empty/error). */
 export function analyzableCaptures(captures: CaptureBucketPage[]): CaptureBucketPage[] {
   return (captures || []).filter(
     (c) =>
@@ -34,7 +36,10 @@ export function analyzableCaptures(captures: CaptureBucketPage[]): CaptureBucket
       typeof c.page_url === 'string' &&
       c.page_url.length > 0 &&
       (c.page_status == null || ANALYZABLE_STATES.has(c.page_status)) &&
-      !!(c.extracted_text && c.extracted_text.trim().length > 0),
+      !!(c.extracted_text && c.extracted_text.trim().length > 0) &&
+      // Final net: never analyze a proxy/upstream error body even if it was
+      // mis-marked 'complete' upstream of here.
+      !isUpstreamErrorBody(c.extracted_text),
   )
 }
 
