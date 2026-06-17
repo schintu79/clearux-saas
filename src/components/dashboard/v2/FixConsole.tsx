@@ -599,10 +599,10 @@ function EvidenceSection({
               Current value
             </span>
             <div
-              className="px-2.5 py-1.5 rounded text-[11px] font-mono leading-relaxed whitespace-pre-wrap max-h-[80px] overflow-y-auto"
+              className="px-2.5 py-1.5 rounded text-[11px] font-mono leading-relaxed whitespace-pre-wrap max-h-[220px] overflow-y-auto"
               style={{ background: 'color-mix(in srgb, var(--severe) 5%, transparent)', border: '1px solid color-mix(in srgb, var(--severe) 15%, transparent)', color: 'var(--ink-2)' }}
             >
-              {evidenceSnippet.length > 200 ? evidenceSnippet.slice(0, 200) + '...' : evidenceSnippet}
+              {evidenceSnippet.length > 4000 ? evidenceSnippet.slice(0, 4000) + '\n…(truncated)' : evidenceSnippet}
             </div>
           </div>
         )}
