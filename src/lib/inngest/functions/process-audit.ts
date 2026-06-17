@@ -1876,10 +1876,11 @@ Return 2-6 findings. Be specific and evidence-based. Reference specific files/co
           }
 
           await auditLog(auditId, 'wcag_check_completed', 'success',
-            `WCAG 2.1 AA check: ${wcagResult.totalFindings} findings, score ${wcagResult.overallScore}/100`, {
+            `WCAG 2.1 AA check: ${wcagResult.totalFindings} findings, score ${wcagResult.overallScore}/100, DOM facts on ${domFactsByUrl.size}/${wcagTargetUrls.slice(0, maxUrls).length} page(s)`, {
               findings_count: wcagResult.totalFindings,
               pages_checked: wcagResult.pages.length,
               overall_score: wcagResult.overallScore,
+              dom_facts_pages: domFactsByUrl.size,
             })
 
           return {
