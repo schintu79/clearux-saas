@@ -1072,6 +1072,49 @@ async function captureDomFacts(page: Page): Promise<DomFacts> {
   })
 }
 
+/**
+ * A DOM snapshot is "hollow" when the page evidently had not rendered yet at
+ * capture time: no headings, no links, and none of the structural landmarks.
+ * On heavy/SPA pages the domcontentloaded navigation fallback can snapshot the
+ * pre-hydration DOM, producing a hollow result that run-to-run variance makes
+ * intermittent. A hollow snapshot is dangerous to KEEP: fed to the analyzer it
+ * asserts "this page has no headings/landmarks" and can mint false structural
+ * findings. So we never store a hollow snapshot — we retry once, then drop it.
+ */
+function domFactsAreHollow(d: DomFacts): boolean {
+  return (
+    d.headings.length === 0 &&
+    d.links.length === 0 &&
+    !d.landmarks.main &&
+    d.landmarks.nav === 0 &&
+    !d.landmarks.header &&
+    !d.landmarks.footer
+  )
+}
+
+/**
+ * Capture DOM facts with one retry — the fix for intermittent empty domFacts.
+ * Retries once (after letting the page settle) if the first snapshot is hollow
+ * or the evaluate throws. Returns a real snapshot, or null if we never got a
+ * non-hollow one (caller then leaves the URL out rather than asserting an empty
+ * page). Null is safe: downstream gates fall back to text-based analysis.
+ */
+async function captureDomFactsResilient(page: Page, url: string): Promise<DomFacts | null> {
+  let last: DomFacts | null = null
+  for (let attempt = 0; attempt < 2; attempt++) {
+    try {
+      const facts = await captureDomFacts(page)
+      if (!domFactsAreHollow(facts)) return facts // good, real snapshot
+      last = facts
+    } catch (domErr) {
+      console.warn(`[wcag-checker] DOM facts capture attempt ${attempt + 1} failed for ${url}:`, (domErr as Error)?.message)
+    }
+    if (attempt === 0) await new Promise((resolve) => setTimeout(resolve, 1500)) // let the page hydrate, then retry
+  }
+  if (last) console.warn(`[wcag-checker] DOM facts still hollow for ${url} after retry — dropping (page likely under-rendered)`)
+  return null
+}
+
 export async function checkWcagAutomated(
   urls: string[],
   maxPages: number = 3,
@@ -1128,12 +1171,11 @@ export async function checkWcagAutomated(
         const results = await runAutomatedChecks(page, url)
         automatedResults.set(url, results)
 
-        // Capture the structural DOM snapshot for the P1 verification gate (non-fatal)
-        try {
-          domFactsByUrl.set(url, await captureDomFacts(page))
-        } catch (domErr) {
-          console.warn(`[wcag-checker] DOM facts capture failed for ${url}:`, (domErr as Error)?.message)
-        }
+        // Capture the structural DOM snapshot for the P1 verification gate
+        // (non-fatal, with one retry; hollow snapshots are dropped so we never
+        // assert an un-rendered page is empty).
+        const facts = await captureDomFactsResilient(page, url)
+        if (facts) domFactsByUrl.set(url, facts)
 
         // Accumulate the rendered colour palette (non-fatal)
         try {
