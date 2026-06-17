@@ -350,10 +350,19 @@ export async function PATCH(
       }
 
       const previousStatus = (finding as any).status
+      // Keep the action-model fix_status in sync with the lifecycle status.
+      // The Fix list badge prefers fix_status while the header dropdown shows
+      // status; the action_mode path already maps action_mode→status, but the
+      // reverse was missing, so reopening via the header left fix_status stale
+      // ('in_progress') → list said "In Progress" while the header said "Open".
+      const STATUS_TO_FIX_STATUS: Record<string, string> = {
+        open: 'unreviewed', in_progress: 'in_progress', fixed: 'fixed', backlog: 'deferred',
+      }
       const { error: updateErr } = await db
         .from('audit_findings')
         .update({
           status,
+          fix_status: STATUS_TO_FIX_STATUS[status],
           status_updated_at: new Date().toISOString(),
           status_note: note || null,
         } as any)
