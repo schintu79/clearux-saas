@@ -58,21 +58,20 @@ describe('mapAxeViolationsToFindings', () => {
     expect(f.evidence).toMatch(/\.hero > p/)
   })
 
-  it('gives a real principle-based WHY, a distinct reference, and a fix without the URL (no duplication)', () => {
-    const [f] = mapAxeViolationsToFindings([violation({})], 'https://x.com/')
-    // WHY IT MATTERS: derived from the WCAG principle (1.x = perceivable), not generic boilerplate.
-    expect(f.whyItMatters).toMatch(/perceive|screen-reader|low vision/i)
-    // Reference surfaced once, separately — NOT inlined into the fix.
-    expect(f.helpUrl).toBe('https://dequeuniversity.com/rules/axe/4.7/color-contrast')
-    expect(f.recommendation).not.toMatch(/http/)
-    // WHAT names the affected count + example element.
-    expect(f.description).toMatch(/1 element on this page fails this check — e\.g\. \.hero > p/)
+  it('enriches a mapped rule with surgical, element-specific what/why/fix and a distinct full reference', () => {
+    const [f] = mapAxeViolationsToFindings([violation({})], 'https://x.com/') // color-contrast (mapped)
+    expect(f.whyItMatters).toMatch(/low vision|colour-blind|read/i) // specific, not generic boilerplate
+    expect(f.helpUrl).toBe('https://dequeuniversity.com/rules/axe/4.7/color-contrast') // full reference
+    expect(f.recommendation).not.toMatch(/http/) // reference is NOT inlined into the fix
+    expect(f.recommendation).toMatch(/contrast|ratio|4\.5/i) // actionable, rule-specific
+    expect(f.description).toContain('.hero > p') // names the actual failing element
+    expect(f.description).toMatch(/contrast/i)
   })
 
-  it('maps each WCAG principle to a distinct impact (operable / understandable / robust)', () => {
-    const op = mapAxeViolationsToFindings([violation({ tags: ['wcag211'] })], 'https://x.com/')[0]
-    const un = mapAxeViolationsToFindings([violation({ tags: ['wcag332'] })], 'https://x.com/')[0]
-    const ro = mapAxeViolationsToFindings([violation({ tags: ['wcag412'] })], 'https://x.com/')[0]
+  it('falls back to principle-based guidance for UNMAPPED rules (works on any site)', () => {
+    const op = mapAxeViolationsToFindings([violation({ id: 'unmapped-op', tags: ['wcag211'] })], 'https://x.com/')[0]
+    const un = mapAxeViolationsToFindings([violation({ id: 'unmapped-un', tags: ['wcag332'] })], 'https://x.com/')[0]
+    const ro = mapAxeViolationsToFindings([violation({ id: 'unmapped-ro', tags: ['wcag412'] })], 'https://x.com/')[0]
     expect(op.whyItMatters).toMatch(/keyboard|operate/i)
     expect(un.whyItMatters).toMatch(/misunderstand|errors|abandonment/i)
     expect(ro.whyItMatters).toMatch(/assistive technolog|interpret/i)

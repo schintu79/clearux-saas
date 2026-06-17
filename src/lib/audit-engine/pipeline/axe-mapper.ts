@@ -19,6 +19,8 @@
 //     evidence — "show your work".
 // ============================================================
 
+import { enrichAxeFinding } from './axe-knowledge'
+
 /* ── axe-core result shapes (minimal — only what we consume) ── */
 
 export interface AxeNode {
@@ -56,23 +58,6 @@ export interface AxeMappedFinding {
   pageUrl: string
   detectionSource: 'axe'
   confidenceLevel: 'deterministic'
-}
-
-/** WCAG principle from a "1.4.3"-style criterion (1=perceivable … 4=robust). */
-function wcagPrincipleImpact(criterion: string | null): string {
-  const p = criterion ? criterion.charAt(0) : ''
-  switch (p) {
-    case '1':
-      return 'People who can\'t fully perceive this — screen-reader users, people with low vision or colour-blindness — may miss the content or be unable to use the page.'
-    case '2':
-      return 'People who navigate by keyboard or assistive technology may be unable to operate this, blocking them from completing actions on the page.'
-    case '3':
-      return 'Visitors may misunderstand or be unable to complete this, which increases errors, confusion, and abandonment.'
-    case '4':
-      return 'Assistive technologies may fail to interpret this correctly, so screen-reader and other AT users get a broken experience — and it can hurt how search engines parse the page.'
-    default:
-      return 'This accessibility defect can prevent some visitors — especially those using assistive technology — from using part of the page.'
-  }
 }
 
 const ACCESSIBILITY_CATEGORY_INDEX = 20
@@ -132,16 +117,23 @@ export function mapAxeViolationsToFindings(
       ].filter(Boolean)
 
       const titlePrefix = criterion ? `[WCAG ${criterion}] ` : ''
-      const count = v.nodes.length
-      // Richer WHAT: name the count + an example element, then the rule meaning.
-      const description = `${count} element${count === 1 ? '' : 's'} on this page ${count === 1 ? 'fails' : 'fail'} this check${primarySelector ? ` — e.g. ${primarySelector}` : ''}. ${v.description || v.help}.`
+      // Surgical enrichment: per-rule expert knowledge + the actual failing
+      // element. Unmapped rules fall back to principle-based guidance.
+      const enriched = enrichAxeFinding({
+        ruleId: v.id,
+        help: v.help,
+        description: v.description || v.help,
+        helpUrl: v.helpUrl || null,
+        criterion,
+        selector: primarySelector,
+        count: v.nodes.length,
+      })
       return {
         title: `${titlePrefix}${v.help}`,
-        description,
-        // FIX = the plain directive only (the reference lives in the technical note, not repeated here).
-        recommendation: v.help,
-        whyItMatters: wcagPrincipleImpact(criterion),
-        helpUrl: v.helpUrl || null,
+        description: enriched.what,
+        recommendation: enriched.fix,
+        whyItMatters: enriched.why,
+        helpUrl: enriched.reference,
         severity,
         targetElement: primarySelector,
         evidence: evidenceParts.join(' — '),
