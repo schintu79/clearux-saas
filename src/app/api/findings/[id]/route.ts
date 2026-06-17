@@ -520,6 +520,21 @@ export async function PATCH(
         }
       }
 
+      // ── Phase 3 — fire fix verification (dark launch behind flag) ──
+      // The FixConsole "Mark fixed" button comes through THIS path via
+      // action_mode='fixed' (which set status='fixed' above). Without this the
+      // verify job only fired from the header-dropdown status path. Fire-and-forget.
+      if (updates.status === 'fixed' && getFeatureFlags().fixOutcomes) {
+        try {
+          await inngest.send({
+            name: 'fix/verify-requested',
+            data: { findingId, userId: user.id, markedFixedAt: new Date().toISOString() },
+          })
+        } catch (sendErr) {
+          console.error('[findings-api] fix/verify-requested (action_mode) send failed (non-fatal):', sendErr)
+        }
+      }
+
       return NextResponse.json({
         success: true,
         action_mode,
