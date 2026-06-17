@@ -103,10 +103,13 @@ function AccuracyTooltip({ accuracyKey, children }: { accuracyKey: string; child
   const [open, setOpen] = useState(false);
   const anchorRef = useRef<HTMLDivElement>(null);
   const [pos, setPos] = useState<{ top: number; left: number } | null>(null);
-  const tip = ACCURACY_TOOLTIP[accuracyKey];
-  if (!tip) return <>{children}</>;
 
-  // eslint-disable-next-line react-hooks/rules-of-hooks
+  // ALL hooks must run unconditionally. This effect previously sat AFTER the
+  // `if (!tip) return` guard below, so a tooltip whose accuracyKey changed from
+  // unmapped (e.g. undefined while data loads) to mapped rendered a different
+  // number of hooks across renders → React error #310 ("Rendered more hooks
+  // than during the previous render"), the intermittent "Something went wrong"
+  // on refresh. Hooks first; the conditional return comes after them.
   useEffect(() => {
     if (!open || !anchorRef.current) return;
     const rect = anchorRef.current.getBoundingClientRect();
@@ -115,6 +118,9 @@ function AccuracyTooltip({ accuracyKey, children }: { accuracyKey: string; child
       left: rect.left + rect.width / 2 + window.scrollX,
     });
   }, [open]);
+
+  const tip = ACCURACY_TOOLTIP[accuracyKey];
+  if (!tip) return <>{children}</>;
 
   return (
     <div
