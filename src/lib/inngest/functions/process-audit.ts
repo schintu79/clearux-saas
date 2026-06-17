@@ -20,8 +20,6 @@ import { applyScoringSeverityCap, capSummarySentence } from '@/lib/scoring/sever
 import { createServiceSupabase } from '@/lib/supabase-server'
 import { crawlPages, formatHeadTagsForAnalysis, type HeadTagData } from '@/lib/audit-engine/crawler'
 import { prioritizePagesForChecks } from '@/lib/audit-engine/page-relevance'
-import { classifyInputRelevance } from '@/lib/audit-engine/pipeline/input-relevance-gate'
-import { classifySpeculativeUx } from '@/lib/audit-engine/pipeline/speculative-ux-gate'
 import { composeFindings } from '@/lib/audit-engine/compose/compose'
 import { pageContentChanged, type PageContentFacts } from '@/lib/audit-engine/content-change'
 import { buildPageCaptureRows, writePageCaptures, CAPTURE_SCHEMA_VERSION } from '@/lib/audit-engine/capture/page-capture'
@@ -4293,59 +4291,13 @@ RULES FOR RE-AUDIT:
         }
       }
 
-      // ── 2d-bis. Input-relevance gate ─────────────────────────
-      // axe/wcag fire "Labels or Instructions" on ANY unlabeled <input>,
-      // including decorative search/newsletter/autofill fields on content pages.
-      // A label/instruction defect is only relevant where the user must enter
-      // real data (signup, login, contact, checkout…). Drop label/instruction
-      // findings that landed on a non-input page (e.g. the raseed /en homepage).
-      // Conservative: only the label/instruction class, only non-input pages,
-      // broad input-page allowlist so genuine forms are never suppressed.
-      // Symptom gate — retired when Compose is active (Compose's general
-      // definition-of-done covers this class).
-      if (findings.length > 0 && process.env.COMPOSE_MODE !== 'active') {
-        const relevance = classifyInputRelevance(
-          findings.map(f => ({
-            id: f.id, title: f.title, description: f.description, page_url: f.page_url,
-            detection_source: f.detection_source || null,
-          })),
-        )
-        if (relevance.offRelevanceIds.length > 0) {
-          for (const id of relevance.offRelevanceIds) idsToDelete.add(id)
-          findings = findings.filter(f => !idsToDelete.has(f.id))
-          await auditLog(auditId, 'input_relevance_filtered', 'info',
-            `Removed ${relevance.offRelevanceIds.length} label/instruction finding${relevance.offRelevanceIds.length > 1 ? 's' : ''} on non-input pages (no genuine user-entry form there)`)
-          for (const [id, reason] of Object.entries(relevance.reasons)) {
-            console.log(`[inngest] Input relevance: dropped ${id} — ${reason}`)
-          }
-        }
-      }
-
-      // ── 2d-ter. Speculative-UX noise gate ────────────────────
-      // The LLM invents "user confusion" about self-evident UI (e.g. "two
-      // confusing CTAs with unclear purpose" for clearly-labelled distinct
-      // buttons). A CTA prompts action; it need not pre-narrate its destination.
-      // Drop LLM speculative CTA-clarity findings — but KEEP any that cite
-      // concrete evidence of genuine ambiguity (identical labels, misleading
-      // text). Never touches deterministic findings.
-      // Symptom gate — retired when Compose is active.
-      if (findings.length > 0 && process.env.COMPOSE_MODE !== 'active') {
-        const spec = classifySpeculativeUx(
-          findings.map(f => ({
-            id: f.id, title: f.title, description: f.description,
-            detection_source: f.detection_source || null,
-          })),
-        )
-        if (spec.dropIds.length > 0) {
-          for (const id of spec.dropIds) idsToDelete.add(id)
-          findings = findings.filter(f => !idsToDelete.has(f.id))
-          await auditLog(auditId, 'speculative_ux_filtered', 'info',
-            `Removed ${spec.dropIds.length} speculative CTA-clarity finding${spec.dropIds.length > 1 ? 's' : ''} (unclear purpose/destination of self-evident controls, no evidence of genuine ambiguity)`)
-          for (const [id, reason] of Object.entries(spec.reasons)) {
-            console.log(`[inngest] Speculative-UX: dropped ${id} — ${reason}`)
-          }
-        }
-      }
+      // ── 2d-bis / 2d-ter. (Retired 2026-06-17) ────────────────
+      // The per-symptom input-relevance and speculative-UX gates were removed
+      // here. Compose (gate 2g) is permanently active and its general
+      // definition-of-done judge — "drop interpretive findings not supported by
+      // the page's evidence" — subsumes both: label/instruction findings on
+      // non-input pages and speculative CTA-clarity claims are dropped by the
+      // judge, without per-phrasing pattern-matching the LLM could rephrase past.
 
       // ── 2e. DOM verification gate (P1 — the durable moat) ───
       // Evidence-based version of 2d: any LLM finding asserting an element is
