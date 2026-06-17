@@ -780,8 +780,11 @@ function FixPageInner() {
     const prev = bundle?.findings.find((f) => f.id === id)?.status;
     statusChangeInFlight.current = true;
     setPending((p) => ({ ...p, [id]: true }));
-    // Optimistic update via shared context — all consumers see it instantly
-    updateFindingLocally(id, { status });
+    // Optimistic update via shared context — all consumers see it instantly.
+    // Sync fix_status too (the list badge prefers it) so the list and the header
+    // agree immediately, matching the server-side sync in /api/findings.
+    const statusToFixStatus: Record<string, string> = { open: 'unreviewed', in_progress: 'in_progress', fixed: 'fixed', backlog: 'deferred' };
+    updateFindingLocally(id, { status, fix_status: statusToFixStatus[status] } as Partial<AuditFinding>);
     try {
       const res = await fetch(`/api/findings/${id}`, {
         method: 'PATCH',
