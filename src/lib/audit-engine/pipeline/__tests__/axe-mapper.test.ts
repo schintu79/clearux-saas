@@ -58,6 +58,26 @@ describe('mapAxeViolationsToFindings', () => {
     expect(f.evidence).toMatch(/\.hero > p/)
   })
 
+  it('gives a real principle-based WHY, a distinct reference, and a fix without the URL (no duplication)', () => {
+    const [f] = mapAxeViolationsToFindings([violation({})], 'https://x.com/')
+    // WHY IT MATTERS: derived from the WCAG principle (1.x = perceivable), not generic boilerplate.
+    expect(f.whyItMatters).toMatch(/perceive|screen-reader|low vision/i)
+    // Reference surfaced once, separately — NOT inlined into the fix.
+    expect(f.helpUrl).toBe('https://dequeuniversity.com/rules/axe/4.7/color-contrast')
+    expect(f.recommendation).not.toMatch(/http/)
+    // WHAT names the affected count + example element.
+    expect(f.description).toMatch(/1 element on this page fails this check — e\.g\. \.hero > p/)
+  })
+
+  it('maps each WCAG principle to a distinct impact (operable / understandable / robust)', () => {
+    const op = mapAxeViolationsToFindings([violation({ tags: ['wcag211'] })], 'https://x.com/')[0]
+    const un = mapAxeViolationsToFindings([violation({ tags: ['wcag332'] })], 'https://x.com/')[0]
+    const ro = mapAxeViolationsToFindings([violation({ tags: ['wcag412'] })], 'https://x.com/')[0]
+    expect(op.whyItMatters).toMatch(/keyboard|operate/i)
+    expect(un.whyItMatters).toMatch(/misunderstand|errors|abandonment/i)
+    expect(ro.whyItMatters).toMatch(/assistive technolog|interpret/i)
+  })
+
   it('caps evidence selectors and reports the overflow count', () => {
     const nodes = Array.from({ length: 7 }, (_, i) => ({ target: [`.item-${i}`] }))
     const [f] = mapAxeViolationsToFindings([violation({ nodes })], 'https://x.com/', { maxNodesInEvidence: 3 })
