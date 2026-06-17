@@ -739,6 +739,22 @@ function FindingCard({ finding, pillarColor, categoryName, pillarName, pillarInd
       {open && (
         <div className="border-t border-rule/40">
 
+          {/* Phase 3 — automated re-check CONFIRMED the fix landed */}
+          {(finding as any).verified_fixed_at && (
+            <div className="flex items-start gap-2.5 px-5 py-3.5 bg-ok/5 border-b border-ok/15">
+              <CheckCircle2 size={14} className="text-ok flex-shrink-0 mt-0.5" />
+              <div>
+                <p className="text-[11px] font-semibold text-ink mb-0.5 tracking-[0.03em] uppercase">Verified fixed</p>
+                <p className="text-[13px] text-ok leading-[1.65]">
+                  An automated re-check re-ran the original test on this page and confirmed the issue is no longer present.
+                </p>
+                <p className="text-[11px] text-m-muted mt-1">
+                  {(() => { try { return `Re-checked ${new Date((finding as any).verified_fixed_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}.` } catch { return 'Re-checked recently.' } })()}
+                </p>
+              </div>
+            </div>
+          )}
+
           {/* AI Verification Note — Likely Fixed */}
           {(finding as any).verification_status === 'likely_fixed' && (finding as any).verification_note && (
             <div className="flex items-start gap-2.5 px-5 py-3.5 bg-ok/5 border-b border-ok/15">

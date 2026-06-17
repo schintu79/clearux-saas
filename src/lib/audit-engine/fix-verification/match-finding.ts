@@ -51,6 +51,13 @@ export function normalizeSelector(s: string | null | undefined): string {
   return (s || '').toLowerCase().replace(/\s+/g, ' ').trim()
 }
 
+/** Normalize a title for identity comparison (pagespeed diagnostics have stable
+ *  titles, so the title is a precise per-diagnostic key — more precise than the
+ *  shared CWV metric, which several diagnostics map to). */
+export function normalizeTitle(s: string | null | undefined): string {
+  return (s || '').toLowerCase().replace(/\s+/g, ' ').trim()
+}
+
 /** Two selectors "overlap" if equal or one contains the other (e.g. a re-check
  *  reports a broader/narrower path to the same element). */
 export function selectorsOverlap(a: string | null, b: string | null): boolean {
@@ -105,7 +112,9 @@ export function originalMatchKey(finding: {
     case 'wcag_checker':
       return { source, key: parseWcagCriterion(finding.title), selector, metric: null }
     case 'pagespeed_api':
-      return { source, key: null, selector: null, metric: finding.performance_metric_type || null }
+      // Title is the precise per-diagnostic identity (stable strings); metric is
+      // kept for context but several diagnostics share one metric.
+      return { source, key: normalizeTitle(finding.title), selector: null, metric: finding.performance_metric_type || null }
     case 'structured_data':
       return { source, key: parseSchemaType(finding.title), selector: null, metric: null }
     default:

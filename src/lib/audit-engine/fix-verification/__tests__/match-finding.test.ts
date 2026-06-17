@@ -91,9 +91,9 @@ describe('originalMatchKey', () => {
     expect(originalMatchKey({ detection_source: 'axe', title: '[WCAG 1.4.3] contrast', target_element: '.x' }))
       .toEqual({ source: 'axe', key: '1.4.3', selector: '.x', metric: null })
   })
-  it('keys pagespeed by metric', () => {
-    expect(originalMatchKey({ detection_source: 'pagespeed_api', performance_metric_type: 'lcp', title: 'LCP slow' }))
-      .toEqual({ source: 'pagespeed_api', key: null, selector: null, metric: 'lcp' })
+  it('keys pagespeed by its (stable) title, keeps metric for context', () => {
+    expect(originalMatchKey({ detection_source: 'pagespeed_api', performance_metric_type: 'tbt', title: 'Unused JavaScript loaded on page' }))
+      .toEqual({ source: 'pagespeed_api', key: 'unused javascript loaded on page', selector: null, metric: 'tbt' })
   })
   it('keys structured-data by schema type', () => {
     expect(originalMatchKey({ detection_source: 'structured_data', title: 'No Organization structured data found' }))

@@ -274,6 +274,7 @@ const DashboardShell: React.FC<DashboardShellProps> = ({ children }) => {
         { label: 'Find', href: `${navBase}/find`, icon: Search, matchPaths: [`${navBase}/audits`], count: findingsCount ?? undefined },
         { label: 'Fix', href: `${navBase}/fix`, icon: Wrench, count: findingsCount ?? undefined },
         { label: 'Track', href: `${navBase}/track`, icon: LineChart },
+        { label: 'Impact', href: `${navBase}/impact`, icon: ShieldCheck },
         { label: 'Connect site', href: `${navBase}/connect`, icon: Server },
       ],
     },
