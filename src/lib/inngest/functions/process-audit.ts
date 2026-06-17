@@ -5838,7 +5838,7 @@ RULES FOR RE-AUDIT:
           const db = getDb()
           const { data: findingsWithTargets } = await db
             .from('audit_findings')
-            .select('id, title, severity, target_element, page_url')
+            .select('id, title, severity, target_element, page_url, confidence_level, detection_source')
             .eq('audit_id', auditId)
             .order('sort_order', { ascending: true })
 
@@ -5848,6 +5848,8 @@ RULES FOR RE-AUDIT:
             severity: f.severity as string,
             targetElement: f.target_element as string | null,
             pageUrl: f.page_url as string | null,
+            confidenceLevel: f.confidence_level as string | null,
+            detectionSource: f.detection_source as string | null,
           }))
 
           const mainUrl = crawlResult.firstPageUrl || auditDetails.productUrl

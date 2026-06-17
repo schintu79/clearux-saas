@@ -179,10 +179,22 @@ export async function captureScreenshot(
   url: string,
   selector?: string | null,
   label?: string | null,
+  opts?: { elementTargetedOnly?: boolean },
 ): Promise<Buffer | null> {
   const hasScreenshotOne = !!process.env.SCREENSHOTONE_API_KEY
   const hasPageSpeed = true // always available (public API)
   const hasPuppeteer = !!process.env.SCREENSHOT_INTERNAL_KEY
+
+  // elementTargetedOnly: only return a capture that genuinely targets the
+  // element (a real CSS selector successfully highlighted/cropped). Never
+  // substitute a plain page-level screenshot — a top-of-page image presented as
+  // "visual evidence for this finding" is misleading when the finding is about
+  // something further down (or about copy that has no selector at all). If we
+  // can't honestly target the element, we return null and the finding shows no
+  // visual evidence rather than a wrong one.
+  const elementTargetedOnly = !!opts?.elementTargetedOnly
+  const hasValidSelector = !!(selector && isLikelyCSSSelector(selector))
+  if (elementTargetedOnly && !hasValidSelector) return null
 
   if (!hasScreenshotOne && !hasPuppeteer) {
     console.warn(`[screenshots] No screenshot API keys configured. Set SCREENSHOTONE_API_KEY (recommended) or SCREENSHOT_INTERNAL_KEY in your environment variables.`)
@@ -192,26 +204,29 @@ export async function captureScreenshot(
   if (hasScreenshotOne) {
     // If we have a selector, try highlight mode first (scrolls to element + red border)
     // then fall back to plain screenshot if the selector fails
-    if (selector && isLikelyCSSSelector(selector)) {
-      const s1h = await captureViaScreenshotOne(url, selector, 'highlight')
+    if (hasValidSelector) {
+      const s1h = await captureViaScreenshotOne(url, selector!, 'highlight')
       if (s1h) {
         console.log(`[screenshots] ScreenshotOne highlight success: ${url} (${selector})`)
         return s1h
       }
-      console.warn(`[screenshots] ScreenshotOne highlight failed for selector "${selector}", falling back to plain`)
+      console.warn(`[screenshots] ScreenshotOne highlight failed for selector "${selector}"${elementTargetedOnly ? ' — no plain fallback (element-targeted only)' : ', falling back to plain'}`)
+      if (elementTargetedOnly) return null
     }
 
-    // Plain page screenshot (no selector or selector failed)
-    const s1 = await captureViaScreenshotOne(url, null, 'none')
-    if (s1) {
-      console.log(`[screenshots] ScreenshotOne success: ${url}`)
-      return s1
+    // Plain page screenshot (no selector or selector failed) — never for element-targeted requests
+    if (!elementTargetedOnly) {
+      const s1 = await captureViaScreenshotOne(url, null, 'none')
+      if (s1) {
+        console.log(`[screenshots] ScreenshotOne success: ${url}`)
+        return s1
+      }
+      console.warn(`[screenshots] ScreenshotOne failed for: ${url}`)
     }
-    console.warn(`[screenshots] ScreenshotOne failed for: ${url}`)
   }
 
-  // Strategy 2: PageSpeed API (free, page-level only)
-  if (hasPageSpeed) {
+  // Strategy 2: PageSpeed API (free, page-level only) — cannot target an element
+  if (hasPageSpeed && !elementTargetedOnly) {
     const s2 = await captureViaPageSpeed(url)
     if (s2) {
       console.log(`[screenshots] PageSpeed success: ${url}`)
@@ -220,7 +235,7 @@ export async function captureScreenshot(
     console.warn(`[screenshots] PageSpeed failed for: ${url}`)
   }
 
-  // Strategy 3: Self-hosted Puppeteer (fallback)
+  // Strategy 3: Self-hosted Puppeteer (crops to the selector when present)
   if (hasPuppeteer) {
     const s3 = await captureViaPuppeteer(url, selector, label)
     if (s3) {
@@ -278,6 +293,21 @@ export async function uploadScreenshot(
 
 // ── Orchestrate screenshots for an entire audit ────────────────
 
+/** Severity levels important enough to ever warrant a screenshot. */
+const SCREENSHOT_SEVERITIES = new Set(['high', 'critical'])
+
+/** Detection sources that are instrument-measured (verified), not LLM interpretation. */
+const VERIFIED_SOURCES = new Set([
+  'axe', 'wcag_checker', 'responsive_checker', 'pagespeed', 'pagespeed_api',
+  'lighthouse', 'structured_data_checker', 'link_checker', 'security_checker',
+])
+
+/** A finding is "verified" when an instrument measured it (deterministic), not the LLM. */
+function isVerifiedFinding(f: { confidenceLevel?: string | null; detectionSource?: string | null }): boolean {
+  if (f.confidenceLevel === 'deterministic') return true
+  return !!(f.detectionSource && VERIFIED_SOURCES.has(f.detectionSource))
+}
+
 export async function captureAuditScreenshots(
   findings: Array<{
     id: string
@@ -285,6 +315,8 @@ export async function captureAuditScreenshots(
     severity: string
     targetElement?: string | null
     pageUrl?: string | null
+    confidenceLevel?: string | null
+    detectionSource?: string | null
   }>,
   fallbackUrl: string,
   auditId: string,
@@ -296,17 +328,34 @@ export async function captureAuditScreenshots(
   const pageScreenshots = new Map<string, string>()
   const findingScreenshots = new Map<string, string>()
 
-  // 1. Collect unique page URLs
-  const uniqueUrls = new Set<string>()
-  uniqueUrls.add(fallbackUrl)
+  // ── Policy (set by the operator, 2026-06-17): screenshots are expensive, so
+  // we only ever pay for "extremely important + verified" evidence and otherwise
+  // REUSE an image we already have:
+  //   • New (paid) element capture ONLY for VERIFIED high/critical findings that
+  //     carry a real CSS selector.
+  //   • Page-level capture ONLY for pages that have a qualifying high/critical
+  //     finding (no blanket page pass).
+  //   • Other high/critical findings reuse that page's screenshot (free).
+  //   • Medium/low findings get nothing, EXCEPT a verified medium finding may
+  //     reuse an element shot already taken for the same URL+selector.
+  // Reuse caches dedupe so the same image is used N times, never re-shot.
+  const elementCache = new Map<string, string>() // key: `${url}\n${selector}` → public URL
+
+  const isImportant = (f: { severity: string }) => SCREENSHOT_SEVERITIES.has((f.severity || '').toLowerCase())
+  const canShootElement = (f: typeof findings[number]) =>
+    isImportant(f) && isVerifiedFinding(f) && !!(f.targetElement && isLikelyCSSSelector(f.targetElement))
+
+  // 1. Page-level screenshots ONLY for pages that have a qualifying high/critical
+  //    finding — reused across every finding on that page.
+  const pagesNeedingShot = new Set<string>()
   for (const f of findings) {
-    if (f.pageUrl) uniqueUrls.add(f.pageUrl)
+    if (isImportant(f)) pagesNeedingShot.add(f.pageUrl || fallbackUrl)
   }
 
-  // 2. Capture page-level screenshots IN PARALLEL (all at once)
-  console.log(`[screenshots] Capturing ${uniqueUrls.size} page screenshots in parallel`)
+  // 2. Capture those page-level screenshots IN PARALLEL (deduped by URL)
+  console.log(`[screenshots] Capturing ${pagesNeedingShot.size} page screenshots (pages with high/critical findings)`)
   await Promise.all(
-    [...uniqueUrls].map(async (url) => {
+    [...pagesNeedingShot].map(async (url) => {
       try {
         const buf = await captureScreenshot(url)
         if (buf) {
@@ -323,56 +372,78 @@ export async function captureAuditScreenshots(
   )
 
   // 3. Capture finding-specific screenshots
-  //    With ScreenshotOne/Puppeteer: use element highlighting for targeted captures
-  //    Without: fall back to page-level screenshots so findings still have visuals
   const hasAdvancedCapture = !!(process.env.SCREENSHOTONE_API_KEY || process.env.SCREENSHOT_INTERNAL_KEY)
 
-  // Severity first — high/critical findings must keep their screenshots.
-  // Within the same severity, prefer selector-bearing findings (axe and the
-  // other deterministic checks) so the limited element-highlighted captures
-  // go to the findings that can actually be highlighted.
-  const order: Record<string, number> = { critical: 0, high: 1, medium: 2, low: 3 }
-  const prioritized = [...findings]
-    .sort((a, b) => {
-      const sev = (order[a.severity] ?? 4) - (order[b.severity] ?? 4)
-      if (sev !== 0) return sev
-      const aSel = a.targetElement ? 0 : 1
-      const bSel = b.targetElement ? 0 : 1
-      return aSel - bSel
-    })
-    .slice(0, maxFindingScreenshots)
+  const elKey = (url: string, selector: string) => `${url}\n${selector}`
 
-  // Process finding screenshots in parallel batches of 3 (avoid API hammering)
-  console.log(`[screenshots] Capturing ${prioritized.length} finding screenshots (batches of 3)`)
+  // ── PASS A — SHOOT (paid) element captures. Only VERIFIED high/critical
+  // findings with a real selector. Deduped by URL+selector so a defect that
+  // appears on N findings is shot ONCE, then reused. Capped at the budget.
+  const severityRank: Record<string, number> = { critical: 0, high: 1, medium: 2, low: 3 }
+  const seenShoot = new Set<string>()
+  const toShoot: typeof findings = []
+  for (const f of [...findings].sort((a, b) => (severityRank[a.severity] ?? 4) - (severityRank[b.severity] ?? 4))) {
+    if (!hasAdvancedCapture || !canShootElement(f)) continue
+    const key = elKey(f.pageUrl || fallbackUrl, f.targetElement as string)
+    if (seenShoot.has(key)) continue // same element already queued — will reuse
+    seenShoot.add(key)
+    toShoot.push(f)
+    if (toShoot.length >= maxFindingScreenshots) break
+  }
+
+  console.log(`[screenshots] Shooting ${toShoot.length} element screenshots (verified high/critical, deduped)`)
   const SCREENSHOT_CONCURRENCY = 3
-  for (let i = 0; i < prioritized.length; i += SCREENSHOT_CONCURRENCY) {
-    const batch = prioritized.slice(i, i + SCREENSHOT_CONCURRENCY)
+  for (let i = 0; i < toShoot.length; i += SCREENSHOT_CONCURRENCY) {
+    const batch = toShoot.slice(i, i + SCREENSHOT_CONCURRENCY)
     await Promise.all(
       batch.map(async (finding) => {
         try {
           const pageUrl = finding.pageUrl || fallbackUrl
-
-          if (hasAdvancedCapture && finding.targetElement) {
-            const buf = await captureScreenshot(pageUrl, finding.targetElement, `${finding.severity.toUpperCase()}: ${finding.title}`)
-            if (buf) {
-              const publicUrl = await uploadScreenshot(auditId, `finding-${finding.id}.png`, buf)
-              if (publicUrl) {
-                findingScreenshots.set(finding.id, publicUrl)
-                return
-              }
+          const selector = finding.targetElement as string
+          const buf = await captureScreenshot(
+            pageUrl,
+            selector,
+            `${finding.severity.toUpperCase()}: ${finding.title}`,
+            { elementTargetedOnly: true },
+          )
+          if (buf) {
+            const publicUrl = await uploadScreenshot(auditId, `finding-${finding.id}.png`, buf)
+            if (publicUrl) {
+              elementCache.set(elKey(pageUrl, selector), publicUrl)
+              findingScreenshots.set(finding.id, publicUrl)
             }
-          }
-
-          // Fallback: link to existing page screenshot
-          const pageScreenshot = pageScreenshots.get(pageUrl)
-          if (pageScreenshot) {
-            findingScreenshots.set(finding.id, pageScreenshot)
           }
         } catch (err) {
           console.error(`[screenshots] Finding capture failed for ${finding.id}:`, err instanceof Error ? err.message : err)
         }
       })
     )
+  }
+
+  // ── PASS B — REUSE (free). Assign an already-captured image to the remaining
+  // findings; never shoot. No image of the right thing → no screenshot.
+  for (const finding of findings) {
+    if (findingScreenshots.has(finding.id)) continue
+    const url = finding.pageUrl || fallbackUrl
+    const sev = (finding.severity || '').toLowerCase()
+    const hasSel = !!(finding.targetElement && isLikelyCSSSelector(finding.targetElement))
+
+    // Exact element image already shot (for a verified finding) → reuse it for
+    // any high/critical finding, or for a verified medium finding.
+    if (hasSel) {
+      const cached = elementCache.get(elKey(url, finding.targetElement as string))
+      if (cached && (SCREENSHOT_SEVERITIES.has(sev) || (sev === 'medium' && isVerifiedFinding(finding)))) {
+        findingScreenshots.set(finding.id, cached)
+        continue
+      }
+    }
+
+    // Otherwise a high/critical finding reuses that page's screenshot (free).
+    // Medium/low get nothing.
+    if (SCREENSHOT_SEVERITIES.has(sev)) {
+      const pageShot = pageScreenshots.get(url)
+      if (pageShot) findingScreenshots.set(finding.id, pageShot)
+    }
   }
 
   return { pageScreenshots, findingScreenshots }
