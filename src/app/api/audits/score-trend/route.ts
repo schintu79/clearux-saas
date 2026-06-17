@@ -5,6 +5,7 @@
 
 import { NextRequest, NextResponse } from 'next/server'
 import { createServerSupabase, createServiceSupabase } from '@/lib/supabase-server'
+import { applyScoringSeverityCap } from '@/lib/scoring/severity-cap'
 
 export async function GET(request: NextRequest) {
   try {
@@ -64,6 +65,20 @@ export async function GET(request: NextRequest) {
     const reportsMap: Record<string, any> = {}
     for (const r of (reports || [])) reportsMap[(r as any).audit_id] = r
 
+    // Active findings per audit — to apply the SAME severity cap the Website
+    // Health Score card uses, so the trend plots the DISPLAYED (capped) number
+    // rather than the raw category average.
+    const { data: allFindings } = await db
+      .from('audit_findings')
+      .select('audit_id, severity, confidence_level, confidence_score, status, dismissed, verification_status')
+      .in('audit_id', auditIds)
+    const findingsByAudit: Record<string, any[]> = {}
+    for (const f of (allFindings || [])) {
+      const fa = (f as any).audit_id
+      if (!findingsByAudit[fa]) findingsByAudit[fa] = []
+      findingsByAudit[fa].push(f)
+    }
+
     const trend = domainAudits.map((a: any) => {
       const r = reportsMap[a.id]
       const aiVis = r?.ai_visibility_breakdown as any
@@ -90,17 +105,16 @@ export async function GET(request: NextRequest) {
         }
       }
 
-      // Score model v2 (2026-06-11): the recompute above exists only to strip
-      // -1 sentinels, but it was OVERWRITING the stored capped score with the
-      // raw category mean — the trend showed 89 while the health score showed
-      // the true capped 65.
-      // 2026-06-15: the stored overall_score is now authoritatively capped by
-      // the scoring-severity rule (Verified drives; AI capped at medium) at
-      // write time. So cap the -1-stripped recompute to the stored score rather
-      // than re-deriving from nominal counts (which would re-introduce the old
-      // over-cap and disagree with the dashboard).
-      if (overallScore != null && r?.overall_score != null) {
-        overallScore = Math.min(overallScore, r.overall_score)
+      // Plot the DISPLAYED Website Health Score, not the raw category average.
+      // Apply the exact same severity cap the health card uses (Verified drives;
+      // AI capped at medium), per audit, over that audit's ACTIVE findings
+      // (open, non-dismissed, not fixed). This makes Score Over Time and the
+      // audit history match the big number the user sees (e.g. 72, not 92).
+      if (overallScore != null) {
+        const active = (findingsByAudit[a.id] || []).filter(
+          (f: any) => !f.dismissed && f.status !== 'fixed' && f.verification_status !== 'verified_fixed',
+        )
+        overallScore = applyScoringSeverityCap(overallScore, active as any).overall
       }
 
       // Per-module RAW means (overview per-category trend deltas). Simple
