@@ -128,28 +128,25 @@ export async function composeFindings(
   findings: ReadonlyArray<FindingForCompose>,
   pageContentByUrl: Record<string, string>,
   judge: ComposeJudge,
+  opts: { concurrency?: number } = {},
 ): Promise<ComposeResult> {
   const result: ComposeResult = { keptIds: [], droppedIds: [], adjusted: {}, reasons: {} }
   const contentByKey = new Map<string, string>()
   for (const [u, c] of Object.entries(pageContentByUrl || {})) contentByKey.set(u.replace(/\/+$/, ''), c)
 
+  // Partition deterministically first (no IO): floor-drops, trusted instruments,
+  // and the interpretive findings that actually need the judge.
+  const toJudge: FindingForCompose[] = []
   for (const f of findings) {
-    // Floor.
     const floor = definitionOfDoneFloor(f)
     if (floor) { result.droppedIds.push(f.id); result.reasons[f.id] = `definition-of-done: ${floor}`; continue }
+    if (!isLlmSource(f.detection_source)) { result.keptIds.push(f.id); continue } // trust instruments
+    toJudge.push(f)
+  }
 
-    // Trust instruments.
-    if (!isLlmSource(f.detection_source)) { result.keptIds.push(f.id); continue }
-
-    const content = contentByKey.get((f.page_url || '').replace(/\/+$/, '')) || ''
-    let verdict: ComposeVerdict
-    try {
-      verdict = parseComposeVerdict(await judge(buildComposePrompt(f, content)))
-    } catch {
-      result.keptIds.push(f.id) // fail-safe: never drop on judge failure
-      continue
-    }
-
+  // Judge interpretive findings in bounded-concurrency batches (LLM calls).
+  const concurrency = Math.max(1, opts.concurrency ?? 6)
+  const applyVerdict = (f: FindingForCompose, verdict: ComposeVerdict) => {
     if (verdict.action === 'drop') {
       result.droppedIds.push(f.id)
       result.reasons[f.id] = `compose: ${verdict.reason}`
@@ -160,6 +157,18 @@ export async function composeFindings(
     } else {
       result.keptIds.push(f.id)
     }
+  }
+  for (let i = 0; i < toJudge.length; i += concurrency) {
+    const batch = toJudge.slice(i, i + concurrency)
+    const verdicts = await Promise.all(batch.map(async (f) => {
+      const content = contentByKey.get((f.page_url || '').replace(/\/+$/, '')) || ''
+      try {
+        return parseComposeVerdict(await judge(buildComposePrompt(f, content)))
+      } catch {
+        return { action: 'keep' as ComposeAction, reason: 'judge error — kept (fail-safe)' }
+      }
+    }))
+    batch.forEach((f, j) => applyVerdict(f, verdicts[j]))
   }
 
   return result

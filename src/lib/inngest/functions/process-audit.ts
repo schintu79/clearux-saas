@@ -22,6 +22,7 @@ import { crawlPages, formatHeadTagsForAnalysis, type HeadTagData } from '@/lib/a
 import { prioritizePagesForChecks } from '@/lib/audit-engine/page-relevance'
 import { classifyInputRelevance } from '@/lib/audit-engine/pipeline/input-relevance-gate'
 import { classifySpeculativeUx } from '@/lib/audit-engine/pipeline/speculative-ux-gate'
+import { composeFindings } from '@/lib/audit-engine/compose/compose'
 import { pageContentChanged, type PageContentFacts } from '@/lib/audit-engine/content-change'
 import { buildPageCaptureRows, writePageCaptures, CAPTURE_SCHEMA_VERSION } from '@/lib/audit-engine/capture/page-capture'
 import { captureInputParity } from '@/lib/audit-engine/capture/capture-bucket'
@@ -1957,17 +1958,15 @@ Return 2-6 findings. Be specific and evidence-based. Reference specific files/co
     const wcagCheck = parallelChecks.wcag
 
     // ──────────────────────────────────────────────────────────
-    // SHADOW CAPTURE (Capture→Analyze→Compose, Phase 1)
-    // Persist immutable per-page PageCapture artifacts ALONGSIDE the current
-    // flow. Paid audits only + behind FEATURE_CAPTURE_SHADOW (OFF by default).
-    // Reads already-persisted audit_pages + this run's DOM facts — adds NO new
-    // crawl/render cost. Fully non-fatal: any failure is logged loudly via the
-    // checked write but can NEVER affect the audit. Nothing reads this yet.
-    // See docs/AUDIT_PIPELINE_ARCHITECTURE.md.
+    // CAPTURE (Capture→Analyze→Compose, Phase 1) — universal
+    // Persist the immutable per-page PageCapture for EVERY audit. It is the
+    // foundation Compose + coverage-limitations read from. Reads already-
+    // persisted audit_pages + this run's DOM facts — adds NO new crawl/render
+    // cost. Fully non-fatal: any failure is logged loudly via the checked write
+    // but can NEVER affect the audit. See docs/AUDIT_PIPELINE_ARCHITECTURE.md.
     // ──────────────────────────────────────────────────────────
     try {
-      const isPaidAudit = auditDetails.plan !== 'free_preview'
-      if (getFeatureFlags().captureShadow && isPaidAudit) {
+      {
         await step.run('shadow-capture', async () => {
           return withStepTimeout(async () => {
             const db = getDb()
@@ -4298,7 +4297,9 @@ RULES FOR RE-AUDIT:
       // findings that landed on a non-input page (e.g. the raseed /en homepage).
       // Conservative: only the label/instruction class, only non-input pages,
       // broad input-page allowlist so genuine forms are never suppressed.
-      if (findings.length > 0) {
+      // Symptom gate — retired when Compose is active (Compose's general
+      // definition-of-done covers this class).
+      if (findings.length > 0 && process.env.COMPOSE_MODE !== 'active') {
         const relevance = classifyInputRelevance(
           findings.map(f => ({
             id: f.id, title: f.title, description: f.description, page_url: f.page_url,
@@ -4323,7 +4324,8 @@ RULES FOR RE-AUDIT:
       // Drop LLM speculative CTA-clarity findings — but KEEP any that cite
       // concrete evidence of genuine ambiguity (identical labels, misleading
       // text). Never touches deterministic findings.
-      if (findings.length > 0) {
+      // Symptom gate — retired when Compose is active.
+      if (findings.length > 0 && process.env.COMPOSE_MODE !== 'active') {
         const spec = classifySpeculativeUx(
           findings.map(f => ({
             id: f.id, title: f.title, description: f.description,
@@ -4480,6 +4482,58 @@ RULES FOR RE-AUDIT:
           }
           await auditLog(auditId, 'evidence_binding_demoted', 'info',
             `Demoted ${binding.ungroundedIds.length} ungrounded LLM finding${binding.ungroundedIds.length > 1 ? 's' : ''} to "Not enough evidence" (no verbatim quote or DOM selector)`)
+        }
+      }
+
+      // ── 2g. COMPOSE (Stage 3) — general definition-of-done judge ───
+      // Active only when COMPOSE_MODE=active (the symptom gates above are skipped
+      // in that mode). Judges each interpretive finding against its page's
+      // captured content: drops unevidenced speculation, re-grades wrong
+      // severities. The general rule that replaces the per-symptom gates.
+      // Fail-safe: any judge error keeps the finding (never silently deletes).
+      if (findings.length > 0 && process.env.COMPOSE_MODE === 'active') {
+        try {
+          const pageContentByUrl: Record<string, string> = {}
+          for (const block of (crawlResult.pageContent || '').split('\n---\n')) {
+            const m = block.match(/URL:\s*(\S+)/)
+            if (m && m[1]) pageContentByUrl[m[1]] = block
+          }
+          const Anthropic = (await import('@anthropic-ai/sdk')).default
+          const anthropic = new Anthropic({ timeout: 25_000 })
+          const judge = async (prompt: string): Promise<string> => {
+            const msg = await anthropic.messages.create({
+              model: 'claude-haiku-4-5-20251001',
+              max_tokens: 200,
+              messages: [{ role: 'user', content: prompt }],
+            })
+            return (msg.content.find((b: any) => b.type === 'text') as any)?.text || ''
+          }
+          const composeRes = await composeFindings(
+            findings.map(f => ({
+              id: f.id, title: f.title, description: f.description, recommendation: f.recommendation,
+              estimated_impact: (f as any).estimated_impact ?? null, severity: f.severity,
+              detection_source: f.detection_source || null, page_url: f.page_url,
+              target_element: f.target_element ?? null, evidence: f.evidence ?? null,
+            })),
+            pageContentByUrl,
+            judge,
+          )
+          const before = findings.length
+          if (composeRes.droppedIds.length > 0) {
+            for (const id of composeRes.droppedIds) idsToDelete.add(id)
+            findings = findings.filter(f => !idsToDelete.has(f.id))
+          }
+          for (const f of findings) {
+            const sev = composeRes.adjusted[f.id]
+            if (sev) { f.severity = sev as any; batchUpdates.push({ id: f.id, updates: { severity: sev } }) }
+          }
+          await auditLog(auditId, 'compose_applied', 'info',
+            `Compose: dropped ${composeRes.droppedIds.length}, re-graded ${Object.keys(composeRes.adjusted).length} of ${before} interpretive finding(s)`)
+          for (const [id, reason] of Object.entries(composeRes.reasons)) {
+            console.log(`[inngest] Compose: ${id} — ${reason}`)
+          }
+        } catch (composeErr) {
+          console.warn('[quality-gates] Compose failed (non-fatal):', (composeErr as Error)?.message)
         }
       }
 
