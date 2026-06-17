@@ -78,13 +78,20 @@ export const INSERT_CONTRACTS = {
     'workspace_id', 'user_id', 'audit_id', 'page_url', 'reason', 'decision',
     'finding_id', 'updated_at',
   ],
+  // Phase 3 — fix-outcomes dataset (one row per fix verification attempt).
+  fix_outcomes: [
+    'finding_id', 'audit_id', 'workspace_id', 'user_id', 'issue_family_id',
+    'page_url', 'detection_source', 'outcome', 'severity_before',
+    'evidence_before', 'evidence_after', 'marked_fixed_at', 'verified_at',
+    'time_to_fix_seconds', 'recheck_method', 'recheck_meta',
+  ],
 } as const
 
 /** Keys our writers are allowed to put in .update() payloads, per table.
  *  (The wcag_checklist/wcag_score incident was an UPDATE, not an insert —
  *  updates against missing columns fail just as silently.) */
 export const UPDATE_CONTRACTS = {
-  audit_findings: ['verification_status', 'verification_note', 'screenshot_url', 'status', 'status_updated_at', 'status_note', 'dismissed', 'dismissal_reason', 'dismissed_at'],
+  audit_findings: ['verification_status', 'verification_note', 'screenshot_url', 'status', 'status_updated_at', 'status_note', 'dismissed', 'dismissal_reason', 'dismissed_at', 'verified_fixed_at'],
   audit_pages: ['is_mobile_friendly', 'viewport_meta', 'wcag_checklist', 'wcag_score', 'ai_readability', 'screenshot_url', 'technical_audit', 'code_quality', 'performance_data', 'excluded_from_score'],
   reports: ['total_issues', 'critical_count', 'high_count', 'medium_count', 'low_count', 'overall_score', 'pdf_url', 'pdf_generated_at', 'updated_at', 'raw_json', 'model_benchmarks', 'brand_intelligence'],
   workspace_ai_interrogations: ['status', 'token_input_total', 'token_output_total', 'estimated_cost_cents', 'completed_at', 'usage_units_consumed'],

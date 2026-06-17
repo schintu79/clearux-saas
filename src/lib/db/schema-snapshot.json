@@ -6,7 +6,7 @@
     "generated_by": "information_schema.columns via Supabase MCP"
   },
   "audit_findings": {
-    "columns": ["id", "audit_id", "checklist_item_id", "severity", "title", "description", "evidence", "page_url", "recommendation", "estimated_impact", "sort_order", "created_at", "target_element", "screenshot_url", "status", "status_updated_at", "status_note", "dismissed", "dismissal_reason", "dismissed_at", "verification_status", "verification_note", "category_index", "ai_interpretation", "human_interpretation", "finding_type", "fix_type", "action_mode", "fix_payload", "fix_format", "is_editable", "is_deployable", "approval_required", "fix_status", "deployable_type", "default_owner", "confidence_level", "detection_source", "owner_team", "performance_metric_type", "owner_roles", "primary_owner_role", "handoff_ready", "handoff_payload", "issue_family_id", "status_in_audit", "score_impact", "scope_json", "page_count_affected", "confidence_score", "business_relevance", "communication", "viewport"],
+    "columns": ["id", "audit_id", "checklist_item_id", "severity", "title", "description", "evidence", "page_url", "recommendation", "estimated_impact", "sort_order", "created_at", "target_element", "screenshot_url", "status", "status_updated_at", "status_note", "dismissed", "dismissal_reason", "dismissed_at", "verification_status", "verification_note", "category_index", "ai_interpretation", "human_interpretation", "finding_type", "fix_type", "action_mode", "fix_payload", "fix_format", "is_editable", "is_deployable", "approval_required", "fix_status", "deployable_type", "default_owner", "confidence_level", "detection_source", "owner_team", "performance_metric_type", "owner_roles", "primary_owner_role", "handoff_ready", "handoff_payload", "issue_family_id", "status_in_audit", "score_impact", "scope_json", "page_count_affected", "confidence_score", "business_relevance", "communication", "viewport", "verified_fixed_at"],
     "required": ["audit_id", "severity", "title", "description", "recommendation"]
   },
   "audit_pages": {
@@ -24,6 +24,10 @@
   "coverage_limitation_decisions": {
     "columns": ["id", "workspace_id", "user_id", "audit_id", "page_url", "reason", "decision", "finding_id", "created_at", "updated_at"],
     "required": ["page_url", "reason", "decision"]
+  },
+  "fix_outcomes": {
+    "columns": ["id", "finding_id", "audit_id", "workspace_id", "user_id", "issue_family_id", "page_url", "detection_source", "outcome", "severity_before", "evidence_before", "evidence_after", "marked_fixed_at", "verified_at", "time_to_fix_seconds", "recheck_method", "recheck_meta", "created_at"],
+    "required": ["page_url", "outcome"]
   },
   "audit_alerts": {
     "columns": ["id", "user_id", "workspace_id", "audit_id", "product_url", "type", "level", "title", "body", "meta", "read_at", "created_at"],
