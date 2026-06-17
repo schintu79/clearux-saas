@@ -152,23 +152,34 @@ const DashboardShell: React.FC<DashboardShellProps> = ({ children }) => {
   );
 
   // Latest audit's finding count for the Find/Fix nav pills.
+  // The badge was only ever fetched once, when the workspace id first resolved,
+  // so a just-completed audit (or a dismiss/fix on the Find/Fix pages) left the
+  // pill showing a stale mount-time value until the shell happened to remount —
+  // the "updates after a while randomly" bug. Re-fetch on route change and on
+  // window focus too (same pattern as the credits/notifications block below;
+  // the notifications page already fires a 'focus' event to refresh the sidebar).
   useEffect(() => {
     const wsId = currentWorkspace?.id;
     if (!wsId) { setFindingsCount(null); return; }
     let cancelled = false;
-    fetch(`/api/audits?workspace_id=${wsId}`)
-      .then((r) => (r.ok ? r.json() : null))
-      .then((d) => {
-        if (cancelled) return;
-        const audits = (d?.audits ?? d ?? []) as any[];
-        const latest = Array.isArray(audits) ? audits[0] : null;
-        const report = Array.isArray(latest?.reports) ? latest.reports[0] : latest?.reports;
-        const n = report?.total_issues;
-        setFindingsCount(typeof n === 'number' ? n : null);
-      })
-      .catch(() => { if (!cancelled) setFindingsCount(null); });
-    return () => { cancelled = true; };
-  }, [currentWorkspace?.id]);
+    const load = () => {
+      fetch(`/api/audits?workspace_id=${wsId}`)
+        .then((r) => (r.ok ? r.json() : null))
+        .then((d) => {
+          if (cancelled) return;
+          const audits = (d?.audits ?? d ?? []) as any[];
+          const latest = Array.isArray(audits) ? audits[0] : null;
+          const report = Array.isArray(latest?.reports) ? latest.reports[0] : latest?.reports;
+          const n = report?.total_issues;
+          setFindingsCount(typeof n === 'number' ? n : null);
+        })
+        .catch(() => { if (!cancelled) setFindingsCount(null); });
+    };
+    load();
+    const onFocus = () => load();
+    window.addEventListener('focus', onFocus);
+    return () => { cancelled = true; window.removeEventListener('focus', onFocus); };
+  }, [currentWorkspace?.id, pathname]);
 
   // Fetch credits and notifications
   useEffect(() => {
