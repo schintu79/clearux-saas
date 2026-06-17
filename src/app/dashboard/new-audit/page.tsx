@@ -100,9 +100,9 @@ const NewAuditInner: React.FC = () => {
         setCanReaudit(d.can_reaudit ?? false);
         setCanDeepAudit(d.can_deep_audit ?? false);
         setReauditsRemaining(d.reaudits_remaining ?? 0);
-        setReauditsPerMonth(d.reaudits_per_month ?? 0);
+        setReauditsPerMonth(d.reaudits_per_month ?? d.reaudits_limit ?? 0);
         setDeepAuditsRemaining(d.deep_audits_remaining ?? 0);
-        setDeepAuditsPerMonth(d.deep_audits_per_month ?? 0);
+        setDeepAuditsPerMonth(d.deep_audits_per_month ?? d.deep_audits_limit ?? 0);
         setEntitlementLoaded(true);
       })
       .catch(() => {
@@ -587,8 +587,8 @@ const NewAuditInner: React.FC = () => {
                   onClick={() => setDepthMode('standard')}
                   className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-medium transition-all"
                   style={{
-                    background: depthMode === 'standard' ? 'color-mix(in srgb, var(--ink) 6%, transparent)' : 'transparent',
-                    color: depthMode === 'standard' ? 'var(--ink)' : 'var(--m-muted)',
+                    background: depthMode === 'standard' ? 'var(--signal)' : 'transparent',
+                    color: depthMode === 'standard' ? '#fff' : 'var(--m-muted)',
                     borderRight: '1px solid var(--rule)',
                   }}
                 >
@@ -600,8 +600,8 @@ const NewAuditInner: React.FC = () => {
                   onClick={() => setDepthMode('deep')}
                   className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-medium transition-all"
                   style={{
-                    background: depthMode === 'deep' ? 'color-mix(in srgb, var(--ink) 6%, transparent)' : 'transparent',
-                    color: depthMode === 'deep' ? 'var(--ink)' : 'var(--m-muted)',
+                    background: depthMode === 'deep' ? 'var(--signal)' : 'transparent',
+                    color: depthMode === 'deep' ? '#fff' : 'var(--m-muted)',
                   }}
                 >
                   <Sparkles size={14} />
