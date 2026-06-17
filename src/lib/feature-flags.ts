@@ -32,6 +32,13 @@ export interface FeatureFlags {
    * See docs/AUDIT_PIPELINE_ARCHITECTURE.md.
    */
   captureShadow: boolean
+  /**
+   * Phase 3 — fix-outcomes verification. When a deterministic finding is marked
+   * fixed, a background job re-runs the instrument on its page and records a
+   * fix_outcomes row (verified_fixed / not_fixed / inconclusive). OFF by default
+   * (dark launch): no event fired, no job effect. See docs/FIX_OUTCOMES_ARCHITECTURE.md.
+   */
+  fixOutcomes: boolean
 }
 
 /**
@@ -45,5 +52,6 @@ export function getFeatureFlags(): FeatureFlags {
     politeCrawler: process.env.FEATURE_POLITE_CRAWLER === 'true',
     leanPipeline: process.env.FEATURE_LEAN_PIPELINE !== 'false', // ON by default
     captureShadow: process.env.FEATURE_CAPTURE_SHADOW === 'true', // OFF by default
+    fixOutcomes: process.env.FEATURE_FIX_OUTCOMES === 'true', // OFF by default
   }
 }

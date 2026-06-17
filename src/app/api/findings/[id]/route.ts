@@ -15,6 +15,8 @@ import {
   recordFindingActionInPatterns,
   recordFindingActionInStats,
 } from '@/lib/audit-engine/pipeline'
+import { inngest } from '@/lib/inngest/client'
+import { getFeatureFlags } from '@/lib/feature-flags'
 
 function normalizeDomain(url: string): string {
   try {
@@ -385,6 +387,21 @@ export async function PATCH(
             .eq('id', (finding as any).issue_family_id)
         } catch (famErr) {
           console.error('[findings-api] Issue family update error (non-fatal):', famErr)
+        }
+      }
+
+      // ── Phase 3 — fix-outcome verification (dark launch behind flag) ──
+      // Fire-and-forget: a background job re-checks the page and records the
+      // outcome. The job filters to deterministic findings, so we fire for any
+      // mark-fixed and let it decide eligibility. Never block the response.
+      if (status === 'fixed' && getFeatureFlags().fixOutcomes) {
+        try {
+          await inngest.send({
+            name: 'fix/verify-requested',
+            data: { findingId, userId: user.id, markedFixedAt: new Date().toISOString() },
+          })
+        } catch (sendErr) {
+          console.error('[findings-api] fix/verify-requested send failed (non-fatal):', sendErr)
         }
       }
 

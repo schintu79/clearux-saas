@@ -10,6 +10,7 @@ import { processAuditFn } from '@/lib/inngest/functions/process-audit'
 import { processBrandAuditFn } from '@/lib/inngest/functions/process-brand-audit'
 import { stallSweeperFn } from '@/lib/inngest/functions/stall-sweeper'
 import { refreshQuestionShortlistsFn } from '@/lib/inngest/functions/refresh-question-shortlists'
+import { verifyFixOutcomeFn } from '@/lib/inngest/functions/verify-fix-outcome'
 
 // REALITY CHECK (2026-06-10): Inngest v4 executes MANY steps inside ONE
 // invocation — the run that died at 09:34:52 lived exactly 300.9s from
@@ -25,6 +26,6 @@ export const maxDuration = 800
 
 export const { GET, POST, PUT } = serve({
   client: inngest,
-  functions: [processAuditFn, processBrandAuditFn, stallSweeperFn, refreshQuestionShortlistsFn],
+  functions: [processAuditFn, processBrandAuditFn, stallSweeperFn, refreshQuestionShortlistsFn, verifyFixOutcomeFn],
   streaming: true,
 })
