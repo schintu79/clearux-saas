@@ -77,6 +77,7 @@ import { generatePredictiveRecommendations } from '@/lib/audit-engine/predictive
 import { runBrandIntelligenceAnalysis } from '@/lib/audit-engine/brand-intelligence'
 import { runFullSpeedTest, generateSpeedFindings } from '@/lib/pagespeed'
 import { checkWcagAutomated, buildWcagResults, parseHeuristicResponse, formatWcagForPrompt, type WcagCheckResult, type WcagAuditResult } from '@/lib/audit-engine/pipeline/wcag-checker'
+import { principleImpact } from '@/lib/audit-engine/pipeline/axe-knowledge'
 import type { DomFacts } from '@/lib/audit-engine/pipeline/dom-verification'
 import { validateFindingsInPageContext, type ValidatorModelCaller } from '@/lib/audit-engine/pipeline/finding-context-validator'
 import { persistRegressionAlerts } from '@/lib/alerts/persist-regression-alerts'
@@ -1664,9 +1665,10 @@ Return 2-6 findings. Be specific and evidence-based. Reference specific files/co
               // verified mix).
               confidence_level: 'deterministic' as const,
               performance_metric_type: f.metricType || null,
+              estimated_impact: f.whyItMatters,
               status: 'open' as const,
               sort_order: 900 + i,
-              communication: buildCommunicationForGenericFinding({ title: f.title, description: f.description, recommendation: f.recommendation, estimatedImpact: null, severity: f.severity }, siteProfile),
+              communication: buildCommunicationForGenericFinding({ title: f.title, description: f.description, recommendation: f.recommendation, estimatedImpact: f.whyItMatters, severity: f.severity }, siteProfile),
             }))
             await insertFindingsChecked(db, auditId, findingRows, 'pagespeed')
           }
@@ -1768,6 +1770,7 @@ Return 2-6 findings. Be specific and evidence-based. Reference specific files/co
                   categoryIndex: 20, // Accessibility Readiness (module 5) — matches the insert below
                 })
                 const wcagDesc = `[WCAG ${finding.wcagCriterion}] ${finding.description}`
+                const wcagImpact = principleImpact(finding.wcagCriterion)
                 wcagInserts.push({
                   audit_id: auditId,
                   checklist_item_id: null,
@@ -1784,13 +1787,13 @@ Return 2-6 findings. Be specific and evidence-based. Reference specific files/co
                   evidence: finding.evidence || null,
                   page_url: finding.pageUrl || crawlResult.firstPageUrl,
                   recommendation: finding.recommendation,
-                  estimated_impact: null,
+                  estimated_impact: wcagImpact,
                   target_element: finding.element || null,
                   screenshot_url: null,
                   sort_order: sortOrder++,
                   confidence_level: 'deterministic',
                   detection_source: 'wcag_checker',
-                  communication: buildCommunicationForGenericFinding({ title: finding.title, description: wcagDesc, recommendation: finding.recommendation, estimatedImpact: null, severity: finding.severity }, siteProfile),
+                  communication: buildCommunicationForGenericFinding({ title: finding.title, description: wcagDesc, recommendation: finding.recommendation, estimatedImpact: wcagImpact, severity: finding.severity }, siteProfile),
                   ...computeActionModelFields({ title: finding.title, description: wcagDesc, recommendation: finding.recommendation, fix_type: cls.fixType, finding_type: cls.findingType }),
                 })
               }

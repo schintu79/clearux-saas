@@ -295,6 +295,8 @@ export interface SpeedFinding {
   title: string
   description: string
   recommendation: string
+  /** Specific, user/business-facing "why it matters" — never the generic fallback. */
+  whyItMatters: string
   severity: 'critical' | 'high' | 'medium' | 'low'
   /** Whether this can be fixed from the Fix Console */
   fixableFromConsole: boolean
@@ -302,6 +304,29 @@ export interface SpeedFinding {
   metricType: string
   /** Who should fix this */
   ownerTeam: 'engineering' | 'marketing'
+}
+
+/**
+ * Principle-based impact per Core Web Vital / metric — used so EVERY speed
+ * finding carries a concrete "why it matters" instead of the generic
+ * "may affect how visitors experience your site" fallback. Works for any
+ * diagnostic, mapped or not, on any site.
+ */
+export function speedImpact(metric: string): string {
+  switch (metric) {
+    case 'lcp':
+      return 'Slows how quickly visitors see your main content appear. A slow load is one of the strongest predictors of people leaving before the page is usable, especially on mobile.'
+    case 'tbt':
+      return 'The browser is busy downloading and processing code, so the page looks ready but does not respond to taps or clicks yet — visitors perceive it as frozen or broken.'
+    case 'inp':
+      return 'Makes taps, clicks, and key presses feel laggy. When the interface does not respond instantly, visitors lose confidence and often give up mid-task.'
+    case 'cls':
+      return 'Content moves around as the page loads, causing visitors to mis-tap buttons or lose their place while reading — it reads as an unstable, low-quality site.'
+    case 'ttfb':
+      return 'Nothing can render until your server responds, so a slow first byte sets the floor for how fast the whole page can possibly feel.'
+    default:
+      return 'Adds avoidable weight and delay to every visit, making the site feel slower and costing bandwidth that mobile visitors pay for.'
+  }
 }
 
 /**
@@ -328,81 +353,93 @@ export function generateSpeedFindings(speedData: SpeedData): SpeedFinding[] {
   if (!result) return findings
 
   // ── Category 1: Fixable from console ──
-  const fixableDiagnostics: Record<string, { title: string; desc: string; rec: string; metric: string }> = {
+  const fixableDiagnostics: Record<string, { title: string; desc: string; rec: string; why: string; metric: string }> = {
     'render-blocking-resources': {
       title: 'Render-blocking resources slowing page load',
       desc: 'CSS and JavaScript files that block page rendering are delaying when content becomes visible to users.',
       rec: 'Add async or defer attributes to non-critical scripts. Move critical CSS inline and load remaining stylesheets asynchronously.',
+      why: 'Visitors stare at a blank or half-built page while these files download and run. Every extra second before content appears measurably increases the share of people who give up and leave, especially on mobile.',
       metric: 'lcp',
     },
     'uses-optimized-images': {
       title: 'Images not optimized for web',
       desc: 'Images are being served without proper compression, causing unnecessary bandwidth usage and slower load times.',
       rec: 'Convert images to WebP or AVIF format. Use quality settings of 75-85% for photographs. Ensure all images have explicit width and height attributes.',
+      why: 'Oversized images are usually the single largest thing a visitor waits to download. They delay the first meaningful paint and, on mobile data, cost the visitor real money — both push impatient people away before the page is usable.',
       metric: 'lcp',
     },
     'unused-javascript': {
       title: 'Unused JavaScript loaded on page',
       desc: 'JavaScript code is being downloaded and parsed that is never executed on this page, wasting bandwidth and CPU time.',
       rec: 'Audit your JavaScript bundles with code coverage tools. Remove unused libraries, implement code-splitting, and defer non-critical scripts.',
+      why: 'The browser still downloads, parses, and compiles this dead code before the page can respond to taps or clicks. On mid-range phones that is often seconds of avoidable delay during which the page looks ready but is not.',
       metric: 'tbt',
     },
     'unused-css-rules': {
       title: 'Unused CSS loaded on page',
       desc: 'CSS rules are being downloaded that do not match any elements on this page, adding unnecessary weight.',
       rec: 'Use PurgeCSS or similar tools to remove unused CSS. Consider splitting CSS per page or component.',
+      why: 'This dead styling is downloaded and parsed on every single visit for no benefit, delaying the first paint and inflating page weight that visitors on slow or metered connections pay for.',
       metric: 'lcp',
     },
     'uses-long-cache-ttl': {
       title: 'Missing or short cache headers',
       desc: 'Static assets are not configured with long cache lifetimes, causing repeat visitors to re-download unchanged files.',
       rec: 'Set Cache-Control headers with max-age of at least 1 year for static assets (JS, CSS, images). Use content hashes in filenames for cache busting.',
+      why: 'Returning visitors re-download files that never changed, so every repeat visit is needlessly slow and your bandwidth bill is higher than it needs to be. Proper caching makes the second visit feel near-instant.',
       metric: 'lcp',
     },
     'unminified-javascript': {
       title: 'Unminified JavaScript assets',
       desc: 'JavaScript files are served without minification, meaning they contain unnecessary whitespace, comments, and long variable names.',
       rec: 'Enable minification in your build pipeline (Terser, esbuild, or SWC). Ensure production builds strip source maps from public-facing assets.',
+      why: 'The extra bytes are pure waste sent to every visitor on every visit, slowing download and parse time. Minification typically cuts script size 30-60% with zero functional change.',
       metric: 'tbt',
     },
     'offscreen-images': {
       title: 'Missing lazy loading on images',
       desc: 'Images below the fold are loaded immediately on page load instead of being deferred until the user scrolls to them.',
       rec: 'Add loading="lazy" to all images below the fold. Keep above-the-fold hero images eager-loaded for LCP.',
+      why: 'Images the visitor may never scroll to are loaded up front, stealing bandwidth from the content they can actually see and delaying when the page becomes interactive.',
       metric: 'lcp',
     },
   }
 
   // ── Category 2: Advisory (non-code issues) ──
-  const advisoryDiagnostics: Record<string, { title: string; desc: string; rec: string; metric: string }> = {
+  const advisoryDiagnostics: Record<string, { title: string; desc: string; rec: string; why: string; metric: string }> = {
     'uses-responsive-images': {
       title: 'Images too large for display size',
       desc: 'Images are being served at dimensions larger than their display size, wasting bandwidth on unnecessary pixels.',
       rec: 'Serve images at the correct size using srcset and sizes attributes. Generate multiple image variants for different viewport widths.',
+      why: 'Visitors download far more image data than their screen can display — wasted bandwidth that slows loading and costs mobile users money, with no visible gain in quality.',
       metric: 'lcp',
     },
     'third-party-summary': {
       title: 'Too many third-party scripts loaded',
       desc: 'Multiple third-party scripts (analytics, chat widgets, tracking pixels) are competing for network and CPU resources.',
       rec: 'Audit third-party scripts and remove any that are not actively providing value. Defer non-critical third-party scripts. Consider self-hosting critical third-party resources.',
+      why: 'Each third-party script can block the main thread and delay interactivity. A single slow analytics or chat vendor can make your whole page feel sluggish even when your own code is fast.',
       metric: 'tbt',
     },
     'dom-size': {
       title: 'Excessive DOM size',
       desc: 'The page has an unusually large number of DOM elements, which slows down style calculations, layout, and paint operations.',
       rec: 'Simplify page structure. Use virtualization for long lists. Remove unnecessary wrapper elements. Consider paginating or lazy-loading content sections.',
+      why: 'A bloated DOM makes every scroll, click, and animation more expensive to render, so the page feels janky and unresponsive — most noticeably on lower-powered phones.',
       metric: 'inp',
     },
     'server-response-time': {
       title: 'Slow server response time (TTFB)',
       desc: 'The server takes too long to respond to requests. This is typically a hosting infrastructure issue rather than a code issue.',
       rec: 'Investigate server-side rendering time, database query performance, and hosting tier. Consider upgrading hosting, adding a CDN, or implementing edge caching.',
+      why: 'Nothing on the page can render until the server responds, so a slow first byte delays everything downstream — it sets the floor for how fast the page can possibly feel.',
       metric: 'ttfb',
     },
     'redirects': {
       title: 'Multiple redirects detected',
       desc: 'The page requires multiple redirects before reaching the final URL, adding network round-trip latency.',
       rec: 'Eliminate unnecessary redirects. Update internal links to point directly to final URLs. Use 301 redirects only when necessary.',
+      why: 'Each redirect is a full network round-trip before the real page even starts loading, adding latency that is most painful on mobile networks.',
       metric: 'ttfb',
     },
   }
@@ -415,6 +452,7 @@ export function generateSpeedFindings(speedData: SpeedData): SpeedFinding[] {
         title: fixable.title,
         description: fixable.desc,
         recommendation: fixable.rec,
+        whyItMatters: fixable.why,
         severity,
         fixableFromConsole: true,
         metricType: fixable.metric,
@@ -428,6 +466,7 @@ export function generateSpeedFindings(speedData: SpeedData): SpeedFinding[] {
         title: advisory.title,
         description: advisory.desc,
         recommendation: advisory.rec,
+        whyItMatters: advisory.why,
         severity: opportunitySeverity(diag.savingsMs),
         fixableFromConsole: false,
         metricType: advisory.metric,
@@ -444,6 +483,7 @@ export function generateSpeedFindings(speedData: SpeedData): SpeedFinding[] {
         title: 'Largest Contentful Paint is too slow',
         description: `LCP is ${result.metrics.lcp.displayValue}, well above the 2.5s threshold. Users perceive the page as slow to load.`,
         recommendation: 'Optimize the largest visible element (usually a hero image or heading). Preload critical resources, reduce server response time, and eliminate render-blocking resources.',
+        whyItMatters: speedImpact('lcp'),
         severity: 'high',
         fixableFromConsole: false,
         metricType: 'lcp',
@@ -457,6 +497,7 @@ export function generateSpeedFindings(speedData: SpeedData): SpeedFinding[] {
       title: 'Layout shift causing visual instability',
       description: `CLS is ${result.metrics.cls.displayValue}, above the 0.1 threshold. Elements are moving unexpectedly as the page loads, frustrating users.`,
       recommendation: 'Set explicit width and height on all images and embeds. Reserve space for dynamic content. Avoid inserting content above existing content after page load.',
+      whyItMatters: speedImpact('cls'),
       severity: 'high',
       fixableFromConsole: true,
       metricType: 'cls',
@@ -469,6 +510,7 @@ export function generateSpeedFindings(speedData: SpeedData): SpeedFinding[] {
       title: 'Page interactions are sluggish',
       description: `INP is ${result.metrics.inp.displayValue}, above the 200ms threshold. User interactions (clicks, taps, key presses) feel delayed.`,
       recommendation: 'Break up long tasks on the main thread. Defer non-critical JavaScript. Use web workers for heavy computation. Reduce DOM size to speed up event handling.',
+      whyItMatters: speedImpact('inp'),
       severity: 'high',
       fixableFromConsole: false,
       metricType: 'inp',

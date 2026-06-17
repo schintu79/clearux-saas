@@ -205,42 +205,27 @@ export function deduplicateFindings(
     const primaryIdx = sorted[0];
     const primary = findings[primaryIdx];
 
-    // Absorb metadata from all members
+    // Absorb only NON-CONTENT metadata (modules, pages, the absorbed titles)
+    // from all members. The displayed title, description, why, recommendation,
+    // and evidence are ALL kept from the single primary finding so the group is
+    // internally coherent. Previously we spliced in the "longest" description /
+    // why / recommendation from other members, which — when a merge was not a
+    // true duplicate — produced a primary whose title and body described
+    // different issues (e.g. a "meta tags" title over error-modal content). The
+    // other members remain visible as "additional observations" via mergedTitles.
     const allModules = new Set<string>();
     const allPages = new Set<string>();
     const mergedTitles: string[] = [];
-    let bestDescription = primary.description;
-    let bestWhyItMatters = primary.whyItMatters;
-    let bestRecommendation = primary.recommendation;
-    let bestEvidence = primary.evidence;
 
     for (const idx of sorted) {
       const f = findings[idx];
       for (const m of f.modules) allModules.add(m);
       for (const p of f.affectedPages) allPages.add(p);
       if (idx !== primaryIdx) mergedTitles.push(f.title);
-
-      // Keep the longest/most detailed description
-      if (f.description.length > bestDescription.length) {
-        bestDescription = f.description;
-      }
-      if (f.whyItMatters && (!bestWhyItMatters || f.whyItMatters.length > bestWhyItMatters.length)) {
-        bestWhyItMatters = f.whyItMatters;
-      }
-      if (f.recommendation.length > bestRecommendation.length) {
-        bestRecommendation = f.recommendation;
-      }
-      if (f.evidence && (!bestEvidence || f.evidence.length > bestEvidence.length)) {
-        bestEvidence = f.evidence;
-      }
     }
 
     result.push({
       ...primary,
-      description: bestDescription,
-      whyItMatters: bestWhyItMatters,
-      recommendation: bestRecommendation,
-      evidence: bestEvidence,
       modules: Array.from(allModules),
       affectedPages: Array.from(allPages),
       mergedCount: sorted.length,
