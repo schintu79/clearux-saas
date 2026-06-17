@@ -586,6 +586,8 @@ export interface AuditFinding {
   dismissed_at:      string | null
   verification_status: 'confirmed_open' | 'likely_fixed' | 'poorly_fixed' | null
   verification_note:   string | null
+  /** Phase 3: set when an automated re-check proved a fix actually landed. */
+  verified_fixed_at:   string | null
   /** AI X-Ray: how AI interprets this element */
   ai_interpretation:   string | null
   /** AI X-Ray: how a human interprets the same element */
