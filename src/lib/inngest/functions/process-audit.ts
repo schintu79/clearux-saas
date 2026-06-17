@@ -1818,13 +1818,23 @@ Return 2-6 findings. Be specific and evidence-based. Reference specific files/co
                   evidence: f.evidence || null,
                   page_url: f.pageUrl || crawlResult.firstPageUrl,
                   recommendation: f.recommendation,
-                  estimated_impact: null,
+                  estimated_impact: f.whyItMatters,
                   target_element: f.targetElement,
                   screenshot_url: null,
                   sort_order: sortOrder++,
                   confidence_level: 'deterministic',
                   detection_source: 'axe',
-                  communication: buildCommunicationForGenericFinding({ title: f.title, description: f.description, recommendation: f.recommendation, estimatedImpact: null, severity: f.severity }, siteProfile),
+                  // Controlled communication so the fields are DISTINCT: real
+                  // principle-based why, and a technical note that is only the
+                  // Deque reference (not a repeat of the fix directive).
+                  communication: {
+                    title_plain: f.title.replace(/^\[WCAG [^\]]+\]\s*/, ''),
+                    what_found: f.description,
+                    why_matters: f.whyItMatters,
+                    fix_plain: f.recommendation,
+                    technical_note: f.helpUrl ? `Technical reference (Deque University): ${f.helpUrl}` : null,
+                    fix_technical: null,
+                  },
                   ...computeActionModelFields({ title: f.title, description: f.description, recommendation: f.recommendation, fix_type: cls.fixType, finding_type: cls.findingType }),
                 }
               })

@@ -47,11 +47,32 @@ export interface AxeMappedFinding {
   targetElement: string | null
   evidence: string
   wcagCriterion: string | null
+  /** Real, principle-based impact (WHY IT MATTERS) — not the generic fallback. */
+  whyItMatters: string
+  /** Deque reference URL, surfaced once as the technical note (not duplicated into the fix). */
+  helpUrl: string | null
   /** Accessibility Readiness (module 5) — categories 20-23. */
   categoryIndex: number
   pageUrl: string
   detectionSource: 'axe'
   confidenceLevel: 'deterministic'
+}
+
+/** WCAG principle from a "1.4.3"-style criterion (1=perceivable … 4=robust). */
+function wcagPrincipleImpact(criterion: string | null): string {
+  const p = criterion ? criterion.charAt(0) : ''
+  switch (p) {
+    case '1':
+      return 'People who can\'t fully perceive this — screen-reader users, people with low vision or colour-blindness — may miss the content or be unable to use the page.'
+    case '2':
+      return 'People who navigate by keyboard or assistive technology may be unable to operate this, blocking them from completing actions on the page.'
+    case '3':
+      return 'Visitors may misunderstand or be unable to complete this, which increases errors, confusion, and abandonment.'
+    case '4':
+      return 'Assistive technologies may fail to interpret this correctly, so screen-reader and other AT users get a broken experience — and it can hurt how search engines parse the page.'
+    default:
+      return 'This accessibility defect can prevent some visitors — especially those using assistive technology — from using part of the page.'
+  }
 }
 
 const ACCESSIBILITY_CATEGORY_INDEX = 20
@@ -111,10 +132,16 @@ export function mapAxeViolationsToFindings(
       ].filter(Boolean)
 
       const titlePrefix = criterion ? `[WCAG ${criterion}] ` : ''
+      const count = v.nodes.length
+      // Richer WHAT: name the count + an example element, then the rule meaning.
+      const description = `${count} element${count === 1 ? '' : 's'} on this page ${count === 1 ? 'fails' : 'fail'} this check${primarySelector ? ` — e.g. ${primarySelector}` : ''}. ${v.description || v.help}.`
       return {
         title: `${titlePrefix}${v.help}`,
-        description: v.description || v.help,
-        recommendation: v.helpUrl ? `${v.help}. Reference: ${v.helpUrl}` : v.help,
+        description,
+        // FIX = the plain directive only (the reference lives in the technical note, not repeated here).
+        recommendation: v.help,
+        whyItMatters: wcagPrincipleImpact(criterion),
+        helpUrl: v.helpUrl || null,
         severity,
         targetElement: primarySelector,
         evidence: evidenceParts.join(' — '),

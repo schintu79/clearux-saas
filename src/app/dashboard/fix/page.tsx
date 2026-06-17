@@ -67,9 +67,15 @@ const STATUS_KEYS: FindingStatus[] = ['open', 'in_progress', 'fixed', 'backlog']
 const SEVERITIES: Array<'all' | 'critical' | 'high' | 'medium' | 'low'> = ['all', 'critical', 'high', 'medium', 'low'];
 const SEVERITY_RANK: Record<string, number> = { critical: 4, high: 3, medium: 2, low: 1 };
 
-function hostnameOf(url: string | null | undefined): string | null {
+function pageLabelOf(url: string | null | undefined): string | null {
   if (!url) return null;
-  try { return new URL(url).hostname.replace(/^www\./, ''); } catch { return null; }
+  try {
+    const u = new URL(url);
+    const host = u.hostname.replace(/^www\./, '');
+    let path = u.pathname || '';
+    path = path === '/' ? '' : path.replace(/\/$/, '');
+    return `${host}${path}`; // full path so the user knows the exact page, not just the domain
+  } catch { return null; }
 }
 
 const VIEWPORT_CHIP_META: Record<string, { label: string; color: string; bg: string }> = {
@@ -159,7 +165,7 @@ function SidebarItem({
   const fixStatus = (finding as AuditFinding & { fix_status?: string }).fix_status;
   const displayStatus = fixStatus && fixStatus !== 'unreviewed' ? fixStatus : finding.status;
   const meta = STATUS_META[displayStatus] || STATUS_META.open;
-  const host = hostnameOf(finding.page_url);
+  const host = pageLabelOf(finding.page_url);
   const fixType = inferFixType(finding);
   const dbFix = (finding as AuditFinding & { fix_type?: string | null }).fix_type;
   const badgeLabel = dbFix || fixType;
@@ -271,7 +277,7 @@ function ActiveFindingDetail({
   const meta = STATUS_META[finding.status] || STATUS_META.open;
   const moduleNames: string[] = group.affectedModuleIndices.filter((i) => i >= 0).map((i) => PHASE1_MODULES[i]);
   if (moduleNames.length === 0 && group.affectedModuleIndices.includes(-1)) moduleNames.push('General');
-  const host = hostnameOf(finding.page_url);
+  const host = pageLabelOf(finding.page_url);
   const whyMattersText = getWhyMatters(finding);
   const hasImpact = Boolean(whyMattersText && whyMattersText.trim());
 
@@ -518,7 +524,7 @@ function ActiveFindingDetail({
             <span className="font-semibold uppercase tracking-[0.06em] mr-2 text-[10px]">Pages</span>
             <span className="inline-flex items-center gap-1 flex-wrap">
               {group.affectedPages.slice(0, 5).map((p) => {
-                const h = hostnameOf(p);
+                const h = pageLabelOf(p);
                 return (
                   <a
                     key={p}
