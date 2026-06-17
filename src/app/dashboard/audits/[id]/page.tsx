@@ -385,7 +385,11 @@ function ScoreOverTime({ productUrl, currentAuditId, currentScore }: { productUr
       })
       .catch(() => {})
       .finally(() => setLoading(false));
-  }, [productUrl]);
+    // currentScore is the LIVE capped health score; re-run the correction when
+    // it resolves/changes (it loads after the trend on first paint and updates
+    // as findings are fixed/dismissed). Without it the chart's latest point kept
+    // the stale uncapped value (showed 93 while the hero showed the capped 80).
+  }, [productUrl, currentScore, currentAuditId]);
 
   if (loading || trend.length < 2) return null;
 
