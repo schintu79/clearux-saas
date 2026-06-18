@@ -13,14 +13,18 @@ export const dynamic = 'force-dynamic'
 export const revalidate = 0
 
 export function GET() {
-  return NextResponse.json({
-    flags: getFeatureFlags(),
-    runtime: {
-      // Presence-only — never echo the value, just whether it parsed to the
-      // expected 'true'. Confirms the Value field (not the Note) was set.
-      FEATURE_FIX_OUTCOMES_is_true: process.env.FEATURE_FIX_OUTCOMES === 'true',
-      FEATURE_ANALYZE_FROM_CAPTURE_is_true: process.env.FEATURE_ANALYZE_FROM_CAPTURE === 'true',
-    },
-    at: new Date().toISOString(),
+  const flags = getFeatureFlags()
+  // Plain text so it's readable by both a browser and simple fetchers (JSON
+  // bodies don't always render). Presence-only on the raw env — never echo
+  // the value, just whether it parsed to the expected 'true'.
+  const lines = [
+    `at=${new Date().toISOString()}`,
+    ...Object.entries(flags).map(([k, v]) => `flag.${k}=${v}`),
+    `env.FEATURE_FIX_OUTCOMES_is_true=${process.env.FEATURE_FIX_OUTCOMES === 'true'}`,
+    `env.FEATURE_ANALYZE_FROM_CAPTURE_is_true=${process.env.FEATURE_ANALYZE_FROM_CAPTURE === 'true'}`,
+  ]
+  return new NextResponse(lines.join('\n') + '\n', {
+    status: 200,
+    headers: { 'content-type': 'text/plain; charset=utf-8', 'cache-control': 'no-store' },
   })
 }
