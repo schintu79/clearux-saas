@@ -2233,6 +2233,22 @@ Return 2-6 findings. Be specific and evidence-based. Reference specific files/co
         }
         try {
           const db = getDb()
+          // Interrogation runs on NEW audits and DEEP re-audits only. A standard
+          // re-audit carries findings forward and must NOT re-interrogate the AI
+          // models (rule 2026-06-18) — the saved results persist and display.
+          if (auditDetails.depthMode !== 'deep') {
+            try {
+              const { count } = await db.from('audits')
+                .select('id', { count: 'exact', head: true })
+                .eq('workspace_id', auditDetails.workspaceId ?? '')
+                .in('status', ['completed', 'completed_with_warnings'])
+                .neq('id', auditId)
+              if ((count ?? 0) > 0) {
+                console.log('[inngest] Standard re-audit — skipping multi-model interrogation (runs on new/deep only)')
+                return { comparison: null, industry: null }
+              }
+            } catch { /* if the re-audit check fails, fall through and run */ }
+          }
           let domain = ''
           try { domain = new URL(auditDetails.productUrl).hostname.replace(/^www\./, '') } catch {}
           const pageBlocks = crawlResult.pageContent.split('\n---\n')
@@ -2257,35 +2273,13 @@ Return 2-6 findings. Be specific and evidence-based. Reference specific files/co
               return { url: urlM?.[1] || '', title: titleM?.[1] || null }
             }).filter((p: { url: string }) => p.url),
           }
-          // Load user's AI model settings to determine which models to probe
-          let enabledModelSlugs: string[] | undefined
-          try {
-            const { data: auditRow } = await db.from('audits').select('user_id').eq('id', auditId).single()
-            const auditUserId = (auditRow as any)?.user_id
-            if (auditUserId) {
-              const { data: userSettings } = await db
-                .from('ai_model_settings')
-                .select('model_slug, enabled')
-                .eq('user_id', auditUserId)
-              if (userSettings && userSettings.length > 0) {
-                const rawSlugs = (userSettings as any[])
-                  .filter((s: any) => s.enabled)
-                  .map((s: any) => s.model_slug)
-                // Validate slugs against current catalog — stale slugs from
-                // old model catalog versions get filtered out here
-                const validSlugs = rawSlugs.filter((slug: string) => findModelBySlug(slug) != null)
-                if (validSlugs.length > 0) {
-                  enabledModelSlugs = validSlugs
-                }
-                // If ALL slugs are stale, leave undefined → uses catalog defaults
-                if (validSlugs.length < rawSlugs.length) {
-                  console.warn(`[inngest] Filtered out ${rawSlugs.length - validSlugs.length} stale model slug(s) from user settings`)
-                }
-              }
-            }
-          } catch {
-            // If table doesn't exist yet or query fails, use defaults
-          }
+          // The audit always benchmarks the 3 DEFAULT (free) models only.
+          // Premium models (Gemini/Grok/Meta) are NEVER auto-probed by the audit
+          // — the user interrogates them on demand on the Intelligence page (rule
+          // 2026-06-18). This stops the page surfacing premium results the user
+          // never asked for, and keeps the AI Accuracy comparable across audits.
+          const DEFAULT_BENCHMARK_SLUGS = ['perplexity/sonar', 'deepseek/deepseek-chat-v3-0324', 'openai/gpt-4o-mini']
+          const enabledModelSlugs: string[] = DEFAULT_BENCHMARK_SLUGS.filter((slug) => findModelBySlug(slug) != null)
           // Fetch workspace's category-specific Top 10 questions from the
           // shortlist generator. These replace the generic fallback questions
           // and become the benchmark scoring basis.
