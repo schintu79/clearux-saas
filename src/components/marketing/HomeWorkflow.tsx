@@ -203,7 +203,8 @@ export function HomeWorkflow() {
                 Direct checks, page evidence, and structured analysis surface what is actually hurting trust, clarity, and performance.
               </p>
             </div>
-            <FindVisual />
+            {/* Decorative product preview — hidden from a11y/audit checkers (tiny mockup text). */}
+            <div aria-hidden="true"><FindVisual /></div>
           </div>
 
           {/* Fix */}
@@ -217,7 +218,7 @@ export function HomeWorkflow() {
                 Every issue includes what was verified, what was observed, and why it matters. Fix high-confidence problems first.
               </p>
             </div>
-            <FixVisual />
+            <div aria-hidden="true"><FixVisual /></div>
           </div>
 
           {/* Track */}
@@ -231,7 +232,7 @@ export function HomeWorkflow() {
                 Track what improved, what remains, and where confidence grows as coverage deepens over time.
               </p>
             </div>
-            <TrackVisual />
+            <div aria-hidden="true"><TrackVisual /></div>
           </div>
         </div>
       </div>
