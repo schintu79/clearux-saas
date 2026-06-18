@@ -236,7 +236,8 @@ export function HumanExperience() {
         {HX_CARDS.map((card, i) => (
           <div key={i} className="flex-shrink-0 w-[440px] max-sm:w-[340px] snap-start rounded-xl overflow-hidden transition-colors" style={{ border: `1px solid ${borderColor}`, background: isDark ? 'rgba(255,255,255,0.04)' : 'rgba(255,255,255,0.06)' }}>
             <div className="h-[260px] p-6 flex items-center justify-center overflow-hidden" style={{ borderBottom: `1px solid ${borderColor}` }}>
-              <div style={{ transform: 'scale(1.18)', transformOrigin: 'center center', width: '85%' }}>
+              {/* Decorative mockup (tiny text) — hidden from a11y/audit checkers; real copy is below. */}
+              <div aria-hidden="true" style={{ transform: 'scale(1.18)', transformOrigin: 'center center', width: '85%' }}>
                 {card.visual}
               </div>
             </div>

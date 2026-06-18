@@ -29,8 +29,9 @@ export function HomeWordPress() {
             </div>
           </div>
 
-          {/* WordPress admin mockup — mirrors real plugin panel */}
-          <div className="rounded-[4px] overflow-hidden border border-rule" style={{ background: 'var(--paper-2)' }}>
+          {/* WordPress admin mockup — mirrors real plugin panel. Decorative
+              preview (tiny mockup text); hidden from a11y/audit checkers. */}
+          <div aria-hidden="true" className="rounded-[4px] overflow-hidden border border-rule" style={{ background: 'var(--paper-2)' }}>
             <div className="px-5 py-3 border-b border-rule flex items-center justify-between">
               <div className="flex items-center gap-2.5">
                 <span className="w-5 h-5 rounded bg-signal flex items-center justify-center">
