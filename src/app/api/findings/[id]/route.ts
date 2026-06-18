@@ -208,7 +208,7 @@ export async function GET(
 
     const { data: finding, error } = await db
       .from('audit_findings')
-      .select('id, audit_id, title, description, severity, status, recommendation, estimated_impact, page_url, sort_order, dismissed, dismissal_reason, action_mode, fix_status, fix_format, is_editable, is_deployable, approval_required, deployable_type, default_owner, fix_payload, issue_family_id')
+      .select('id, audit_id, title, description, severity, status, recommendation, estimated_impact, page_url, sort_order, dismissed, dismissal_reason, action_mode, fix_status, fix_format, is_editable, is_deployable, approval_required, deployable_type, default_owner, fix_payload, issue_family_id, verified_fixed_at, status_note, confidence_level')
       .eq('id', findingId)
       .single()
 
@@ -265,7 +265,7 @@ export async function PATCH(
     // Fetch finding (no verification_status — column may not exist)
     const { data: finding } = await db
       .from('audit_findings')
-      .select('audit_id, title, severity, recommendation, status, action_mode, fix_status, issue_family_id')
+      .select('audit_id, title, severity, recommendation, status, action_mode, fix_status, issue_family_id, confidence_level, detection_source')
       .eq('id', findingId)
       .single()
 
@@ -403,12 +403,18 @@ export async function PATCH(
       // Fire-and-forget: a background job re-checks the page and records the
       // outcome. The job filters to deterministic findings, so we fire for any
       // mark-fixed and let it decide eligibility. Never block the response.
-      if (status === 'fixed' && getFeatureFlags().fixOutcomes) {
+      // Only deterministic findings get re-checked by the job, so only those
+      // drive the "Verifying fix…" UI — AI findings shouldn't show a spinner
+      // that never resolves.
+      const isVerifiable = (finding as any).confidence_level === 'deterministic'
+      let verificationQueued = false
+      if (status === 'fixed' && isVerifiable && getFeatureFlags().fixOutcomes) {
         try {
           await inngest.send({
             name: 'fix/verify-requested',
             data: { findingId, userId: user.id, markedFixedAt: new Date().toISOString() },
           })
+          verificationQueued = true
         } catch (sendErr) {
           console.error('[findings-api] fix/verify-requested send failed (non-fatal):', sendErr)
         }
@@ -442,6 +448,7 @@ export async function PATCH(
       return NextResponse.json({
         success: true,
         status,
+        verificationQueued,
         scoreUpdate: scoreUpdate || undefined,
       })
     }
@@ -524,12 +531,15 @@ export async function PATCH(
       // The FixConsole "Mark fixed" button comes through THIS path via
       // action_mode='fixed' (which set status='fixed' above). Without this the
       // verify job only fired from the header-dropdown status path. Fire-and-forget.
-      if (updates.status === 'fixed' && getFeatureFlags().fixOutcomes) {
+      const isVerifiable = (finding as any).confidence_level === 'deterministic'
+      let verificationQueued = false
+      if (updates.status === 'fixed' && isVerifiable && getFeatureFlags().fixOutcomes) {
         try {
           await inngest.send({
             name: 'fix/verify-requested',
             data: { findingId, userId: user.id, markedFixedAt: new Date().toISOString() },
           })
+          verificationQueued = true
         } catch (sendErr) {
           console.error('[findings-api] fix/verify-requested (action_mode) send failed (non-fatal):', sendErr)
         }
@@ -539,6 +549,7 @@ export async function PATCH(
         success: true,
         action_mode,
         fix_status: resolvedFixStatus,
+        verificationQueued,
         scoreUpdate: scoreUpdate || undefined,
       })
     }

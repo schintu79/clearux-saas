@@ -2344,6 +2344,63 @@ function SelfServeConsole({
   );
 }
 
+/* ── Fix verification pill ─────────────────────────────────────
+ * When a MEASURED (deterministic) finding is marked fixed, a background job
+ * re-runs the instrument on its page. This pill gives the customer live
+ * feedback on that async check: "Verifying fix…" → "Verified fixed" /
+ * "Still present — reopened". AI-assessed findings aren't auto-verified, so
+ * the pill renders nothing for them (no spinner that never resolves). */
+function FixVerificationPill({ finding }: { finding: AuditFinding }) {
+  const isDeterministic = (finding as any).confidence_level === 'deterministic';
+  const alreadyVerified = !!(finding as any).verified_fixed_at;
+  const [state, setState] = useState<'verifying' | 'verified' | 'reopened' | 'pending'>(
+    alreadyVerified ? 'verified' : 'verifying',
+  );
+
+  useEffect(() => {
+    if (!isDeterministic || alreadyVerified) return;
+    let cancelled = false;
+    let attempts = 0;
+    const MAX = 16; // ~48s at 3s intervals
+    let timer: ReturnType<typeof setTimeout>;
+    const tick = async () => {
+      attempts++;
+      try {
+        const res = await fetch(`/api/findings/${finding.id}`);
+        const d = await res.json().catch(() => ({} as any));
+        const f = d?.finding;
+        if (!cancelled && f) {
+          if (f.verified_fixed_at) { setState('verified'); return; }
+          if (f.status === 'open') { setState('reopened'); return; }
+        }
+      } catch { /* transient — keep polling */ }
+      if (cancelled) return;
+      if (attempts >= MAX) { setState('pending'); return; }
+      timer = setTimeout(tick, 3000);
+    };
+    timer = setTimeout(tick, 3000);
+    return () => { cancelled = true; clearTimeout(timer); };
+  }, [finding.id, isDeterministic, alreadyVerified]);
+
+  if (!isDeterministic) return null;
+
+  const cfg = {
+    verifying: { label: 'Verifying fix…', color: 'var(--signal)', spin: true },
+    verified: { label: 'Verified fixed', color: 'var(--ok)', spin: false },
+    reopened: { label: 'Still present — reopened', color: 'var(--warn)', spin: false },
+    pending: { label: 'Marked fixed — verification pending', color: 'var(--m-muted)', spin: false },
+  }[state];
+
+  return (
+    <span className="inline-flex items-center gap-1.5 text-[11px] font-medium" style={{ color: cfg.color }} aria-live="polite">
+      {cfg.spin
+        ? <Loader2 size={12} className="animate-spin flex-shrink-0" />
+        : <span className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ background: cfg.color }} />}
+      {cfg.label}
+    </span>
+  );
+}
+
 /* ── Main FixConsole Export ────────────────────────────────── */
 
 export default function FixConsole({
@@ -2439,19 +2496,25 @@ export default function FixConsole({
               : 'var(--ink)',
           }}
         >
-          <span
-            className="w-1.5 h-1.5 rounded-full flex-shrink-0"
-            style={{
-              background: currentFixStatus === 'fixed'
-                ? 'var(--ok)'
-                : currentFixStatus === 'failed'
-                ? 'var(--err)'
-                : currentFixStatus === 'deferred'
-                ? 'var(--m-muted)'
-                : 'var(--ink)',
-            }}
-          />
-          {fixStatusLabel(currentFixStatus)}
+          {currentFixStatus === 'fixed' && (finding as any).confidence_level === 'deterministic' ? (
+            <FixVerificationPill finding={finding} />
+          ) : (
+            <>
+              <span
+                className="w-1.5 h-1.5 rounded-full flex-shrink-0"
+                style={{
+                  background: currentFixStatus === 'fixed'
+                    ? 'var(--ok)'
+                    : currentFixStatus === 'failed'
+                    ? 'var(--err)'
+                    : currentFixStatus === 'deferred'
+                    ? 'var(--m-muted)'
+                    : 'var(--ink)',
+                }}
+              />
+              {fixStatusLabel(currentFixStatus)}
+            </>
+          )}
         </div>
       )}
 
