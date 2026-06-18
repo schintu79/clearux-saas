@@ -208,7 +208,7 @@ export async function GET(
 
     const { data: finding, error } = await db
       .from('audit_findings')
-      .select('id, audit_id, title, description, severity, status, recommendation, estimated_impact, page_url, sort_order, dismissed, dismissal_reason, action_mode, fix_status, fix_format, is_editable, is_deployable, approval_required, deployable_type, default_owner, fix_payload, issue_family_id, verified_fixed_at, status_note, confidence_level')
+      .select('id, audit_id, title, description, severity, status, recommendation, estimated_impact, page_url, sort_order, dismissed, dismissal_reason, action_mode, fix_status, fix_format, is_editable, is_deployable, approval_required, deployable_type, default_owner, fix_payload, issue_family_id, verified_fixed_at, status_note, confidence_level, status_updated_at')
       .eq('id', findingId)
       .single()
 
