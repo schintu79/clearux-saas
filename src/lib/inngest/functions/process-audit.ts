@@ -23,7 +23,7 @@ import { prioritizePagesForChecks } from '@/lib/audit-engine/page-relevance'
 import { composeFindings } from '@/lib/audit-engine/compose/compose'
 import { pageContentChanged, type PageContentFacts } from '@/lib/audit-engine/content-change'
 import { buildPageCaptureRows, writePageCaptures, CAPTURE_SCHEMA_VERSION } from '@/lib/audit-engine/capture/page-capture'
-import { captureInputParity } from '@/lib/audit-engine/capture/capture-bucket'
+import { captureInputParity, captureToPageContent } from '@/lib/audit-engine/capture/capture-bucket'
 import { runCrawlPreflight } from '@/lib/audit-engine/crawl-preflight'
 import { probeAIDiscovery, formatAIDiscoveryForAnalysis } from '@/lib/audit-engine/ai-discovery-probe'
 import { validateStructuredData, formatValidationForAnalysis } from '@/lib/audit-engine/structured-data-validator'
@@ -1967,9 +1967,14 @@ Return 2-6 findings. Be specific and evidence-based. Reference specific files/co
     // cost. Fully non-fatal: any failure is logged loudly via the checked write
     // but can NEVER affect the audit. See docs/AUDIT_PIPELINE_ARCHITECTURE.md.
     // ──────────────────────────────────────────────────────────
+    // #27 — when FEATURE_ANALYZE_FROM_CAPTURE is on AND capture parity is full,
+    // the shadow-capture step returns analyzer input reconstructed from the
+    // immutable PageCapture. We point the LLM analyzer at it below so Stage 2 is
+    // re-runnable without re-crawling. OFF by default → stays null → no change.
+    let analysisContentOverride: string | null = null
     try {
       {
-        await step.run('shadow-capture', async () => {
+        const shadowCaptureRes = await step.run('shadow-capture', async () => {
           return withStepTimeout(async () => {
             const db = getDb()
             const { data: capturePages, error: captureReadErr } = await db.from('audit_pages')
@@ -1999,16 +2004,31 @@ Return 2-6 findings. Be specific and evidence-based. Reference specific files/co
             // coverage to the live crawl input. No analyzer is run, no LLM call,
             // no behavior change — this just records parity so we know the
             // capture can feed Stage 2 before we point an analyzer at it.
+            let captureContent: string | null = null
             try {
               const parity = captureInputParity(crawlResult?.pageContent || '', rows as unknown as Parameters<typeof captureInputParity>[1])
               await auditLog(auditId, 'shadow_capture_parity', parity.coversAllLivePages ? 'info' : 'warning',
                 `Capture input parity: covers ${parity.captureUrls}/${parity.liveUrls} live page(s)${parity.coversAllLivePages ? ' (full)' : ` — missing ${parity.missingFromCapture.length}`}`,
                 { live_urls: parity.liveUrls, capture_urls: parity.captureUrls, covers_all: parity.coversAllLivePages, missing: parity.missingFromCapture.slice(0, 20), capture_chars: parity.captureChars })
+              // #27 — only when the flag is on AND the capture faithfully covers
+              // every live page do we reconstruct the analyzer input from the
+              // capture. captureToPageContent reproduces the live pageContent
+              // format byte-for-byte (URL/Title/H1/Meta/Content blocks).
+              if (getFeatureFlags().analyzeFromCapture && parity.coversAllLivePages && parity.captureChars > 0) {
+                captureContent = captureToPageContent(rows as unknown as Parameters<typeof captureToPageContent>[0])
+              }
             } catch { /* parity logging is best-effort, never affects the audit */ }
 
-            return res
-          }, 30_000, 'shadow-capture', { ok: false, saved: 0 })
+            return { ...res, captureContent }
+          }, 30_000, 'shadow-capture', { ok: false, saved: 0, captureContent: null })
         })
+        // #27 — adopt the capture-derived analyzer input when the step produced it
+        // (flag on + full parity). Instruments/SEO checks still read crawlResult.
+        analysisContentOverride = (shadowCaptureRes as { captureContent?: string | null } | undefined)?.captureContent ?? null
+        if (analysisContentOverride) {
+          await auditLog(auditId, 'analysis_source_capture', 'info',
+            'Analyzer input sourced from the immutable PageCapture (re-runnable, no re-crawl) — capture parity full')
+        }
       }
     } catch (captureErr) {
       // Shadow capture must never affect the audit — swallow after logging.
@@ -3153,7 +3173,7 @@ RULES FOR RE-AUDIT:
         const aiDiscoveryBlockBl = aiDiscovery.summary ? `\n\n${aiDiscovery.summary}` : ''
         const structuredDataBlockBl = structuredDataResult.summary ? `\n\n${structuredDataResult.summary}` : ''
         const llmProbeBlockBl = llmProbeResult?.summary ? `\n\n${llmProbeResult.summary}` : ''
-        const contentWithContextBl = `${siteContext.context}\n\n${crawlResult.pageContent}${aiDiscoveryBlockBl}${structuredDataBlockBl}${llmProbeBlockBl}`
+        const contentWithContextBl = `${siteContext.context}\n\n${analysisContentOverride ?? crawlResult.pageContent}${aiDiscoveryBlockBl}${structuredDataBlockBl}${llmProbeBlockBl}`
 
         // Design Consistency gap fill — uses standard content by default.
         // When Brand DNA enrichment is enabled, prepend brand guidelines for comparison.
@@ -3515,7 +3535,7 @@ RULES FOR RE-AUDIT:
         const aiDiscoveryBlock = aiDiscovery.summary ? `\n\n${aiDiscovery.summary}` : ''
         const structuredDataBlock = structuredDataResult.summary ? `\n\n${structuredDataResult.summary}` : ''
         const llmProbeBlock = llmProbeResult?.summary ? `\n\n${llmProbeResult.summary}` : ''
-        const contentWithContext = `${patchedContext}\n\n${crawlResult.pageContent}${aiDiscoveryBlock}${structuredDataBlock}${llmProbeBlock}`
+        const contentWithContext = `${patchedContext}\n\n${analysisContentOverride ?? crawlResult.pageContent}${aiDiscoveryBlock}${structuredDataBlock}${llmProbeBlock}`
         const designConsistencyContent = brandContext
           ? `=== BRAND IDENTITY GUIDELINES (PRIMARY REFERENCE) ===\n${brandContext}\n\n=== MANDATORY COMPARISON INSTRUCTION ===\nYour PRIMARY task for this category is to compare the website's actual implementation against the brand guidelines above. For EACH aspect of the brand guidelines (colors, typography, voice, tone, visual style, messaging patterns), check whether the website follows or deviates from them.\n\nYou MUST flag:\n- Any mismatch between documented brand colors/fonts and what the site actually uses\n- Voice/tone deviations from the brand personality\n- Visual style inconsistencies with brand guidelines\n- Messaging that contradicts the brand positioning\n\nDo NOT smooth over discrepancies. If the brand says "professional and authoritative" but the site uses casual slang, that is a HIGH severity finding. If the brand specifies specific colors but the site uses different ones, flag it.\n\n=== WEBSITE CONTENT (TO COMPARE AGAINST BRAND) ===\n${contentWithContext}`
           : contentWithContext

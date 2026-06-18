@@ -39,6 +39,16 @@ export interface FeatureFlags {
    * (dark launch): no event fired, no job effect. See docs/FIX_OUTCOMES_ARCHITECTURE.md.
    */
   fixOutcomes: boolean
+  /**
+   * Capture→Analyze doctrine — when ON, the LLM analyzer's page-content input is
+   * sourced from the immutable PageCapture (via captureToPageContent) instead of
+   * the live crawl result, making analysis re-runnable without re-crawling.
+   * Applied ONLY to the analyzer's text input, and ONLY when capture parity is
+   * full (covers every live page); instrument/SEO checks are untouched. OFF by
+   * default (dark launch): analyzer reads the live crawl exactly as before.
+   * See docs/AUDIT_PIPELINE_ARCHITECTURE.md.
+   */
+  analyzeFromCapture: boolean
 }
 
 /**
@@ -53,5 +63,6 @@ export function getFeatureFlags(): FeatureFlags {
     leanPipeline: process.env.FEATURE_LEAN_PIPELINE !== 'false', // ON by default
     captureShadow: process.env.FEATURE_CAPTURE_SHADOW === 'true', // OFF by default
     fixOutcomes: process.env.FEATURE_FIX_OUTCOMES === 'true', // OFF by default
+    analyzeFromCapture: process.env.FEATURE_ANALYZE_FROM_CAPTURE === 'true', // OFF by default
   }
 }
