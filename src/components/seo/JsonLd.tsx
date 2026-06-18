@@ -185,25 +185,16 @@ export function HomeJsonLd() {
     })),
   }
 
-  const breadcrumb = {
-    '@context': 'https://schema.org',
-    '@type': 'BreadcrumbList',
-    itemListElement: [
-      { '@type': 'ListItem', position: 1, name: 'Home', item: siteUrl },
-      { '@type': 'ListItem', position: 2, name: 'Product', item: `${siteUrl}/product` },
-      { '@type': 'ListItem', position: 3, name: 'Why Fixpath', item: `${siteUrl}/why-fixpath` },
-      { '@type': 'ListItem', position: 4, name: 'Pricing', item: `${siteUrl}/pricing` },
-      { '@type': 'ListItem', position: 5, name: 'About', item: `${siteUrl}/about` },
-      { '@type': 'ListItem', position: 6, name: 'Contact', item: `${siteUrl}/contact` },
-    ],
-  }
+  // BreadcrumbList removed from the homepage (2026-06-18): the page has no
+  // visible breadcrumb trail and the static 6-item list didn't reflect the real
+  // site structure — Google's guidance is that breadcrumb structured data must
+  // mirror a real on-page trail, so it belongs on content pages, not here.
 
   return (
     <>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(website) }} />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(software) }} />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faq) }} />
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumb) }} />
     </>
   )
 }
