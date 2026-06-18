@@ -2350,45 +2350,62 @@ function SelfServeConsole({
  * feedback on that async check: "Verifying fix…" → "Verified fixed" /
  * "Still present — reopened". AI-assessed findings aren't auto-verified, so
  * the pill renders nothing for them (no spinner that never resolves). */
+// How long after a finding is marked fixed we keep actively polling for the
+// verification result. Past this window we treat it as settled and stop the
+// spinner — so a page refresh doesn't restart "Verifying…" forever when the
+// job is slow, disabled, or already returned an inconclusive result.
+const VERIFY_ACTIVE_WINDOW_MS = 2 * 60 * 1000;
+
 function FixVerificationPill({ finding }: { finding: AuditFinding }) {
   const isDeterministic = (finding as any).confidence_level === 'deterministic';
-  const alreadyVerified = !!(finding as any).verified_fixed_at;
-  const [state, setState] = useState<'verifying' | 'verified' | 'reopened' | 'pending'>(
-    alreadyVerified ? 'verified' : 'verifying',
+  const [state, setState] = useState<'loading' | 'verifying' | 'verified' | 'reopened' | 'settled'>(
+    (finding as any).verified_fixed_at ? 'verified' : 'loading',
   );
 
   useEffect(() => {
-    if (!isDeterministic || alreadyVerified) return;
+    if (!isDeterministic) return;
+    if ((finding as any).verified_fixed_at) { setState('verified'); return; }
     let cancelled = false;
     let attempts = 0;
     const MAX = 16; // ~48s at 3s intervals
     let timer: ReturnType<typeof setTimeout>;
+    // Returns true when a terminal state was reached (stop polling).
+    const decide = (f: any): boolean => {
+      if (f.verified_fixed_at) { setState('verified'); return true; }
+      if (f.status === 'open') { setState('reopened'); return true; }
+      const updatedAt = f.status_updated_at ? new Date(f.status_updated_at).getTime() : 0;
+      const recentlyMarked = updatedAt > 0 && (Date.now() - updatedAt) < VERIFY_ACTIVE_WINDOW_MS;
+      // Only show the live spinner if the fix was marked recently — otherwise the
+      // result either already came back (and isn't a pass) or never will, so we
+      // settle to a stable, non-spinning label that survives refreshes.
+      if (!recentlyMarked) { setState('settled'); return true; }
+      setState('verifying');
+      return false;
+    };
     const tick = async () => {
-      attempts++;
       try {
         const res = await fetch(`/api/findings/${finding.id}`);
         const d = await res.json().catch(() => ({} as any));
         const f = d?.finding;
-        if (!cancelled && f) {
-          if (f.verified_fixed_at) { setState('verified'); return; }
-          if (f.status === 'open') { setState('reopened'); return; }
-        }
-      } catch { /* transient — keep polling */ }
+        if (cancelled) return;
+        if (f && decide(f)) return;
+      } catch { /* transient — keep polling within the window */ }
       if (cancelled) return;
-      if (attempts >= MAX) { setState('pending'); return; }
+      attempts++;
+      if (attempts >= MAX) { setState('settled'); return; }
       timer = setTimeout(tick, 3000);
     };
-    timer = setTimeout(tick, 3000);
+    tick(); // immediate first check — no 3s blank gap
     return () => { cancelled = true; clearTimeout(timer); };
-  }, [finding.id, isDeterministic, alreadyVerified]);
+  }, [finding.id, isDeterministic]);
 
-  if (!isDeterministic) return null;
+  if (!isDeterministic || state === 'loading') return null;
 
   const cfg = {
     verifying: { label: 'Verifying fix…', color: 'var(--signal)', spin: true },
     verified: { label: 'Verified fixed', color: 'var(--ok)', spin: false },
     reopened: { label: 'Still present — reopened', color: 'var(--warn)', spin: false },
-    pending: { label: 'Marked fixed — verification pending', color: 'var(--m-muted)', spin: false },
+    settled: { label: 'Marked fixed', color: 'var(--ok)', spin: false },
   }[state];
 
   return (
