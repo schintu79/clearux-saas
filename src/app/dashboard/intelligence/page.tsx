@@ -2286,7 +2286,11 @@ function IntelligencePage() {
                 {IQ_MODEL_DISPLAY.map((m) => {
                   const provider = providerKeyToIcon(m.shortId);
                   const iq = iqPerModel[m.slug];
-                  const probe = mergedModelBreakdown.find((pb) => pb.model_id === m.shortId && (pb.status === 'measured' || !pb.status));
+                  // Only the 3 default (free) models are measured by the audit itself.
+                  // Premium models show a score ONLY if the user explicitly
+                  // interrogated them (iq) — never a stale audit probe. So an
+                  // un-interrogated premium model reads "Not measured", not a number.
+                  const probe = m.free ? mergedModelBreakdown.find((pb) => pb.model_id === m.shortId && (pb.status === 'measured' || !pb.status)) : undefined;
                   const score = iq ? iq.score : probe ? probe.accuracy_score : null;
                   const nQuestions = iq ? iq.n : probe ? probe.total_questions : 0;
                   const badge = score != null ? accuracyBadge(score, 'measured') : null;
@@ -2557,7 +2561,9 @@ function IntelligencePage() {
                       </p>
                     )}
                     <div className="space-y-2.5">
-                      {iqResults.map((r) => {
+                      {/* Dedupe by model — one card per model (keep the first/newest),
+                          so a model interrogated more than once for a question never repeats. */}
+                      {iqResults.filter((r, i, arr) => arr.findIndex((x) => x.modelSlug === r.modelSlug) === i).map((r) => {
                         const provider = providerKeyToIcon(r.modelShortId);
                         const ac = accuracyColor(r.accuracy);
                         const normAcc = normalizeAccuracy(r.accuracy);
