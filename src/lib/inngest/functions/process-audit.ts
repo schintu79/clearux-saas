@@ -24,6 +24,8 @@ import { composeFindings } from '@/lib/audit-engine/compose/compose'
 import { pageContentChanged, type PageContentFacts } from '@/lib/audit-engine/content-change'
 import { buildPageCaptureRows, writePageCaptures, CAPTURE_SCHEMA_VERSION } from '@/lib/audit-engine/capture/page-capture'
 import { captureInputParity, captureToPageContent } from '@/lib/audit-engine/capture/capture-bucket'
+import { detectReauditResolvedFixes } from '@/lib/audit-engine/fix-verification/reaudit-fix-detection'
+import { insertChecked } from '@/lib/db/checked-write'
 import { runCrawlPreflight } from '@/lib/audit-engine/crawl-preflight'
 import { probeAIDiscovery, formatAIDiscoveryForAnalysis } from '@/lib/audit-engine/ai-discovery-probe'
 import { validateStructuredData, formatValidationForAnalysis } from '@/lib/audit-engine/structured-data-validator'
@@ -5392,6 +5394,68 @@ RULES FOR RE-AUDIT:
         }
       } catch (ceCatch) {
         console.error('[inngest] checks_executed computation failed (non-fatal):', ceCatch)
+      }
+
+      // ── Phase 3 — Re-audit fix detection (auto-verify on re-audit) ──
+      // If the user fixed something and re-audited WITHOUT marking it, a
+      // previously-open deterministic finding that's now gone — on a page we
+      // actually re-analyzed (crawl_status='success') — is proven fixed, the
+      // same standard as a manual single-page re-check. Flag-gated,
+      // coverage-guarded (no false "fixed"), deduped against the manual path,
+      // and fully non-fatal: it can never affect audit completion.
+      try {
+        if (getFeatureFlags().fixOutcomes) {
+          const { data: auditRow } = await db.from('audits')
+            .select('previous_audit_id, workspace_id, user_id')
+            .eq('id', auditId).single()
+          const priorAuditId = (auditRow as any)?.previous_audit_id as string | null
+          if (priorAuditId) {
+            const { data: priorRows } = await db.from('audit_findings')
+              .select('id, audit_id, page_url, detection_source, confidence_level, status, dismissed, severity, title, target_element, performance_metric_type, evidence, issue_family_id, created_at')
+              .eq('audit_id', priorAuditId)
+              .eq('status', 'open')
+              .eq('confidence_level', 'deterministic')
+            if (priorRows && priorRows.length > 0) {
+              const [freshRes, pageRes] = await Promise.all([
+                db.from('audit_findings')
+                  .select('page_url, detection_source, title, target_element, performance_metric_type')
+                  .eq('audit_id', auditId),
+                db.from('audit_pages').select('url').eq('audit_id', auditId).eq('crawl_status', 'success'),
+              ])
+              const priorIds = (priorRows as any[]).map((f) => f.id)
+              const { data: existingOutcomes } = await db.from('fix_outcomes')
+                .select('finding_id').in('finding_id', priorIds)
+              const resolved = detectReauditResolvedFixes({
+                priorFindings: priorRows as any,
+                freshFindings: (freshRes.data || []) as any,
+                coveredPageUrls: ((pageRes.data || []) as any[]).map((p) => p.url).filter(Boolean),
+                workspaceId: (auditRow as any)?.workspace_id ?? null,
+                userId: (auditRow as any)?.user_id ?? null,
+                verifiedAt: new Date().toISOString(),
+                alreadyRecordedFindingIds: ((existingOutcomes || []) as any[]).map((o) => o.finding_id),
+                newAuditId: auditId,
+              })
+              let wrote = 0
+              for (const r of resolved) {
+                const w = await insertChecked(db, 'fix_outcomes', r.row as any, { label: 'reaudit-fix-detection', auditId })
+                if (w.ok) {
+                  wrote++
+                  await db.from('audit_findings').update({ verified_fixed_at: r.row.verified_at } as any).eq('id', r.priorFindingId)
+                  if (r.issueFamilyId) {
+                    await db.from('issue_families').update({ fix_status: 'validated_fixed', fix_updated_at: r.row.verified_at } as any).eq('id', r.issueFamilyId)
+                  }
+                }
+              }
+              if (resolved.length > 0) {
+                await auditLog(auditId, 'reaudit_fixes_verified', wrote > 0 ? 'success' : 'info',
+                  `Re-audit auto-verified ${wrote} fix(es) resolved since the previous audit`,
+                  { detected: resolved.length, wrote, prior_audit_id: priorAuditId })
+              }
+            }
+          }
+        }
+      } catch (reauditFixErr) {
+        console.error('[inngest] re-audit fix detection failed (non-fatal):', reauditFixErr)
       }
 
       // ATOMIC: Set status + completed_at in ONE call.

@@ -162,6 +162,10 @@ export interface BuildOutcomeInput {
   markedFixedAt: string | null
   verifiedAt: string
   recheckMeta?: Record<string, unknown> | null
+  /** How the outcome was reached. 'single_page_instrument' = on-demand re-check
+   *  after a manual mark-fixed; 'reaudit_diff' = detected by a full re-audit no
+   *  longer finding the issue. Defaults to single_page_instrument. */
+  recheckMethod?: string
 }
 
 /** Pure assembly of a fix_outcomes row. time_to_fix is detection→verification,
@@ -191,7 +195,7 @@ export function buildFixOutcomeRow(input: BuildOutcomeInput): FixOutcomeRow {
     marked_fixed_at: input.markedFixedAt,
     verified_at: input.verifiedAt,
     time_to_fix_seconds: timeToFix,
-    recheck_method: 'single_page_instrument',
+    recheck_method: input.recheckMethod ?? 'single_page_instrument',
     recheck_meta: input.recheckMeta ?? null,
   }
 }
