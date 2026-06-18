@@ -1258,6 +1258,11 @@ function OverviewInner() {
           onToggleAll={() => setShowAllHistory((v) => !v)}
           currentAuditId={audit.id}
           onDeleted={handleAuditDeleted}
+          // Show the SAME capped Website Health Score the card and trend use,
+          // not the raw category average. Per-audit capped values come from the
+          // score-trend API; the current row uses the live card value exactly.
+          cappedScores={Object.fromEntries(scoreTrend.map((t) => [t.auditId, t.overallScore]))}
+          currentScore={overallScore}
         />
       </div>
 
@@ -1682,6 +1687,8 @@ function AuditHistoryCard({
   onToggleAll,
   currentAuditId,
   onDeleted,
+  cappedScores,
+  currentScore,
 }: {
   history: LatestAuditBundle['history'];
   auditCount: number;
@@ -1689,6 +1696,10 @@ function AuditHistoryCard({
   onToggleAll: () => void;
   currentAuditId: string;
   onDeleted: (deletedAuditId: string) => void;
+  /** auditId → capped Website Health Score (from score-trend). */
+  cappedScores?: Record<string, number>;
+  /** Live capped score for the current audit — matches the big card exactly. */
+  currentScore?: number;
 }) {
   const { workspaceSlug: _ws } = useWorkspace();
   const _dp = _ws ? `/dashboard/${_ws}` : '/dashboard';
@@ -1797,12 +1808,21 @@ function AuditHistoryCard({
                   >
                     {aLang}
                   </span>
-                  {done && r?.overall_score != null && (
-                    <>
-                      <span style={{ color: 'var(--rule)' }}>·</span>
-                      <span className={`font-medium ${scoreColor(r.overall_score)}`}>{r.overall_score} pts</span>
-                    </>
-                  )}
+                  {(() => {
+                    // The displayed score is the capped Website Health Score —
+                    // the SAME number as the big card and the trend — not the raw
+                    // category average. Current row uses the live card value; older
+                    // rows use the per-audit capped value from score-trend.
+                    const displayScore = a.id === currentAuditId
+                      ? (currentScore ?? r?.overall_score ?? null)
+                      : (cappedScores?.[a.id] ?? r?.overall_score ?? null);
+                    return done && displayScore != null ? (
+                      <>
+                        <span style={{ color: 'var(--rule)' }}>·</span>
+                        <span className={`font-medium ${scoreColor(displayScore)}`}>{displayScore} pts</span>
+                      </>
+                    ) : null;
+                  })()}
                   {a.id === currentAuditId && (
                     <span className="text-[10px] font-semibold text-signal bg-signal/10 px-1.5 py-0.5 rounded-full uppercase tracking-[0.03em]">
                       Current
