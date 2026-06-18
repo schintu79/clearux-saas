@@ -166,6 +166,9 @@ function OverviewInner() {
   const [limitationsOpen, setLimitationsOpen] = useState(false);
 
   const [scoreTrend, setScoreTrend] = useState<Array<{ auditId: string; date: string; overallScore: number; pillarScores?: (number | null)[] | null }>>([]);
+  // Tracks the score-trend fetch so we show a skeleton instead of flashing the
+  // "Re-audit to track" empty state for the 2-3s the request is in flight.
+  const [trendLoading, setTrendLoading] = useState(true);
   const [competitors, setCompetitors] = useState<Array<{ domain: string; score: number; pillarScores?: Array<{ name: string; score: number }> }>>([]);
   const [categoryScores, setCategoryScores] = useState<Array<{ name: string; score: number; summary: string }>>([]);
   const [findings, setFindings] = useState<AuditFinding[]>([]);
@@ -249,6 +252,7 @@ function OverviewInner() {
   // by AuditBundleContext (which now clears to null on workspace change).
   useEffect(() => {
     setScoreTrend([]);
+    setTrendLoading(true);
     setCompetitors([]);
     setCategoryScores([]);
     setFindings([]);
@@ -338,13 +342,16 @@ function OverviewInner() {
     setBrandIntelligence(biData ? (biData as BrandIntelligenceSummary) : null);
 
     const productUrl = latestCompleted.product_url;
+    if (!productUrl) setTrendLoading(false);
     if (productUrl) {
       const trendParams = new URLSearchParams({ url: productUrl });
       if (workspace?.id) trendParams.set('workspace_id', workspace.id);
+      setTrendLoading(true);
       fetch(`/api/audits/score-trend?${trendParams}`)
         .then(r => r.json())
         .then(d => { if (d.trend) setScoreTrend(d.trend); })
-        .catch(() => {});
+        .catch(() => {})
+        .finally(() => setTrendLoading(false));
 
       fetch(`/api/audits/detect-competitors?url=${encodeURIComponent(productUrl)}`)
         .then(r => r.json())
@@ -1087,7 +1094,7 @@ function OverviewInner() {
           return (
         <DashboardCard
           title="Score Over Time"
-          subtitle={scoreTrend.length >= 2 ? `${scoreTrend.length} audits` : 'Trend appears after next audit'}
+          subtitle={scoreTrend.length >= 2 ? `${scoreTrend.length} audits` : (trendLoading ? 'Loading trend…' : 'Trend appears after next audit')}
           icon={TrendingUp}
           titleSize="lg"
           rightBadge={ptsBadge}
@@ -1096,8 +1103,20 @@ function OverviewInner() {
             <div className="h-full flex flex-col justify-end">
               <ScoreOverTimeChart trend={scoreTrend} />
             </div>
+          ) : trendLoading ? (
+            // Bottom-aligned skeleton — mirrors the chart's footprint so the card
+            // doesn't jump or flash the empty state while the trend loads.
+            <div className="h-full flex flex-col justify-end" aria-busy="true" aria-label="Loading score trend">
+              <div className="animate-pulse w-full">
+                <div
+                  className="w-full rounded-lg"
+                  style={{ height: 150, background: 'linear-gradient(180deg, color-mix(in srgb, var(--ink) 7%, transparent), color-mix(in srgb, var(--ink) 3%, transparent))' }}
+                />
+                <div className="mt-2 h-px w-full" style={{ background: 'color-mix(in srgb, var(--ink) 8%, transparent)' }} />
+              </div>
+            </div>
           ) : (
-            <div className="flex flex-col items-center justify-center py-8 text-center">
+            <div className="h-full flex flex-col items-center justify-center py-8 text-center">
               <TrendingUp size={28} style={{ color: 'var(--m-muted)', opacity: 0.4 }} className="mb-2" />
               <p className="text-[11px]" style={{ color: 'var(--m-muted)' }}>Re-audit to track your score over time.</p>
               <Link
