@@ -70,7 +70,7 @@ export async function GET(request: NextRequest) {
     // rather than the raw category average.
     const { data: allFindings } = await db
       .from('audit_findings')
-      .select('audit_id, severity, confidence_level, confidence_score, status, dismissed, verification_status')
+      .select('audit_id, severity, confidence_level, confidence_score, status, dismissed, verification_status, finding_type')
       .in('audit_id', auditIds)
     const findingsByAudit: Record<string, any[]> = {}
     for (const f of (allFindings || [])) {
