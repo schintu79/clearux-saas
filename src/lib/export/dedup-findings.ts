@@ -23,8 +23,10 @@ import type { ExportFinding } from './findings-formatter';
 
 /* ── Configuration ─────────────────────────────────────── */
 
-/** Similarity threshold (0..1). Findings above this merge into one group. */
-const SIMILARITY_THRESHOLD = 0.35;
+/** Similarity threshold (0..1) for the weaker combined (title+description)
+ *  path. Raised 0.35 → 0.42 (2026-06-18) — 0.35 let boilerplate-heavy findings
+ *  cluster. This path now ALSO requires a shared significant title word. */
+const SIMILARITY_THRESHOLD = 0.42;
 
 /** Minimum shared n-gram count to even consider a pair (fast pre-filter). */
 const MIN_SHARED_NGRAMS = 3;
@@ -62,6 +64,23 @@ function normalize(text: string): string {
     )
     .replace(/\s+/g, ' ')
     .trim();
+}
+
+/** Significant content words of a string (normalized, stop-words already removed
+ *  by normalize, ≥3 chars). Used as a TOPIC guard: two findings only merge on the
+ *  weaker combined-similarity path if their TITLES share at least one such word —
+ *  this stops generic boilerplate overlap ("this issue may affect…", "on this
+ *  page…") from clustering genuinely unrelated findings (e.g. a meta-tags finding
+ *  and an error-modal finding, which share no real subject word). */
+function significantWords(text: string): Set<string> {
+  return new Set(normalize(text).split(' ').filter((w) => w.length >= 3));
+}
+
+/** Do two title word-sets share any significant word? */
+function shareSignificantWord(a: Set<string>, b: Set<string>): boolean {
+  const [small, big] = a.size <= b.size ? [a, b] : [b, a];
+  for (const w of small) if (big.has(w)) return true;
+  return false;
 }
 
 /** Build a set of character n-grams (shingles) from normalized text. */
@@ -137,6 +156,7 @@ export function deduplicateFindings(
     titleShingles: shingleSet(f.title),
     descShingles: shingleSet(f.description),
     combinedShingles: shingleSet(`${f.title} ${f.description}`),
+    titleWords: significantWords(f.title),
     rootCause: rootCauseKey(f),
   }));
 
@@ -174,9 +194,11 @@ export function deduplicateFindings(
         continue;
       }
 
-      // Combined similarity
+      // Combined (title+description) similarity — the weak path. Require a
+      // shared significant TITLE word too, so generic description boilerplate
+      // can't merge findings that are about different things.
       const combinedSim = jaccard(fi.combinedShingles, fj.combinedShingles);
-      if (combinedSim >= SIMILARITY_THRESHOLD) {
+      if (combinedSim >= SIMILARITY_THRESHOLD && shareSignificantWord(fi.titleWords, fj.titleWords)) {
         union(i, j);
       }
     }
