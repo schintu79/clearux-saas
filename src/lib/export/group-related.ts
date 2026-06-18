@@ -72,12 +72,27 @@ const CLUSTER_RULES: ClusterRule[] = [
       /canonical\s*(url|tag)?/i,
     ],
   },
+  // Accessibility is a CATEGORY, not a related-finding cluster. The old single
+  // rule matched anything containing "wcag"/"aria", so four unrelated criteria
+  // (2.5.5 touch targets, 2.1.1 keyboard, 1.1.1 alt text, 2.4.6 headings) all
+  // collapsed into one meaningless "Accessibility and inclusive design" group
+  // with different elements and different fixes. Cluster ONLY by a shared,
+  // cohesive sub-topic so genuinely-related findings group and distinct WCAG
+  // criteria stay separate.
   {
-    id: 'accessibility',
-    label: 'Accessibility and inclusive design',
-    patterns: [
-      /\balt\s+text\b|keyboard\s+nav|color\s+contrast|screen\s+reader|wcag|aria|focus\s+manag/i,
-    ],
+    id: 'a11y-contrast',
+    label: 'Color contrast and legibility',
+    patterns: [/color\s+contrast|contrast\s+ratio|low\s+contrast|\b1\.4\.(3|6|11)\b/i],
+  },
+  {
+    id: 'a11y-keyboard',
+    label: 'Keyboard accessibility and focus order',
+    patterns: [/keyboard\s+(nav|access|accessib|operab)|tabindex|focus\s+(order|manage|management|trap|visible|indicator)|\b2\.1\.1\b|\b2\.4\.7\b/i],
+  },
+  {
+    id: 'a11y-alt-text',
+    label: 'Alternative text for images and media',
+    patterns: [/\balt\s+text\b|non-?text\s+content|image\s+alt|missing\s+alt|\b1\.1\.1\b/i],
   },
   {
     id: 'i18n',
