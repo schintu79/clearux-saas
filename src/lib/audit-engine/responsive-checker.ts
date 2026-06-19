@@ -292,6 +292,23 @@ async function runChecks({ page, viewport, url }: PageCheckInput): Promise<Viewp
         }
         return parts.join(' > ')
       }
+      // Is the element GENUINELY visible & tappable at THIS viewport? This is the
+      // gate that was missing — a desktop nav link hidden behind a hamburger on
+      // mobile still has a bounding box, so size-only checks flagged it as an
+      // un-tappable target when it isn't even shown. We confirm real visibility
+      // (CSS display/visibility/opacity, content-visibility, and that the element
+      // actually lays out) before trusting its measured size.
+      const isTrulyVisible = (node: Element): boolean => {
+        const e = node as HTMLElement
+        const cv = (e as unknown as { checkVisibility?: (o?: object) => boolean }).checkVisibility
+        if (typeof cv === 'function' && !cv.call(e, { checkVisibilityCSS: true, checkOpacity: true, contentVisibilityAuto: true })) return false
+        const st = window.getComputedStyle(e)
+        if (st.visibility === 'hidden' || st.display === 'none' || parseFloat(st.opacity || '1') === 0) return false
+        // offsetParent === null means an ancestor is display:none (hidden menu),
+        // unless the element is position:fixed (legitimately has no offsetParent).
+        if (e.offsetParent === null && st.position !== 'fixed') return false
+        return true
+      }
       const tooSmall: Array<{
         tag: string; width: number; height: number; text: string; selector: string
         clip: string; clipPath: string; position: string; left: number; right: number; viewportWidth: number; href: string | null
@@ -305,6 +322,10 @@ async function runChecks({ page, viewport, url }: PageCheckInput): Promise<Viewp
         if (rect.width === 0 || rect.height === 0) continue
         // Skip elements off-screen
         if (rect.top > 5000 || rect.bottom < 0) continue
+        // Skip elements that aren't actually shown at this viewport (e.g. the
+        // desktop nav collapsed behind a hamburger on mobile) — the fix for the
+        // "Product/Pricing too small to tap" false positive.
+        if (!isTrulyVisible(el)) continue
 
         if (rect.width < MIN_SIZE || rect.height < MIN_SIZE) {
           const tag = el.tagName.toLowerCase()
