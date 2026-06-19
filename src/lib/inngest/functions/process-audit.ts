@@ -26,6 +26,7 @@ import { buildPageCaptureRows, writePageCaptures, CAPTURE_SCHEMA_VERSION } from 
 import { captureInputParity, captureToPageContent } from '@/lib/audit-engine/capture/capture-bucket'
 import { detectReauditResolvedFixes } from '@/lib/audit-engine/fix-verification/reaudit-fix-detection'
 import { insertChecked } from '@/lib/db/checked-write'
+import { generateVerdict } from '@/lib/audit-engine/verdict'
 import { runCrawlPreflight } from '@/lib/audit-engine/crawl-preflight'
 import { probeAIDiscovery, formatAIDiscoveryForAnalysis } from '@/lib/audit-engine/ai-discovery-probe'
 import { validateStructuredData, formatValidationForAnalysis } from '@/lib/audit-engine/structured-data-validator'
@@ -5395,6 +5396,51 @@ RULES FOR RE-AUDIT:
         }
       } catch (ceCatch) {
         console.error('[inngest] checks_executed computation failed (non-fatal):', ceCatch)
+      }
+
+      // ── The Verdict — honest, plain-language top-level judgment (dark launch) ──
+      // The hero of the report: a senior-consultant verdict (industry standing,
+      // value-prop clarity, service findability, the 2-4 things costing customers,
+      // each pinned to an exact location). Stored on the report; non-fatal.
+      try {
+        if (getFeatureFlags().verdict && crawlResult?.pageContent) {
+          const homepageBlock = crawlResult.pageContent.split('\n---\n')[0] || crawlResult.pageContent.slice(0, 4000)
+          let industry = siteProfile?.industryVertical || ''
+          let audience = siteProfile?.targetAudience || null
+          if (!industry) {
+            try {
+              const sp = await detectSiteProfile(crawlResult.pageContent, auditDetails.productUrl)
+              industry = sp?.industryVertical || 'General'
+              audience = sp?.targetAudience || null
+            } catch { industry = 'General' }
+          }
+          const { data: vfRows } = await db.from('audit_findings')
+            .select('detection_source').eq('audit_id', auditId).neq('status', 'fixed')
+          const vrows = (vfRows || []) as Array<{ detection_source: string | null }>
+          const countSrc = (srcs: string[]) => vrows.filter((r) => srcs.includes(r.detection_source || '')).length
+          const verdict = await generateVerdict({
+            url: auditDetails.productUrl,
+            industry,
+            audience,
+            homepageContent: homepageBlock,
+            signals: {
+              mobileIssues: countSrc(['responsive_checker']),
+              slowOnMobile: countSrc(['pagespeed_api']) > 0,
+              accessibilityIssues: countSrc(['wcag_checker', 'axe']),
+              searchVisibilityIssues: countSrc(['structured_data']),
+              detectedValueProp: null,
+            },
+          })
+          if (verdict) {
+            const { data: vRep } = await db.from('reports').select('raw_json').eq('audit_id', auditId).single()
+            const merged = { ...((vRep as { raw_json?: Record<string, unknown> } | null)?.raw_json || {}), verdict }
+            await db.from('reports').update({ raw_json: merged } as any).eq('audit_id', auditId)
+            await auditLog(auditId, 'verdict_generated', 'info', `Verdict: ${verdict.headline}`,
+              { confidence: verdict.confidence, points: verdict.points.length })
+          }
+        }
+      } catch (verdictErr) {
+        console.error('[process-audit] verdict generation failed (non-fatal):', verdictErr)
       }
 
       // ── Phase 3 — Re-audit fix detection (auto-verify on re-audit) ──

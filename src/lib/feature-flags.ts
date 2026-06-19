@@ -49,6 +49,13 @@ export interface FeatureFlags {
    * See docs/AUDIT_PIPELINE_ARCHITECTURE.md.
    */
   analyzeFromCapture: boolean
+  /**
+   * The Verdict — generate the honest, plain-language top-level judgment (industry
+   * standing, value-prop clarity, service findability, the 2-4 things costing
+   * customers) and store it on the report. OFF by default (dark launch): generated
+   * and stored but not yet the hero of the UI. See src/lib/audit-engine/verdict.ts.
+   */
+  verdict: boolean
 }
 
 /**
@@ -64,5 +71,6 @@ export function getFeatureFlags(): FeatureFlags {
     captureShadow: process.env.FEATURE_CAPTURE_SHADOW === 'true', // OFF by default
     fixOutcomes: process.env.FEATURE_FIX_OUTCOMES === 'true', // OFF by default
     analyzeFromCapture: process.env.FEATURE_ANALYZE_FROM_CAPTURE === 'true', // OFF by default
+    verdict: process.env.FEATURE_VERDICT === 'true', // OFF by default (dark launch)
   }
 }
