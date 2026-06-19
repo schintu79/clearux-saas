@@ -43,6 +43,7 @@ async function captureViaScreenshotOne(
   url: string,
   _selector?: string | null,
   highlightMode: 'crop' | 'highlight' | 'none' = 'none',
+  device: 'mobile' | 'desktop' = 'desktop',
 ): Promise<Buffer | null> {
   const apiKey = process.env.SCREENSHOTONE_API_KEY
   if (!apiKey) {
@@ -51,11 +52,15 @@ async function captureViaScreenshotOne(
   }
 
   try {
+    // Mobile findings MUST be shot at a phone width — a desktop screenshot is the
+    // wrong context for "too small to tap on a phone".
+    const isMobile = device === 'mobile'
     const params = new URLSearchParams({
       access_key: apiKey,
       url,
-      viewport_width: '1280',
-      viewport_height: '900',
+      viewport_width: isMobile ? '390' : '1280',
+      viewport_height: isMobile ? '844' : '900',
+      device_scale_factor: isMobile ? '2' : '1',
       format: 'png',
       full_page: 'false',
       delay: '2',           // wait 2s for page to settle
@@ -103,14 +108,14 @@ async function captureViaScreenshotOne(
 
 // ── Strategy 2: Google PageSpeed API (free, reliable) ──────────
 
-async function captureViaPageSpeed(url: string): Promise<Buffer | null> {
+async function captureViaPageSpeed(url: string, device: 'mobile' | 'desktop' = 'desktop'): Promise<Buffer | null> {
   try {
     const apiKey = process.env.GOOGLE_PAGESPEED_API_KEY
     const base = 'https://www.googleapis.com/pagespeedonline/v5/runPagespeed'
     const params = new URLSearchParams({
       url,
       category: 'PERFORMANCE',
-      strategy: 'DESKTOP',
+      strategy: device === 'mobile' ? 'MOBILE' : 'DESKTOP',
     })
     if (apiKey) params.set('key', apiKey)
 
@@ -140,10 +145,11 @@ async function captureViaPuppeteer(
   url: string,
   selector?: string | null,
   label?: string | null,
+  device: 'mobile' | 'desktop' = 'desktop',
 ): Promise<Buffer | null> {
   try {
     const baseUrl = getBaseUrl()
-    const body: Record<string, string> = { url }
+    const body: Record<string, string> = { url, device }
     if (selector) body.selector = selector
     if (label) body.label = label
 
@@ -180,11 +186,13 @@ export async function captureScreenshot(
   url: string,
   selector?: string | null,
   label?: string | null,
-  opts?: { elementTargetedOnly?: boolean },
+  opts?: { elementTargetedOnly?: boolean; device?: 'mobile' | 'desktop' },
 ): Promise<Buffer | null> {
   const hasScreenshotOne = !!process.env.SCREENSHOTONE_API_KEY
   const hasPageSpeed = true // always available (public API)
   const hasPuppeteer = !!process.env.SCREENSHOT_INTERNAL_KEY
+  // Capture at the finding's device so mobile findings get a phone-width shot.
+  const device: 'mobile' | 'desktop' = opts?.device === 'mobile' ? 'mobile' : 'desktop'
 
   // elementTargetedOnly: only return a capture that genuinely targets the
   // element (a real CSS selector successfully highlighted/cropped). Never
@@ -206,7 +214,7 @@ export async function captureScreenshot(
     // If we have a selector, try highlight mode first (scrolls to element + red border)
     // then fall back to plain screenshot if the selector fails
     if (hasValidSelector) {
-      const s1h = await captureViaScreenshotOne(url, selector!, 'highlight')
+      const s1h = await captureViaScreenshotOne(url, selector!, 'highlight', device)
       if (s1h) {
         console.log(`[screenshots] ScreenshotOne highlight success: ${url} (${selector})`)
         return s1h
@@ -217,7 +225,7 @@ export async function captureScreenshot(
 
     // Plain page screenshot (no selector or selector failed) — never for element-targeted requests
     if (!elementTargetedOnly) {
-      const s1 = await captureViaScreenshotOne(url, null, 'none')
+      const s1 = await captureViaScreenshotOne(url, null, 'none', device)
       if (s1) {
         console.log(`[screenshots] ScreenshotOne success: ${url}`)
         return s1
@@ -228,7 +236,7 @@ export async function captureScreenshot(
 
   // Strategy 2: PageSpeed API (free, page-level only) — cannot target an element
   if (hasPageSpeed && !elementTargetedOnly) {
-    const s2 = await captureViaPageSpeed(url)
+    const s2 = await captureViaPageSpeed(url, device)
     if (s2) {
       console.log(`[screenshots] PageSpeed success: ${url}`)
       return s2
@@ -238,7 +246,7 @@ export async function captureScreenshot(
 
   // Strategy 3: Self-hosted Puppeteer (crops to the selector when present)
   if (hasPuppeteer) {
-    const s3 = await captureViaPuppeteer(url, selector, label)
+    const s3 = await captureViaPuppeteer(url, selector, label, device)
     if (s3) {
       console.log(`[screenshots] Puppeteer success: ${url}`)
       return s3
@@ -318,6 +326,8 @@ export async function captureAuditScreenshots(
     pageUrl?: string | null
     confidenceLevel?: string | null
     detectionSource?: string | null
+    /** Device the finding applies to — mobile findings get a phone-width shot. */
+    viewport?: string | null
   }>,
   fallbackUrl: string,
   auditId: string,
@@ -405,7 +415,10 @@ export async function captureAuditScreenshots(
             pageUrl,
             selector,
             `${finding.severity.toUpperCase()}: ${finding.title}`,
-            { elementTargetedOnly: true },
+            {
+              elementTargetedOnly: true,
+              device: finding.viewport === 'mobile' || finding.viewport === 'tablet' ? 'mobile' : 'desktop',
+            },
           )
           if (buf) {
             const publicUrl = await uploadScreenshot(auditId, `finding-${finding.id}.png`, buf)

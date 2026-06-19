@@ -5919,7 +5919,7 @@ RULES FOR RE-AUDIT:
           const db = getDb()
           const { data: findingsWithTargets } = await db
             .from('audit_findings')
-            .select('id, title, severity, target_element, page_url, confidence_level, detection_source')
+            .select('id, title, severity, target_element, page_url, confidence_level, detection_source, viewport')
             .eq('audit_id', auditId)
             .order('sort_order', { ascending: true })
 
@@ -5931,6 +5931,7 @@ RULES FOR RE-AUDIT:
             pageUrl: f.page_url as string | null,
             confidenceLevel: f.confidence_level as string | null,
             detectionSource: f.detection_source as string | null,
+            viewport: f.viewport as string | null, // mobile findings get a phone-width shot
           }))
 
           const mainUrl = crawlResult.firstPageUrl || auditDetails.productUrl

@@ -188,8 +188,8 @@ export function AuditConfidenceStrip({ findings, crawlSummary, className = '' }:
       <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 px-4 py-2.5 text-[11px] leading-snug" style={{ color: 'var(--m-muted)', borderTop: '0.5px solid color-mix(in srgb, var(--ink) 8%, transparent)' }}>
         <span className="font-semibold" style={{ color: 'var(--ink)' }}>What the labels mean:</span>
         <span>
-          <span className="font-semibold" style={{ color: 'var(--ok)' }}>Verified</span>
-          {' '}— an instrument measured it; drives your score.
+          <span className="font-semibold" style={{ color: 'var(--ok)' }}>Measured</span>
+          {' '}— an instrument measured it; drives your score. Confirm it applies to your visitors before acting.
         </span>
         <span>
           <span className="font-semibold" style={{ color: 'var(--signal)' }}>AI-assessed</span>
@@ -329,7 +329,7 @@ export function EvidenceBadge({ type }: { type: EvidenceType }) {
 export function evidenceTooltip(type: EvidenceType): string {
   switch (type) {
     case 'verified':
-      return 'Verified — an instrument measured this. Counts fully toward your score.'
+      return 'Measured — an instrument measured this. It does not mean it is definitely a problem for every visitor — confirm it applies before acting. Counts toward your score.'
     case 'observed':
     case 'heuristic':
       return 'AI-assessed — expert AI judgment grounded in your page content. We think it is real, but could not verify it 100% — double-check before acting. Capped at medium for scoring.'
