@@ -166,6 +166,29 @@ export function isVisuallyHiddenInteractive(f: InteractiveElementFacts): boolean
   return false
 }
 
+/** Injected into every page (via evaluateOnNewDocument) so any check's
+ *  page.evaluate() can build a stable CSS selector for the exact element it
+ *  flagged — the screenshot pass uses it to highlight precisely where. */
+export const CSS_PATH_INJECTOR = () => {
+  ;(window as unknown as { __cssPath: (n: Element) => string }).__cssPath = (node: Element): string => {
+    if (node.id) return `${node.tagName.toLowerCase()}#${node.id}`
+    const parts: string[] = []
+    let el: Element | null = node
+    while (el && el.nodeType === 1 && parts.length < 4) {
+      let sel = el.tagName.toLowerCase()
+      if (el.id) { parts.unshift(`${sel}#${el.id}`); break }
+      const parent: Element | null = el.parentElement
+      if (parent) {
+        const sibs = Array.from(parent.children).filter((c) => c.tagName === el!.tagName)
+        if (sibs.length > 1) sel += `:nth-of-type(${sibs.indexOf(el) + 1})`
+      }
+      parts.unshift(sel)
+      el = el.parentElement
+    }
+    return parts.join(' > ')
+  }
+}
+
 /**
  * Run all layout checks on a page at a specific viewport.
  * Each check runs inside page.evaluate() for DOM access.
@@ -201,7 +224,9 @@ async function runChecks({ page, viewport, url }: PageCheckInput): Promise<Viewp
     const overflow = docWidth - viewportWidth
 
     // Find elements causing overflow
+    const cssPath = (window as unknown as { __cssPath?: (n: Element) => string }).__cssPath
     const culprits: string[] = []
+    let firstSelector = ''
     if (overflow > 10) {
       const all = document.querySelectorAll('body *')
       for (const el of all) {
@@ -214,12 +239,13 @@ async function runChecks({ page, viewport, url }: PageCheckInput): Promise<Viewp
           const cls = el.className ? `.${String(el.className).split(' ').slice(0, 2).join('.')}` : ''
           const id = el.id ? `#${el.id}` : ''
           culprits.push(`<${tag}${id}${cls}>`)
+          if (!firstSelector && cssPath) firstSelector = cssPath(el)
           if (culprits.length >= 3) break
         }
       }
     }
 
-    return { overflow, culprits }
+    return { overflow, culprits, firstSelector }
   })
 
   if (overflowData.overflow > 10 && (viewport.name === 'Mobile' || viewport.name === 'Tablet')) {
@@ -234,7 +260,7 @@ async function runChecks({ page, viewport, url }: PageCheckInput): Promise<Viewp
         (overflowData.culprits.length > 0 ? ` Overflow caused by: ${overflowData.culprits.join(', ')}.` : ''),
       recommendation:
         'Ensure all content fits within the viewport width. Common fixes: add max-width: 100% to images and containers, use overflow-x: hidden on the body, and replace fixed-width values with relative units (%, vw, rem).',
-      element: overflowData.culprits[0] || undefined,
+      element: overflowData.firstSelector || undefined,
     })
   }
 
@@ -337,9 +363,10 @@ async function runChecks({ page, viewport, url }: PageCheckInput): Promise<Viewp
   // ── 4. Check text readability ──
   if (viewport.isMobile) {
     const textData = await page.evaluate(() => {
+      const cssPath = (window as unknown as { __cssPath?: (n: Element) => string }).__cssPath
       const MIN_FONT = 12 // px — minimum readable on mobile
       const all = document.querySelectorAll('p, li, span, a, td, th, label, div')
-      const tooSmall: Array<{ tag: string; fontSize: string; text: string }> = []
+      const tooSmall: Array<{ tag: string; fontSize: string; text: string; selector: string }> = []
       const checked = new Set<Element>()
 
       for (const el of all) {
@@ -366,6 +393,7 @@ async function runChecks({ page, viewport, url }: PageCheckInput): Promise<Viewp
             tag: el.tagName.toLowerCase(),
             fontSize: style.fontSize,
             text: text.slice(0, 40),
+            selector: cssPath ? cssPath(el) : '',
           })
           if (tooSmall.length >= 8) break
         }
@@ -391,6 +419,7 @@ async function runChecks({ page, viewport, url }: PageCheckInput): Promise<Viewp
         recommendation:
           'Ensure body text is at least 16px and secondary text is at least 12px on mobile. Use responsive font sizes with clamp() or media queries to scale text appropriately across breakpoints.',
         evidence: examples,
+        element: textData.tooSmall.find((t) => t.selector)?.selector || undefined,
       })
     }
   }
@@ -465,8 +494,9 @@ async function runChecks({ page, viewport, url }: PageCheckInput): Promise<Viewp
 
   // ── 6. Check image overflow ──
   const imageOverflow = await page.evaluate((vw: number) => {
+    const cssPath = (window as unknown as { __cssPath?: (n: Element) => string }).__cssPath
     const images = document.querySelectorAll('img, video, iframe, svg')
-    const overflowing: Array<{ tag: string; naturalWidth: number; renderedWidth: number }> = []
+    const overflowing: Array<{ tag: string; naturalWidth: number; renderedWidth: number; selector: string }> = []
 
     for (const el of images) {
       // Skip decorative / aria-hidden subtrees (illustrative UI mockups).
@@ -478,6 +508,7 @@ async function runChecks({ page, viewport, url }: PageCheckInput): Promise<Viewp
           tag: el.tagName.toLowerCase(),
           naturalWidth: (el as HTMLImageElement).naturalWidth || Math.round(rect.width),
           renderedWidth: Math.round(rect.width),
+          selector: cssPath ? cssPath(el) : '',
         })
         if (overflowing.length >= 5) break
       }
@@ -497,6 +528,7 @@ async function runChecks({ page, viewport, url }: PageCheckInput): Promise<Viewp
         `${imageOverflow.length} image/video/iframe element(s) extend beyond the viewport width at ${viewport.width}px, causing horizontal scroll or cropping.`,
       recommendation:
         'Add max-width: 100% and height: auto to all images. For iframes and videos, use a responsive wrapper with aspect-ratio or the padding-bottom technique.',
+      element: imageOverflow.find((o) => o.selector)?.selector || undefined,
     })
   }
 
@@ -631,8 +663,9 @@ async function runChecks({ page, viewport, url }: PageCheckInput): Promise<Viewp
   // ── 8. Check line length (readability) ──
   if (viewport.isMobile) {
     const lineLengthData = await page.evaluate((vw: number) => {
+      const cssPath = (window as unknown as { __cssPath?: (n: Element) => string }).__cssPath
       const textElements = document.querySelectorAll('p, li, td, th, blockquote')
-      const tooLong: Array<{ tag: string; chars: number; text: string }> = []
+      const tooLong: Array<{ tag: string; chars: number; text: string; selector: string }> = []
 
       for (const el of textElements) {
         // Skip decorative / aria-hidden subtrees (illustrative UI mockups).
@@ -656,6 +689,7 @@ async function runChecks({ page, viewport, url }: PageCheckInput): Promise<Viewp
             tag: el.tagName.toLowerCase(),
             chars: charsPerLine,
             text: text.slice(0, 50),
+            selector: cssPath ? cssPath(el) : '',
           })
           if (tooLong.length >= 5) break
         }
@@ -683,6 +717,7 @@ async function runChecks({ page, viewport, url }: PageCheckInput): Promise<Viewp
         recommendation:
           'Add horizontal padding to text containers on mobile (at least 16px on each side). Use max-width on paragraph elements or adjust font size so lines stay within 45-75 characters.',
         evidence: examples,
+        element: lineLengthData.tooLong.find((t) => t.selector)?.selector || undefined,
       })
     }
   }
@@ -690,10 +725,11 @@ async function runChecks({ page, viewport, url }: PageCheckInput): Promise<Viewp
   // ── 9. Check content density / spacing ──
   if (viewport.isMobile) {
     const densityData = await page.evaluate(() => {
+      const cssPath = (window as unknown as { __cssPath?: (n: Element) => string }).__cssPath
       const contentBlocks = document.querySelectorAll('p, h1, h2, h3, h4, h5, h6, ul, ol, table, form, section > div')
       let cramped = 0
       let checked = 0
-      const crampedExamples: Array<{ tag: string; marginBottom: string }> = []
+      const crampedExamples: Array<{ tag: string; marginBottom: string; selector: string }> = []
 
       for (const el of contentBlocks) {
         // Skip decorative / aria-hidden subtrees (illustrative UI mockups).
@@ -717,6 +753,7 @@ async function runChecks({ page, viewport, url }: PageCheckInput): Promise<Viewp
             crampedExamples.push({
               tag: el.tagName.toLowerCase(),
               marginBottom: `${Math.round(totalSpacing)}px`,
+              selector: cssPath ? cssPath(el) : '',
             })
           }
         }
@@ -744,6 +781,7 @@ async function runChecks({ page, viewport, url }: PageCheckInput): Promise<Viewp
         recommendation:
           'Increase vertical spacing between content blocks on mobile. Use at least 16px margin-bottom on paragraphs and 24px between sections. Consider using CSS gap in flex/grid layouts.',
         evidence: examples,
+        element: densityData.crampedExamples.find((e) => e.selector)?.selector || undefined,
       })
     }
   }
@@ -751,9 +789,10 @@ async function runChecks({ page, viewport, url }: PageCheckInput): Promise<Viewp
   // ── 10. Check body text readability (14px+ recommended on mobile) ──
   if (viewport.isMobile) {
     const readabilityData = await page.evaluate(() => {
+      const cssPath = (window as unknown as { __cssPath?: (n: Element) => string }).__cssPath
       const MIN_COMFORTABLE = 14 // px — comfortable reading on mobile
       const bodyElements = document.querySelectorAll('p, li, td, th, blockquote, label')
-      const tooSmall: Array<{ tag: string; fontSize: string; text: string }> = []
+      const tooSmall: Array<{ tag: string; fontSize: string; text: string; selector: string }> = []
       const checked = new Set<Element>()
 
       for (const el of bodyElements) {
@@ -779,6 +818,7 @@ async function runChecks({ page, viewport, url }: PageCheckInput): Promise<Viewp
             tag: el.tagName.toLowerCase(),
             fontSize: style.fontSize,
             text: text.slice(0, 40),
+            selector: cssPath ? cssPath(el) : '',
           })
           if (tooSmall.length >= 8) break
         }
@@ -804,6 +844,7 @@ async function runChecks({ page, viewport, url }: PageCheckInput): Promise<Viewp
         recommendation:
           'Set mobile body text to at least 16px (the browser default) for comfortable reading. Use responsive font sizes: font-size: clamp(16px, 4vw, 18px) adapts cleanly across mobile viewports.',
         evidence: examples,
+        element: readabilityData.tooSmall.find((t) => t.selector)?.selector || undefined,
       })
     }
   }
@@ -911,6 +952,8 @@ export async function checkResponsiveDesign(
 
     for (const url of urlsToCheck) {
       const page = await browser.newPage()
+      // Make __cssPath available in every navigation so checks can pin the exact element.
+      await page.evaluateOnNewDocument(CSS_PATH_INJECTOR)
       const pageIssues: ViewportIssue[] = []
       let hasMobileViewport = false
 
