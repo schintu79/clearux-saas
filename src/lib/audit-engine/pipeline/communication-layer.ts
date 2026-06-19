@@ -158,6 +158,118 @@ function isNavFinding(title: string, description: string): boolean {
  *   2. The finding came from a non-analyzer source (WCAG checker,
  *      responsive checker, structured data validator, etc.)
  */
+/**
+ * Hand-written plain-language copy for the KNOWN deterministic checks
+ * (responsive, WCAG, pagespeed). These findings have stable, recognizable
+ * titles, so instead of mechanically truncating jargon we emit copy a
+ * non-technical person actually understands — and keep the precise technical
+ * wording in `technical_note` for developers. Returns null when nothing
+ * matches, so the generic synthesizer still handles everything else.
+ */
+export function plainCopyForDeterministicFinding(
+  title: string,
+  description: string,
+): Pick<FindingCommunication, 'title_plain' | 'what_found' | 'why_matters' | 'fix_plain'> | null {
+  const t = `${title} ${description}`.toLowerCase()
+  // Pull the quoted element labels the checker listed (e.g. "Product", "Pricing")
+  // so we can tell the user WHICH elements, in plain words.
+  const examples = Array.from(description.matchAll(/"([^"]{1,40})"/g)).map((m) => m[1]).filter(Boolean)
+  const egTail = examples.length ? ` For example: ${examples.slice(0, 3).join(', ')}.` : ''
+
+  const rule = (
+    re: RegExp,
+    copy: Pick<FindingCommunication, 'title_plain' | 'what_found' | 'why_matters' | 'fix_plain'>,
+  ) => (re.test(t) ? copy : null)
+
+  return (
+    rule(/touch target|too small to tap|below 44/, {
+      title_plain: 'Some buttons and links are too small to tap on a phone',
+      what_found: `A few buttons or links are smaller than the size a fingertip needs (about 44×44 pixels), so they're easy to mis-tap on a phone.${egTail}`,
+      why_matters: 'People on phones tap the wrong thing or miss it entirely — that frustration costs you clicks and signups.',
+      fix_plain: 'Make these buttons and links a little bigger on phones — add padding so the tappable area is at least 44×44 pixels, without changing how they look.',
+    }) ||
+    rule(/keyboard/, {
+      title_plain: "Something on this page can't be used with a keyboard",
+      what_found: 'One element only responds to a mouse. People who get around with a keyboard (or assistive tech) can reach it but cannot activate it.',
+      why_matters: "Keyboard and screen-reader users get blocked from finishing what they came to do — and it's a legal accessibility risk.",
+      fix_plain: 'Make the element keyboard-reachable and add a keyboard action alongside the click, so pressing Enter or Space works too.',
+    }) ||
+    rule(/non-text content|accessible name|alt text|image description|1\.1\.1/, {
+      title_plain: 'An image or icon has no description',
+      what_found: 'An image, icon, or graphic has no text description, so screen readers have nothing to read aloud — the content is invisible to blind users.',
+      why_matters: "Blind and low-vision visitors miss what the image is saying, and search engines can't read it either.",
+      fix_plain: "Add a short description to the image (alt text). If it's purely decorative, mark it as such so screen readers skip it.",
+    }) ||
+    rule(/contrast|1\.4\.3/, {
+      title_plain: 'Some text is too faint to read easily',
+      what_found: 'Text and its background are too close in shade, so the words are hard to read — especially in sunlight or for low-vision users.',
+      why_matters: 'People squint, skim, or give up reading — and it fails accessibility contrast standards.',
+      fix_plain: 'Darken the text or lighten the background until the two have enough contrast to read comfortably.',
+    }) ||
+    rule(/heading.*(skip|level|label)|skips levels|2\.4\.6/, {
+      title_plain: 'Your headings skip levels',
+      what_found: 'The page jumps heading levels (for example, a big heading straight to a small sub-sub-heading) instead of stepping down in order.',
+      why_matters: 'Screen-reader users rely on heading order to navigate; skipping levels makes the page confusing to move through.',
+      fix_plain: 'Use headings in order (H1, then H2, then H3) without skipping a level.',
+    }) ||
+    rule(/fixed width|exceeding.*viewport|horizontal (scroll|overflow)|wider than/, {
+      title_plain: 'Part of the page is wider than a phone screen',
+      what_found: `Something on the page is set to a fixed width that's wider than a phone, so it spills off the edge and creates sideways scrolling.${egTail}`,
+      why_matters: 'Sideways scrolling on mobile is the #1 thing that makes a site feel broken — visitors bounce.',
+      fix_plain: 'Let the element shrink to fit the screen (use a flexible/percentage width or a max-width of 100%) instead of a fixed pixel width.',
+    }) ||
+    rule(/media element|image.*overflow|video.*overflow/, {
+      title_plain: 'An image or video runs off the side of the screen',
+      what_found: 'An image, video, or embed is wider than the screen, so it gets cut off or causes sideways scrolling on smaller devices.',
+      why_matters: 'Cut-off media looks broken and pushes the layout sideways on phones.',
+      fix_plain: 'Make media scale to its container — set its maximum width to 100% so it always fits the screen.',
+    }) ||
+    rule(/tightly packed|breathing room|content.*dense|spacing between/, {
+      title_plain: 'Your content is crammed together on phones',
+      what_found: 'On phones, sections and paragraphs sit almost on top of each other with little space between them, so the page is hard to scan.',
+      why_matters: 'Dense walls of text are tiring to read on a small screen, so people skim and miss your message.',
+      fix_plain: 'Add more breathing room on phones — a bit more space below paragraphs and between sections.',
+    }) ||
+    rule(/lines exceed|line length|characters? per line|75 character/, {
+      title_plain: 'Lines of text run too long to read comfortably',
+      what_found: 'Some paragraphs stretch very wide, so each line has too many characters and the eye loses its place jumping back to the start.',
+      why_matters: 'Over-long lines slow reading and tire the eyes, so people read less of your page.',
+      fix_plain: 'Cap the width of text blocks (or add side padding) so lines stay in a comfortable 45–75 character range.',
+    }) ||
+    rule(/text.*(below|smaller).*1[024]px|too small to read|font size/, {
+      title_plain: 'Some text is too small to read on phones',
+      what_found: `Some text renders very small on phones — below the size that's comfortable to read without zooming.${egTail}`,
+      why_matters: 'Tiny text makes people pinch-zoom or give up — a real drop-off on mobile.',
+      fix_plain: 'Bump the smallest text up so body copy is comfortable to read on a phone (around 16px).',
+    }) ||
+    rule(/navigation.*(hidden|adapt)|hamburger|menu.*(hidden|mobile)/, {
+      title_plain: "Your main menu isn't shown the right way on this screen",
+      what_found: "On this screen size, your primary menu is either hidden behind a toggle when it shouldn't be, or not adapted for the device.",
+      why_matters: 'If people can\'t see where to go, they don\'t explore — navigation problems quietly kill engagement.',
+      fix_plain: 'Show your main links directly on bigger screens, and use a clean menu button on phones.',
+    }) ||
+    rule(/multiple redirect|redirects detected/, {
+      title_plain: 'Visitors get bounced through extra web addresses before your page loads',
+      what_found: 'Reaching this page sends the browser through several redirects, each one a round-trip that adds delay before anything appears.',
+      why_matters: "Every redirect is dead waiting time — painful on mobile networks and a small but real hit to speed and SEO.",
+      fix_plain: 'Point your links straight at the final web address so the browser loads the page in one step.',
+    }) ||
+    rule(/unused javascript|unused js/, {
+      title_plain: 'The page loads code it never uses',
+      what_found: 'The page downloads and processes JavaScript that never runs here, spending the visitor\'s bandwidth and phone battery for nothing.',
+      why_matters: 'That dead code delays when the page becomes tappable — it looks ready before it actually is.',
+      fix_plain: 'Trim or split your scripts so each page only loads the code it actually needs.',
+    }) ||
+    rule(/missing viewport meta/, {
+      title_plain: 'The page is missing its mobile setup tag',
+      what_found: 'The page has no viewport tag, so phones render it at desktop width and shrink it down — text becomes tiny and tapping is hard.',
+      why_matters: "Without it the entire mobile experience is broken from the first second.",
+      fix_plain: 'Add the standard mobile viewport tag to the page so it sizes correctly on phones.',
+    }) ||
+    null
+  )
+}
+
 export function synthesizeCommunication(
   finding: GenericFinding,
   siteProfile: SiteProfile | null,
@@ -166,6 +278,20 @@ export function synthesizeCommunication(
   const desc = finding.description
   const rec = finding.recommendation
   const impact = finding.estimatedImpact || ''
+
+  // First, try the curated plain-language copy for known deterministic checks.
+  // Keep the original technical wording in technical_note for developers.
+  const curated = plainCopyForDeterministicFinding(title, desc)
+  if (curated) {
+    return {
+      title_plain: isNavFinding(title, desc) ? enforceNavNaming(curated.title_plain, desc) : curated.title_plain,
+      what_found: curated.what_found,
+      why_matters: curated.why_matters,
+      technical_note: desc !== curated.what_found ? `${desc}${rec ? `\n\nRecommended: ${rec}` : ''}` : (rec || null),
+      fix_plain: curated.fix_plain,
+      fix_technical: extractTechnicalFix(rec),
+    }
+  }
 
   // Build a plain title — strip technical jargon if detected
   let titlePlain = stripTechnicalJargon(title)
