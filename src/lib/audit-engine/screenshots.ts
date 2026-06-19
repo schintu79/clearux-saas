@@ -21,18 +21,19 @@ function getBaseUrl(): string {
  * Check if a string looks like a valid CSS selector (vs a description like "the hero image").
  * We only want to send actual selectors to ScreenshotOne — not prose.
  */
-function isLikelyCSSSelector(s: string): boolean {
+export function isLikelyCSSSelector(s: string): boolean {
   if (!s || s.length > 100) return false
   // Must start with a tag, class, ID, or attribute selector
-  if (/^[a-z]/i.test(s) || s.startsWith('.') || s.startsWith('#') || s.startsWith('[')) {
-    // Should NOT contain spaces that suggest prose (e.g., "the hero section")
-    // But allow spaces in valid selectors like "nav > ul > li"
-    if (/\b(the|a|an|is|of|for|in|on|this|that|with|and|or)\b/i.test(s)) return false
-    // Should look like CSS: contains dots, hashes, brackets, combinators, or is a simple tag
-    if (/^[a-z][a-z0-9-]*$/i.test(s)) return true // simple tag like "nav", "header", "footer"
-    if (/[.#\[\]>+~:]/.test(s)) return true // has CSS selector characters
-    return false
-  }
+  if (!(/^[a-z]/i.test(s) || s.startsWith('.') || s.startsWith('#') || s.startsWith('['))) return false
+  // Strong CSS signal — combinators, class/id/attr, or a pseudo like :nth-of-type.
+  // Checked FIRST so a real selector containing the <a> anchor tag (e.g.
+  // "div > a:nth-of-type(2)") is accepted instead of being mistaken for prose.
+  if (/[.#\[\]>+~]|:nth|:not|:first|:last|:focus/.test(s)) return true
+  // A simple single tag with no spaces: "nav", "header", "a", "button".
+  if (/^[a-z][a-z0-9-]*$/i.test(s)) return true
+  // Otherwise it's a multi-word string with no CSS structure — reject if it
+  // reads like prose ("the hero section"). 'a' is omitted: it's a valid tag.
+  if (/\b(the|an|is|of|for|in|on|this|that|with|and|or)\b/i.test(s)) return false
   return false
 }
 
