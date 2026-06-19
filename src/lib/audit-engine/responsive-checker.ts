@@ -125,6 +125,47 @@ export function shouldFlagDesktopNavHidden(
   return true
 }
 
+/* ── Visually-hidden interactive guard (pure, testable) ──────
+ * Skip links and screen-reader-only affordances are INTENTIONALLY tiny or
+ * pushed off-screen until focused. They are a CORRECT accessibility pattern, so
+ * flagging them as "too small to tap" (WCAG 2.5.5) is a false positive on the
+ * exact thing the author did right — the worst kind of error for an audit tool.
+ * The browser collects these facts per element; this pure function decides. */
+export interface InteractiveElementFacts {
+  tag: string
+  width: number
+  height: number
+  text: string
+  /** computed `clip` */
+  clip: string
+  /** computed `clip-path` */
+  clipPath: string
+  /** computed `position` */
+  position: string
+  /** rect.left */
+  left: number
+  /** rect.right */
+  right: number
+  viewportWidth: number
+  /** href attribute for anchors (null otherwise) */
+  href: string | null
+}
+
+export function isVisuallyHiddenInteractive(f: InteractiveElementFacts): boolean {
+  // Canonical sr-only / skip-link box is 1px (or clipped to nothing).
+  if (f.width <= 1 || f.height <= 1) return true
+  // clip:rect(0,0,0,0) and clip-path:inset(50%/100%) are the standard sr-only hides.
+  const clip = (f.clip || '').replace(/\s+/g, '')
+  if (clip === 'rect(0px,0px,0px,0px)' || clip === 'rect(1px,1px,1px,1px)') return true
+  const cp = (f.clipPath || '').replace(/\s+/g, '')
+  if (cp === 'inset(50%)' || cp === 'inset(100%)') return true
+  // Absolutely/fixed-positioned and pushed fully off-screen (the left:-9999px pattern).
+  if ((f.position === 'absolute' || f.position === 'fixed') && (f.right <= 0 || f.left >= f.viewportWidth)) return true
+  // Explicit skip link: an in-page anchor whose visible text is "skip to …".
+  if (f.href && f.href.startsWith('#') && /^\s*skip\b/i.test(f.text || '')) return true
+  return false
+}
+
 /**
  * Run all layout checks on a page at a specific viewport.
  * Each check runs inside page.evaluate() for DOM access.
@@ -204,7 +245,11 @@ async function runChecks({ page, viewport, url }: PageCheckInput): Promise<Viewp
       const interactive = document.querySelectorAll(
         'a, button, input, select, textarea, [role="button"], [role="link"], [tabindex]'
       )
-      const tooSmall: Array<{ tag: string; width: number; height: number; text: string }> = []
+      const vw = window.innerWidth
+      const tooSmall: Array<{
+        tag: string; width: number; height: number; text: string
+        clip: string; clipPath: string; position: string; left: number; right: number; viewportWidth: number; href: string | null
+      }> = []
 
       for (const el of interactive) {
         // Skip decorative / aria-hidden subtrees (illustrative UI mockups).
@@ -218,34 +263,46 @@ async function runChecks({ page, viewport, url }: PageCheckInput): Promise<Viewp
         if (rect.width < MIN_SIZE || rect.height < MIN_SIZE) {
           const tag = el.tagName.toLowerCase()
           const text = (el as HTMLElement).innerText?.trim()?.slice(0, 30) || ''
+          const style = window.getComputedStyle(el)
           tooSmall.push({
             tag,
             width: Math.round(rect.width),
             height: Math.round(rect.height),
             text,
+            clip: style.clip || '',
+            clipPath: (style as any).clipPath || '',
+            position: style.position || '',
+            left: Math.round(rect.left),
+            right: Math.round(rect.right),
+            viewportWidth: vw,
+            href: el.getAttribute('href'),
           })
-          if (tooSmall.length >= 10) break
+          if (tooSmall.length >= 20) break
         }
       }
 
       return { total: interactive.length, tooSmall }
     })
 
-    if (touchData.tooSmall.length > 0) {
-      const examples = touchData.tooSmall
+    // Exclude visually-hidden affordances (skip links, sr-only) — flagging those
+    // as un-tappable is a false positive on a correct accessibility pattern.
+    const realTooSmall = touchData.tooSmall.filter((t) => !isVisuallyHiddenInteractive(t))
+
+    if (realTooSmall.length > 0) {
+      const examples = realTooSmall
         .slice(0, 3)
         .map((t) => `<${t.tag}> "${t.text}" (${t.width}x${t.height}px)`)
         .join('; ')
-      const ratio = Math.round((touchData.tooSmall.length / Math.max(touchData.total, 1)) * 100)
+      const ratio = Math.round((realTooSmall.length / Math.max(touchData.total, 1)) * 100)
 
       issues.push({
         viewport: viewport.name,
         width: viewport.width,
         type: 'touch_target_small',
         severity: ratio > 30 ? 'high' : 'medium',
-        title: `${touchData.tooSmall.length} touch targets below 44x44px minimum at ${viewport.width}px`,
+        title: `${realTooSmall.length} touch targets below 44x44px minimum at ${viewport.width}px`,
         description:
-          `${touchData.tooSmall.length} of ${touchData.total} interactive elements (${ratio}%) are smaller than the WCAG 2.5.5 minimum of 44x44px on ${viewport.name.toLowerCase()} viewport. Examples: ${examples}.`,
+          `${realTooSmall.length} of ${touchData.total} interactive elements (${ratio}%) are smaller than the WCAG 2.5.5 minimum of 44x44px on ${viewport.name.toLowerCase()} viewport. Examples: ${examples}.`,
         recommendation:
           'Increase the size of interactive elements to at least 44x44px on touch devices. Use min-height and min-width, or add padding to increase the tap area without changing visual design.',
         evidence: examples,
