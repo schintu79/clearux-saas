@@ -79,9 +79,9 @@ describe('computeChecksRun', () => {
 /* ── Unified display labels ──────────────────────────────── */
 
 describe('evidenceDisplayLabel (single source for strip, badges, export)', () => {
-  it('deterministic detection displays as Verified', () => {
+  it('deterministic detection displays as Measured (honest about method, not certainty)', () => {
     expect(evidenceDisplayLabel(mapEvidenceType(finding({ confidence_level: 'deterministic', detection_source: 'wcag_checker' }))))
-      .toBe('Verified')
+      .toBe('Measured')
   })
 
   it('interpretive and heuristic LLM findings display as AI-assessed — never Observed/Heuristic', () => {

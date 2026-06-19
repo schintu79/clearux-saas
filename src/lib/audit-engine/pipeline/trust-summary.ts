@@ -109,8 +109,12 @@ export function mapEvidenceType(finding: AuditFinding): EvidenceType {
  * 'Heuristic'. Export labels (findings-formatter EVIDENCE_LABELS) and the
  * strip/badges must agree with this function.
  */
-export function evidenceDisplayLabel(type: EvidenceType): 'Verified' | 'AI-assessed' | 'Not enough evidence' {
-  if (type === 'verified') return 'Verified'
+export function evidenceDisplayLabel(type: EvidenceType): 'Measured' | 'AI-assessed' | 'Not enough evidence' {
+  // 'Measured' (was 'Verified', 2026-06): an instrument measured this — it does
+  // NOT claim the result is definitely a problem for every visitor. "Verified"
+  // over-promised certainty (a hidden element can be measured and still not be a
+  // real issue). "Measured" states the method honestly; the human decides.
+  if (type === 'verified') return 'Measured'
   if (type === 'undetermined') return 'Not enough evidence'
   return 'AI-assessed'
 }

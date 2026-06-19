@@ -130,7 +130,7 @@ const STATUS_LABELS: Record<string, string> = {
 // finding badges (trust-summary.ts evidenceDisplayLabel): Verified =
 // instrument measured it; AI-assessed = the LLM concluded it.
 const EVIDENCE_LABELS: Record<EvidenceStrength, string> = {
-  verified: 'Verified',
+  verified: 'Measured',
   ai_assessed: 'AI-assessed',
   unverified: 'Not enough evidence',
 };
