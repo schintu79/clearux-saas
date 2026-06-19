@@ -94,20 +94,49 @@ async function extractPageContent(page: Page): Promise<{
     // Title
     const title = document.title || null
 
-    // H1
-    const h1El = document.querySelector('h1')
-    const h1 = h1El?.textContent?.trim() || null
+    // Is an element actually VISIBLE to a human (not display:none, not
+    // visibility:hidden, not opacity:0, not inside a hidden subtree)? This is
+    // the fix for the contaminated-capture bug: hidden modal templates
+    // ("Error / Yes No Close") and sr-only brand headings were leaking into the
+    // text and the H1, so the analyzer + verdict described content nobody sees.
+    const isVisible = (el: Element): boolean => {
+      const e = el as HTMLElement
+      const cv = (e as unknown as { checkVisibility?: (o?: object) => boolean }).checkVisibility
+      if (typeof cv === 'function') return cv.call(e, { checkVisibilityCSS: true, checkOpacity: true, contentVisibilityAuto: true })
+      const st = window.getComputedStyle(e)
+      if (st.visibility === 'hidden' || st.display === 'none' || parseFloat(st.opacity || '1') === 0) return false
+      // offsetParent === null catches a display:none ancestor (except position:fixed).
+      return !(e.offsetParent === null && st.position !== 'fixed')
+    }
+
+    // H1 — the first VISIBLE heading a human actually sees, not a hidden/brand h1.
+    let h1: string | null = null
+    for (const el of Array.from(document.querySelectorAll('h1'))) {
+      const t = el.textContent?.trim()
+      if (t && isVisible(el)) { h1 = t; break }
+    }
 
     // Meta description
     const metaEl = document.querySelector('meta[name="description"]') as HTMLMetaElement | null
     const metaDescription = metaEl?.content?.trim() || null
 
-    // Content text — extract body text, strip scripts/styles
-    const body = document.body
-    const clone = body.cloneNode(true) as HTMLElement
-    clone.querySelectorAll('script, style, noscript, nav, footer, header').forEach(el => el.remove())
-    let contentText = clone.innerText || clone.textContent || ''
-    contentText = contentText.replace(/\s+/g, ' ').trim()
+    // Content text — VISIBLE text only. Walk the live DOM (so visibility is
+    // computed correctly) collecting text nodes whose element is shown and not
+    // inside chrome (nav/footer/header/script/style/aria-hidden).
+    const SKIP = 'script,style,noscript,nav,footer,header,[aria-hidden="true"]'
+    const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT, {
+      acceptNode(node: Node) {
+        const t = node.textContent
+        if (!t || !t.trim()) return NodeFilter.FILTER_REJECT
+        const p = (node as Text).parentElement
+        if (!p || p.closest(SKIP)) return NodeFilter.FILTER_REJECT
+        return isVisible(p) ? NodeFilter.FILTER_ACCEPT : NodeFilter.FILTER_REJECT
+      },
+    })
+    const parts: string[] = []
+    let tn: Node | null
+    while ((tn = walker.nextNode())) { const s = tn.textContent?.trim(); if (s) parts.push(s) }
+    let contentText = parts.join(' ').replace(/\s+/g, ' ').trim()
     if (contentText.length > maxLen) {
       contentText = contentText.substring(0, maxLen)
     }
