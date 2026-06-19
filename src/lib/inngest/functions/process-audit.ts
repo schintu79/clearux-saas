@@ -27,6 +27,7 @@ import { captureInputParity, captureToPageContent } from '@/lib/audit-engine/cap
 import { detectReauditResolvedFixes } from '@/lib/audit-engine/fix-verification/reaudit-fix-detection'
 import { insertChecked } from '@/lib/db/checked-write'
 import { generateVerdict } from '@/lib/audit-engine/verdict'
+import { browserRenderPage } from '@/lib/audit-engine/browser-renderer'
 import { runCrawlPreflight } from '@/lib/audit-engine/crawl-preflight'
 import { probeAIDiscovery, formatAIDiscoveryForAnalysis } from '@/lib/audit-engine/ai-discovery-probe'
 import { validateStructuredData, formatValidationForAnalysis } from '@/lib/audit-engine/structured-data-validator'
@@ -5404,7 +5405,19 @@ RULES FOR RE-AUDIT:
       // each pinned to an exact location). Stored on the report; non-fatal.
       try {
         if (getFeatureFlags().verdict && crawlResult?.pageContent) {
-          const homepageBlock = crawlResult.pageContent.split('\n---\n')[0] || crawlResult.pageContent.slice(0, 4000)
+          // The verdict needs to read what a HUMAN sees. The crawl content can
+          // come from Jina (raw markdown incl. hidden modals/nav), so take a
+          // fresh VISIBLE render of the homepage (browserRenderPage now extracts
+          // visible-only text + the visible H1). Fall back to crawl content only
+          // if the render fails.
+          let homepageBlock = ''
+          try {
+            const rendered = await browserRenderPage(auditDetails.productUrl, 20_000)
+            if (rendered && !rendered.blockedByBot && (rendered.contentText?.length ?? 0) > 50) {
+              homepageBlock = `URL: ${auditDetails.productUrl}\nTitle: ${rendered.title || ''}\nVisible heading (what users see first): ${rendered.h1 || '(none)'}\nVisible page text:\n${(rendered.contentText || '').slice(0, 4000)}`
+            }
+          } catch { /* fall through to crawl content */ }
+          if (!homepageBlock) homepageBlock = crawlResult.pageContent.split('\n---\n')[0] || crawlResult.pageContent.slice(0, 4000)
           let industry = siteProfile?.industryVertical || ''
           let audience = siteProfile?.targetAudience || null
           if (!industry) {
