@@ -5399,63 +5399,6 @@ RULES FOR RE-AUDIT:
         console.error('[inngest] checks_executed computation failed (non-fatal):', ceCatch)
       }
 
-      // ── The Verdict — honest, plain-language top-level judgment (dark launch) ──
-      // The hero of the report: a senior-consultant verdict (industry standing,
-      // value-prop clarity, service findability, the 2-4 things costing customers,
-      // each pinned to an exact location). Stored on the report; non-fatal.
-      try {
-        if (getFeatureFlags().verdict && crawlResult?.pageContent) {
-          // The verdict needs to read what a HUMAN sees. The crawl content can
-          // come from Jina (raw markdown incl. hidden modals/nav), so take a
-          // fresh VISIBLE render of the homepage (browserRenderPage now extracts
-          // visible-only text + the visible H1). Fall back to crawl content only
-          // if the render fails.
-          let homepageBlock = ''
-          try {
-            const rendered = await browserRenderPage(auditDetails.productUrl, 20_000)
-            if (rendered && !rendered.blockedByBot && (rendered.contentText?.length ?? 0) > 50) {
-              homepageBlock = `URL: ${auditDetails.productUrl}\nTitle: ${rendered.title || ''}\nVisible heading (what users see first): ${rendered.h1 || '(none)'}\nVisible page text:\n${(rendered.contentText || '').slice(0, 4000)}`
-            }
-          } catch { /* fall through to crawl content */ }
-          if (!homepageBlock) homepageBlock = crawlResult.pageContent.split('\n---\n')[0] || crawlResult.pageContent.slice(0, 4000)
-          let industry = siteProfile?.industryVertical || ''
-          let audience = siteProfile?.targetAudience || null
-          if (!industry) {
-            try {
-              const sp = await detectSiteProfile(crawlResult.pageContent, auditDetails.productUrl)
-              industry = sp?.industryVertical || 'General'
-              audience = sp?.targetAudience || null
-            } catch { industry = 'General' }
-          }
-          const { data: vfRows } = await db.from('audit_findings')
-            .select('detection_source').eq('audit_id', auditId).neq('status', 'fixed')
-          const vrows = (vfRows || []) as Array<{ detection_source: string | null }>
-          const countSrc = (srcs: string[]) => vrows.filter((r) => srcs.includes(r.detection_source || '')).length
-          const verdict = await generateVerdict({
-            url: auditDetails.productUrl,
-            industry,
-            audience,
-            homepageContent: homepageBlock,
-            signals: {
-              mobileIssues: countSrc(['responsive_checker']),
-              slowOnMobile: countSrc(['pagespeed_api']) > 0,
-              accessibilityIssues: countSrc(['wcag_checker', 'axe']),
-              searchVisibilityIssues: countSrc(['structured_data']),
-              detectedValueProp: null,
-            },
-          })
-          if (verdict) {
-            const { data: vRep } = await db.from('reports').select('raw_json').eq('audit_id', auditId).single()
-            const merged = { ...((vRep as { raw_json?: Record<string, unknown> } | null)?.raw_json || {}), verdict }
-            await db.from('reports').update({ raw_json: merged } as any).eq('audit_id', auditId)
-            await auditLog(auditId, 'verdict_generated', 'info', `Verdict: ${verdict.headline}`,
-              { confidence: verdict.confidence, points: verdict.points.length })
-          }
-        }
-      } catch (verdictErr) {
-        console.error('[process-audit] verdict generation failed (non-fatal):', verdictErr)
-      }
-
       // ── Phase 3 — Re-audit fix detection (auto-verify on re-audit) ──
       // If the user fixed something and re-audited WITHOUT marking it, a
       // previously-open deterministic finding that's now gone — on a page we
@@ -5556,6 +5499,77 @@ RULES FOR RE-AUDIT:
       console.log(`[inngest] Audit ${auditId} completed`)
       }, 30_000, 'complete')
     })
+
+    // ──────────────────────────────────────────────────────────
+    // STEP 10b: THE VERDICT (post-completion, own step budget)
+    // The hero of the report: a senior-consultant top-level judgment
+    // (industry standing, value-prop clarity, service findability, the
+    // 2-4 things costing customers, each pinned to an exact location).
+    //
+    // It runs in its OWN step AFTER 'complete' on purpose: it takes a
+    // fresh VISIBLE browser render (~15-20s) + an LLM call, which would
+    // blow the 30s 'complete' budget if run inline. Isolated here it
+    // gets its own timeout and can NEVER delay or fail the audit —
+    // the audit is already marked complete before this runs.
+    // ──────────────────────────────────────────────────────────
+    if (getFeatureFlags().verdict && crawlResult?.pageContent) {
+      try {
+        await step.run('generate-verdict', async () => {
+          return withStepTimeout(async () => {
+            const db = getDb()
+            // The verdict must read what a HUMAN sees. Crawl content can come
+            // from Jina (raw markdown incl. hidden modals/nav), so take a fresh
+            // VISIBLE render of the homepage (browserRenderPage extracts
+            // visible-only text + the visible H1). Fall back to crawl content
+            // only if the render fails.
+            let homepageBlock = ''
+            try {
+              const rendered = await browserRenderPage(auditDetails.productUrl, 20_000)
+              if (rendered && !rendered.blockedByBot && (rendered.contentText?.length ?? 0) > 50) {
+                homepageBlock = `URL: ${auditDetails.productUrl}\nTitle: ${rendered.title || ''}\nVisible heading (what users see first): ${rendered.h1 || '(none)'}\nVisible page text:\n${(rendered.contentText || '').slice(0, 4000)}`
+              }
+            } catch { /* fall through to crawl content */ }
+            if (!homepageBlock) homepageBlock = crawlResult.pageContent.split('\n---\n')[0] || crawlResult.pageContent.slice(0, 4000)
+            let industry = siteProfile?.industryVertical || ''
+            let audience = siteProfile?.targetAudience || null
+            if (!industry) {
+              try {
+                const sp = await detectSiteProfile(crawlResult.pageContent, auditDetails.productUrl)
+                industry = sp?.industryVertical || 'General'
+                audience = sp?.targetAudience || null
+              } catch { industry = 'General' }
+            }
+            const { data: vfRows } = await db.from('audit_findings')
+              .select('detection_source').eq('audit_id', auditId).neq('status', 'fixed')
+            const vrows = (vfRows || []) as Array<{ detection_source: string | null }>
+            const countSrc = (srcs: string[]) => vrows.filter((r) => srcs.includes(r.detection_source || '')).length
+            const verdict = await generateVerdict({
+              url: auditDetails.productUrl,
+              industry,
+              audience,
+              homepageContent: homepageBlock,
+              signals: {
+                mobileIssues: countSrc(['responsive_checker']),
+                slowOnMobile: countSrc(['pagespeed_api']) > 0,
+                accessibilityIssues: countSrc(['wcag_checker', 'axe']),
+                searchVisibilityIssues: countSrc(['structured_data']),
+                detectedValueProp: null,
+              },
+            })
+            if (verdict) {
+              const { data: vRep } = await db.from('reports').select('raw_json').eq('audit_id', auditId).single()
+              const merged = { ...((vRep as { raw_json?: Record<string, unknown> } | null)?.raw_json || {}), verdict }
+              await db.from('reports').update({ raw_json: merged } as any).eq('audit_id', auditId)
+              await auditLog(auditId, 'verdict_generated', 'info', `Verdict: ${verdict.headline}`,
+                { confidence: verdict.confidence, points: verdict.points.length })
+            }
+            return { generated: !!verdict }
+          }, 90_000, 'generate-verdict', { generated: false })
+        })
+      } catch (verdictErr) {
+        console.error('[process-audit] verdict generation failed (non-fatal):', verdictErr)
+      }
+    }
 
     // ──────────────────────────────────────────────────────────
     // STEP 11: BEST-EFFORT ENRICHMENT (post-completion)
