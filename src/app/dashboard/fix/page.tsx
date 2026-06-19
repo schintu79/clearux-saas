@@ -27,6 +27,12 @@ import {
   AlertTriangle,
   Info,
   Download,
+  Smartphone,
+  Monitor,
+  Tablet,
+  Layers,
+  Code2,
+  Palette,
 } from 'lucide-react';
 import {
   severityColor,
@@ -78,23 +84,25 @@ function pageLabelOf(url: string | null | undefined): string | null {
   } catch { return null; }
 }
 
-const VIEWPORT_CHIP_META: Record<string, { label: string; color: string; bg: string }> = {
-  mobile:           { label: 'Mobile',          color: '#8b5cf6', bg: 'color-mix(in srgb, #8b5cf6 12%, transparent)' },
-  desktop:          { label: 'Desktop',         color: '#0ea5e9', bg: 'color-mix(in srgb, #0ea5e9 12%, transparent)' },
-  tablet:           { label: 'Tablet',          color: '#f97316', bg: 'color-mix(in srgb, #f97316 12%, transparent)' },
-  'cross-viewport': { label: 'Cross-viewport',  color: '#ec4899', bg: 'color-mix(in srgb, #ec4899 12%, transparent)' },
-  technical:        { label: 'Technical',       color: '#6b7280', bg: 'color-mix(in srgb, #6b7280 12%, transparent)' },
-  'brand-dna':      { label: 'Brand DNA',       color: '#d97706', bg: 'color-mix(in srgb, #d97706 12%, transparent)' },
+const VIEWPORT_CHIP_META: Record<string, { label: string; color: string; bg: string; icon: React.ElementType }> = {
+  mobile:           { label: 'Mobile',          color: '#8b5cf6', bg: 'color-mix(in srgb, #8b5cf6 12%, transparent)', icon: Smartphone },
+  desktop:          { label: 'Desktop',         color: '#0ea5e9', bg: 'color-mix(in srgb, #0ea5e9 12%, transparent)', icon: Monitor },
+  tablet:           { label: 'Tablet',          color: '#f97316', bg: 'color-mix(in srgb, #f97316 12%, transparent)', icon: Tablet },
+  'cross-viewport': { label: 'All screens',     color: '#ec4899', bg: 'color-mix(in srgb, #ec4899 12%, transparent)', icon: Layers },
+  technical:        { label: 'Technical',       color: '#6b7280', bg: 'color-mix(in srgb, #6b7280 12%, transparent)', icon: Code2 },
+  'brand-dna':      { label: 'Brand DNA',       color: '#d97706', bg: 'color-mix(in srgb, #d97706 12%, transparent)', icon: Palette },
 };
 
 function ViewportChip({ viewport }: { viewport: string }) {
   const meta = VIEWPORT_CHIP_META[viewport];
   if (!meta) return null;
+  const Icon = meta.icon;
   return (
     <span
-      className="inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-semibold tracking-[0.03em]"
+      className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[9px] font-semibold tracking-[0.03em]"
       style={{ background: meta.bg, color: meta.color }}
     >
+      <Icon size={10} aria-hidden />
       {meta.label}
     </span>
   );

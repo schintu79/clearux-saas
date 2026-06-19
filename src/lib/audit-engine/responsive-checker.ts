@@ -827,6 +827,12 @@ function issuesToFindings(results: ResponsiveCheckResult[]): AnalysisFinding[] {
           : 'Makes the site harder to read and use on mobile devices.',
         targetElement: issue.element || null,
         pageUrl: result.url,
+        // Device scope drives the Mobile/Desktop chip in the UI. Responsive
+        // findings are inherently device-specific — carry the viewport that
+        // triggered them so the user sees exactly where it applies.
+        viewport: issue.viewport === 'Tablet' ? 'tablet'
+          : (issue.viewport === 'Desktop' || issue.viewport === 'Small Desktop') ? 'desktop'
+          : 'mobile',
       })
     }
   }

@@ -1566,6 +1566,7 @@ Return 2-6 findings. Be specific and evidence-based. Reference specific files/co
                 sort_order: sortOrder++,
                 confidence_level: 'deterministic',
                 detection_source: 'responsive_checker',
+                viewport: finding.viewport || null,
                 communication: buildCommunicationForGenericFinding({ title: finding.title, description: finding.description, recommendation: finding.recommendation, estimatedImpact: finding.estimatedImpact || null, severity: finding.severity }, siteProfile),
                 ...computeActionModelFields({ title: finding.title, description: finding.description, recommendation: finding.recommendation, fix_type: cls.fixType, finding_type: cls.findingType }),
               }
