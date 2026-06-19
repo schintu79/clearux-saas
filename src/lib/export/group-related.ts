@@ -55,7 +55,10 @@ const CLUSTER_RULES: ClusterRule[] = [
     id: 'meta-tags',
     label: 'Page-specific meta tags and descriptions',
     patterns: [
-      /meta\s+description|og[:\s]|open\s+graph/i,
+      // `og[:\s]` matched the substring "og " inside ordinary words (log, blog,
+      // dialog, catalog), pulling unrelated findings into this cluster. Require
+      // the real Open Graph prefix (og:title / og_title) or explicit meta terms.
+      /meta\s+description|\bog[:_][a-z]|open\s+graph|<meta\b/i,
     ],
   },
   {
