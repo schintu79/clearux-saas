@@ -33,6 +33,28 @@ describe('groupRelatedFindings — accessibility over-merge fix', () => {
     expect(contrast!.label).toBe('Color contrast and legibility')
   })
 
+  it('meta-tags cluster no longer matches the substring "og" inside ordinary words', () => {
+    const findings = [
+      f('Blog index missing pagination', 'the blog catalog and dialog flows need work', 'medium'),
+      f('Free audit offer unclear', 'visitors need to know the scope before signup', 'low'),
+    ]
+    const clusters = groupRelatedFindings(findings)
+    // Neither mentions real meta/OG tags → no meta-tags cluster.
+    expect(clusters.some((c) => c.label === 'Page-specific meta tags and descriptions')).toBe(false)
+    expect(clusters.every((c) => !c.isClustered)).toBe(true)
+  })
+
+  it('meta-tags cluster STILL groups genuine meta/OG findings', () => {
+    const findings = [
+      f('Generic meta description', 'the meta description is not page-specific', 'medium'),
+      f('Missing og:title', 'og:title and og:image tags absent for social sharing', 'low'),
+    ]
+    const clusters = groupRelatedFindings(findings)
+    const meta = clusters.find((c) => c.label === 'Page-specific meta tags and descriptions')
+    expect(meta).toBeDefined()
+    expect(meta!.members).toHaveLength(2)
+  })
+
   it('does not cross-group keyboard with alt-text', () => {
     const findings = [
       f('Keyboard trap in modal', 'focus order broken, tabindex misuse', 'high'),

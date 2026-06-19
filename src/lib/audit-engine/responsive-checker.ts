@@ -632,7 +632,9 @@ async function runChecks({ page, viewport, url }: PageCheckInput): Promise<Viewp
         viewport: viewport.name,
         width: viewport.width,
         type: 'line_length_too_long',
-        severity: 'medium',
+        // Soft readability preference, not a defect → advisory tier (low) so it
+        // ranks below real issues and never inflates the medium-tier score cap.
+        severity: 'low',
         title: `Text lines exceed 75 characters on ${viewport.name.toLowerCase()} — reduced readability`,
         description:
           `${lineLengthData.tooLong.length} text blocks have lines exceeding 75 characters at the ${viewport.width}px viewport. Optimal mobile line length is 45-75 characters for comfortable reading. Elements: ${examples}.`,
@@ -692,7 +694,8 @@ async function runChecks({ page, viewport, url }: PageCheckInput): Promise<Viewp
         viewport: viewport.name,
         width: viewport.width,
         type: 'content_too_dense',
-        severity: 'medium',
+        // Soft readability preference, not a defect → advisory tier (low).
+        severity: 'low',
         title: `Content blocks are tightly packed on ${viewport.name.toLowerCase()} — poor visual breathing room`,
         description:
           `${densityData.cramped} of ${densityData.checked} content blocks (${Math.round(crampedRatio * 100)}%) have less than 8px spacing between them at the ${viewport.width}px viewport. Dense layouts are harder to scan and read on small screens. Examples: ${examples}.`,
