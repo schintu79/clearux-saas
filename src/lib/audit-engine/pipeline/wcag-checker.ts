@@ -209,24 +209,42 @@ async function runAutomatedChecks(page: Page, url: string): Promise<WcagCheckRes
 
   // ── 1.1.1 Non-text Content (images without alt) ──
   const imgData = await page.evaluate(() => {
+    const cssPath = (node: Element): string => {
+      if (node.id) return `${node.tagName.toLowerCase()}#${node.id}`
+      const parts: string[] = []
+      let el: Element | null = node
+      while (el && el.nodeType === 1 && parts.length < 4) {
+        let sel = el.tagName.toLowerCase()
+        if (el.id) { parts.unshift(`${sel}#${el.id}`); break }
+        const parent: Element | null = el.parentElement
+        if (parent) {
+          const sibs = Array.from(parent.children).filter((c) => c.tagName === el!.tagName)
+          if (sibs.length > 1) sel += `:nth-of-type(${sibs.indexOf(el) + 1})`
+        }
+        parts.unshift(sel)
+        el = el.parentElement
+      }
+      return parts.join(' > ')
+    }
     const imgs = document.querySelectorAll('img')
-    const missing: Array<{ src: string; snippet: string }> = []
+    const missing: Array<{ src: string; snippet: string; selector: string }> = []
     for (const img of imgs) {
       const alt = img.getAttribute('alt')
       if (alt === null) { // alt="" is intentionally decorative — ok
         missing.push({
           src: img.src?.slice(0, 80) || '(no src)',
           snippet: img.outerHTML.slice(0, 120),
+          selector: cssPath(img),
         })
       }
     }
     // Also check SVGs without accessible names
     const svgs = document.querySelectorAll('svg:not([aria-hidden="true"])')
-    const missingSvg: string[] = []
+    const missingSvg: Array<{ snippet: string; selector: string }> = []
     for (const svg of svgs) {
       const hasTitle = svg.querySelector('title')
       const hasLabel = svg.getAttribute('aria-label') || svg.getAttribute('aria-labelledby')
-      if (!hasTitle && !hasLabel) missingSvg.push(svg.outerHTML.slice(0, 80))
+      if (!hasTitle && !hasLabel) missingSvg.push({ snippet: svg.outerHTML.slice(0, 80), selector: cssPath(svg) })
     }
     return { missing, missingSvg, total: imgs.length }
   })
@@ -235,7 +253,7 @@ async function runAutomatedChecks(page: Page, url: string): Promise<WcagCheckRes
     const issues: WcagIssue[] = []
     for (const img of imgData.missing.slice(0, 5)) {
       issues.push({
-        element: `<img src="${img.src}">`,
+        element: img.selector || `<img src="${img.src}">`,
         description: 'Image has no alt attribute. Screen readers cannot describe this image.',
         recommendation: 'Add a descriptive alt attribute, or alt="" if the image is purely decorative.',
         severity: 'high',
@@ -244,11 +262,11 @@ async function runAutomatedChecks(page: Page, url: string): Promise<WcagCheckRes
     }
     for (const svg of imgData.missingSvg.slice(0, 3)) {
       issues.push({
-        element: '<svg>',
+        element: svg.selector || 'svg',
         description: 'SVG has no accessible name (no <title>, aria-label, or aria-labelledby).',
         recommendation: 'Add <title> inside the SVG or aria-label on the element, or aria-hidden="true" if decorative.',
         severity: 'medium',
-        evidence: svg,
+        evidence: svg.snippet,
       })
     }
     addResult('1.1.1', 'fail', issues)
