@@ -506,22 +506,37 @@ async function runAutomatedChecks(page: Page, url: string): Promise<WcagCheckRes
 
   // ── 2.1.1 Keyboard — check focusable elements ──
   const keyboardData = await page.evaluate(() => {
+    const cssPath = (node: Element): string => {
+      if (node.id) return `${node.tagName.toLowerCase()}#${node.id}`
+      const parts: string[] = []
+      let el: Element | null = node
+      while (el && el.nodeType === 1 && parts.length < 4) {
+        let sel = el.tagName.toLowerCase()
+        if (el.id) { parts.unshift(`${sel}#${el.id}`); break }
+        const parent: Element | null = el.parentElement
+        if (parent) {
+          const sibs = Array.from(parent.children).filter((c) => c.tagName === el!.tagName)
+          if (sibs.length > 1) sel += `:nth-of-type(${sibs.indexOf(el) + 1})`
+        }
+        parts.unshift(sel)
+        el = el.parentElement
+      }
+      return parts.join(' > ')
+    }
     const interactive = document.querySelectorAll('a[href], button, input, select, textarea, [tabindex], [role="button"], [role="link"], [onclick]')
     let nonFocusable = 0
     const examples: string[] = []
+    let firstSelector = ''
     for (const el of interactive) {
       const tabindex = el.getAttribute('tabindex')
-      if (tabindex === '-1') {
+      const isOnclickOnly = el.hasAttribute('onclick') && !el.hasAttribute('tabindex') && !el.matches('a, button, input, select, textarea')
+      if (tabindex === '-1' || isOnclickOnly) {
         nonFocusable++
-        if (examples.length < 3) examples.push(el.outerHTML.slice(0, 80))
-      }
-      // Check divs/spans with onclick but no tabindex
-      if (el.hasAttribute('onclick') && !el.hasAttribute('tabindex') && !el.matches('a, button, input, select, textarea')) {
-        nonFocusable++
+        if (!firstSelector) firstSelector = cssPath(el)
         if (examples.length < 3) examples.push(el.outerHTML.slice(0, 80))
       }
     }
-    return { nonFocusable, examples }
+    return { nonFocusable, examples, firstSelector }
   })
   addResult('2.1.1', keyboardData.nonFocusable > 0 ? 'fail' : 'pass',
     keyboardData.nonFocusable > 0 ? [{
@@ -529,6 +544,7 @@ async function runAutomatedChecks(page: Page, url: string): Promise<WcagCheckRes
       recommendation: 'Ensure all interactive elements are focusable (remove tabindex="-1") and add keyboard event handlers alongside click handlers.',
       severity: 'high',
       evidence: keyboardData.examples.join('\n'),
+      element: keyboardData.firstSelector || undefined,
     }] : [])
 
   // ── 2.2.2 Pause, Stop, Hide (auto-moving content) ──

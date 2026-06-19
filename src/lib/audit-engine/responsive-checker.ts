@@ -246,8 +246,28 @@ async function runChecks({ page, viewport, url }: PageCheckInput): Promise<Viewp
         'a, button, input, select, textarea, [role="button"], [role="link"], [tabindex]'
       )
       const vw = window.innerWidth
+      // Build a stable CSS selector for an element so the screenshot pass can
+      // scroll to it and highlight EXACTLY where the problem is (not a generic
+      // page shot). Walks up to an id or the document, using :nth-of-type.
+      const cssPath = (node: Element): string => {
+        if (node.id) return `${node.tagName.toLowerCase()}#${node.id}`
+        const parts: string[] = []
+        let el: Element | null = node
+        while (el && el.nodeType === 1 && parts.length < 4) {
+          let sel = el.tagName.toLowerCase()
+          if (el.id) { parts.unshift(`${sel}#${el.id}`); break }
+          const parent: Element | null = el.parentElement
+          if (parent) {
+            const sibs = Array.from(parent.children).filter((c) => c.tagName === el!.tagName)
+            if (sibs.length > 1) sel += `:nth-of-type(${sibs.indexOf(el) + 1})`
+          }
+          parts.unshift(sel)
+          el = el.parentElement
+        }
+        return parts.join(' > ')
+      }
       const tooSmall: Array<{
-        tag: string; width: number; height: number; text: string
+        tag: string; width: number; height: number; text: string; selector: string
         clip: string; clipPath: string; position: string; left: number; right: number; viewportWidth: number; href: string | null
       }> = []
 
@@ -269,6 +289,7 @@ async function runChecks({ page, viewport, url }: PageCheckInput): Promise<Viewp
             width: Math.round(rect.width),
             height: Math.round(rect.height),
             text,
+            selector: cssPath(el),
             clip: style.clip || '',
             clipPath: (style as any).clipPath || '',
             position: style.position || '',
@@ -306,6 +327,9 @@ async function runChecks({ page, viewport, url }: PageCheckInput): Promise<Viewp
         recommendation:
           'Increase the size of interactive elements to at least 44x44px on touch devices. Use min-height and min-width, or add padding to increase the tap area without changing visual design.',
         evidence: examples,
+        // Point the screenshot pass at a real example element so it highlights
+        // exactly where, instead of falling back to a generic page shot.
+        element: realTooSmall[0]?.selector || undefined,
       })
     }
   }
@@ -374,7 +398,24 @@ async function runChecks({ page, viewport, url }: PageCheckInput): Promise<Viewp
   // ── 5. Check for fixed-width elements ──
   if (viewport.isMobile) {
     const fixedWidthData = await page.evaluate((vw: number) => {
-      const issues: Array<{ tag: string; declaredWidth: string }> = []
+      const cssPath = (node: Element): string => {
+        if (node.id) return `${node.tagName.toLowerCase()}#${node.id}`
+        const parts: string[] = []
+        let el: Element | null = node
+        while (el && el.nodeType === 1 && parts.length < 4) {
+          let sel = el.tagName.toLowerCase()
+          if (el.id) { parts.unshift(`${sel}#${el.id}`); break }
+          const parent: Element | null = el.parentElement
+          if (parent) {
+            const sibs = Array.from(parent.children).filter((c) => c.tagName === el!.tagName)
+            if (sibs.length > 1) sel += `:nth-of-type(${sibs.indexOf(el) + 1})`
+          }
+          parts.unshift(sel)
+          el = el.parentElement
+        }
+        return parts.join(' > ')
+      }
+      const issues: Array<{ tag: string; declaredWidth: string; selector: string }> = []
       const all = document.querySelectorAll('div, section, main, article, aside, table, img')
 
       for (const el of all) {
@@ -392,7 +433,7 @@ async function runChecks({ page, viewport, url }: PageCheckInput): Promise<Viewp
           if (px > vw && rect.right > vw) {
             const tag = el.tagName.toLowerCase()
             const cls = el.className ? `.${String(el.className).split(' ')[0]}` : ''
-            issues.push({ tag: `<${tag}${cls}>`, declaredWidth: width })
+            issues.push({ tag: `<${tag}${cls}>`, declaredWidth: width, selector: cssPath(el) })
             if (issues.length >= 5) break
           }
         }
@@ -417,6 +458,7 @@ async function runChecks({ page, viewport, url }: PageCheckInput): Promise<Viewp
         recommendation:
           'Replace fixed pixel widths with max-width: 100%, percentage-based widths, or CSS grid/flexbox. For tables, add overflow-x: auto to a wrapper container.',
         evidence: examples,
+        element: fixedWidthData[0]?.selector || undefined,
       })
     }
   }
